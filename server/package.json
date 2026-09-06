@@ -1,0 +1,20 @@
+{
+  "name": "@shelflifeai/server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ../Backend/services/server.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mongodb": "^7.6.0",
+    "mongoose": "^9.9.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.4.1",
+    "typescript": "~6.0.3"
+  }
+}
