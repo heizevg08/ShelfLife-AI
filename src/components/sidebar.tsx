@@ -7,8 +7,6 @@
     ChevronsUpDown,
     ChevronRight,
     ChevronDown,
-    BadgeCheck,
-    Bell,
     LogOut,
     PanelLeft,
     UserPlus,
@@ -276,9 +274,9 @@
                 icon={<Users className="h-4 w-4" />}
                 label="Accounts"
                 subItems={[
-                    { label: 'Active Users', href: '#ActiveUsers' },
-                    { label: 'Pending Requests', href: '#PendingRequests' },
-                    { label: 'Roles', href: '#Roles' },
+                    { label: 'Active Users', href: '../../pages/subpages/ActiveUser' },
+                    { label: 'Pending Requests', href: '../../pages/subpages/RequestDash' },
+                    { label: 'Roles', href: '../../pages/subpages/RolesDash' },
                 ]}
                 isSidebarOpen={isSidebarOpen}
                 />
@@ -296,6 +294,7 @@
                 storageKey="nav_analytics_open"
                 icon={<ChartNoAxesCombined className="h-4 w-4" />}
                 label="Recommendation Analytics"
+                path="/pages/recommendation"
                 isSidebarOpen={isSidebarOpen}
                 />
 
@@ -303,6 +302,7 @@
                 storageKey="nav_reports_open"
                 icon={<MessageCircleWarning className="h-4 w-4" />}
                 label="Report & Analytics"
+                path="/pages/reports"
                 isSidebarOpen={isSidebarOpen}
                 />
             </div>
