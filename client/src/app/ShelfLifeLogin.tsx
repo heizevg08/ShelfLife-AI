@@ -1,19 +1,8 @@
     import React, { useState } from 'react';
-    import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Image, Platform } from 'react-native';
+    import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
     import { useRouter } from 'expo-router';
-    import Constants from 'expo-constants';
-
-    // Determine backend URL based on execution environment
-    const getApiUrl = (): string => {
-    if (Platform.OS === 'web') {
-        return 'http://127.0.0.1:5000/api/auth/login';
-    }
-    const debuggerHost = Constants.expoConfig?.hostUri;
-    const host = debuggerHost ? debuggerHost.split(':')[0] : '10.0.2.2';
-    return `http://${host}:5000/api/auth/login`;
-    };
-
-    const API_URL = getApiUrl();
+    import { login } from '../services/auth';
+    import { clearSession } from '../services/session';
 
     interface ValidationErrors {
     email?: string;
@@ -56,46 +45,29 @@
         setErrors({});
 
         try {
-        // 1. Authenticate user against backend API
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-            password,
-            }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            setErrors({ auth: data.error || 'Invalid credentials. Please try again.' });
-            return;
-        }
-
-        // 2. Role-Based Access Control (RBAC) Routing
-        const userRole = data.user?.role;
+        const user = await login(email.trim().toLowerCase(), password);
+        const userRole = user.role;
 
         switch (userRole) {
             case 'Super Admin':
-            case 'SuperAdmin':
             router.replace('/pages/SuperAdminDash');
             break;
             case 'Admin':
             router.replace('/pages/AdminDash');
             break;
-            case 'Staff':
+            case 'Inventory Staff':
             router.replace('/pages/InStaff');
             break;
             case 'Manager':
             router.replace('/pages/InManager');
             break;
             default:
+            clearSession();
             setErrors({ auth: `Unauthorized role assignment (${userRole}). Contact system administrator.` });
             break;
         }
         } catch (error) {
-        setErrors({ auth: 'Unable to connect to authentication server.' });
+        setErrors({ auth: error instanceof Error ? error.message : 'Unable to connect to authentication server.' });
         } finally {
         setIsLoading(false);
         }

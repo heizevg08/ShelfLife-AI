@@ -74,7 +74,7 @@ test('database boundary uses bounded options and no models or writes', async () 
   const driver = { connection: { readyState: 0 }, connect: async (...args) => calls.push(args), disconnect: async () => calls.push('disconnect') };
   const db = createDatabase(driver);
   await db.connect(config.mongoUri);
-  assert.deepEqual(calls[0], [config.mongoUri, { serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000, autoIndex: false, autoCreate: false }]);
+  assert.deepEqual(calls[0], [config.mongoUri, { dbName: 'shelflifeai', serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000, autoIndex: false, autoCreate: false }]);
   for (const state of [0, 1, 2, 3]) { driver.connection.readyState = state; assert.equal(db.isConnected(), state === 1); }
   await db.disconnect(); assert.equal(calls[1], 'disconnect');
 });

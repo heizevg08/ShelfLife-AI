@@ -1,3 +1,5 @@
+import { currentUser } from '../services/auth';
+import { clearSession } from '../services/session';
     // src/components/sidebar.tsx
     import React, { useState, useEffect } from 'react';
     import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
@@ -56,13 +58,7 @@
             setIsLoadingUser(true);
             setUserFetchError(null);
 
-            const response = await fetch('/api/user/profile');
-
-            if (!response.ok) {
-            throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}`);
-            }
-
-            const data: UserProfile = await response.json();
+            const data = await currentUser();
             setUserData(data);
         } catch (error) {
             console.error('Error fetching user profile:', error);
@@ -76,6 +72,8 @@
     }, []);
 
     const handleLogout = () => {
+        clearSession();
+        setUserData(null);
         setIsUserMenuOpen(false);
         router.replace('/ShelfLifeLogin' as any);
     };

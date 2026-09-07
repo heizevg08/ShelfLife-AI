@@ -10,7 +10,7 @@ export interface Database {
 export function createDatabase(driver = new Mongoose()): Database {
   return {
     async connect(uri) {
-      await driver.connect(uri, { serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000, autoIndex: false, autoCreate: false });
+      await driver.connect(uri, { dbName: 'shelflifeai', serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000, autoIndex: false, autoCreate: false });
     },
     async disconnect() { await driver.disconnect(); },
     isConnected() { return driver.connection.readyState === 1; },

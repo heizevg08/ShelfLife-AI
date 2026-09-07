@@ -1,3 +1,5 @@
+import { currentUser as fetchCurrentUser } from '../services/auth';
+import { clearSession } from '../services/session';
     import React, { useState, useEffect } from 'react';
     import {
     Terminal,
@@ -64,6 +66,8 @@
     });
 
     const handleLogout = () => {
+        clearSession();
+        setCurrentUser(null);
         setIsUserMenuOpen(false);
         router.replace('/ShelfLifeLogin');
     };
@@ -72,37 +76,18 @@
     useEffect(() => {
         const fetchUserProfile = async () => {
         try {
-            const token = localStorage.getItem('userToken');
-
-            if (!token) {
-            console.warn('No authentication token found in localStorage.');
-            return;
-            }
-
-            const response = await fetch(`${API_BASE_URL}/api/user/me`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            });
-
-            if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: Failed to fetch user details`);
-            }
-
-            const responseData = await response.json();
-            const raw = responseData.user || responseData.data || responseData;
+            const raw = await fetchCurrentUser();
 
             setCurrentUser({
-            name: raw.name || `${raw.firstName || ''} ${raw.lastName || ''}`.trim() || 'User',
-            firstName: raw.firstName,
-            lastName: raw.lastName,
+            name: raw.name,
+            firstName: undefined,
+            lastName: undefined,
             role: raw.role || 'User',
             email: raw.email || 'email@example.com',
             });
         } catch (error) {
-            console.error('Failed to fetch user profile:', error);
+            setCurrentUser(null);
+            router.replace('/ShelfLifeLogin');
         }
         };
 

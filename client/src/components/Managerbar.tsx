@@ -1,3 +1,5 @@
+import { currentUser } from '../services/auth';
+import { clearSession } from '../services/session';
     import React, { useState, useEffect } from 'react';
     import {
     LayoutDashboard,
@@ -57,24 +59,11 @@
             setIsLoadingRoles(true);
             setUserFetchError(null);
 
-            const [userResponse, rolesResponse] = await Promise.all([
-            fetch('/api/user/profile'),
-            fetch('/api/roles'),
-            ]);
+            setUserData(await currentUser());
+            const rolesResponse = await fetch('/api/roles');
+            if (!rolesResponse.ok) throw new Error('Roles unavailable');
+            const rolesDataRaw = await rolesResponse.json();
 
-            if (!userResponse.ok) {
-            throw new Error(`User fetch failed: ${userResponse.statusText}`);
-            }
-            if (!rolesResponse.ok) {
-            throw new Error(`Roles fetch failed: ${rolesResponse.statusText}`);
-            }
-
-            const [userDataRaw, rolesDataRaw] = await Promise.all([
-            userResponse.json(),
-            rolesResponse.json(),
-            ]);
-
-            setUserData(userDataRaw as UserProfile);
             setRoles(rolesDataRaw as Role[]);
 
             if ((rolesDataRaw as Role[]).length > 0) {
@@ -263,6 +252,8 @@
                     icon={<LogOut className="h-4 w-4" />}
                     label="Log out"
                     onClick={() => {
+                    clearSession();
+                    setUserData(null);
                     window.location.href = '/ShelfLifeLogin';
                     }}
                 />

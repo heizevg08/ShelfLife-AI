@@ -3,6 +3,10 @@ import type { EventEmitter } from 'node:events';
 import { createApp } from './app';
 import { createDatabase, type Database } from './config/database';
 import { readConfig, type Config } from './config/env';
+import { Mongoose } from 'mongoose';
+import { readJwtSecret } from './config/auth';
+import { userModel } from './models/user';
+import { createAuth, type AuthService } from './services/auth';
 
 async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
@@ -13,9 +17,9 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService) {
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected()));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -63,7 +67,14 @@ export function registerShutdown(signals: EventEmitter, stop: () => Promise<numb
 if (require.main === module) {
   void (async () => {
     const config = readConfig(process.env);
-    const runtime = await startServer(config, createDatabase());
+    const secret = readJwtSecret(process.env);
+    const driver = new Mongoose();
+    const users = userModel(driver);
+    const auth = createAuth({
+      byEmail: email => users.findOne({ email }).select('+passwordHash').lean().exec(),
+      byId: id => users.findById(id).lean().exec(),
+    }, secret);
+    const runtime = await startServer(config, createDatabase(driver), 5000, auth);
     console.info('Backend listening');
     registerShutdown(process, runtime.stop, code => process.exit(code));
   })().catch(error => {
