@@ -8,7 +8,18 @@ const path = require('node:path');
 const { readConfig } = require('../dist/config/env');
 const { createDatabase } = require('../dist/config/database');
 const { createApp } = require('../dist/app');
-const { startServer, registerShutdown } = require('../dist/server');
+const { startServer, registerShutdown, startupDiagnostic } = require('../dist/server');
+
+test('startup diagnostics allowlist metadata and reject secret-bearing fields', () => {
+  const error = Object.assign(new Error('mongodb://private:password@host secret-token hash-value'), { code: 'ECONNREFUSED' });
+  assert.deepEqual(startupDiagnostic('database-connection', error), { stage: 'database-connection', name: 'Error', code: 'ECONNREFUSED' });
+  error.name = 'private-name'; error.code = 'private-code';
+  assert.deepEqual(startupDiagnostic('application-composition', error), { stage: 'application-composition', name: 'UnknownError' });
+  assert.deepEqual(startupDiagnostic('configuration', new Error('Invalid configuration: JWT_SECRET')), { stage: 'configuration', name: 'Error', message: 'Invalid configuration: JWT_SECRET' });
+  assert.equal(startupDiagnostic('configuration', new Error('Invalid configuration: JWT_SECRET=private-value')).message, undefined);
+  assert.equal(startupDiagnostic('configuration', 'private-value').name, 'UnknownError');
+  assert.deepEqual(startupDiagnostic('shutdown-registration', new TypeError('private-value')), { stage: 'shutdown-registration', name: 'TypeError' });
+});
 
 const config = { ...readConfig({ MONGO_URI: 'mongodb://test.invalid/foundation', NODE_ENV: 'test' }), port: 0 };
 async function serve(t, app) {
@@ -81,7 +92,14 @@ test('database boundary uses bounded options and no models or writes', async () 
 
 test('connection failure is sanitized and disconnects without listening', async () => {
   let disconnected = 0;
-  await assert.rejects(startServer(config, { connect: async () => { throw new Error('private-driver-details'); }, disconnect: async () => { disconnected++; }, isConnected: () => false }), { message: 'Backend startup failed' });
+  const stages = [];
+  await assert.rejects(startServer(config, { connect: async () => { throw new Error('private-driver-details'); }, disconnect: async () => { disconnected++; }, isConnected: () => false }, 5000, undefined, stage => stages.push(stage)), error => {
+    assert.equal(error.message, 'Backend startup failed');
+    assert.deepEqual(error.diagnostic, { stage: 'database-connection', name: 'Error' });
+    assert.equal(error.cause, undefined);
+    return true;
+  });
+  assert.deepEqual(stages, ['application-composition', 'database-connection']);
   assert.equal(disconnected, 1);
 });
 
@@ -90,7 +108,11 @@ test('listen failure disconnects the database and exposes no raw socket error', 
   let disconnected = 0;
   await assert.rejects(startServer({ ...config, port: Number(new URL(origin).port) }, {
     connect: async () => {}, disconnect: async () => { disconnected++; }, isConnected: () => true,
-  }), { message: 'Backend startup failed' });
+  }), error => {
+    assert.equal(error.message, 'Backend startup failed');
+    assert.deepEqual(error.diagnostic, { stage: 'http-listen', name: 'Error', code: 'EADDRINUSE' });
+    return true;
+  });
   assert.equal(disconnected, 1);
 });
 
