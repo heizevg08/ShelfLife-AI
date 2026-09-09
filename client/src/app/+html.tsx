@@ -21,8 +21,8 @@ export default function Root({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <Head><title>ShelfLifeAI</title></Head>
-        <meta name="application-name" content="ShelfLifeAI" />
+        <Head><title>ShelfLife AI</title><link rel="icon" type="image/svg+xml" href="/icons/shelflife-logo.svg" /></Head>
+        <meta name="application-name" content="ShelfLife AI" />
         <meta name="theme-color" content="#12231A" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
