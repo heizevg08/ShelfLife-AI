@@ -1,5 +1,27 @@
 # Welcome to your Expo app 👋
 
+## ShelfLifeAI development runtime
+
+Use **Node.js 24.20.0** for this repository. The root `.nvmrc` records the
+verified development version; `server/package.json` requires Node `24.x`
+and keeps the backend compiled module format as CommonJS.
+
+Select this version before installing dependencies or starting either workspace:
+
+```bash
+nvm use 24.20.0
+node --version
+```
+
+The version check must print `v24.20.0`. With another version manager, select
+the version in `.nvmrc` using that manager's command. `.nvmrc` does not switch
+Node automatically in every shell, and npm's `engines` check is normally a
+warning rather than a runtime guard.
+
+From the repository root, use `npm run client` for Expo and
+`npm --prefix server run dev` for the canonical backend. Keep local server
+configuration in ignored `server/.env`; do not commit credentials.
+
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started
