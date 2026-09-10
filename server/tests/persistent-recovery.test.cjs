@@ -5,6 +5,8 @@ const { once } = require('node:events');
 const { createServer } = require('node:http');
 const { createAuth } = require('../dist/services/auth');
 const { createPersistentSessions, tokenHash } = require('../dist/services/persistent-session');
+const { createPasswordRecovery } = require('../dist/services/password-recovery');
+const { createResetEmail } = require('../dist/services/reset-email');
 const { hashPassword, verifyPassword } = require('../dist/services/password');
 const { createApp } = require('../dist/app');
 
@@ -56,4 +58,30 @@ test('real HTTP cookie contract is HttpOnly, CSRF guarded, rotating and revocabl
   assert.equal((await post('/refresh',{},first)).status,401);
   assert.equal((await post('/logout',{},cookie)).status,204);
   assert.equal((await post('/refresh',{},cookie)).status,401);
+});
+
+test('recovery is generic, hashed, expiring, single-use and invalidates prior access tokens',async()=>{
+  const f=await fixture();let saved, delivered;let now=new Date();
+  const store={...f.users,setReset:async(id,hash,expires)=>{saved={hash,expires}},clearReset:async hash=>{if(saved?.hash===hash)saved=undefined},
+    consumeReset:async(hash,date,passwordHash)=>{if(!saved||saved.hash!==hash||saved.expires<=date||!f.row.isActive)return false;saved=undefined;f.row.passwordHash=passwordHash;f.row.authVersion++;return true;}};
+  const recovery=createPasswordRecovery(store,{send:async(email,token)=>{delivered=token}},()=>now);
+  const known=await recovery.request({email:f.row.email});assert.deepEqual(await recovery.request({email:'missing@shelflife.com'}),known);
+  assert.equal(saved.hash,tokenHash(delivered));assert(!JSON.stringify(known).includes(delivered));
+  const old=f.auth.issue(f.row).accessToken;await recovery.complete({token:delivered,password:'changed-password-only'});
+  assert(await verifyPassword('changed-password-only',f.row.passwordHash));await assert.rejects(f.auth.authenticate('Bearer '+old));
+  await assert.rejects(recovery.complete({token:delivered,password:'changed-password-only'}));
+  await recovery.request({email:f.row.email});now=new Date(now.getTime()+900001);await assert.rejects(recovery.complete({token:delivered,password:'changed-password-only'}));
+  const disabled=createPasswordRecovery(store);await assert.rejects(disabled.request({email:f.row.email}),e=>e.status===503);
+  const failed=createPasswordRecovery(store,{send:async()=>{throw Error('private provider details')}});
+  assert.deepEqual(await failed.request({email:f.row.email}),known);assert.equal(saved,undefined);
+});
+
+test('Resend boundary is disabled without configuration and requires provider acceptance',async()=>{
+  assert.equal(createResetEmail({}),undefined);
+  assert.equal(createResetEmail({RESEND_API_KEY:'test',RESEND_FROM:'test@example.com',PASSWORD_RESET_URL:'http://untrusted.example',NODE_ENV:'production'}),undefined);
+  const env={RESEND_API_KEY:'isolated-key',RESEND_FROM:'test@example.com',PASSWORD_RESET_URL:'https://example.com/ShelfLifeAILogin'};
+  let sent;
+  await createResetEmail(env,async(url,options)=>{sent=JSON.parse(options.body);return new Response(JSON.stringify({id:'provider-accepted'}),{status:200})}).send('recipient@example.com','a'.repeat(64));
+  assert(sent.text.includes('#reset='));assert(!sent.text.includes('?reset='));
+  await assert.rejects(createResetEmail(env,async()=>new Response('{}',{status:500})).send('recipient@example.com','a'.repeat(64)));
 });

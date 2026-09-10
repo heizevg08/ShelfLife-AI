@@ -10,6 +10,8 @@ const schema = new Schema({
   role: { type: String, required: true, enum: ROLES },
   isActive: { type: Boolean, required: true, default: true },
   authVersion: { type: Number, default: 0 },
+  resetTokenHash: { type: String, select: false },
+  resetExpiresAt: { type: Date, select: false },
 }, { timestamps: true, versionKey: false, collection: 'users', strict: 'throw' });
 
 export type UserRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };

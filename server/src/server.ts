@@ -9,6 +9,8 @@ import { userModel } from './models/user';
 import { createAuth, type AuthService } from './services/auth';
 import { persistentSessionModel } from './models/persistent-session';
 import { createPersistentSessions } from './services/persistent-session';
+import { createPasswordRecovery } from './services/password-recovery';
+import { createResetEmail } from './services/reset-email';
 import type { AuthExtensions } from './routes/auth.routes';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
@@ -116,7 +118,19 @@ if (require.main === module) {
       rotate: (hash, next, now) => sessions.findOneAndUpdate({ tokenHash: hash, expiresAt: { $gt: now } }, { $set: { tokenHash: next } }).lean().exec(),
       revoke: hash => sessions.deleteMany({ tokenHash: hash }).exec(),
     }, userStore, auth);
-    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, secureCookies: config.nodeEnv === 'production' });
+    const recovery = createPasswordRecovery({
+      ...userStore,
+      setReset: (id, hash, expires) => users.updateOne({ _id: id, isActive: true }, { $set: { resetTokenHash: hash, resetExpiresAt: expires } }).exec(),
+      clearReset: hash => users.updateOne({ resetTokenHash: hash }, { $unset: { resetTokenHash: 1, resetExpiresAt: 1 } }).exec(),
+      consumeReset: async (hash, now, passwordHash) => {
+        // One atomic update consumes the token and revokes existing access/refresh credentials by version.
+        const result = await users.updateOne({ resetTokenHash: hash, resetExpiresAt: { $gt: now }, isActive: true }, {
+          $set: { passwordHash }, $unset: { resetTokenHash: 1, resetExpiresAt: 1 }, $inc: { authVersion: 1 },
+        }).exec();
+        return result.modifiedCount === 1;
+      },
+    }, createResetEmail(process.env));
+    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' });
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

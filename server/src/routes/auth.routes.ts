@@ -2,9 +2,10 @@ import { Router } from 'express';
 import type { AuthService } from '../services/auth';
 import { authenticate } from '../middleware/auth.middleware';
 import type { PersistentSessions } from '../services/persistent-session';
+import type { PasswordRecovery } from '../services/password-recovery';
 import { HttpError } from '../middleware/error.middleware';
 
-export interface AuthExtensions { sessions?: PersistentSessions; secureCookies?: boolean }
+export interface AuthExtensions { sessions?: PersistentSessions; recovery?: PasswordRecovery; secureCookies?: boolean }
 
 export function authRoutes(auth: AuthService, origins: readonly string[] = [], extensions: AuthExtensions = {}) {
   const router = Router();
@@ -46,6 +47,15 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
     await extensions.sessions?.revoke(cookie(req.headers.cookie));
     res.clearCookie(cookieName, cookieOptions);
     res.status(204).end();
+  });
+  router.get('/password-reset/availability', (_req, res) => { res.json({ available: extensions.recovery?.available === true }); });
+  router.post('/password-reset/request', async (req, res) => {
+    if (!extensions.recovery) throw new HttpError(503, 'Password recovery is awaiting email delivery setup');
+    res.json(await extensions.recovery.request(req.body));
+  });
+  router.post('/password-reset/complete', async (req, res) => {
+    if (!extensions.recovery) throw new HttpError(503, 'Password recovery unavailable');
+    res.json(await extensions.recovery.complete(req.body));
   });
   router.get('/me', authenticate(auth), (_req, res) => { res.json({ user: res.locals.user }); });
   return router;
