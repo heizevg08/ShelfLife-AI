@@ -61,7 +61,7 @@ test('health readiness follows controlled state; errors and legacy endpoints are
   assert.equal((await fetch(origin + '/api/health/ready')).status, 503);
   r = await fetch(origin + '/api/health/live', { headers: { Origin: 'https://allowed.test' } });
   assert.equal(r.headers.get('access-control-allow-origin'), 'https://allowed.test');
-  assert.equal(r.headers.get('access-control-allow-credentials'), null);
+  assert.equal(r.headers.get('access-control-allow-credentials'), 'true');
   r = await fetch(origin + '/api/health/live', { method: 'OPTIONS', headers: { Origin: 'https://allowed.test', 'Access-Control-Request-Method': 'GET' } }); assert.equal(r.status, 204);
   r = await fetch(origin + '/api/health/live', { headers: { Origin: 'https://denied.test' } });
   assert.equal(r.status, 403); assert.equal(r.headers.get('access-control-allow-origin'), null);

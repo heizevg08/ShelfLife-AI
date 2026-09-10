@@ -3,7 +3,7 @@ import { HttpError } from '../middleware/error.middleware';
 
 export function corsOptions(origins: readonly string[]): CorsOptions {
   return {
-    credentials: false,
+    credentials: true,
     origin(origin, callback) {
       // Requests without Origin (including health probes) need no CORS grant.
       if (!origin) return callback(null, false);

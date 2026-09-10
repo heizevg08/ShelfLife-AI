@@ -7,6 +7,9 @@ import { Mongoose } from 'mongoose';
 import { readJwtSecret } from './config/auth';
 import { userModel } from './models/user';
 import { createAuth, type AuthService } from './services/auth';
+import { persistentSessionModel } from './models/persistent-session';
+import { createPersistentSessions } from './services/persistent-session';
+import type { AuthExtensions } from './routes/auth.routes';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
@@ -41,11 +44,11 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -102,11 +105,18 @@ if (require.main === module) {
     onStage('application-composition');
     const driver = new Mongoose();
     const users = userModel(driver);
-    const auth = createAuth({
-      byEmail: email => users.findOne({ email }).select('+passwordHash').lean().exec(),
-      byId: id => users.findById(id).lean().exec(),
-    }, secret);
-    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage);
+    const userStore = {
+      byEmail: (email: string) => users.findOne({ email }).select('+passwordHash').lean().exec(),
+      byId: (id: string) => users.findById(id).lean().exec(),
+    };
+    const auth = createAuth(userStore, secret);
+    const sessions = persistentSessionModel(driver);
+    const persistent = createPersistentSessions({
+      create: record => sessions.create(record),
+      rotate: (hash, next, now) => sessions.findOneAndUpdate({ tokenHash: hash, expiresAt: { $gt: now } }, { $set: { tokenHash: next } }).lean().exec(),
+      revoke: hash => sessions.deleteMany({ tokenHash: hash }).exec(),
+    }, userStore, auth);
+    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, secureCookies: config.nodeEnv === 'production' });
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

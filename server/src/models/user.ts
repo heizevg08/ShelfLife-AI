@@ -9,6 +9,7 @@ const schema = new Schema({
   passwordHash: { type: String, required: true, select: false, match: /^scrypt\$131072\$8\$1\$[a-f0-9]{32}\$[a-f0-9]{128}$/ },
   role: { type: String, required: true, enum: ROLES },
   isActive: { type: Boolean, required: true, default: true },
+  authVersion: { type: Number, default: 0 },
 }, { timestamps: true, versionKey: false, collection: 'users', strict: 'throw' });
 
 export type UserRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
