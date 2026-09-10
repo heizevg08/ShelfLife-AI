@@ -1,5 +1,5 @@
 import { currentUser } from '../services/auth';
-import { clearSession } from '../services/session';
+import { logout as endSession } from '../services/auth';
     // src/components/sidebar.tsx
     import React, { useState, useEffect } from 'react';
     import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
@@ -48,6 +48,7 @@ import { clearSession } from '../services/session';
     
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [logoutError, setLogoutError] = useState(false);
     const [userData, setUserData] = useState<UserProfile | null>(null);
     const [isLoadingUser, setIsLoadingUser] = useState(true);
     const [userFetchError, setUserFetchError] = useState<string | null>(null);
@@ -71,11 +72,11 @@ import { clearSession } from '../services/session';
         fetchUserProfile();
     }, []);
 
-    const handleLogout = () => {
-        clearSession();
+    const handleLogout = async () => {
+        try { setLogoutError(false); await endSession(); } catch { setLogoutError(true); return; }
         setUserData(null);
         setIsUserMenuOpen(false);
-        router.replace('/ShelfLifeLogin' as any);
+        router.replace('/ShelfLifeAILogin' as any);
     };
 
     const avatarSeed = userData?.avatarSeed || userData?.email || 'pantry';
@@ -103,6 +104,7 @@ import { clearSession } from '../services/session';
 
     return (
         <View className="flex-1 flex-row bg-white">
+        {logoutError && <div role="alert">Unable to log out. Check your connection and try again.</div>}
         {/* Sidebar Container */}
         <View 
             className={`${

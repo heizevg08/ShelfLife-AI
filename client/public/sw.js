@@ -3,9 +3,9 @@
 // Provides application-shell caching and offline fallback for the PWA.
 // API/data requests are not intentionally cached here.
 const CACHE_PREFIX = 'shelflifeai-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
-const SHELL_PATHS = ['/', '/ShelfLifeLogin'];
-const PUBLIC_FILES = ['/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/favicon.ico'];
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const SHELL_PATHS = ['/', '/ShelfLifeAILogin'];
+const PUBLIC_FILES = ['/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/shelflife-logo.svg'];
 
 function isStaticAsset(url) {
   return url.origin === self.location.origin && !url.search && (
@@ -80,7 +80,7 @@ self.addEventListener('fetch', event => {
           const cached = await cache.match(url.pathname);
           if (cached) return cached;
         } else {
-          return Response.redirect(new URL('/ShelfLifeLogin', self.location.origin).href, 302);
+          return Response.redirect(new URL('/ShelfLifeAILogin', self.location.origin).href, 302);
         }
         return new Response('ShelfLifeAI is offline. Connect and reload to download the app.', {
           status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' },

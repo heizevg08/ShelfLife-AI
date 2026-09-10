@@ -1,11 +1,6 @@
-    // src/pages/SuperAdminDash.tsx
-    import React from 'react';
-    import SidebarLayout from '../../components/sidebar';
+import { Redirect } from 'expo-router';
 
-    export default function SuperAdminDash(): React.ReactElement {
-    return (
-        <SidebarLayout> 
-            <h1>Super Admin Dashboard</h1>
-        </SidebarLayout>
-    );
-    }
+// Preserve existing bookmarks while keeping a single canonical dashboard URL.
+export default function SuperAdminDash() {
+  return <Redirect href="/SuperAdminDashboard" />;
+}

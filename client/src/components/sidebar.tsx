@@ -1,5 +1,5 @@
 import { currentUser as fetchCurrentUser } from '../services/auth';
-import { clearSession } from '../services/session';
+import { logout as endSession } from '../services/auth';
     import React, { useState, useEffect } from 'react';
     import {
     Terminal,
@@ -49,6 +49,7 @@ import { clearSession } from '../services/session';
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     // Current logged in user state
+    const [logoutError, setLogoutError] = useState(false);
     const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
     const [roles, setRoles] = useState<Role[]>([]);
@@ -65,11 +66,11 @@ import { clearSession } from '../services/session';
         role: '',
     });
 
-    const handleLogout = () => {
-        clearSession();
+    const handleLogout = async () => {
+        try { setLogoutError(false); await endSession(); } catch { setLogoutError(true); return; }
         setCurrentUser(null);
         setIsUserMenuOpen(false);
-        router.replace('/ShelfLifeLogin');
+        router.replace('/ShelfLifeAILogin');
     };
 
     // 1. Fetch logged-in user profile (with authentication)
@@ -87,7 +88,7 @@ import { clearSession } from '../services/session';
             });
         } catch (error) {
             setCurrentUser(null);
-            router.replace('/ShelfLifeLogin');
+            router.replace('/ShelfLifeAILogin');
         }
         };
 
@@ -155,6 +156,7 @@ import { clearSession } from '../services/session';
 
     return (
         <div className="flex h-screen w-screen bg-white text-gray-900 font-sans overflow-hidden">
+        {logoutError && <div role="alert">Unable to log out. Check your connection and try again.</div>}
         {/* SIDEBAR */}
         <aside
             className={`${
@@ -165,7 +167,7 @@ import { clearSession } from '../services/session';
             <div className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200/50 cursor-pointer transition-colors min-h-[44px]">
                 {isSidebarOpen && (
                 <h1 className="text-lg font-bold tracking-tight whitespace-nowrap">
-                    <Link href="/pages/SuperAdminDash" className="flex flex-col text-left no-underline">
+                    <Link href="/SuperAdminDashboard" className="flex flex-col text-left no-underline">
                     <span className="text-lg font-bold tracking-tight leading-none text-gray-900">
                         ShelfLife <span className="text-emerald-600">AI</span>
                     </span>
@@ -198,7 +200,7 @@ import { clearSession } from '../services/session';
                 storageKey="nav_home_open"
                 icon={<Bot className="h-4 w-4" />}
                 label="Home"
-                path="/pages/SuperAdminDash"
+                path="/SuperAdminDashboard"
                 isSidebarOpen={isSidebarOpen}
                 />
                 <CollapsibleNavItem

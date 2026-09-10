@@ -1,5 +1,5 @@
 import { currentUser } from '../services/auth';
-import { clearSession } from '../services/session';
+import { logout as endSession } from '../services/auth';
     import React, { useState, useEffect } from 'react';
     import {
     LayoutDashboard,
@@ -40,6 +40,7 @@ import { clearSession } from '../services/session';
     const [isLoadingRoles, setIsLoadingRoles] = useState<boolean>(true);
 
     // States for fetching user profile data
+    const [logoutError, setLogoutError] = useState(false);
     const [userData, setUserData] = useState<UserProfile | null>(null);
     const [isLoadingUser, setIsLoadingUser] = useState<boolean>(true);
     const [userFetchError, setUserFetchError] = useState<string | null>(null);
@@ -104,6 +105,7 @@ import { clearSession } from '../services/session';
 
     return (
         <div className="flex h-screen w-screen bg-white text-gray-900 font-sans overflow-hidden">
+        {logoutError && <div role="alert">Unable to log out. Check your connection and try again.</div>}
         {/* SIDEBAR */}
         <aside
             className={`${
@@ -251,10 +253,10 @@ import { clearSession } from '../services/session';
                 <MenuItem
                     icon={<LogOut className="h-4 w-4" />}
                     label="Log out"
-                    onClick={() => {
-                    clearSession();
+                    onClick={async () => {
+                    try { setLogoutError(false); await endSession(); } catch { setLogoutError(true); return; }
                     setUserData(null);
-                    window.location.href = '/ShelfLifeLogin';
+                    window.location.href = '/ShelfLifeAILogin';
                     }}
                 />
                 </div>
