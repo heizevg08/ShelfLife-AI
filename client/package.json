@@ -9,6 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test:baseline": "node --import tsx --test --test-isolation=none tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "build:web": "expo export --platform web"
   },

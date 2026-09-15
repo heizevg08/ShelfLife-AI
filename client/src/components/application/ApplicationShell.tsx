@@ -1,36 +1,63 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, type Href } from 'expo-router';
 import {
+  ArrowUp,
   ChevronDown,
   LayoutDashboard,
+  LoaderCircle,
   LogOut,
   Menu,
-  LoaderCircle,
   PanelLeftClose,
   PanelLeftOpen,
+  Search,
   X,
 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AuthRequestError, currentUser, logout as endSession, type SessionUser } from '../../services/auth';
-import { DataState } from './primitives';
+import { getSystemAvailability } from '../../services/system';
+import '../../styles/application.css';
 import { Brand } from './Brand';
 import { Dialog } from './Dialog';
-import { useHoverIntent } from './useHoverIntent';
 import { Notifications } from './Notifications';
 import { administrationAreas, type AdministrationAreaId } from './administration';
-import '../../styles/application.css';
+import { DataState } from './primitives';
+import { useHoverIntent } from './useHoverIntent';
 
-const dashboardPath = '/SuperAdminDashboard';
-
-// Visibility follows the Super Admin workspace; this is not backend authorization.
-const destinations: { label: string; Icon: typeof LayoutDashboard; path?: string; id?: AdministrationAreaId }[] = [
-  { label: 'Dashboard', Icon: LayoutDashboard, path: dashboardPath },
-  ...administrationAreas,
-];
+import { canOpenWorkspacePath, dashboardPaths, workspaceNavigation } from './workspace';
 
 export default function ApplicationShell({ children }: { children: (user: SessionUser, openArea: (id: AdministrationAreaId) => void) => ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<SessionUser | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [systemHealth, setSystemHealth] = useState<'checking' | 'healthy' | 'attention' | 'unavailable'>('checking');
+  const appRef = useRef<HTMLDivElement>(null);
+  const dashboardPath = dashboardPaths[user?.role ?? 'Super Admin'];
+  const destinations = [{ label: 'Dashboard', Icon: LayoutDashboard, path: dashboardPath }, ...(user?.role === 'Super Admin' ? administrationAreas.filter(area => !('hidden' in area && area.hidden)) : user ? workspaceNavigation(user.role) : [])];
+  const superAdminSearchEntries = user?.role === 'Super Admin' ? [
+    { label: 'User Accounts', path: '/UserManagement', Icon: Search, keywords: 'users accounts admin manager inventory staff create add user roles active deactivated' },
+    { label: 'Alert Queue', path: '/Alerts', Icon: Search, keywords: 'alerts critical low stock expiring expiration waste risk severity status' },
+    { label: 'Change Request Queue', path: '/ChangeRequests', Icon: Search, keywords: 'requests pending approved rejected threshold override discard batch reorder level review' },
+    { label: 'Recent Audit Logs', path: '/AdministrativeAudit', Icon: Search, keywords: 'audit logs actor action account created updated deactivated reactivated security activity' },
+    { label: 'Waste & Forecast Reports', path: '/Reports', Icon: Search, keywords: 'reports weekly waste cost forecast accuracy predicted actual waste inventory value analytics high waste' },
+    { label: 'System Configuration', path: '/SystemSettings', Icon: Search, keywords: 'settings configuration session policy notifications inventory rules policies' },
+  ] : [];
+  const searchIndex = [...destinations.map(item => ({ ...item, keywords: item.label })), ...superAdminSearchEntries];
+  const searchMatches = searchQuery.trim()
+    ? searchIndex.filter(item => item.path && `${item.label} ${item.keywords}`.toLowerCase().includes(searchQuery.trim().toLowerCase())).filter((item, index, all) => all.findIndex(candidate => candidate.label === item.label && candidate.path === item.path) === index).slice(0, 8)
+    : [];
+  const navigationGroups = destinations.reduce<{ label: string; items: typeof destinations }[]>((groups, item) => {
+    const group = !user || item.path === dashboardPath ? 'Overview'
+      : user.role === 'Super Admin' ? 'Administration'
+      : user.role === 'Admin' ? (['/UserManagement', '/Ingredients'].includes(item.path) ? 'Core data' : 'Oversight')
+      : user.role === 'Manager' ? (item.path === '/InventoryBatches' ? 'Inventory' : ['/UsageWaste', '/ChangeRequests'].includes(item.path) ? 'Operations' : 'Intelligence')
+      : ['/InventoryBatches', '/StockIn'].includes(item.path) ? 'Inventory' : ['/Usage', '/Waste'].includes(item.path) ? 'Records' : 'Follow-up';
+    const existing = groups.find(entry => entry.label === group);
+    if (existing) existing.items.push(item);
+    else groups.push({ label: group, items: [item] });
+    return groups;
+  }, []);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -46,8 +73,6 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const [focusedNavigation, setFocusedNavigation] = useState<{ label: string; top: number } | null>(null);
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-
-
 
   const accountRef = useRef<HTMLDivElement>(null);
   const accountButton = useRef<HTMLButtonElement>(null);
@@ -114,6 +139,30 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
     return () => media.removeEventListener('change', closeOnDesktop);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    let controller: AbortController | null = null;
+
+    const check = async () => {
+      controller?.abort();
+      controller = new AbortController();
+      try {
+        const result = await getSystemAvailability(controller.signal);
+        if (active) setSystemHealth(result.backendAlive && result.backendReady ? 'healthy' : 'attention');
+      } catch {
+        if (active && !controller.signal.aborted) setSystemHealth('unavailable');
+      }
+    };
+
+    check();
+    const interval = window.setInterval(check, 30000);
+    return () => {
+      active = false;
+      controller?.abort();
+      window.clearInterval(interval);
+    };
+  }, []);
+
   const changeNotifications = useCallback((open: boolean) => {
     setNotificationsOpen(open);
     if (open) setAccountOpen(false);
@@ -156,14 +205,16 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
 
   function renderNavigation(mobile = false) {
     return (
-      <nav aria-label={mobile ? 'Super Admin mobile navigation' : 'Super Admin navigation'} className="sl-navigation">
-        {destinations.map(({ label, Icon, path, id }) =>
+      <nav aria-label={mobile ? 'Workspace mobile navigation' : 'Workspace navigation'} className="sl-navigation">
+        {navigationGroups.map(group => <section className="sl-nav-group" key={group.label} aria-label={group.label}>
+          <p className={`sl-eyebrow sl-nav-group-label${mobile ? '' : ' sl-desktop-label'}`}>{group.label}</p>
+          {group.items.map(({ label, Icon, path }) =>
           path ? (
             <a
               key={label}
               href={path}
               className="sl-nav-item"
-              aria-current={pathname === path ? 'page' : undefined}
+              aria-current={pathname === path || (path === '/UsageWaste' && ['/Usage', '/Waste'].includes(pathname)) || (path === '/InventoryBatches' && pathname === '/ExpirationMonitoring') ? 'page' : undefined}
               aria-label={label}
               title={!mobile && railCollapsed ? label : undefined}
               onFocus={event => !mobile && railCollapsed && setFocusedNavigation({ label, top: event.currentTarget.getBoundingClientRect().top })}
@@ -178,24 +229,9 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
               <Icon size={20} aria-hidden="true" className="sl-nav-icon" />
               <span className={mobile ? 'sl-nav-label' : 'sl-nav-label sl-desktop-label'}>{label}</span>
             </a>
-          ) : (
-            <button
-              key={label}
-              type="button"
-              className="sl-nav-item"
-              aria-haspopup="dialog"
-              onClick={() => id && openArea(id)}
-              aria-label={label}
-              title={!mobile && railCollapsed ? label : undefined}
-              onFocus={event => !mobile && railCollapsed && setFocusedNavigation({ label, top: event.currentTarget.getBoundingClientRect().top })}
-              onBlur={() => setFocusedNavigation(null)}
-              onKeyDown={event => { if (event.key === 'Escape') setFocusedNavigation(null); }}
-            >
-              <Icon size={20} aria-hidden="true" className="sl-nav-icon" />
-              <span className={mobile ? 'sl-nav-label' : 'sl-nav-label sl-desktop-label'}>{label}</span>
-            </button>
-          )
-        )}
+          ) : null
+          )}
+        </section>)}
       </nav>
     );
   }
@@ -203,10 +239,8 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   if (loading || (!user && !failed)) {
     // Never render protected identity or dashboard data while the server verifies the session.
     return <div className="sl-app sl-session-pending">
-      <Brand />
-      <main className="sl-session-progress" role="status" aria-label="Checking your account">
+      <main className="sl-session-progress" role="status" aria-label="Loading workspace" aria-busy="true">
         <LoaderCircle className="sl-spin" size={18} aria-hidden="true" />
-        <span className="sl-supporting">Checking your account...</span>
       </main>
     </div>;
   }
@@ -245,7 +279,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   }
 
   // Presentation scope only. Role gate ensures proper workspace routing.
-  if (user.role !== 'Super Admin') {
+  if (!canOpenWorkspacePath(user.role, pathname)) {
     return (
       <div className="sl-app">
         <main className="sl-session-state">
@@ -254,19 +288,11 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
             <DataState
               kind="permission"
               title="This page is restricted"
-              description="This page is available to Super Admin accounts."
+              description="Your current account cannot access this workspace."
               action={
                 <button
                   className="sl-button sl-button-primary"
-                  onClick={() =>
-                    router.replace(
-                      user.role === 'Admin'
-                        ? '/pages/AdminDash'
-                        : user.role === 'Manager'
-                        ? '/pages/InManager'
-                        : '/pages/InStaff'
-                    )
-                  }
+                  onClick={() => router.replace(dashboardPaths[user.role] as Href)}
                 >
                   Go to your dashboard
                 </button>
@@ -279,7 +305,12 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   }
 
   return (
-    <div className="sl-app sl-shell" data-collapsed={railCollapsed}>
+    <div
+      ref={appRef}
+      className="sl-app sl-shell"
+      data-collapsed={railCollapsed}
+      onScroll={event => setShowBackToTop(event.currentTarget.scrollTop > 520)}
+    >
       <a className="sl-skip" href="#sl-main">
         Skip to main content
       </a>
@@ -288,13 +319,12 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
         <a href={dashboardPath} className="sl-brand" aria-label="ShelfLife AI home" onClick={event => {
           if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
           event.preventDefault();
-          if (pathname !== dashboardPath) router.push(dashboardPath);
+          if (pathname !== dashboardPath) router.push(dashboardPath as Href);
         }}>
           <Brand inverse />
         </a>
 
         <div className="sl-sidebar-section">
-          <p className="sl-eyebrow sl-desktop-label">Administration</p>
           {renderNavigation(false)}
         </div>
 
@@ -320,7 +350,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
       <dialog
         ref={drawer}
         className="sl-drawer"
-        aria-label="Super Admin navigation"
+        aria-label={`${user.role} navigation`}
         onClose={() => mobileButton.current?.focus()}
         onKeyDown={event => {
           if (event.key !== 'Tab') return;
@@ -342,12 +372,12 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
             <a href={dashboardPath} className="sl-brand" aria-label="ShelfLife AI home" onClick={event => {
               if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
               event.preventDefault(); drawer.current?.close();
-              if (pathname !== dashboardPath) router.push(dashboardPath);
+              if (pathname !== dashboardPath) router.push(dashboardPath as Href);
             }}>
               <Brand inverse />
             </a>
             <button
-              className="sl-button sl-icon-button sl-drawer-close"
+              className="sl-button sl-icon-button sl-drawer-close sl-close-button"
               onClick={() => drawer.current?.close()}
               aria-label="Close navigation"
             >
@@ -356,16 +386,25 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
           </div>
 
           <div className="sl-drawer-nav">
-            <p className="sl-eyebrow">Administration</p>
             {renderNavigation(true)}
           </div>
         </div>
       </dialog>
 
-      <Dialog open={confirmLogout} busy={logoutPending} showClose={false} title="Log out of ShelfLife AI?" onDismiss={() => setConfirmLogout(false)} returnFocus={logoutButton} actions={<>
-        <button className="sl-button" disabled={logoutPending} data-initial-focus onClick={() => setConfirmLogout(false)}>Stay logged in</button>
-        <button className="sl-button sl-button-logout" disabled={logoutPending} onClick={logout}>{logoutPending ? 'Logging out...' : 'Log out'}</button>
-      </>}><p className="sl-description">You’ll need to log in again to access your workspace.</p>
+      <Dialog
+        open={confirmLogout}
+        busy={logoutPending}
+        showClose={false}
+        className="sl-logout-dialog"
+        title={<><span className="sl-logout-icon" aria-hidden="true"><LogOut size={20} /></span><span>Log out of ShelfLife AI?</span></>}
+        onDismiss={() => setConfirmLogout(false)}
+        returnFocus={logoutButton}
+        actions={<>
+          <button className="sl-button sl-logout-stay" disabled={logoutPending} data-initial-focus onClick={() => setConfirmLogout(false)}>Stay logged in</button>
+          <button className="sl-button sl-button-logout" disabled={logoutPending} onClick={logout}>{logoutPending ? 'Logging out...' : 'Log out'}</button>
+        </>}
+      >
+        <p className="sl-description">You’ll need to log in again to access your workspace.</p>
         {logoutError && <p role="alert" className="sl-field-error">Unable to end your session. Check your connection and try again.</p>}
       </Dialog>
 
@@ -382,10 +421,58 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
               <Menu size={18} aria-hidden="true" />
             </button>
 
-
+            <div className="sl-global-search" role="search">
+              <Search size={17} aria-hidden="true" />
+              <input
+                value={searchQuery}
+                placeholder="Search pages and tools..."
+                aria-label="Search workspace pages and tools"
+                onFocus={() => setSearchOpen(true)}
+                onChange={event => { setSearchQuery(event.target.value); setSearchOpen(true); }}
+                onKeyDown={event => {
+                  if (event.key === 'Escape') {
+                    setSearchOpen(false);
+                    setSearchQuery('');
+                  } else if (event.key === 'Enter' && searchMatches[0]?.path) {
+                    event.preventDefault();
+                    router.push(searchMatches[0].path as Href);
+                    setSearchOpen(false);
+                    setSearchQuery('');
+                  }
+                }}
+              />
+              {searchOpen && searchQuery.trim() && (
+                <div className="sl-search-results" role="listbox" aria-label="Search results">
+                  {searchMatches.length ? searchMatches.map(item => item.path && (
+                    <button
+                      key={item.label}
+                      type="button"
+                      role="option"
+                      className="sl-search-result"
+                      onMouseDown={event => event.preventDefault()}
+                      onClick={() => {
+                        router.push(item.path as Href);
+                        setSearchOpen(false);
+                        setSearchQuery('');
+                      }}
+                    >
+                      <item.Icon size={16} aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </button>
+                  )) : <p className="sl-search-empty">No matching page, tool, or dashboard section</p>}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="sl-topbar-right">
+            <div className="sl-global-health" aria-label={`System status: ${systemHealth}`}>
+              <span className="sl-global-health-label">System status</span>
+              <span className="sl-global-health-value" data-state={systemHealth}>
+                <span className="sl-status-dot" aria-hidden="true" />
+                {systemHealth === 'checking' ? 'Checking' : systemHealth === 'healthy' ? 'Healthy' : systemHealth === 'attention' ? 'Needs attention' : 'Unavailable'}
+              </span>
+            </div>
             <Notifications open={notificationsOpen} onChange={changeNotifications} />
 
             <div
@@ -405,7 +492,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
                 aria-controls="sl-account-panel"
                 onClick={() => { accountHover.cancel(); setNotificationsOpen(false); setAccountOpen(value => !value); }}
               >
-                <span className="sl-avatar" aria-hidden="true">
+                <span className="sl-avatar sl-account-avatar" aria-hidden="true">
                   {user.name
                     .split(/\s+/)
                     .map(part => part[0])
@@ -448,6 +535,17 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
         <main id="sl-main" tabIndex={-1} className="sl-main">
           {children(user, openArea)}
         </main>
+
+        {showBackToTop && (
+          <button
+            className="sl-back-to-top"
+            type="button"
+            aria-label="Back to top"
+            onClick={() => appRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            <ArrowUp size={19} aria-hidden="true" />
+          </button>
+        )}
       </div>
     </div>
   );

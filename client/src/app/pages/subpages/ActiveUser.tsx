@@ -1,11 +1,3 @@
-import React from 'react';
-import SidebarLayout from '../../../components/sidebar';
-
-
-export default function ActiveUser(): React.ReactElement {
-    return (
-        <SidebarLayout>
-            <h1>Active User page</h1>
-        </SidebarLayout>
-    );
-}
+import { Redirect } from 'expo-router';
+import { useApplicationWorkspace } from '../../../components/application/ApplicationWorkspace';
+export default function LegacyAccounts() { const { user } = useApplicationWorkspace(); return <Redirect href={user.role === 'Super Admin' ? '/AdminAccounts' : '/UserManagement'} />; }

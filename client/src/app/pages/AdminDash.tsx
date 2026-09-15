@@ -1,11 +1,5 @@
-  // src/pages/SuperAdminDash.tsx
-    import React from 'react';
-    import ManagerBar from '../../components/Managerbar';
+import { Redirect } from 'expo-router';
 
-    export default function AdminDash(): React.ReactElement {
-    return (
-        <ManagerBar> 
-            <h1>Admin Dashboard</h1>
-        </ManagerBar>
-    );
-    }
+export default function LegacyAdminDashboard() {
+  return <Redirect href="/AdminDashboard" />;
+}

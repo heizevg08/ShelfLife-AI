@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { LogIn, Eye, EyeOff, LoaderCircle, TriangleAlert } from 'lucide-react';
 import { useRouter } from 'expo-router';
-import { AuthRequestError, login } from '../services/auth';
-import { clearSession } from '../services/session';
+import { Eye, EyeOff, LoaderCircle, LogIn, TriangleAlert } from 'lucide-react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Brand } from '../components/application/Brand';
 import { Dialog } from '../components/application/Dialog';
 import { PasswordRecovery } from '../components/application/PasswordRecovery';
+import { AuthRequestError, login } from '../services/auth';
+import { clearSession } from '../services/session';
 import '../styles/application.css';
 
 interface ValidationErrors { email?: string; password?: string; auth?: string }
@@ -63,9 +63,9 @@ export default function ShelfLifeLogin() {
       const user = await login(email.trim().toLowerCase(), password, rememberMe);
       switch (user.role) {
         case 'Super Admin': router.replace('/SuperAdminDashboard'); break;
-        case 'Admin': router.replace('/pages/AdminDash'); break;
-        case 'Inventory Staff': router.replace('/pages/InStaff'); break;
-        case 'Manager': router.replace('/pages/InManager'); break;
+        case 'Admin': router.replace('/AdminDashboard'); break;
+        case 'Inventory Staff': router.replace('/InventoryStaffDashboard'); break;
+        case 'Manager': router.replace('/ManagerDashboard'); break;
         default:
           clearSession();
           setErrors({ auth: 'Your account cannot access this application. Contact your administrator.' });
@@ -88,10 +88,10 @@ export default function ShelfLifeLogin() {
         <section className="sl-login-intro" aria-labelledby="sl-product-title">
           <header className="sl-login-brand"><a href="/ShelfLifeAILogin" aria-label="ShelfLife AI — return to clean login" className="sl-login-home"><Brand inverse login /></a></header>
           <p className="sl-eyebrow">For food-service teams</p>
-          <h2 id="sl-product-title">Ingredient inventory.<br /><span>Less food waste.</span></h2>
+          <h2 id="sl-product-title">Intelligent inventory.<br /><span>Less food waste.</span></h2>
           <div className="sl-login-intro-footer">
             <span className="sl-login-rule" aria-hidden="true" />
-            <p>AI-Assisted Ingredient Inventory &amp; Food Waste Reduction System</p>
+            <p>Intelligent Inventory, Expiry and Demand Forecasting System</p>
           </div>
         </section>
         <section className="sl-login-form-panel" aria-labelledby="sl-login-title">

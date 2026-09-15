@@ -1,4 +1,4 @@
-# ShelfLifeAI --- Master Agreed Project Summary
+# ShelfLife AI --- Master Agreed Project Summary
 
 > **Status:** FINAL AUTHORITATIVE SOURCE OF TRUTH — implementation baseline\
 > **Purpose:** This document consolidates the project decisions,
@@ -8,14 +8,71 @@
 > **Authority:** This file is the highest project reference. Explicit team decisions made after this version may amend it; the current repository architecture and established contracts govern implementation details where this file intentionally leaves them open. Older ShelfLifeAI documents are subordinate where they conflict with this Master.\
 > **Important:** Items explicitly marked **OPEN / PENDING** are not to be treated as finalized requirements until the group/professor approves them.
 
+## Latest Architectural Amendment — 2026-09-16 — PRE-VITE CHECKPOINT
+
+This amendment is the newest and authoritative frontend architecture decision.
+It explicitly supersedes every conflicting older Expo-specific architecture
+statement preserved elsewhere in this document.
+
+- The final frontend build/runtime is **Vite + React + TypeScript + React Router + PWA**.
+- React remains the frontend UI framework and TypeScript remains required.
+- React Router replaces Expo Router. The browser/PWA remains the product target.
+- Expo, Expo Router, React Native Web, Metro, and Expo-specific routing and
+  configuration are superseded development architecture and are scheduled for
+  removal only after Vite feature and visual parity is established.
+- The current approved Super Admin UI/UX must be preserved through migration.
+- The backend remains **Node.js + Express + TypeScript + MongoDB Atlas + Mongoose**.
+- Authentication, RBAC, and API contracts remain unchanged unless separately approved.
+- Unfinished Admin, Manager, and Inventory Staff UI work will continue directly
+  under Vite after migration.
+- No future instruction may interpret an older Expo-specific section as
+  overriding this amendment.
+
+### Verified pre-migration baseline
+
+- Root TypeScript: **PASS**
+- Client TypeScript: **PASS**
+- Server TypeScript: **PASS**
+- Server production build: **PASS**
+- Server tests: **31/31 PASS**
+- Client baseline tests: **2/2 PASS**
+- Expo static export: **PASS — 60 routes**
+- `git diff --check`: **PASS**
+- Source-of-Truth-derived authorization matrix: **84/84 PASS**
+- All four canonical roles authenticate successfully.
+
+The current Super Admin UI is the approved and frozen pre-migration visual
+baseline. This statement records approval of that baseline; it does not claim
+pixel parity with any external reference.
+
+### Open migration-resolution items
+
+- The approved Super Admin visual sidebar still presents legacy destinations
+  that do not fully match the canonical authorization/navigation policy. Do not
+  change the current sidebar or grant Super Admin additional permissions merely
+  because a legacy visible link exists. The final Vite navigation must reconcile
+  presentation with approved capabilities without silently expanding RBAC.
+- The development Admin account has canonical role `Admin` but currently displays
+  the name `Super Admin`. This is a non-blocking development-data cleanup
+  observation; no Atlas record is changed by this checkpoint.
+
 ------------------------------------------------------------------------
 
 ## 1. Official Project Identity
 
 ### Official project name
 
-**ShelfLifeAI --- AI-Assisted Ingredient Inventory & Food Waste
-Reduction System**
+**ShelfLife AI: Intelligent Inventory, Expiry and Demand Forecasting System**
+
+### Naming and terminology
+
+- **ShelfLife AI** is the official visible/product name for user-facing UI,
+  documentation titles, presentation material, browser metadata, and branding.
+- **Intelligent Inventory, Expiry and Demand Forecasting System** is the
+  official descriptive system title.
+- **ShelfLifeAI** may remain in existing technical/internal identifiers,
+  filenames, namespaces, routes, environment names, and code contracts where
+  renaming is unnecessary or would create implementation churn.
 
 ### System domain
 
@@ -45,14 +102,33 @@ ingredients, which can lead to:
 
 ### Core system definition
 
-> ShelfLifeAI is a web-based inventory and decision-support system that
-> manages perishable ingredient inventory, tracks ingredient usage and
-> expiration, uses historical usage data to forecast whether ingredients
-> are likely to be used before expiration, and provides alerts and
-> recommended actions to help reduce food waste and financial losses.
+> ShelfLife AI is a web-based intelligent inventory and decision-support
+> system that manages perishable ingredients and inventory batches, monitors
+> expiry, analyzes historical sales/usage with usage as the primary forecasting
+> data, and forecasts future demand/consumption using current inventory and
+> expiry context to identify overstock, shortage/low-stock, and expiry risks
+> and recommend actions for human decision-makers, with reduced avoidable
+> food waste and financial loss as intended outcomes of better inventory decisions.
 
 This is the preferred system-definition sentence for project
 documentation.
+
+### Authoritative conceptual flow
+
+**Historical Sales / Usage + Current Inventory + Expiry Data → Demand
+Forecasting → Overstock / Shortage / Expiry Risk → Recommendations → Better
+Inventory Decisions → Reduced Avoidable Food Waste**
+
+Expiration status remains deterministic; AI/ML forecasts future
+consumption/demand rather than expiration itself. Historical usage remains
+primary, waste records provide supporting data, and inventory batches provide
+current stock and expiry context. Recommendations remain human-in-the-loop,
+not autonomous inventory actions. Baseline-first forecasting remains required;
+the exact final ML algorithm remains **OPEN**.
+
+Reduced avoidable food waste is a measurable intended outcome, not the
+defining system title. This preserves the rationale for **SDG 12 — Responsible
+Consumption and Production**, alongside reducing financial loss.
 
 ------------------------------------------------------------------------
 
@@ -2715,12 +2791,15 @@ Manager / Authorized User
 
 # 64. The One-Sentence Project Explanation
 
-> **ShelfLifeAI is a MERN-based web/PWA decision-support system for
-> food-service establishments that manages perishable ingredient
-> inventory and batches, records usage and waste, monitors expiration
-> and FEFO priority, analyzes historical consumption, and uses
-> forecasting to identify inventory/expiration risks and recommend
-> actions that can reduce food waste and financial loss.**
+> **ShelfLife AI: Intelligent Inventory, Expiry and Demand Forecasting System
+> is a MERN-based web/PWA decision-support system for food-service establishments
+> that manages perishable ingredients and inventory batches, records usage and
+> waste, monitors expiration and FEFO priority deterministically, analyzes
+> historical sales/usage with usage as the primary forecasting data, forecasts
+> demand/consumption using current inventory and expiry context, and identifies
+> overstock, shortage/low-stock, and expiry risks to recommend human-reviewed
+> actions for better inventory decisions that can reduce avoidable food waste
+> and financial loss.**
 
 ------------------------------------------------------------------------
 
@@ -2778,9 +2857,9 @@ CONSISTENCY ARCHITECTURE
 
 #   66. FINAL ARCHITECTURE
 ┌─────────────────────────────────────┐
-│             ShelfLifeAI             │
-│ AI-Assisted Ingredient Inventory &  │
-│ Food Waste Reduction System         │
+│            ShelfLife AI             │
+│ Intelligent Inventory, Expiry and   │
+│ Demand Forecasting System           │
 └─────────────────────────────────────┘
                  │
        ┌─────────┴─────────┐

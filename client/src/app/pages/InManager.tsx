@@ -1,11 +1,5 @@
-  // src/pages/SuperAdminDash.tsx
-    import React from 'react';
-    import ManagerLayout from '../../components/Managerbar';
+import { Redirect } from 'expo-router';
 
-    export default function InManagerDash(): React.ReactElement {
-    return (
-        <ManagerLayout> 
-            <h1>Manager Dashboard</h1>
-        </ManagerLayout>
-    );
-    }
+export default function LegacyManagerDashboard() {
+  return <Redirect href="/ManagerDashboard" />;
+}

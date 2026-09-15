@@ -1,120 +1,181 @@
+import { Link } from 'expo-router';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Activity, ChevronRight, Check, CircleHelp, RefreshCw } from 'lucide-react';
+import { dashboardSummary, listAccounts, type Account, type DashboardSummary } from '../../services/administration';
 import type { SessionUser } from '../../services/auth';
-import { getSystemAvailability, type SystemAvailability } from '../../services/system';
-import { Card, DashboardGrid, PageHeader, DataState, Status, SummaryItems, UnavailableTable } from '../application/primitives';
-import { administrationAreas, type AdministrationAreaId } from '../application/administration';
+import { AuditTable } from '../application/AuditTable';
+import { Card, PageHeader, Status, SummaryCards } from '../application/primitives';
 
-export default function SuperAdminDashboard({ user, onOpenArea }: { user: SessionUser; onOpenArea: (id: AdministrationAreaId) => void }) {
+const AUTO_REFRESH_MS = 15000;
+
+export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   const [refresh, setRefresh] = useState(0);
-  const [availability, setAvailability] = useState<SystemAvailability | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [summaryError, setSummaryError] = useState(false);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accountsError, setAccountsError] = useState(false);
   const [greeting, setGreeting] = useState('Welcome');
+  const [clock, setClock] = useState(() => new Date());
 
-  // Use local time only after hydration; exports must not depend on build time.
   useEffect(() => {
-    const hour = new Date().getHours();
-    setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening');
+    const updateClock = () => {
+      const now = new Date();
+      setClock(now);
+      const hour = now.getHours();
+      setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening');
+    };
+    updateClock();
+    const interval = window.setInterval(updateClock, 30000);
+    return () => window.clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    // Cancel stale checks without changing the existing API or timeout boundary.
-    const controller = new AbortController();
-    let active = true;
-    setLoading(true);
-    setError(false);
-    setAvailability(null);
-    const timeout = setTimeout(() => controller.abort(), 10000);
-    getSystemAvailability(controller.signal)
-      .then(result => { if (active) setAvailability(result); })
-      .catch(() => { if (active) setError(true); })
-      .finally(() => { clearTimeout(timeout); if (active) setLoading(false); });
-    return () => {
-      active = false;
-      clearTimeout(timeout);
-      controller.abort();
-    };
+    const abort = new AbortController();
+    setSummaryError(false);
+    setAccountsError(false);
+
+    Promise.allSettled([
+      dashboardSummary(abort.signal),
+      listAccounts(1, 'createdAt', 'desc', abort.signal),
+    ]).then(([summaryResult, accountsResult]) => {
+      if (abort.signal.aborted) return;
+      if (summaryResult.status === 'fulfilled') setSummary(summaryResult.value);
+      else setSummaryError(true);
+
+      if (accountsResult.status === 'fulfilled') setAccounts(accountsResult.value.items.slice(0, 4));
+      else {
+        setAccounts([]);
+        setAccountsError(true);
+      }
+    });
+
+    return () => abort.abort();
   }, [refresh]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => setRefresh(value => value + 1), AUTO_REFRESH_MS);
+    return () => window.clearInterval(interval);
+  }, []);
+
   const displayName = user.name.trim();
-  const ready = availability?.backendAlive && availability.backendReady;
-  const status = loading ? 'Checking' : error ? 'Status unavailable' : ready ? 'Available' : 'Needs attention';
-  const checks = [
-    { label: 'Application connection', value: availability?.backendAlive, good: 'Responding', bad: 'Unavailable' },
-    { label: 'Ready to use', value: availability?.backendReady, good: 'Ready', bad: 'Not ready' },
-  ];
+  const dateTimeLabel = new Intl.DateTimeFormat(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  }).format(clock);
 
   return (
     <>
-      <PageHeader eyebrow="Dashboard" title={displayName ? `${greeting}, ${displayName}.` : `${greeting}.`} description="System status and administration tools, at a glance." />
+      <div className="sl-dashboard-heading sl-dashboard-heading-v8">
+        <PageHeader
+          eyebrow="Dashboard"
+          title={displayName ? `${greeting}, ${displayName}.` : `${greeting}.`}
+        />
+        <time className="sl-dashboard-datetime" dateTime={clock.toISOString()}>{dateTimeLabel}</time>
+      </div>
 
-      <DashboardGrid>
-        <section className="sl-health-panel" aria-labelledby="sl-health-title" data-state={loading || error ? 'unknown' : ready ? 'available' : 'attention'}>
-          <div className="sl-health-panel-header">
-            <div className="sl-heading-with-icon">
-              <Activity size={20} aria-hidden="true" />
-              <h2 id="sl-health-title" className="sl-section-title">Application availability</h2>
-            </div>
-            <button className="sl-button sl-refresh-btn" disabled={loading} aria-label="Refresh system status" onClick={() => setRefresh(value => value + 1)}>
-              <RefreshCw size={16} aria-hidden="true" className={loading ? 'sl-spin' : undefined} /><span className="sl-refresh-label">Refresh</span>
-            </button>
-          </div>
-          <div className="sl-availability-summary" role="status" aria-busy={loading}>
-            <span className="sl-availability-symbol" aria-hidden="true">{loading ? <RefreshCw className="sl-spin" /> : error ? <CircleHelp /> : ready ? <Check /> : <Activity />}</span>
-            <div>
-              <p className="sl-availability-value">{status}</p>
-              <p className="sl-supporting">{loading ? 'Checking the application…' : error ? 'A current status could not be confirmed.' : ready ? 'ShelfLife AI is responding and ready to use.' : 'One or more application checks need attention.'}</p>
-            </div>
-          </div>
-          {error && <DataState kind="error" title="Couldn’t check system status" description="Check your connection and refresh to try again." />}
-          <dl className="sl-service-checks">
-            {checks.map(check => (
-              <div key={check.label}>
-                <dt>{check.label}</dt>
-                <dd><Status tone={loading || error ? 'neutral' : check.value ? 'success' : 'attention'}>
-                  {loading ? 'Checking' : error ? 'Unknown' : check.value ? check.good : check.bad}
-                </Status></dd>
+      <div className="sl-admin-view sl-superadmin-dashboard">
+        <SummaryCards items={[
+          { label: 'Total users', value: summary?.totalUsers.toLocaleString() ?? (summaryError ? 'Unavailable' : 'Loading…'), detail: 'Real account records', tone: 'brand', trend: 'line' },
+          { label: 'Active accounts', value: summary?.activeUsers.toLocaleString() ?? (summaryError ? 'Unavailable' : 'Loading…'), detail: 'Real account records', tone: 'success', trend: 'accuracy' },
+          { label: 'Open alerts', value: <span className="sl-placeholder-value">—</span>, detail: 'Awaiting alert service', tone: 'attention', trend: 'bars' },
+          { label: 'Pending requests', value: <span className="sl-placeholder-value">—</span>, detail: 'Awaiting request service', tone: 'critical', trend: 'segments' },
+        ]} />
+
+        <div className="sl-superadmin-primary-grid">
+          <Card
+            id="sl-dashboard-users"
+            title="User Accounts"
+            action={<Link href="/UserManagement" className="sl-text-link">Manage users <ArrowRight size={15} aria-hidden="true" /></Link>}
+          >
+            {accountsError ? (
+              <p className="sl-state-inline">Account records could not be loaded.</p>
+            ) : (
+              <div className="sl-table-scroll" role="region" aria-label="Recent user accounts" tabIndex={0}>
+                <table className="sl-data-table sl-compact-table">
+                  <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Activity</th></tr></thead>
+                  <tbody>
+                    {!accounts.length && <tr><td colSpan={4} className="sl-empty-table-message">No subordinate accounts yet.</td></tr>}
+                    {accounts.map(account => <tr key={account.id}>
+                      <td>{account.name}</td>
+                      <td>{account.email}</td>
+                      <td>{account.role}</td>
+                      <td><Status tone={account.isActive ? 'success' : 'neutral'}>{account.isActive ? 'Active' : 'Last activity unavailable'}</Status></td>
+                    </tr>)}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </dl>
-          {/* This is the time of this check, never an uptime or incident-history claim. */}
-          <p className="sl-check-timestamp sl-supporting">{availability ? 'Last checked at ' + availability.checkedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : loading ? 'Waiting for current results…' : 'No current results available'}</p>
+            )}
+          </Card>
+
+
+          <Card id="sl-dashboard-requests" title="Change Request Overview">
+            {/* TODO: Replace this unavailable-state chart with backend-derived request aggregates. */}
+            <div className="sl-request-preview">
+              <div className="sl-request-donut" role="img" aria-label="Change request distribution awaiting request service">
+                <svg viewBox="0 0 120 120" aria-hidden="true">
+                  <circle className="sl-request-donut-track" cx="60" cy="60" r="44" />
+                  <circle className="sl-request-donut-segment sl-request-donut-success" cx="60" cy="60" r="44" pathLength="100" />
+                  <circle className="sl-request-donut-segment sl-request-donut-attention" cx="60" cy="60" r="44" pathLength="100" />
+                  <circle className="sl-request-donut-segment sl-request-donut-critical" cx="60" cy="60" r="44" pathLength="100" />
+                </svg>
+                <strong aria-hidden="true">—</strong>
+              </div>
+              <div className="sl-preview-legend">
+                <span><i className="sl-dot sl-dot-success" /> Approved <strong>—</strong></span>
+                <span><i className="sl-dot sl-dot-attention" /> Pending <strong>—</strong></span>
+                <span><i className="sl-dot sl-dot-critical" /> Rejected <strong>—</strong></span>
+              </div>
+              <p className="sl-supporting">Awaiting request service</p>
+            </div>
+          </Card>
+        </div>
+
+        <Card
+          id="sl-recent-audit"
+          title="Recent Audit Logs"
+          action={<Link href="/AdministrativeAudit" className="sl-text-link">View all logs <ArrowRight size={15} aria-hidden="true" /></Link>}
+        >
+          <AuditTable recent />
+        </Card>
+
+        <section aria-labelledby="sl-analytics-preview-title" className="sl-admin-section">
+          <div className="sl-section-heading">
+            <div>
+              <p className="sl-eyebrow">Analytics</p>
+              <h2 id="sl-analytics-preview-title" className="sl-section-title">Waste and Forecast Analytics</h2>
+            </div>
+          </div>
+          <div className="sl-analytics-preview-grid">
+            <article className="sl-analytics-preview-card" data-tone="attention">
+              <h3>Weekly Waste Cost</h3>
+              <div className="sl-analytics-unavailable">
+                <strong>Unavailable</strong>
+                <span className="sl-supporting">Awaiting waste analytics service</span>
+              </div>
+            </article>
+            <article className="sl-analytics-preview-card" data-tone="success">
+              <div className="sl-analytics-card-heading"><h3>Forecast Accuracy</h3></div>
+              <div className="sl-analytics-unavailable">
+                <strong>Unavailable</strong>
+                <span className="sl-supporting">Awaiting forecast analytics service</span>
+              </div>
+            </article>
+            <article className="sl-analytics-preview-card" data-tone="critical">
+              <div className="sl-analytics-card-heading"><h3>30-Day Waste Value</h3></div>
+              <div className="sl-analytics-unavailable">
+                <strong>Unavailable</strong>
+                <span className="sl-supporting">Awaiting waste analytics service</span>
+              </div>
+            </article>
+          </div>
         </section>
-
-        <Card id="sl-administration-tools" title="Administration tools">
-          <p className="sl-tools-note sl-supporting">Open an administration area.</p>
-          <ul className="sl-tools-list">
-            {administrationAreas.map(({ id, label, Icon, summary }) => <li key={id}>
-              <button onClick={() => onOpenArea(id)} className="sl-tool-button">
-                <Icon size={20} aria-hidden="true" />
-                <span><span className="sl-card-title">{label}</span><span className="sl-supporting">{summary}</span></span>
-                <ChevronRight size={16} aria-hidden="true" />
-              </button>
-            </li>)}
-          </ul>
-        </Card>
-      </DashboardGrid>
-
-      {/* Missing services never imply zero accounts, no incidents, or a healthy inventory. */}
-      <DashboardGrid>
-        <Card id="sl-admin-summary" title="Admin-account overview">
-          <SummaryItems items={[{ label: 'All Admin accounts' }, { label: 'Active' }, { label: 'Disabled' }]} />
-          <div className="sl-related-actions"><button className="sl-button" onClick={() => onOpenArea('accounts')}>View account directory</button></div>
-        </Card>
-        <Card id="sl-security-summary" title="Security overview">
-          <SummaryItems items={[{ label: 'Security events' }, { label: 'Active-session monitoring' }]} />
-          <div className="sl-related-actions"><button className="sl-button" onClick={() => onOpenArea('security')}>View Security & Activity</button></div>
-        </Card>
-      </DashboardGrid>
-      <Card id="sl-operational-exceptions" title="Operational exceptions">
-        <SummaryItems items={[{ label: 'Critical inventory alerts' }, { label: 'Critical / expired batches' }, { label: 'High expiration risk' }]} />
-        <p className="sl-section-note sl-supporting">Operational summaries are unavailable. This area is read-only.</p>
-      </Card>
-      <Card id="sl-recent-audit" title="Recent administrative activity">
-        <UnavailableTable label="Recent administrative activity" columns={['Timestamp', 'Actor', 'Action', 'Resource']}
-          description="Protected audit history will appear here when connected. No recent activity can currently be confirmed." />
-      </Card>
+      </div>
     </>
   );
 }

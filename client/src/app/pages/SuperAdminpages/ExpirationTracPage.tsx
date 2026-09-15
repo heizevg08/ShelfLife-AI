@@ -1,12 +1,3 @@
-import React from 'react';
-import SidebarLayout from '../../../components/sidebar';
-
-
-export default function ExpirationTracking(): React.ReactElement {
-    return (
-        <SidebarLayout>
-                <h1>Expiration Tracking page</h1>
-        </SidebarLayout>
-        
-    );
-}
+import { Redirect } from 'expo-router';
+// Retain bookmarked URLs without rendering the inherited prototype screen.
+export default function LegacyRoute() { return <Redirect href="/ExpirationMonitoring" />; }

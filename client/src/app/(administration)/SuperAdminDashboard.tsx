@@ -2,6 +2,6 @@ import { useApplicationWorkspace } from '../../components/application/Applicatio
 import Dashboard from '../../components/dashboard/SuperAdminDashboard';
 
 export default function SuperAdminDashboard() {
-  const { user, openArea } = useApplicationWorkspace();
-  return <Dashboard user={user} onOpenArea={openArea} />;
+  const { user } = useApplicationWorkspace();
+  return <Dashboard user={user} />;
 }

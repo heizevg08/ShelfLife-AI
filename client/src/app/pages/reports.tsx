@@ -1,12 +1,3 @@
-
-import React from 'react';
-import SidebarLayout from '../../components/sidebar';
-
-export default function Reports(): React.ReactElement {
-    return (
-        <SidebarLayout>
-                <h1>Reports page</h1>
-        </SidebarLayout>
-        
-    );
-}
+import { Redirect } from 'expo-router';
+// Retain bookmarked URLs without rendering the inherited prototype screen.
+export default function LegacyRoute() { return <Redirect href="/Reports" />; }

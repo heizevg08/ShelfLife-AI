@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
 import { CircleDashed, Inbox, LoaderCircle, LockKeyhole, TriangleAlert } from 'lucide-react';
+import type { ReactNode } from 'react';
 
-export function PageHeader({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
+export function PageHeader({ eyebrow, title, description }: { eyebrow: string; title: string; description?: string }) {
   return <header className="sl-page-header"><p className="sl-eyebrow">{eyebrow}</p>
-    <h1 className="sl-page-title">{title}</h1><p className="sl-description">{description}</p></header>;
+    <h1 className="sl-page-title">{title}</h1>{description && <p className="sl-description">{description}</p>}</header>;
 }
 
 // Role dashboards share geometry, not permissions or data.
@@ -34,21 +34,59 @@ export function SummaryItems({ items }: { items: { label: string; value?: string
   </div>)}</dl>;
 }
 
-export function UnavailableTable({ label, columns, description }: { label: string; columns: string[]; description: string }) {
-  // Supported columns remain visible; a missing service never implies zero records.
-  return <div className="sl-table-scroll" role="region" aria-label={label} tabIndex={0}>
-    <table className="sl-data-table"><caption className="sl-supporting">{description}</caption>
+export function SummaryCards({ items }: { items: { label: string; value?: ReactNode; detail?: string; tone?: 'neutral' | 'success' | 'attention' | 'critical' | 'brand'; trend?: 'line' | 'bars' | 'segments' | 'accuracy' }[] }) {
+  // Unknown metrics are labeled explicitly, never represented as measured zeroes.
+  return <dl className="sl-overview-cards">{items.map(({ label, value, detail, tone = 'neutral', trend = 'line' }) => <div key={label} className="sl-overview-card" data-tone={tone}>
+    <dt className="sl-supporting">{label}</dt>
+    <dd className="sl-summary-value">{value ?? 'Unavailable'}</dd>
+    <div className={`sl-kpi-trend sl-kpi-trend-${trend}`} aria-hidden="true">{trend === 'bars' ? <>{[1,2,3,4,5,6,7].map(i => <i key={i} />)}</> : trend === 'segments' ? <>{[1,2,3,4].map(i => <i key={i} />)}</> : <svg viewBox="0 0 120 28" preserveAspectRatio="none"><path d={trend === 'accuracy' ? 'M2 22 C22 19, 32 9, 49 13 S76 5, 118 7' : 'M2 22 C22 24, 31 11, 51 14 S78 12, 118 4'} /></svg>}</div>
+    {detail && <span className="sl-overview-detail">{detail}</span>}
+  </div>)}</dl>;
+}
+
+export function PlaceholderSummaryCards({ items }: { items: { label: string; tone?: 'neutral' | 'success' | 'attention' | 'critical' | 'brand' }[] }) {
+  // TODO: Replace these checkpoint previews with API-driven values when each
+  // corresponding backend service is implemented.
+  return <SummaryCards items={items.map(({ label, tone = 'neutral' }) => ({
+    label,
+    value: <><span className="sl-placeholder-value" aria-hidden="true">—</span><span className="sl-sr-only">Data unavailable</span></>,
+    detail: 'Preview · awaiting live data',
+    tone,
+  }))} />;
+}
+
+export function PlaceholderTable({ label, columns, description, rows = 4 }: { label: string; columns: string[]; description: string; rows?: number }) {
+  // TODO: Connect this section to its backend service and replace these
+  // presentation-only rows with real API-driven records.
+  return <div className="sl-table-scroll" role="region" aria-label={`${label} preview`} tabIndex={0}>
+    <table className="sl-data-table sl-placeholder-table">
       <thead><tr>{columns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
-      <tbody><tr><td colSpan={columns.length}><DataState title="Records unavailable" description="This information is not connected yet. No records or totals can be confirmed." /></td></tr></tbody>
+      <tbody>
+        <tr className="sl-placeholder-state-row"><td colSpan={columns.length} className="sl-empty-cell">
+          <DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} />
+        </td></tr>
+
+      </tbody>
     </table>
   </div>;
 }
 
-export function Card({ title, children, id }: { title: string; children: ReactNode; id: string }) {
+export function UnavailableTable({ label, columns, description, stateTitle = 'Records unavailable', stateDescription = 'This information is not connected yet. No records or totals can be confirmed.' }: { label: string; columns: string[]; description: string; stateTitle?: string; stateDescription?: string }) {
+  // Supported columns remain visible; a missing service never implies zero records.
+  return <div className="sl-table-scroll" role="region" aria-label={label} tabIndex={0}>
+    <table className="sl-data-table"><caption className="sl-supporting">{description}</caption>
+      <thead><tr>{columns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
+      <tbody><tr><td colSpan={columns.length}><DataState title={stateTitle} description={stateDescription} /></td></tr></tbody>
+    </table>
+  </div>;
+}
+
+export function Card({ title, children, id, action }: { title: string; children: ReactNode; id: string; action?: ReactNode }) {
   return (
     <section className="sl-card" aria-labelledby={id}>
       <div className="sl-card-header">
         <h2 className="sl-section-title" id={id}>{title}</h2>
+        {action}
       </div>
       <div className="sl-card-body">{children}</div>
     </section>

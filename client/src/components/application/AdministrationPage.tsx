@@ -1,54 +1,69 @@
+import { AccountsTable } from './AccountsTable';
 import { administrationAreas, type AdministrationAreaId } from './administration';
-import { useApplicationWorkspace } from './ApplicationWorkspace';
-import { Card, DashboardGrid, DataState, PageHeader, SummaryItems, UnavailableTable } from './primitives';
+import { AuditTable } from './AuditTable';
+import { Card, DataState, PageHeader, Status, SummaryCards } from './primitives';
 
 export function AdministrationPage({ areaId }: { areaId: AdministrationAreaId }) {
   const area = administrationAreas.find(item => item.id === areaId)!;
-  const { user, openArea } = useApplicationWorkspace();
+
+  if (areaId === 'accounts') {
+    return <>
+      <PageHeader eyebrow="Administration" title={area.label} description="Manage Admin, Manager, and Inventory Staff accounts." />
+      <div className="sl-admin-view">
+        <SummaryCards items={[
+          { label: 'Account directory', value: 'Connected', detail: 'MongoDB account records', tone: 'success' },
+          { label: 'Managed roles', value: '3', detail: 'Admin · Manager · Inventory Staff', tone: 'brand' },
+          { label: 'Lifecycle', value: 'Available', detail: 'Create · update · deactivate · reactivate', tone: 'success' },
+          { label: 'Data updates', value: 'Automatic', detail: 'Directory refreshes in the background', tone: 'brand' },
+        ]} />
+        <Card id="sl-account-directory" title="Account directory"><AccountsTable /></Card>
+      </div>
+    </>;
+  }
+
+  if (areaId === 'security') {
+    return <>
+      <PageHeader eyebrow="Security & Activity" title={area.label} description="Read-only records of administrative account changes." />
+      <div className="sl-admin-view">
+        <SummaryCards items={[
+          { label: 'Administrative audit', value: 'Connected', detail: 'Successful account changes', tone: 'success' },
+          { label: 'Sign-in activity', value: '—', detail: 'Awaiting authentication-event service', tone: 'brand' },
+          { label: 'Session activity', value: '—', detail: 'Awaiting session-event service', tone: 'attention' },
+          { label: 'Security alerts', value: '—', detail: 'Awaiting monitoring service', tone: 'critical' },
+        ]} />
+        <div className="sl-module-columns">
+          <Card id="sl-audit-records" title="Administrative audit records"><AuditTable /></Card>
+          <Card id="security-scope" title="Security coverage">
+            <dl className="sl-guidance-list">
+              <div><dt>Account changes</dt><dd>Successful create, update, deactivate, and reactivate actions are recorded automatically.</dd></div>
+              <div><dt>Authentication activity</dt><dd><Status>Not connected</Status></dd><dd>Sign-in and persistent-session history will appear when its event service is connected.</dd></div>
+            </dl>
+          </Card>
+        </div>
+      </div>
+    </>;
+  }
+
   return <>
-    <PageHeader eyebrow="Administration" title={area.label} description={area.summary} />
-    {areaId === 'accounts' ? <>
-      <Card id="sl-account-totals" title="Administrator account overview">
-        <SummaryItems items={[{ label: 'All Admin accounts' }, { label: 'Active Admin accounts' }, { label: 'Disabled Admin accounts' }]} />
+    <PageHeader eyebrow="Administration" title={area.label} description="System-wide configuration." />
+    <div className="sl-admin-view">
+      {/* TODO: Replace these setup-state summaries with configuration API values when the backend contract exists. */}
+      <SummaryCards items={[
+        { label: 'Configuration groups', value: '—', detail: 'Awaiting configuration service', tone: 'brand' },
+        { label: 'Active policies', value: '—', detail: 'Awaiting configuration service', tone: 'success' },
+        { label: 'Pending review', value: '—', detail: 'Awaiting configuration service', tone: 'attention' },
+        { label: 'Policy alerts', value: '—', detail: 'Awaiting configuration service', tone: 'critical' },
+      ]} />
+      <section className="sl-settings-grid" aria-label="System configuration areas">
+        {[
+          ['Session policy', 'Authentication and persistent-session policy controls.'],
+          ['Notification delivery', 'Notification-channel and delivery configuration.'],
+          ['Inventory rules', 'System-wide inventory and expiry rule configuration.'],
+        ].map(([title, description]) => <article className="sl-settings-tile" key={title}><Status>Setup required</Status><h2 className="sl-card-title">{title}</h2><p className="sl-supporting">{description}</p></article>)}
+      </section>
+      <Card id="sl-settings-scope" title="Configuration workspace">
+        <DataState kind="unavailable" title="Configuration service not connected" description="Permission-controlled settings will appear here when the backend configuration service is available." />
       </Card>
-      <Card id="sl-account-directory" title="Admin-account directory">
-        <UnavailableTable label="Admin-account directory" columns={['Name', 'Email', 'Role', 'Account status']}
-          description="Account status shows whether an account is enabled, not whether someone is online." />
-      </Card>
-      <Card id="sl-account-controls" title="Account administration">
-        <DataState title="Account management unavailable" description="Admin accounts cannot be created or changed here yet." />
-      </Card>
-    </> : areaId === 'security' ? <>
-      <DashboardGrid>
-        <Card id="sl-current-account" title="Your authenticated account">
-          <SummaryItems items={[{ label: 'Name', value: user.name }, { label: 'Email', value: user.email }, { label: 'Account status', value: user.isActive ? 'Active' : 'Inactive' }]} />
-          <p className="sl-section-note sl-supporting">These details describe your account only.</p>
-        </Card>
-        <Card id="sl-security-monitoring" title="Security monitoring">
-          <SummaryItems items={[{ label: 'Security events' }, { label: 'Active-session monitoring' }]} />
-          <p className="sl-section-note sl-supporting">Security history is unavailable; this does not confirm an absence of incidents.</p>
-        </Card>
-      </DashboardGrid>
-      <Card id="sl-audit-records" title="Protected audit records">
-        <UnavailableTable label="Protected audit records" columns={['Timestamp', 'Actor', 'Action', 'Resource type', 'Resource ID']}
-          description="System-generated records of administrative actions. Audit records cannot be edited here." />
-      </Card>
-    </> : <>
-      <Card id="sl-settings-scope" title="System-wide configuration">
-        <UnavailableTable label="System configuration" columns={['Setting', 'Current value']}
-          description="System-wide settings for ShelfLife AI." />
-      </Card>
-      <DashboardGrid>
-        <Card id="sl-settings-changes" title="Configuration changes">
-          <DataState title="Editing unavailable" description="System settings cannot be changed here yet." />
-        </Card>
-        <Card id="sl-settings-related" title="Related administration">
-          <div className="sl-related-actions">
-            <button className="sl-button" onClick={() => openArea('accounts')}>Open Admin Accounts</button>
-            <button className="sl-button" onClick={() => openArea('security')}>Open Security & Activity</button>
-          </div>
-        </Card>
-      </DashboardGrid>
-    </>}
+    </div>
   </>;
 }

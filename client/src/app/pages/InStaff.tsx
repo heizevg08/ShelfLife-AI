@@ -1,11 +1,5 @@
-  // src/pages/SuperAdminDash.tsx
-    import React from 'react';
-    import StaffBar from '../../components/staffbar';
+import { Redirect } from 'expo-router';
 
-    export default function InStaffDash(): React.ReactElement {
-    return (
-        <StaffBar> 
-            <h1>Inventory staff Dashboard</h1>
-        </StaffBar>
-    );
-    }
+export default function LegacyInventoryStaffDashboard() {
+  return <Redirect href="/InventoryStaffDashboard" />;
+}
