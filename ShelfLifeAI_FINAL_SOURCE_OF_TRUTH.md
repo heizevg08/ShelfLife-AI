@@ -70,7 +70,7 @@ pixel parity with any external reference.
   documentation titles, presentation material, browser metadata, and branding.
 - **Intelligent Inventory, Expiry and Demand Forecasting System** is the
   official descriptive system title.
-- **ShelfLifeAI** may remain in existing technical/internal identifiers,
+- **ShelfLife AI** may remain in existing technical/internal identifiers,
   filenames, namespaces, routes, environment names, and code contracts where
   renaming is unnecessary or would create implementation churn.
 
@@ -80,7 +80,7 @@ Food-service inventory and perishable ingredient management.
 
 ### Target users / establishments
 
-ShelfLifeAI is intended for:
+ShelfLife AI is intended for:
 
 -   Small-to-medium restaurants
 -   Food-preparation cafés

@@ -111,8 +111,13 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   }, []);
 
   useEffect(() => {
-    // Admin navigation is intentionally expanded by default so the canonical labels remain visible.
-    if (user?.role === 'Admin') setCollapsed(false);
+    // Administration workspaces enter in the same collapsed rail state after login.
+    // The rail can still expand temporarily on hover or persistently from the toggle button.
+    if (user?.role === 'Admin' || user?.role === 'Super Admin') {
+      sidebarHover.cancel();
+      setHoverExpanded(false);
+      setCollapsed(true);
+    }
   }, [user?.role]);
 
   useEffect(() => {
@@ -135,7 +140,6 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   }, [accountOpen, confirmLogout]);
 
   useEffect(() => {
-    // Release the modal drawer when crossing the CSS desktop breakpoint.
     const media = window.matchMedia('(min-width: 769px)');
     const closeOnDesktop = () => {
       if (media.matches) drawer.current?.close();

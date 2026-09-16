@@ -1,13 +1,15 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowRight, ListChecks } from 'lucide-react';
+import { ArrowRight, ListChecks, TriangleAlert } from 'lucide-react';
 import { Link } from 'expo-router';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
 import { Card, PageHeader, PlaceholderSummaryCards, PlaceholderTable, Status, SummaryCards } from '../application/primitives';
 import { ForecastFlow, WorkflowLink, WorkspaceLink } from '../application/ModulePage';
 import { AccountsTable } from '../application/AccountsTable';
 import { accountSummary } from '../../services/administration';
+import { listIngredients } from '../../services/ingredients';
 import { AuditTable } from '../application/AuditTable';
 import { sessionDisplayName } from '../../services/auth';
+import { WasteForecastAnalytics } from '../shared/dashboard/WasteForecastAnalytics';
 
 function DashboardHeading({ userName }: { userName: string }) {
   const [clock, setClock] = useState(() => new Date());
@@ -26,60 +28,38 @@ function DashboardHeading({ userName }: { userName: string }) {
 }
 
 function AdminDashboardContent({ userName }: { userName: string }) {
-  const [total, setTotal] = useState<number | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [ingredientTotal, setIngredientTotal] = useState<number | null>(null);
+  const [ingredientFailed, setIngredientFailed] = useState(false);
   useEffect(() => {
     const abort = new AbortController();
-    accountSummary(abort.signal)
-      .then(data => { if (!abort.signal.aborted) setTotal(data.activeUsers); })
-      .catch(() => { if (!abort.signal.aborted) setFailed(true); });
+    listIngredients(1, 1, '', '', abort.signal)
+      .then(data => { if (!abort.signal.aborted) setIngredientTotal(data.total); })
+      .catch(() => { if (!abort.signal.aborted) setIngredientFailed(true); });
     return () => abort.abort();
   }, []);
 
+  const ingredientValue = ingredientFailed ? 'Unavailable' : ingredientTotal === null ? 'Loading…' : ingredientTotal.toLocaleString();
   return <>
     <DashboardHeading userName={userName} />
     <p className="sl-dashboard-description">Monitor operational activity, ingredient data, analytics and administrative oversight.</p>
-    <div className="sl-admin-view sl-admin-dashboard-v17">
+    <div className="sl-admin-view sl-superadmin-dashboard sl-admin-dashboard-v30">
       <SummaryCards items={[
-        { label: 'Active Users', value: failed ? 'Unavailable' : total === null ? 'Loading…' : total.toLocaleString(), detail: 'Active establishment accounts', tone: 'brand', trend: 'line' },
-        { label: 'Open alerts', value: <span className="sl-placeholder-value">—</span>, detail: 'Awaiting alert service', tone: 'attention', trend: 'bars' },
-        { label: 'Pending requests', value: <span className="sl-placeholder-value">—</span>, detail: 'Awaiting request service', tone: 'critical', trend: 'segments' },
-        { label: 'Audit events today', value: <span className="sl-placeholder-value">—</span>, detail: 'Live events appear in Audit Logs', tone: 'success', trend: 'accuracy' },
+        { label: 'Total Ingredients', value: ingredientValue, detail: ingredientFailed ? 'Ingredient service unavailable' : 'Live ingredient records', tone: 'brand', trend: 'line' },
+        { label: 'Total Inventory Batches', value: <span className="sl-placeholder-value">—</span>, detail: 'Awaiting inventory batch service', tone: 'success', trend: 'accuracy' },
+        { label: 'Items Expiring Soon (≤ 3 days)', value: <span className="sl-placeholder-value">—</span>, detail: 'Awaiting expiration service', tone: 'attention', trend: 'bars' },
+        { label: 'Expired Items', value: <span className="sl-placeholder-value">—</span>, detail: 'Awaiting expiration service', tone: 'critical', trend: 'segments' },
       ]} />
 
-      <div className="sl-admin-insight-grid">
-        <Card id="admin-recent-audit" title="Recent Audit Logs" action={<Link href="/AdministrativeAudit" className="sl-text-link">View all logs <ArrowRight size={15} aria-hidden="true" /></Link>}>
-          <AuditTable recent />
-        </Card>
-        <Card id="admin-change-requests" title="Change Requests">
-          <div className="sl-request-preview sl-admin-request-preview">
-            <div className="sl-request-donut" role="img" aria-label="Change request data awaiting request service">
-              <svg viewBox="0 0 120 120" aria-hidden="true"><circle className="sl-request-donut-track" cx="60" cy="60" r="44" /><circle className="sl-request-donut-segment sl-request-donut-success" cx="60" cy="60" r="44" pathLength="100" /><circle className="sl-request-donut-segment sl-request-donut-attention" cx="60" cy="60" r="44" pathLength="100" /><circle className="sl-request-donut-segment sl-request-donut-critical" cx="60" cy="60" r="44" pathLength="100" /></svg>
-              <strong aria-hidden="true">—</strong>
-            </div>
-            <div className="sl-preview-legend"><span><i className="sl-dot sl-dot-success" /> Approved <strong>—</strong></span><span><i className="sl-dot sl-dot-attention" /> Pending <strong>—</strong></span><span><i className="sl-dot sl-dot-critical" /> Rejected <strong>—</strong></span></div>
-            <p className="sl-supporting">Awaiting request service</p>
-          </div>
-        </Card>
-      </div>
-
-      <section aria-labelledby="admin-analytics-title" className="sl-admin-section">
-        <div className="sl-section-heading"><div><p className="sl-eyebrow">Analytics</p><h2 id="admin-analytics-title" className="sl-section-title">Waste and Forecast Analytics</h2></div></div>
-        <div className="sl-analytics-preview-grid">
-          <article className="sl-analytics-preview-card" data-tone="attention">
-            <h3>Weekly Waste Cost</h3>
-            <div className="sl-analytics-unavailable"><strong>Unavailable</strong><span className="sl-supporting">Awaiting waste analytics service</span></div>
-          </article>
-          <article className="sl-analytics-preview-card" data-tone="success">
-            <div className="sl-analytics-card-heading"><h3>Forecast Accuracy</h3></div>
-            <div className="sl-analytics-unavailable"><strong>Unavailable</strong><span className="sl-supporting">Awaiting forecast analytics service</span></div>
-          </article>
-          <article className="sl-analytics-preview-card" data-tone="critical">
-            <div className="sl-analytics-card-heading"><h3>30-Day Waste Value</h3></div>
-            <div className="sl-analytics-unavailable"><strong>Unavailable</strong><span className="sl-supporting">Awaiting waste analytics service</span></div>
-          </article>
-        </div>
+      <section className="sl-admin-inventory-grid" aria-label="Inventory dashboard analytics">
+        <Card id="admin-inventory-category" title="Inventory Status by Category"><div className="sl-reference-empty-chart"><div className="sl-inventory-donut" aria-label="Inventory category distribution awaiting analytics data"><svg viewBox="0 0 42 42" aria-hidden="true"><circle className="sl-inventory-donut-track" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-produce" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-meat" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-dairy" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-dry" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-condiments" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-others" cx="21" cy="21" r="15.9155"/></svg><span><strong>{ingredientValue === 'Loading…' || ingredientValue === 'Unavailable' ? '—' : ingredientValue}</strong><small>Ingredients</small></span></div><div className="sl-reference-legend"><span><i/>Produce <b>—</b></span><span><i/>Meat <b>—</b></span><span><i/>Dairy <b>—</b></span><span><i/>Dry Goods <b>—</b></span><span><i/>Condiments <b>—</b></span><span><i/>Others <b>—</b></span></div></div><p className="sl-dashboard-empty-note">Category totals require inventory analytics data.</p></Card>
+        <Card id="admin-expiration-trend" title="Expiration Trend"><div className="sl-expiration-shell" aria-label="Expiration trend awaiting service"><div className="sl-chart-gridlines"/><div className="sl-chart-placeholder-bars">{[2,3,2,3,5,4,3].map((h,i)=><i key={i} style={{height:`${h*12}px`}} />)}</div><div className="sl-chart-labels"><span>Day 1</span><span>Day 3</span><span>Day 5</span><span>Day 7</span></div></div><p className="sl-dashboard-empty-note">Awaiting expiration analytics service</p></Card>
+        <Card id="admin-low-stock" title="Low Stock Ingredients" action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={15}/></Link>}><div className="sl-low-stock-empty"><TriangleAlert size={25}/><strong>No live low-stock summary yet</strong><span>Stock thresholds will appear when inventory batches are connected.</span></div></Card>
       </section>
+
+      <section className="sl-admin-activity-grid sl-admin-activity-grid-single">
+        <Card id="admin-recent-activity" title="Recent Activity" action={<Link href="/AdministrativeAudit" className="sl-text-link">View All <ArrowRight size={15}/></Link>}><AuditTable recent /></Card>
+      </section>
+      <WasteForecastAnalytics />
     </div>
   </>;
 }

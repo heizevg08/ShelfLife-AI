@@ -4,7 +4,7 @@ import { createAccount, getAccount, listAccounts, setAccountActive, updateAccoun
 import { ApiError } from '../../services/apiClient';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
-import { DataState, Status } from './primitives';
+import { DataState, Pagination, Status } from './primitives';
 
 const blank = { firstName: '', lastName: '', email: '', password: '' };
 type ManagedRole = 'Admin' | 'Manager' | 'Inventory Staff';
@@ -192,7 +192,7 @@ export function AccountsTable() {
         </tr>)}
       </tbody></table>
     </div>
-    {data && <div className="sl-table-toolbar sl-pagination"><span className="sl-supporting">{data.total} {data.total === 1 ? 'account' : 'accounts'} · Page {page}</span><div className="sl-row-actions"><button className="sl-button" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Previous</button><button className="sl-button" disabled={page * data.pageSize >= data.total} onClick={() => setPage(value => value + 1)}>Next</button></div></div>}
+    {data && <Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="accounts" onPageChange={setPage} />}
 
     <Dialog
       open={mode === 'create' || mode === 'edit'}

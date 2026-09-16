@@ -26,10 +26,10 @@ export function pagination(query: Record<string, unknown>, sorts: string[], fall
 export type PageQuery = ReturnType<typeof pagination>;
 const auditActions = ['CREATE', 'UPDATE', 'DEACTIVATE', 'REACTIVATE'] as const;
 export type AuditActionFilter = typeof auditActions[number];
-export type AuditPageQuery = PageQuery & { actorRole?: typeof ROLES[number]; action?: AuditActionFilter; from?: Date };
+export type AuditPageQuery = PageQuery & { actorRole?: typeof ROLES[number]; action?: AuditActionFilter; from?: Date; to?: Date };
 export function auditPagination(query: Record<string, unknown>): AuditPageQuery {
   const pageKeys = ['page', 'pageSize', 'sortBy', 'sortOrder'];
-  for (const key of Object.keys(query)) if (![...pageKeys, 'actorRole', 'action', 'from'].includes(key)) invalid(key);
+  for (const key of Object.keys(query)) if (![...pageKeys, 'actorRole', 'action', 'from', 'to'].includes(key)) invalid(key);
   const page = pagination(Object.fromEntries(pageKeys.filter(key => query[key] !== undefined).map(key => [key, query[key]])), ['timestamp', 'action', 'targetType'], 'timestamp');
   const result: AuditPageQuery = { ...page };
   if (query.actorRole !== undefined) {
@@ -44,6 +44,11 @@ export function auditPagination(query: Record<string, unknown>): AuditPageQuery 
     if (typeof query.from !== 'string' || !Number.isFinite(Date.parse(query.from))) invalid('from');
     result.from = new Date(query.from);
   }
+  if (query.to !== undefined) {
+    if (typeof query.to !== 'string' || !Number.isFinite(Date.parse(query.to))) invalid('to');
+    result.to = new Date(query.to);
+  }
+  if (result.from && result.to && result.from > result.to) invalid('to', 'End date must be on or after start date');
   return result;
 }
 export type AccountInput = { firstName?: string; lastName?: string; email?: string; role?: typeof ROLES[number]; password?: string };

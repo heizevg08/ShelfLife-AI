@@ -58,10 +58,6 @@ export default function Alerts() {
           description="Alert records will appear here when the alert service is connected."
           rows={6}
         />
-        <div className="sl-table-toolbar sl-pagination sl-preview-pagination" aria-label="Alert queue pagination">
-          <span className="sl-supporting">0 alerts · Page 1</span>
-          <div className="sl-row-actions"><button className="sl-button" disabled>Previous</button><button className="sl-button" disabled>Next</button></div>
-        </div>
       </Card>
     </div>
   </>;

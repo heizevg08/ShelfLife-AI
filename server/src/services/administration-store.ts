@@ -36,7 +36,7 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
     async audits(query) {
       const filter: Record<string, unknown> = {};
       if (query.action) filter.action = query.action;
-      if (query.from) filter.timestamp = { $gte: query.from };
+      if (query.from || query.to) filter.timestamp = { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lte: query.to } : {}) };
       if (query.actorRole) {
         const actors = await users.find({ role: query.actorRole }).select('_id').lean().exec();
         filter.userId = { $in: actors.map(actor => actor._id) };

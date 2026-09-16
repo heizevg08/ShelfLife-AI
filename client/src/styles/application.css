@@ -739,7 +739,7 @@
 }
 
 
-/* V3 polish: preserve brand geometry while restoring proportional icon plates. */
+/* Collapsed sidebar styles */
 .sl-app[data-collapsed='true'] .sl-nav-item {
   width: 44px;
   min-width: 44px;
@@ -756,7 +756,7 @@
 .sl-app[data-collapsed='true'] .sl-nav-item .sl-nav-icon { width: 20px; height: 20px; }
 .sl-sidebar .sl-brand-icon-box { border-radius: 10px; background: oklch(98% 0.01 100); }
 
-/* Health is intentionally brighter and pill-shaped so status reads before decoration. */
+/* HEALTH STATUS */
 .sl-global-health-value[data-state='healthy'] {
   color: oklch(38% 0.13 145);
   background: oklch(95% 0.055 145);
@@ -766,7 +766,7 @@
 }
 .sl-global-health-value[data-state='healthy'] .sl-status-dot { background: oklch(58% 0.16 145); }
 
-/* KPI cards use one geometry everywhere; semantic emphasis belongs to values/top rules. */
+/* KPI CARDS*/
 .sl-overview-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; }
 .sl-overview-card { min-height: 132px; display: flex; flex-direction: column; justify-content: space-between; gap: .7rem; }
 .sl-overview-card[data-tone='success'] { border-top: 3px solid oklch(50% 0.13 145); }
@@ -2027,39 +2027,11 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 
 /* PATCH V17 — Admin workspace follows the Super Admin visual system while retaining role-specific information architecture. */
 .sl-admin-dashboard-v17 { gap: 1rem; }
-.sl-admin-insight-grid { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(15rem,.85fr) minmax(15rem,.9fr); gap:.9rem; align-items:stretch; }
-.sl-admin-insight-grid > .sl-card { min-width:0; height:100%; }
-.sl-admin-insight-grid .sl-card-body { height:100%; }
-.sl-admin-performance { min-height:245px; padding:1rem; display:grid; grid-template-columns:minmax(0,1fr) 64px; gap:.75rem 1rem; align-content:center; }
-.sl-admin-performance > div:not(.sl-admin-performance-ring):not(.sl-admin-performance-rule) { display:grid; gap:.3rem; }
-.sl-admin-performance strong { font-size:1.65rem; line-height:1.1; color:var(--sl-text); }
-.sl-admin-performance-ring { width:54px; height:54px; border-radius:50%; border:6px solid var(--sl-success); border-top-color:var(--sl-border-subtle); }
-.sl-admin-performance-rule { grid-column:1/-1; height:1px; background:var(--sl-border-subtle); }
-.sl-admin-request-preview { min-height:245px; align-content:center; }
 .sl-analytics-card-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:.75rem; }
-.sl-analytics-chip { flex:0 0 auto; padding:.25rem .55rem; border-radius:999px; font-size:.72rem; font-weight:700; }
-.sl-analytics-chip-success { color:var(--sl-success); background:var(--sl-success-subtle); }
-.sl-analytics-chip-critical { color:var(--sl-critical); background:var(--sl-critical-subtle); }
-.sl-analytics-value { display:block; margin-top:1.2rem; font-size:1.75rem; line-height:1; }
-.sl-analytics-saving { display:block; margin-top:1rem; color:var(--sl-success); font-weight:650; font-size:.82rem; }
-.sl-week-bars { height:92px; display:flex; align-items:flex-end; gap:.45rem; margin-top:1.1rem; }
-.sl-week-bars i { flex:1; min-width:0; background:var(--sl-freshness); border-radius:.25rem .25rem 0 0; opacity:.82; }
-.sl-week-bars i:nth-child(3) { background:var(--sl-brand); opacity:.62; }
-.sl-week-labels { display:grid; grid-template-columns:repeat(7,1fr); gap:.45rem; text-align:center; margin-top:.4rem; color:var(--sl-muted); font-size:.72rem; }
-.sl-forecast-mini-bars { height:58px; display:flex; align-items:flex-end; gap:.3rem; margin-top:1.2rem; width:58px; }
-.sl-forecast-mini-bars i { width:7px; background:var(--sl-freshness); border-radius:2px 2px 0 0; }
-@media (max-width:1200px) { .sl-admin-insight-grid { grid-template-columns:minmax(0,1fr) minmax(14rem,.8fr); } .sl-admin-insight-grid > :first-child { grid-column:1/-1; } }
-@media (max-width:800px) { .sl-admin-insight-grid { grid-template-columns:minmax(0,1fr); } .sl-admin-insight-grid > :first-child { grid-column:auto; } }
-
-/* PATCH V18 — Admin dashboard source-of-truth alignment */
-.sl-admin-dashboard-v17 .sl-admin-insight-grid { grid-template-columns: minmax(0, 1.65fr) minmax(18rem, .85fr); }
-@media (max-width: 1000px) { .sl-admin-dashboard-v17 .sl-admin-insight-grid { grid-template-columns: minmax(0, 1fr); } }
 
 
 /* ===== PATCH V19 — cross-role dashboard hierarchy + Admin reference parity ===== */
 .sl-dashboard-description { margin: -.25rem 0 .85rem; color: var(--sl-muted); font: var(--sl-font-supporting); }
-/* Admin Recent Audit Logs uses the same primary/secondary width ratio as Reports > Weekly Waste Cost. */
-.sl-admin-dashboard-v17 .sl-admin-insight-grid { grid-template-columns: minmax(0, 2.1fr) minmax(20rem, .68fr); }
 
 /* Ingredients Master Data follows the approved Admin reference without fabricating ingredient records. */
 .sl-ingredients-master-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; }
@@ -2082,7 +2054,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-ingredients-master-table .sl-data-table th:nth-child(9) { width:10%; }
 .sl-ingredients-master-footer { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
 .sl-page-number { min-width:36px; }
-@media (max-width:1000px) { .sl-admin-dashboard-v17 .sl-admin-insight-grid { grid-template-columns:1fr; } .sl-ingredients-master-heading { align-items:stretch; flex-direction:column; } .sl-ingredients-master-tools { padding-bottom:0; } }
+@media (max-width:1000px) { .sl-ingredients-master-heading { align-items:stretch; flex-direction:column; } .sl-ingredients-master-tools { padding-bottom:0; } }
 @media (max-width:620px) { .sl-ingredients-master-tools { align-items:stretch; flex-direction:column; } .sl-ingredients-master-tools .sl-directory-search { width:100%; } }
 
 /* ===== PATCH V20 — Admin parity, inventory terminology, connected-state controls ===== */
@@ -2107,11 +2079,6 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 }
 
 /* ===== PATCH V21 — Admin Change Requests density, live ingredient controls, unified pagination ===== */
-#admin-change-requests .sl-card-body { display:flex; align-items:center; }
-#admin-change-requests .sl-admin-request-preview { min-height:0; width:100%; padding:.45rem 1rem .75rem; align-content:center; row-gap:.35rem; }
-#admin-change-requests .sl-request-donut { align-self:center; }
-#admin-change-requests .sl-preview-legend { align-self:center; }
-#admin-change-requests .sl-admin-request-preview > .sl-supporting { margin-top:.1rem; }
 .sl-filter-menu { position:relative; }
 .sl-filter-popover { position:absolute; z-index:30; top:calc(100% + .4rem); right:0; width:12rem; padding:.35rem; border:1px solid var(--sl-border); border-radius:var(--sl-radius-md); background:var(--sl-surface); box-shadow:var(--sl-shadow-md); display:grid; }
 .sl-filter-popover button { border:0; background:transparent; border-radius:.45rem; padding:.55rem .65rem; text-align:left; color:var(--sl-text); cursor:pointer; }
@@ -2120,9 +2087,619 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-live-ingredient-form .sl-form-grid { margin:0; }
 .sl-live-ingredient-form select.sl-admin-input { appearance:auto; }
 .sl-inline-notice-error { color:var(--sl-critical); background:var(--sl-critical-subtle); }
-.sl-system-pagination { display:flex; justify-content:flex-end; align-items:center; gap:.45rem; }
-.sl-page-number-active { background:var(--sl-brand) !important; border-color:var(--sl-brand) !important; color:#fff !important; }
+.sl-inline-notice-success { color:var(--sl-success); }
+.sl-page-number-active { background:var(--sl-brand) !important; border-color:var(--sl-brand) !important; color:var(--sl-on-brand) !important; }
 /* One pagination language across Super Admin, Admin, Manager, and Inventory Staff pages. */
-.sl-pagination .sl-row-actions, .sl-preview-pagination .sl-row-actions { gap:.45rem; }
-.sl-pagination .sl-button, .sl-preview-pagination .sl-button, .sl-system-pagination .sl-button { min-height:36px; border-radius:.55rem; }
-.sl-pagination .sl-button:disabled, .sl-preview-pagination .sl-button:disabled, .sl-system-pagination .sl-button:disabled { opacity:.5; cursor:not-allowed; }
+.sl-pagination .sl-row-actions { gap:.45rem; }
+.sl-pagination .sl-button { min-height:36px; border-radius:.55rem; }
+.sl-pagination .sl-button:disabled { opacity:.5; cursor:not-allowed; }
+.sl-pagination-page-slot { display:inline-flex; align-items:center; gap:.45rem; }
+.sl-pagination-ellipsis { color:var(--sl-muted); padding-inline:.1rem; }
+@media (max-width:620px) { .sl-pagination { align-items:flex-start; flex-direction:column; } .sl-pagination .sl-row-actions { max-width:100%; overflow-x:auto; } }
+
+/* ===== PATCH V22: shared dashboard analytics visual architecture =====
+   Admin and Super Admin render this exact shell. Empty analytics data changes
+   only the content state; it no longer swaps the charts for generic text cards. */
+.sl-superadmin-dashboard .sl-analytics-preview-card {
+  grid-template-rows: auto auto minmax(58px, 1fr) auto;
+}
+.sl-superadmin-dashboard .sl-analytics-preview-card h3 { margin: 0; }
+.sl-superadmin-dashboard .sl-analytics-empty-value {
+  margin: 0;
+  font: var(--sl-font-numeric);
+  color: var(--sl-text);
+}
+.sl-superadmin-dashboard .sl-analytics-empty-chart {
+  height: 68px;
+  align-items: end;
+  opacity: .62;
+}
+.sl-superadmin-dashboard .sl-analytics-empty-chart i {
+  min-height: 8px;
+  height: 8px;
+  background: var(--sl-border);
+}
+.sl-superadmin-dashboard .sl-analytics-axis-labels {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--sl-space-2);
+  margin-top: calc(var(--sl-space-3) * -1);
+  color: var(--sl-muted);
+  font-size: .68rem;
+  text-align: center;
+}
+.sl-superadmin-dashboard .sl-forecast-shell {
+  min-height: 68px;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+}
+.sl-superadmin-dashboard .sl-analytics-empty-meter { background: var(--sl-border-subtle); }
+.sl-superadmin-dashboard .sl-analytics-empty-meter span { width: 0; }
+.sl-superadmin-dashboard .sl-forecast-shell-lines {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.sl-superadmin-dashboard .sl-forecast-shell-lines i {
+  height: 5px;
+  border-radius: var(--sl-radius-full);
+  background: var(--sl-border);
+}
+.sl-superadmin-dashboard .sl-analytics-empty-chart-compact { max-width: 72%; }
+.sl-superadmin-dashboard .sl-analytics-state-copy {
+  margin: 0;
+  min-height: 1.25rem;
+}
+
+/* ===== PATCH V23 — close remaining Admin/Super Admin visual parity gaps ===== */
+/* Admin's taller audit empty-state must not stretch the shared Change Request card.
+   The request card now keeps the same intrinsic geometry it has beside User Accounts
+   on SuperAdminDashboard. */
+.sl-admin-dashboard-v17 .sl-superadmin-primary-grid {
+  align-items: start !important;
+}
+.sl-admin-dashboard-v17 #sl-dashboard-requests {
+  align-self: start !important;
+  height: auto !important;
+}
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-card-body {
+  height: auto !important;
+}
+
+/* Ingredient CRUD uses the established Add User modal language instead of a generic form dialog. */
+.sl-ingredient-reference-dialog > .sl-popover-header {
+  min-height: 88px !important;
+  padding: 0 24px !important;
+}
+.sl-ingredient-reference-dialog > .sl-dialog-content {
+  padding: 24px 24px 0 !important;
+}
+.sl-ingredient-reference-dialog .sl-live-ingredient-form .sl-form-grid {
+  gap: 17px 16px;
+}
+.sl-ingredient-reference-dialog .sl-live-ingredient-form .sl-form-grid > label {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+  font-weight: 650;
+}
+.sl-ingredient-reference-dialog .sl-admin-input {
+  min-height: 48px;
+  margin-top: 0;
+}
+.sl-ingredient-reference-dialog > .sl-dialog-actions {
+  margin-top: 20px;
+  padding: 20px 24px;
+  gap: 10px;
+  background: var(--sl-surface);
+}
+.sl-ingredient-reference-dialog > .sl-dialog-actions .sl-button {
+  min-height: 42px;
+  padding-inline: 18px;
+}
+.sl-ingredient-reference-dialog .sl-field-error {
+  margin: -1px 0 0;
+  line-height: 1.35;
+}
+@media (max-width: 560px) {
+  .sl-ingredient-reference-dialog > .sl-popover-header { padding-inline: 16px !important; }
+  .sl-ingredient-reference-dialog > .sl-dialog-content { padding-inline: 16px !important; }
+  .sl-ingredient-reference-dialog > .sl-dialog-actions { padding-inline: 16px; }
+}
+
+/* PATCH V25 — Admin request overview must fill the Recent Audit Logs row. */
+.sl-admin-dashboard-v17 .sl-superadmin-primary-grid {
+  align-items: stretch !important;
+}
+.sl-admin-dashboard-v17 .sl-superadmin-primary-grid > .sl-card,
+.sl-admin-dashboard-v17 #sl-dashboard-requests {
+  align-self: stretch !important;
+  height: 100% !important;
+}
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-card-body {
+  height: 100% !important;
+  display: flex;
+  align-items: center;
+}
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-request-preview { width: 100%; }
+
+/* Ingredient form: roomy desktop form, fixed PHP currency treatment. */
+.sl-area-dialog.sl-ingredient-reference-dialog { width: min(720px, calc(100vw - 40px)) !important; max-width: 720px !important; }
+.sl-ingredient-reference-dialog > .sl-dialog-content { padding: 28px 30px 4px !important; }
+.sl-ingredient-reference-dialog .sl-live-ingredient-form .sl-form-grid { gap: 22px 20px !important; }
+.sl-ingredient-reference-dialog .sl-admin-input { min-height: 48px; }
+.sl-currency-input { display:flex; align-items:center; min-height:48px; border:1px solid var(--sl-border); border-radius:var(--sl-radius-sm); background:var(--sl-surface); overflow:hidden; }
+.sl-currency-input > span { padding:0 0 0 14px; font-weight:700; color:var(--sl-text); }
+.sl-currency-input .sl-admin-input { border:0 !important; box-shadow:none !important; flex:1; min-width:0; }
+.sl-currency-input:focus-within { outline:2px solid var(--sl-brand); outline-offset:1px; }
+.sl-ingredient-actions { justify-content:center; }
+.sl-success-dialog-icon { font-size:1.2rem; font-weight:800; }
+.sl-success-summary { display:grid; gap:5px; padding:16px; border:1px solid var(--sl-border); border-radius:var(--sl-radius-md); background:var(--sl-surface-muted); }
+.sl-success-summary strong { font-size:1rem; }
+.sl-success-summary span { color:var(--sl-muted); font-size:.88rem; }
+.sl-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.sl-detail-grid > span { display:grid; gap:4px; padding:13px 14px; border:1px solid var(--sl-border); border-radius:var(--sl-radius-sm); }
+.sl-detail-grid small { color:var(--sl-muted); }
+@media (max-width: 620px) { .sl-area-dialog.sl-ingredient-reference-dialog { width:calc(100vw - 1rem) !important; } .sl-detail-grid { grid-template-columns:1fr; } }
+
+/* PATCH V26 — Admin request card uses the full row without leaving its content stranded at the top. */
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-card-body {
+  min-height: 0 !important;
+  padding-block: 0 !important;
+}
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-request-preview {
+  min-height: 0 !important;
+  height: 100% !important;
+  display: grid !important;
+  align-content: center !important;
+  padding-block: 18px !important;
+  box-sizing: border-box;
+}
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-supporting { margin-bottom: 0 !important; }
+
+/* Ingredient row actions now mirror account actions and remain usable without table overflow. */
+.sl-ingredient-actions { display:flex; flex-wrap:nowrap; gap:7px; justify-content:flex-end; }
+.sl-ingredient-actions .sl-account-action { min-width:auto; padding-inline:10px; }
+.sl-account-action-danger, .sl-button-danger { border-color:var(--sl-critical, #b54747) !important; color:var(--sl-critical, #b54747) !important; background:var(--sl-surface) !important; }
+.sl-button-danger { font-weight:700; }
+.sl-button-danger:hover { background:#fff4f4 !important; }
+.sl-danger-dialog-icon { color:var(--sl-critical, #b54747); background:#fff1f1 !important; }
+.sl-delete-summary { display:grid; gap:6px; padding:16px; border:1px solid var(--sl-border); border-radius:var(--sl-radius-md); background:var(--sl-surface-muted); }
+.sl-delete-summary p { margin:8px 0 0; color:var(--sl-critical, #b54747); }
+
+/* ===== PATCH V27 — Admin request-card centering, numeric guidance, ingredient table fit ===== */
+/* The Admin request card stretches with Recent Audit Logs, while the compact chart block stays centered instead of leaving a bottom-heavy void. */
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-card-body {
+  display: flex !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+}
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-request-preview {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 20px 22px !important;
+  align-self: stretch !important;
+  align-content: center !important;
+  justify-content: center !important;
+  grid-template-columns: 118px minmax(145px, 1fr) !important;
+  grid-template-rows: auto auto !important;
+  column-gap: 18px !important;
+  row-gap: 4px !important;
+}
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-request-donut { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-preview-legend { grid-column: 2; grid-row: 1; align-self: end; width: 100%; }
+.sl-admin-dashboard-v17 #sl-dashboard-requests .sl-request-preview > .sl-supporting { grid-column: 2; grid-row: 2; align-self: start; justify-self: center; margin: 5px 0 0 !important; }
+
+/* Numeric fields intentionally use text+inputMode so invalid letters remain visible long enough to explain the error inline. */
+.sl-live-ingredient-form .sl-field-error { display:block; margin-top:6px; color:var(--sl-critical, #b54747); font-size:.82rem; line-height:1.25; }
+.sl-live-ingredient-form .sl-admin-input[aria-invalid="true"],
+.sl-live-ingredient-form .sl-currency-input:has(.sl-admin-input[aria-invalid="true"]) { border-color:var(--sl-critical, #b54747) !important; outline-color:var(--sl-critical, #b54747) !important; }
+
+/* Desktop ingredient directory must fit its card — never force a 72rem table or a horizontal scrollbar. */
+.sl-ingredients-master-table .sl-table-scroll { overflow-x:hidden !important; width:100%; }
+.sl-ingredients-master-table .sl-data-table { min-width:0 !important; width:100% !important; table-layout:fixed !important; }
+.sl-ingredients-master-table .sl-data-table th,
+.sl-ingredients-master-table .sl-data-table td { padding-inline:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(1) { width:13%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(2) { width:10%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(3) { width:9%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(4) { width:6%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(5) { width:7%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(6) { width:9%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(7) { width:8%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(8) { width:12%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(9) { width:26%; }
+.sl-ingredients-master-table .sl-ingredient-actions { justify-content:flex-end; gap:5px; }
+.sl-ingredients-master-table .sl-ingredient-actions .sl-account-action { padding:7px 8px; font-size:.78rem; }
+
+/* Destructive confirmation follows the supplied reference: warning header, ingredient summary, explanatory copy, explicit keep/remove actions. */
+.sl-area-dialog.sl-ingredient-delete-dialog { width:min(520px, calc(100vw - 28px)) !important; max-width:520px !important; }
+.sl-delete-warning-icon { background:#fff2c9 !important; color:#9a6700 !important; font-weight:800; font-size:1.1rem; }
+.sl-delete-reference-body { display:grid; gap:18px; }
+.sl-delete-ingredient-card { display:flex; align-items:center; gap:13px; padding:15px 16px; border:1px solid var(--sl-border); border-radius:14px; background:var(--sl-surface-muted); }
+.sl-delete-ingredient-avatar { width:44px; height:44px; border-radius:10px; display:grid; place-items:center; background:var(--sl-brand-light); color:var(--sl-brand); font-weight:800; }
+.sl-delete-ingredient-card > span:last-child { display:grid; gap:3px; }
+.sl-delete-ingredient-card small { color:var(--sl-muted); }
+.sl-delete-reference-body > p { margin:0; line-height:1.55; color:var(--sl-muted); }
+.sl-delete-confirm-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; background:var(--sl-critical, #b54747) !important; color:#fff !important; }
+.sl-delete-confirm-button:hover { filter:brightness(.96); background:var(--sl-critical, #b54747) !important; }
+.sl-delete-keep-button { min-width:180px; }
+
+@media (max-width: 760px) {
+  .sl-ingredients-master-table .sl-table-scroll { overflow-x:auto !important; }
+  .sl-ingredients-master-table .sl-data-table { min-width:900px !important; }
+  .sl-admin-dashboard-v17 #sl-dashboard-requests .sl-request-preview { grid-template-columns:1fr !important; grid-template-rows:auto auto auto !important; justify-items:center !important; }
+  .sl-admin-dashboard-v17 #sl-dashboard-requests .sl-request-donut,
+  .sl-admin-dashboard-v17 #sl-dashboard-requests .sl-preview-legend,
+  .sl-admin-dashboard-v17 #sl-dashboard-requests .sl-request-preview > .sl-supporting { grid-column:1 !important; grid-row:auto !important; }
+}
+
+/* ===== PATCH V28 — Admin reference alignment: ingredients, inventory, modal states ===== */
+.sl-currency-input { display:flex !important; align-items:stretch !important; overflow:hidden; padding:0 !important; background:#fff !important; border:1px solid var(--sl-border) !important; border-radius:var(--sl-radius-md) !important; }
+.sl-currency-input > span[aria-hidden="true"] { flex:0 0 42px; display:grid; place-items:center; background:#fff !important; border-right:1px solid var(--sl-border); color:var(--sl-text); font-weight:700; }
+.sl-currency-input .sl-admin-input { flex:1; border:0 !important; border-radius:0 !important; background:#fff !important; box-shadow:none !important; outline:0 !important; }
+.sl-currency-input:focus-within { border-color:var(--sl-brand) !important; box-shadow:0 0 0 2px color-mix(in srgb, var(--sl-brand) 18%, transparent); }
+.sl-currency-input:has(.sl-admin-input[aria-invalid="true"]) { border-color:var(--sl-critical,#b54747) !important; box-shadow:0 0 0 1px color-mix(in srgb, var(--sl-critical,#b54747) 18%, transparent); }
+
+/* One modal language across add/edit/view/delete — same radius, border, controls and interaction colors. */
+.sl-account-reference-dialog.sl-ingredient-reference-dialog,
+.sl-account-reference-dialog.sl-ingredient-view-dialog,
+.sl-account-reference-dialog.sl-ingredient-delete-dialog { border-radius:16px !important; overflow:hidden; }
+.sl-ingredient-reference-dialog .sl-button-primary,
+.sl-ingredient-view-dialog .sl-button-primary { background:var(--sl-brand) !important; border-color:var(--sl-brand) !important; color:#fff !important; }
+.sl-ingredient-reference-dialog .sl-button-primary:hover,
+.sl-ingredient-view-dialog .sl-button-primary:hover { filter:brightness(.94); }
+.sl-ingredient-reference-dialog .sl-button-primary:active,
+.sl-ingredient-view-dialog .sl-button-primary:active { filter:brightness(.88); transform:translateY(1px); }
+.sl-delete-confirm-button { background:var(--sl-critical,#b54747) !important; border-color:var(--sl-critical,#b54747) !important; }
+.sl-delete-confirm-button:hover { filter:brightness(.94) !important; }
+.sl-delete-confirm-button:active { filter:brightness(.88) !important; transform:translateY(1px); }
+.sl-delete-reference-body { gap:0 !important; }
+
+.sl-ingredient-detail-reference { display:grid; gap:18px; }
+.sl-ingredient-detail-hero { display:grid; grid-template-columns:64px 1fr auto; align-items:center; gap:14px; }
+.sl-ingredient-detail-hero > span:nth-child(2) { display:grid; gap:4px; }
+.sl-ingredient-detail-hero small { color:var(--sl-muted); }
+.sl-ingredient-detail-avatar { width:64px; height:64px; border-radius:12px; display:grid; place-items:center; background:var(--sl-brand-light); color:var(--sl-brand); font-size:1.4rem; font-weight:800; }
+.sl-ingredient-view-dialog .sl-detail-grid { grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:0 !important; border:1px solid var(--sl-border); border-radius:12px; overflow:hidden; background:var(--sl-surface-muted); }
+.sl-ingredient-view-dialog .sl-detail-grid > span { padding:14px; border-right:1px solid var(--sl-border); }
+.sl-ingredient-view-dialog .sl-detail-grid > span:last-child { border-right:0; }
+
+.sl-inventory-reference-view { gap:16px; }
+.sl-inventory-reference-grid { display:grid; grid-template-columns:minmax(0,3fr) minmax(270px,1fr); gap:16px; align-items:start; }
+.sl-inventory-reference-grid > .sl-card { min-width:0; }
+.sl-inventory-reference-aside { display:grid; gap:16px; }
+.sl-inventory-table-tools { display:flex; justify-content:flex-end; gap:8px; margin-bottom:12px; }
+.sl-quick-actions-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.sl-quick-actions-grid .sl-button { justify-content:center; min-height:44px; }
+@media (max-width:1050px){ .sl-inventory-reference-grid{grid-template-columns:1fr;} }
+@media (max-width:720px){ .sl-ingredient-view-dialog .sl-detail-grid{grid-template-columns:1fr 1fr !important;} .sl-quick-actions-grid{grid-template-columns:1fr;} }
+.sl-ingredients-master-heading { align-items:center !important; }
+.sl-ingredient-list-toolbar { min-height:58px; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 14px; border-bottom:1px solid var(--sl-border); }
+.sl-ingredient-list-toolbar > strong { font-size:1rem; }
+.sl-ingredient-list-toolbar .sl-ingredients-master-tools { padding:0; }
+.sl-ingredient-list-toolbar .sl-directory-search { width:240px; }
+@media(max-width:760px){.sl-ingredient-list-toolbar{align-items:stretch;flex-direction:column}.sl-ingredient-list-toolbar .sl-ingredients-master-tools{justify-content:flex-start}.sl-ingredient-list-toolbar .sl-directory-search{width:100%}}
+
+/* PATCH V29 — Admin parity + exact ingredient reference modals */
+.sl-sidebar .sl-nav-item {
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms cubic-bezier(.2,.8,.2,1), box-shadow 180ms ease;
+}
+.sl-sidebar .sl-nav-item .sl-nav-icon {
+  transition: transform 180ms cubic-bezier(.2,.8,.2,1);
+}
+.sl-sidebar .sl-nav-item:hover:not([aria-current='page']) {
+  transform: translateX(4px);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--sl-on-brand) 42%, transparent);
+}
+.sl-sidebar .sl-nav-item:hover .sl-nav-icon { transform: scale(1.1); }
+.sl-sidebar .sl-nav-item:active { transform: translateX(2px) scale(.99); }
+
+.sl-ingredient-reference-title { font-size:1.05rem; font-weight:750; color:var(--sl-text); }
+.sl-ingredient-reference-dialog > .sl-popover-header,
+.sl-ingredient-view-dialog > .sl-popover-header { padding:18px 22px !important; min-height:58px; }
+.sl-ingredient-reference-dialog > .sl-dialog-content { padding:16px 22px 10px !important; }
+.sl-ingredient-reference-dialog .sl-live-ingredient-form .sl-form-grid {
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px 16px !important;
+}
+.sl-ingredient-reference-dialog .sl-live-ingredient-form .sl-form-grid > label:nth-child(7),
+.sl-ingredient-reference-dialog .sl-live-ingredient-form .sl-form-grid > label:nth-child(8) { grid-column:1 / -1; }
+.sl-ingredient-reference-dialog .sl-live-ingredient-form label { font-size:.8rem; font-weight:600; }
+.sl-required-mark { color:var(--sl-critical,#c43e3e); }
+.sl-ingredient-reference-dialog .sl-admin-input { min-height:42px !important; margin-top:5px; }
+.sl-ingredient-reference-dialog > .sl-dialog-actions { padding:12px 22px 16px !important; }
+.sl-ingredient-reference-dialog > .sl-dialog-actions .sl-button { min-width:112px; }
+
+.sl-ingredient-view-dialog { width:min(640px,calc(100vw - 32px)) !important; max-width:640px !important; }
+.sl-ingredient-view-dialog > .sl-dialog-content { padding:16px 20px 22px !important; }
+.sl-ingredient-detail-reference { gap:16px !important; }
+.sl-ingredient-detail-hero.sl-ingredient-detail-no-photo { grid-template-columns:minmax(0,1fr) auto !important; gap:16px; padding:0; }
+.sl-ingredient-detail-copy { display:grid; gap:4px; min-width:0; }
+.sl-ingredient-name-row { display:flex; align-items:center; gap:9px; }
+.sl-ingredient-name-row strong { font-size:1rem; }
+.sl-ingredient-detail-actions { display:flex; align-items:center; gap:8px; }
+.sl-ingredient-detail-actions .sl-button { min-height:36px; padding:7px 13px; }
+.sl-icon-button { width:36px; height:36px; display:grid; place-items:center; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--sl-text); transition:background 160ms ease,border-color 160ms ease; }
+.sl-icon-button:hover { background:var(--sl-surface-subtle); border-color:var(--sl-border); }
+.sl-ingredient-view-dialog .sl-detail-grid { border:0 !important; background:#f5f9fd !important; border-radius:10px !important; }
+.sl-ingredient-view-dialog .sl-detail-grid > span { padding:13px 14px !important; }
+.sl-ingredient-view-dialog .sl-detail-grid small { font-size:.68rem; }
+.sl-ingredient-view-dialog .sl-detail-grid strong { margin-top:5px; font-size:.85rem; }
+.sl-ingredient-statistics { display:grid; gap:9px; }
+.sl-ingredient-statistics h4 { margin:0; font-size:.84rem; }
+.sl-ingredient-stat-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
+.sl-ingredient-stat-grid > span { min-height:62px; padding:10px 11px; display:grid; align-content:center; gap:4px; border-radius:8px; background:#effaf4; }
+.sl-ingredient-stat-grid > span:nth-child(2) { background:#f4f8ff; }
+.sl-ingredient-stat-grid > span:nth-child(3) { background:#f5f8fb; }
+.sl-ingredient-stat-grid > span:nth-child(4) { background:#f5f8fb; }
+.sl-ingredient-stat-grid small { font-size:.65rem; color:var(--sl-muted); }
+.sl-ingredient-stat-grid strong { font-size:.95rem; }
+@media(max-width:620px){
+  .sl-ingredient-reference-dialog .sl-live-ingredient-form .sl-form-grid{grid-template-columns:1fr !important;}
+  .sl-ingredient-reference-dialog .sl-live-ingredient-form .sl-form-grid > label{grid-column:auto !important;}
+  .sl-ingredient-stat-grid{grid-template-columns:1fr 1fr;}
+}
+
+/* ===== PATCH V30 — Admin inventory dashboard reference + interaction corrections ===== */
+/* Sidebar: undo V29's added movement/scale/inset decoration. Keep only a smoother version
+   of the established background/color transition. */
+.sl-sidebar .sl-nav-item { transition: background-color 240ms ease, color 240ms ease !important; transform:none !important; box-shadow:none !important; }
+.sl-sidebar .sl-nav-item .sl-nav-icon { transition: color 240ms ease !important; transform:none !important; }
+.sl-sidebar .sl-nav-item:hover:not([aria-current='page']),
+.sl-sidebar .sl-nav-item:active { transform:none !important; box-shadow:none !important; }
+.sl-sidebar .sl-nav-item:hover .sl-nav-icon { transform:none !important; }
+
+/* Ingredients filter: the menu must escape the table card instead of being clipped. */
+.sl-ingredients-master-table,
+.sl-ingredients-master-table .sl-ingredient-list-toolbar { overflow:visible !important; }
+.sl-ingredients-master-table .sl-filter-menu { position:relative; z-index:45; }
+.sl-ingredients-master-table .sl-filter-popover { top:calc(100% + 8px) !important; right:0 !important; max-height:320px; overflow-y:auto; z-index:100 !important; }
+
+/* New Admin KPI visual language based on the supplied inventory dashboard reference. */
+.sl-inventory-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+.sl-inventory-kpi { min-height:104px; display:flex; align-items:center; gap:14px; padding:16px 18px; border:1px solid var(--sl-border); border-radius:12px; background:var(--sl-surface); box-shadow:var(--sl-shadow-sm); }
+.sl-inventory-kpi-icon { width:58px; height:58px; flex:0 0 58px; display:grid; place-items:center; border-radius:50%; }
+.sl-inventory-kpi > span:last-child { min-width:0; display:grid; gap:2px; }
+.sl-inventory-kpi small { font-size:.76rem; font-weight:650; color:var(--sl-muted); }
+.sl-inventory-kpi small b { display:block; font-size:.7rem; }
+.sl-inventory-kpi strong { font-size:1.55rem; line-height:1.05; color:var(--sl-text); }
+.sl-inventory-kpi em { margin-top:3px; font-size:.72rem; font-style:normal; }
+.sl-kpi-green { background:linear-gradient(105deg,#f3fcf7,#fff); }.sl-kpi-green .sl-inventory-kpi-icon{background:#d9f5e5;color:#15945b}.sl-kpi-green em{color:#15945b}
+.sl-kpi-blue { background:linear-gradient(105deg,#f4f9ff,#fff); }.sl-kpi-blue .sl-inventory-kpi-icon{background:#dceeff;color:#1877d2}.sl-kpi-blue em{color:#1877d2}
+.sl-kpi-amber { background:linear-gradient(105deg,#fffaf0,#fff); }.sl-kpi-amber .sl-inventory-kpi-icon{background:#ffefcb;color:#d99012}.sl-kpi-amber em{color:#c57a00}
+.sl-kpi-red { background:linear-gradient(105deg,#fff5f5,#fff); }.sl-kpi-red .sl-inventory-kpi-icon{background:#ffdede;color:#e04e55}.sl-kpi-red em{color:#d43d45}
+
+.sl-admin-inventory-grid { display:grid; grid-template-columns:1.05fr 1.15fr .9fr; gap:14px; align-items:stretch; }
+.sl-admin-inventory-grid > .sl-card { min-width:0; height:100%; }
+.sl-reference-empty-chart { min-height:180px; display:grid; grid-template-columns:140px 1fr; align-items:center; gap:14px; padding:8px 4px; }
+.sl-reference-donut { width:124px; height:124px; border-radius:50%; display:grid; place-items:center; align-content:center; background:conic-gradient(#35b978 0 20%,#2582d5 20% 38%,#f5b43b 38% 55%,#f4a986 55% 70%,#7586a9 70% 84%,#9166e7 84% 100%); position:relative; }
+.sl-reference-donut::after { content:""; position:absolute; inset:20px; border-radius:50%; background:var(--sl-surface); }
+.sl-reference-donut strong,.sl-reference-donut small { position:relative; z-index:1; }.sl-reference-donut strong{font-size:1.35rem}.sl-reference-donut small{font-size:.72rem}
+.sl-reference-legend { display:grid; gap:9px; font-size:.76rem; }.sl-reference-legend span{display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:7px}.sl-reference-legend i{width:9px;height:9px;border-radius:50%;background:#35b978}.sl-reference-legend span:nth-child(2) i{background:#2582d5}.sl-reference-legend span:nth-child(3) i{background:#f5b43b}.sl-reference-legend span:nth-child(4) i{background:#f4a986}.sl-reference-legend span:nth-child(5) i{background:#7586a9}.sl-reference-legend span:nth-child(6) i{background:#9166e7}.sl-reference-legend b{font-weight:500;color:var(--sl-muted)}
+.sl-dashboard-empty-note { margin:0; color:var(--sl-muted); font-size:.76rem; }
+.sl-expiration-shell { height:180px; position:relative; border-left:1px solid var(--sl-border); border-bottom:1px solid var(--sl-border); overflow:hidden; }
+.sl-chart-gridlines { position:absolute; inset:0; background:repeating-linear-gradient(to bottom,transparent 0,transparent 35px,var(--sl-border-subtle) 36px); }
+.sl-chart-placeholder-bars { position:absolute; inset:auto 16px 0; height:150px; display:flex; align-items:flex-end; justify-content:space-around; gap:9px; opacity:.62; }.sl-chart-placeholder-bars i{width:28px;background:linear-gradient(to top,#55bf8b 0 55%,#f6bd55 55% 75%,#ef6b70 75%);border-radius:3px 3px 0 0}.sl-chart-labels{display:flex;justify-content:space-between;padding:6px 8px;color:var(--sl-muted);font-size:.65rem}
+.sl-low-stock-empty { min-height:180px; display:grid; place-items:center; align-content:center; gap:8px; text-align:center; color:var(--sl-muted); padding:20px; }.sl-low-stock-empty strong{color:var(--sl-text)}.sl-low-stock-empty span{font-size:.78rem;max-width:230px}
+.sl-admin-activity-grid { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(300px,.85fr); gap:14px; align-items:stretch; }.sl-admin-activity-grid>.sl-card{height:100%;min-width:0}
+.sl-dashboard-quick-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.sl-quick-action{min-height:76px;padding:13px 14px;border-radius:9px;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--sl-text);transition:filter 180ms ease}.sl-quick-action:hover{filter:brightness(.97)}.sl-quick-action>svg{width:25px;height:25px;flex:0 0 25px}.sl-quick-action span{display:grid;gap:2px}.sl-quick-action strong{font-size:.8rem}.sl-quick-action small{font-size:.69rem;color:var(--sl-muted)}.sl-quick-green{background:#edf9f2;color:#138b53}.sl-quick-blue{background:#eef6ff;color:#176fc3}.sl-quick-purple{background:#f5efff;color:#7445c7}.sl-quick-amber{background:#fff7e8;color:#b8780a}
+
+/* Change Request Overview: strictly compact — no forced height and no dead space below the graph/legend. */
+.sl-admin-request-row { display:grid; grid-template-columns:minmax(300px,390px); justify-content:end; }
+.sl-admin-request-row #sl-dashboard-requests,
+.sl-admin-request-row #sl-dashboard-requests .sl-card-body { height:auto !important; min-height:0 !important; align-self:start !important; }
+.sl-admin-request-row #sl-dashboard-requests .sl-card-body { padding:0 !important; }
+.sl-admin-request-row #sl-dashboard-requests .sl-request-preview { min-height:0 !important; height:auto !important; margin:0 !important; padding:16px 18px 14px !important; grid-template-columns:118px minmax(145px,1fr) !important; grid-template-rows:auto auto !important; align-content:start !important; justify-content:stretch !important; column-gap:16px !important; row-gap:2px !important; }
+.sl-admin-request-row #sl-dashboard-requests .sl-request-donut{grid-column:1;grid-row:1 / span 2;align-self:center}.sl-admin-request-row #sl-dashboard-requests .sl-preview-legend{grid-column:2;grid-row:1;align-self:center;width:100%}.sl-admin-request-row #sl-dashboard-requests .sl-supporting{grid-column:2;grid-row:2;margin:4px 0 0 !important;align-self:start;justify-self:center}
+
+@media(max-width:1150px){.sl-inventory-kpis{grid-template-columns:1fr 1fr}.sl-admin-inventory-grid{grid-template-columns:1fr 1fr}.sl-admin-inventory-grid>#admin-low-stock{grid-column:1/-1}.sl-admin-activity-grid{grid-template-columns:1fr}.sl-admin-request-row{grid-template-columns:1fr}}
+@media(max-width:700px){.sl-inventory-kpis,.sl-admin-inventory-grid{grid-template-columns:1fr}.sl-admin-inventory-grid>#admin-low-stock{grid-column:auto}.sl-dashboard-quick-actions{grid-template-columns:1fr}.sl-reference-empty-chart{grid-template-columns:1fr;justify-items:center}}
+
+/* PATCH V31 — Admin dashboard follows the established ShelfLifeAI dashboard system. */
+.sl-admin-dashboard-v30 > .sl-overview-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .9rem;
+}
+.sl-admin-dashboard-v30 > .sl-overview-cards .sl-overview-card {
+  min-height: 132px;
+}
+.sl-admin-dashboard-v30 .sl-admin-activity-grid-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+@container (max-width: 64rem) {
+  .sl-admin-dashboard-v30 > .sl-overview-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (max-width: 30rem) {
+  .sl-admin-dashboard-v30 > .sl-overview-cards { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* PATCH V32 — Admin inventory analytics use the established ShelfLifeAI dashboard palette and donut language. */
+.sl-admin-dashboard-v30 {
+  --sl-inventory-produce: var(--sl-success);
+  --sl-inventory-meat: var(--sl-brand);
+  --sl-inventory-dairy: var(--sl-attention);
+  --sl-inventory-dry: oklch(72% 0.075 55);
+  --sl-inventory-condiments: oklch(53% 0.045 245);
+  --sl-inventory-others: oklch(55% 0.085 305);
+}
+.sl-inventory-donut { width:124px; height:124px; position:relative; display:grid; place-items:center; }
+.sl-inventory-donut svg { width:100%; height:100%; transform:rotate(-90deg); overflow:visible; }
+.sl-inventory-donut circle { fill:none; stroke-width:6; }
+.sl-inventory-donut-track { stroke:var(--sl-border-subtle); }
+.sl-inventory-donut-segment { stroke-linecap:butt; stroke-dasharray:16.6667 83.3333; }
+.sl-inventory-donut-produce { stroke:var(--sl-inventory-produce); stroke-dashoffset:0; }
+.sl-inventory-donut-meat { stroke:var(--sl-inventory-meat); stroke-dashoffset:-16.6667; }
+.sl-inventory-donut-dairy { stroke:var(--sl-inventory-dairy); stroke-dashoffset:-33.3334; }
+.sl-inventory-donut-dry { stroke:var(--sl-inventory-dry); stroke-dashoffset:-50.0001; }
+.sl-inventory-donut-condiments { stroke:var(--sl-inventory-condiments); stroke-dashoffset:-66.6668; }
+.sl-inventory-donut-others { stroke:var(--sl-inventory-others); stroke-dashoffset:-83.3335; }
+.sl-inventory-donut > span { position:absolute; inset:0; display:grid; place-content:center; text-align:center; line-height:1.08; }
+.sl-inventory-donut strong { font-size:1.35rem; color:var(--sl-text); }
+.sl-inventory-donut small { margin-top:4px; font-size:.72rem; color:var(--sl-muted); }
+.sl-admin-dashboard-v30 .sl-reference-legend span:nth-child(1) i { background:var(--sl-inventory-produce); }
+.sl-admin-dashboard-v30 .sl-reference-legend span:nth-child(2) i { background:var(--sl-inventory-meat); }
+.sl-admin-dashboard-v30 .sl-reference-legend span:nth-child(3) i { background:var(--sl-inventory-dairy); }
+.sl-admin-dashboard-v30 .sl-reference-legend span:nth-child(4) i { background:var(--sl-inventory-dry); }
+.sl-admin-dashboard-v30 .sl-reference-legend span:nth-child(5) i { background:var(--sl-inventory-condiments); }
+.sl-admin-dashboard-v30 .sl-reference-legend span:nth-child(6) i { background:var(--sl-inventory-others); }
+.sl-admin-dashboard-v30 .sl-chart-placeholder-bars { opacity:.72; }
+.sl-admin-dashboard-v30 .sl-chart-placeholder-bars i {
+  background:linear-gradient(to top,
+    var(--sl-success) 0 55%,
+    var(--sl-attention) 55% 75%,
+    var(--sl-critical) 75% 100%);
+}
+
+/* Admin audit overview — uses the established ShelfLifeAI semantic palette and card geometry. */
+.sl-audit-overview { display: grid; gap: var(--sl-space-4); margin-bottom: var(--sl-space-4); }
+.sl-audit-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sl-space-3); }
+.sl-audit-kpi { min-width: 0; min-height: 112px; display: flex; align-items: center; gap: var(--sl-space-3); padding: var(--sl-space-4); border: 1px solid var(--sl-border); border-radius: var(--sl-radius-lg); background: var(--sl-surface); box-shadow: var(--sl-shadow-sm); }
+.sl-audit-kpi-icon { width: 48px; height: 48px; flex: 0 0 48px; display: grid; place-items: center; border-radius: 50%; color: var(--sl-brand); background: var(--sl-brand-light); }
+.sl-audit-kpi > div { min-width: 0; display: grid; gap: 2px; }
+.sl-audit-kpi > div > span, .sl-audit-kpi small { color: var(--sl-muted); font: var(--sl-font-supporting); }
+.sl-audit-kpi strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--sl-text); font: var(--sl-font-numeric); }
+.sl-audit-kpi[data-tone='success'] .sl-audit-kpi-icon { color: var(--sl-success); background: var(--sl-success-bg); }
+.sl-audit-kpi[data-tone='attention'] .sl-audit-kpi-icon { color: var(--sl-attention); background: var(--sl-attention-bg); }
+.sl-audit-kpi[data-tone='critical'] .sl-audit-kpi-icon { color: var(--sl-critical); background: var(--sl-critical-bg); }
+.sl-audit-filter-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; gap: var(--sl-space-3); padding: var(--sl-space-3); border: 1px solid var(--sl-border); border-radius: var(--sl-radius-lg); background: var(--sl-surface); box-shadow: var(--sl-shadow-sm); }
+.sl-audit-filter-strip label { min-width: 0; display: grid; gap: var(--sl-space-1); color: var(--sl-muted); font: var(--sl-font-supporting); font-weight: 600; }
+.sl-audit-filter-strip .sl-admin-input { width: 100%; min-height: 40px; background: var(--sl-surface); }
+.sl-audit-apply { min-height: 40px; padding-inline: var(--sl-space-5); white-space: nowrap; }
+@container (max-width: 62rem) { .sl-audit-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sl-audit-filter-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (max-width: 36rem) { .sl-audit-kpis, .sl-audit-filter-strip { grid-template-columns: minmax(0, 1fr); } .sl-audit-apply { width: 100%; } }
+.sl-audit-fragment, .sl-audit-fragment-body { display: contents; }
+
+/* Admin audit overview — follows the established dashboard KPI dimensions and palette. */
+.sl-audit-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; }
+.sl-audit-kpi { min-height: 132px; height: 132px; padding: var(--sl-space-4); border-top: 3px solid var(--sl-border); }
+.sl-audit-kpi[data-tone='brand'] { border-top-color: var(--sl-brand); }
+.sl-audit-kpi[data-tone='success'] { border-top-color: var(--sl-success); }
+.sl-audit-kpi[data-tone='attention'] { border-top-color: var(--sl-attention); }
+.sl-audit-kpi[data-tone='critical'] { border-top-color: var(--sl-critical); }
+.sl-audit-results-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--sl-space-4); align-items: start; }
+.sl-audit-detail-card { border: 1px solid var(--sl-border); border-radius: var(--sl-radius-lg); background: var(--sl-surface); box-shadow: var(--sl-shadow-sm); overflow: hidden; }
+.sl-audit-detail-header { min-height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 var(--sl-space-4); border-bottom: 1px solid var(--sl-border); }
+.sl-audit-detail-header h2 { margin: 0; font: var(--sl-font-card-title); }
+.sl-audit-detail-empty { min-height: 260px; display: grid; place-items: center; align-content: center; gap: var(--sl-space-2); padding: var(--sl-space-5); text-align: center; color: var(--sl-muted); }
+.sl-audit-detail-event { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: var(--sl-space-3); align-items: center; padding: var(--sl-space-4); }
+.sl-audit-detail-event > div { display: grid; gap: 2px; min-width: 0; }
+.sl-audit-detail-event small, .sl-audit-user small { color: var(--sl-muted); }
+.sl-audit-detail-icon, .sl-audit-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: var(--sl-success-bg); color: var(--sl-success); }
+.sl-audit-detail-section { display: grid; gap: var(--sl-space-2); margin: 0 var(--sl-space-4) var(--sl-space-3); padding: var(--sl-space-3); border-radius: var(--sl-radius-md); background: var(--sl-surface-subtle); }
+.sl-audit-user { display: flex; align-items: center; gap: var(--sl-space-3); }
+.sl-audit-user > div { display: grid; gap: 2px; }
+.sl-audit-detail-list { display: grid; gap: var(--sl-space-2); margin: 0; }
+.sl-audit-detail-list > div { display: grid; grid-template-columns: 82px minmax(0,1fr); gap: var(--sl-space-2); }
+.sl-audit-detail-list dt { color: var(--sl-muted); }
+.sl-audit-detail-list dd { margin: 0; overflow-wrap: anywhere; }
+.sl-audit-clickable-row { cursor: pointer; }
+.sl-audit-clickable-row:hover, .sl-audit-clickable-row:focus-visible { background: var(--sl-brand-subtle); outline: none; }
+.sl-audit-apply.sl-button-secondary { background: var(--sl-surface); color: var(--sl-brand); border-color: var(--sl-brand); }
+.sl-audit-apply.sl-button-secondary:hover { background: var(--sl-brand-subtle); }
+@container (max-width: 72rem) { .sl-audit-results-layout { grid-template-columns: minmax(0, 1fr); } .sl-audit-detail-card { width: 100%; } }
+@container (max-width: 62rem) { .sl-audit-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (max-width: 36rem) { .sl-audit-kpis { grid-template-columns: minmax(0, 1fr); } }
+
+
+/* PATCH V36 — Admin audit consistency: shared Super Admin KPI system and adaptive details panel. */
+.sl-audit-overview > .sl-overview-cards { margin: 0; }
+.sl-audit-results-layout { align-items: stretch; }
+.sl-audit-results-layout > .sl-card,
+.sl-audit-results-layout > .sl-audit-detail-card { height: 100%; min-height: 100%; }
+.sl-audit-detail-card { display: flex; flex-direction: column; align-self: stretch; }
+.sl-audit-detail-empty { flex: 1; min-height: 0; }
+@container (max-width: 72rem) {
+  .sl-audit-results-layout > .sl-audit-detail-card { height: auto; min-height: 0; }
+}
+
+/* PATCH V37 — Admin audit controls use the established ShelfLifeAI tokens. */
+.sl-audit-filter-strip { grid-template-columns: repeat(4, minmax(0, 1fr)) auto; }
+.sl-audit-specific-dates { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sl-space-3); padding: var(--sl-space-3); border: 1px solid var(--sl-border); border-radius: var(--sl-radius-md); background: var(--sl-surface-subtle); }
+.sl-audit-specific-dates label { display: grid; gap: var(--sl-space-1); }
+.sl-audit-table-heading { gap: var(--sl-space-4); flex-wrap: wrap; }
+.sl-audit-table-controls { margin-left: auto; display: flex; align-items: center; gap: var(--sl-space-3); }
+.sl-audit-page-size { display: flex; align-items: center; gap: var(--sl-space-2); color: var(--sl-muted); font: var(--sl-font-supporting); white-space: nowrap; }
+.sl-audit-page-size .sl-admin-input { width: 70px; min-height: 38px; }
+.sl-audit-search { min-width: 210px; min-height: 38px; display: flex; align-items: center; gap: var(--sl-space-2); padding: 0 var(--sl-space-3); border: 1px solid var(--sl-border); border-radius: var(--sl-radius-md); background: var(--sl-surface); color: var(--sl-muted); }
+.sl-audit-search:focus-within { border-color: var(--sl-brand); box-shadow: 0 0 0 2px var(--sl-brand-subtle); }
+.sl-audit-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--sl-text); font: var(--sl-font-body); }
+.sl-audit-search input::placeholder { color: var(--sl-muted); }
+.sl-audit-results-layout .sl-data-table th:nth-child(1) { width: 20%; }
+.sl-audit-results-layout .sl-data-table th:nth-child(2) { width: 20%; }
+.sl-audit-results-layout .sl-data-table th:nth-child(3) { width: 18%; }
+.sl-audit-results-layout .sl-data-table th:nth-child(4) { width: 27%; }
+.sl-audit-results-layout .sl-data-table th:nth-child(5) { width: 15%; }
+@container (max-width: 72rem) {
+  .sl-audit-filter-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sl-audit-apply { width: 100%; }
+}
+@container (max-width: 42rem) {
+  .sl-audit-filter-strip, .sl-audit-specific-dates { grid-template-columns: minmax(0, 1fr); }
+  .sl-audit-table-controls { width: 100%; margin-left: 0; justify-content: space-between; flex-wrap: wrap; }
+  .sl-audit-search { flex: 1 1 190px; }
+}
+
+/* Admin audit controls — established ShelfLifeAI visual system */
+.sl-audit-specific-dates {
+  grid-column: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(112px, 1fr));
+  gap: var(--sl-space-2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.sl-audit-specific-dates .sl-admin-input {
+  min-height: 40px;
+  padding-inline: var(--sl-space-2);
+}
+.sl-audit-table-controls {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+.sl-audit-page-size {
+  flex: 0 0 auto;
+}
+.sl-audit-page-size::before {
+  content: 'Show';
+}
+.sl-audit-page-size { font-size: 0; }
+.sl-audit-page-size::before,
+.sl-audit-page-size select { font-size: var(--sl-font-size-sm, .875rem); }
+.sl-pagination-compact {
+  justify-content: flex-end;
+  padding-top: var(--sl-space-3);
+}
+.sl-pagination-compact .sl-row-actions { margin-left: auto; gap: .35rem; }
+.sl-pagination-compact .sl-button {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 .55rem;
+  border-color: var(--sl-border);
+  background: var(--sl-surface);
+  color: var(--sl-text);
+}
+.sl-pagination-compact .sl-page-number-active {
+  border-color: var(--sl-brand);
+  background: var(--sl-brand);
+  color: var(--sl-on-brand, #fff);
+}
+.sl-pagination-compact .sl-button:hover:not(:disabled):not(.sl-page-number-active) {
+  border-color: var(--sl-brand);
+  background: var(--sl-brand-subtle);
+  color: var(--sl-brand);
+}
+.sl-pagination-compact .sl-pagination-arrow { font-size: 1.1rem; line-height: 1; }
+@container (max-width: 62rem) {
+  .sl-audit-specific-dates { grid-column: 1 / -1; max-width: 420px; }
+}
+@container (max-width: 36rem) {
+  .sl-audit-specific-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; }
+}

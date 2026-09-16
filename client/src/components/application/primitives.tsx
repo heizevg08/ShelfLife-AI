@@ -132,3 +132,28 @@ export function DataState({
     </div>
   );
 }
+
+export function Pagination({ page, pageSize, total, itemLabel, onPageChange, compact = false }: {
+  page: number;
+  pageSize: number;
+  total: number;
+  itemLabel: string;
+  onPageChange: (page: number) => void;
+  compact?: boolean;
+}) {
+  const totalPages = Math.ceil(total / pageSize);
+  const pages = totalPages <= 5
+    ? Array.from({ length: totalPages }, (_, index) => index + 1)
+    : [...new Set([1, page - 1, page, page + 1, totalPages].filter(value => value >= 1 && value <= totalPages))].sort((a, b) => a - b);
+  return <nav className={`sl-table-toolbar sl-pagination${compact ? ' sl-pagination-compact' : ''}`} aria-label={`${itemLabel} pagination`}>
+    {!compact && <span className="sl-supporting">{total} {total === 1 ? itemLabel.replace(/s$/, '') : itemLabel}{totalPages ? ` · Page ${page} of ${totalPages}` : ''}</span>}
+    {totalPages > 0 && <div className="sl-row-actions">
+      <button type="button" className="sl-button sl-pagination-arrow" aria-label="Previous page" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>{compact ? '‹' : 'Previous'}</button>
+      {pages.map((value, index) => <span key={value} className="sl-pagination-page-slot">
+        {index > 0 && value - pages[index - 1] > 1 && <span className="sl-pagination-ellipsis" aria-hidden="true">…</span>}
+        <button type="button" className={`sl-button sl-page-number${value === page ? ' sl-page-number-active' : ''}`} aria-current={value === page ? 'page' : undefined} onClick={() => onPageChange(value)}>{value}</button>
+      </span>)}
+      <button type="button" className="sl-button sl-pagination-arrow" aria-label="Next page" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>{compact ? '›' : 'Next'}</button>
+    </div>}
+  </nav>;
+}

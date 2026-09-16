@@ -3,7 +3,7 @@ import type { SessionUser } from './auth';
 
 export interface Account extends SessionUser { firstName: string; lastName: string; createdAt: string; updatedAt: string }
 export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: string; targetType: string; targetId: string; timestamp: string }
-export interface AuditFilters { actorRole?: SessionUser['role']; action?: 'CREATE' | 'UPDATE' | 'DEACTIVATE' | 'REACTIVATE'; from?: string }
+export interface AuditFilters { actorRole?: SessionUser['role']; action?: 'CREATE' | 'UPDATE' | 'DEACTIVATE' | 'REACTIVATE'; from?: string; to?: string }
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface DashboardSummary { totalUsers: number; activeUsers: number; inactiveUsers: number }
 export type AccountFields = Pick<Account, 'firstName' | 'lastName' | 'email' | 'role'>;
@@ -19,5 +19,6 @@ export const listAuditRecords = (page = 1, pageSize = 25, sortOrder = 'desc', fi
   if (filters.actorRole) query.set('actorRole', filters.actorRole);
   if (filters.action) query.set('action', filters.action);
   if (filters.from) query.set('from', filters.from);
+  if (filters.to) query.set('to', filters.to);
   return apiClient<Page<AuditRecord>>(`/audit-records?${query}`, { signal });
 };
