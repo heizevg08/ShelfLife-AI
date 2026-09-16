@@ -28,8 +28,9 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
       ]);
       return { items: rows.map(account), page: query.page, pageSize: query.pageSize, total };
     },
-    async summary() {
-      const [counts] = await users.aggregate([{ $group: { _id: null, totalUsers: { $sum: 1 }, activeUsers: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } }, inactiveUsers: { $sum: { $cond: [{ $eq: ['$isActive', false] }, 1, 0] } } } }]).exec();
+    async summary(roles = null) {
+      const roleFilter = roles ? { role: { $in: ROLES.filter(role => roles.includes(role)) } } : {};
+      const [counts] = await users.aggregate([{ $match: roleFilter }, { $group: { _id: null, totalUsers: { $sum: 1 }, activeUsers: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } }, inactiveUsers: { $sum: { $cond: [{ $eq: ['$isActive', false] }, 1, 0] } } } }]).exec();
       return { totalUsers: counts?.totalUsers ?? 0, activeUsers: counts?.activeUsers ?? 0, inactiveUsers: counts?.inactiveUsers ?? 0 };
     },
     async audits(query) {

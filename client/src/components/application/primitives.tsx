@@ -1,8 +1,8 @@
 import { CircleDashed, Inbox, LoaderCircle, LockKeyhole, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-export function PageHeader({ eyebrow, title, description }: { eyebrow: string; title: string; description?: string }) {
-  return <header className="sl-page-header"><p className="sl-eyebrow">{eyebrow}</p>
+export function PageHeader({ eyebrow, title, description }: { eyebrow?: string; title: string; description?: string }) {
+  return <header className="sl-page-header">{eyebrow && <p className="sl-eyebrow">{eyebrow}</p>}
     <h1 className="sl-page-title">{title}</h1>{description && <p className="sl-description">{description}</p>}</header>;
 }
 

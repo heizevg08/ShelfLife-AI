@@ -14,6 +14,7 @@ export function administrationRoutes(auth: AuthService, service: AdministrationS
   router.use('/dashboard', authorizeAdministration(['Super Admin']));
   router.use(json({ limit: '100kb' }));
   router.get('/users', actions.list);
+  router.get('/users/summary', actions.summary);
   router.get('/users/:id', actions.get);
   router.post('/users', actions.create);
   router.patch('/users/:id', actions.update);

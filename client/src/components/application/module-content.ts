@@ -25,7 +25,7 @@ export const moduleContent: Partial<Record<ModuleId, ModuleContent>> = {
   },
   InventoryBatches: {
     description: 'Track received stock, remaining quantities and batch expiration.', title: 'Batch inventory',
-    columns: ['Ingredient', 'Batch', 'Remaining quantity', 'Received', 'Expiration', 'Status'],
+    columns: ['Ingredient', 'Batch Code', 'Remaining quantity', 'Received', 'Expiration', 'Status'],
     missing: 'Inventory records are not connected yet. Stock levels and expiration status cannot be confirmed.',
     guide: [{ title: 'Use first · FEFO', text: 'The earliest-expiring eligible batch is prioritised by the inventory service.' }, { title: 'Keep a transaction trail', text: 'Usage and waste are recorded separately. Quantities are not rewritten directly.' }],
   },
@@ -43,7 +43,7 @@ export const moduleContent: Partial<Record<ModuleId, ModuleContent>> = {
   },
   ExpirationMonitoring: {
     description: 'Review approaching expiration and FEFO priority.', title: 'Expiration review',
-    columns: ['Ingredient', 'Batch', 'Remaining quantity', 'Expiration', 'Status', 'FEFO priority'],
+    columns: ['Ingredient', 'Batch Code', 'Remaining quantity', 'Expiration', 'Status', 'FEFO priority'],
     missing: 'Batch expiration data is not connected yet.',
     guide: [{ title: 'Deterministic status', text: 'Expiration status and FEFO ordering come from inventory rules, not AI predictions.' }, { title: 'Act on the batch', text: 'Review the batch before recording usage, waste or a controlled change request.' }],
   },

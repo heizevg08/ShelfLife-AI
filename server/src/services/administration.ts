@@ -19,7 +19,7 @@ export interface AccountTransaction {
 export interface AdministrationStore {
   list(roles: string[] | null, query: PageQuery): Promise<Page<Account>>;
   get(id: string): Promise<Account | null>;
-  summary(): Promise<{ totalUsers: number; activeUsers: number; inactiveUsers: number }>;
+  summary(roles?: string[] | null): Promise<{ totalUsers: number; activeUsers: number; inactiveUsers: number }>;
   audits(query: AuditPageQuery): Promise<Page<AuditRecord>>;
   transaction<T>(work: (tx: AccountTransaction) => Promise<T>): Promise<T>;
 }
@@ -37,7 +37,7 @@ export function createAdministration(store: AdministrationStore) {
       if (!user || !canRead(actor, user)) throw missing();
       return user;
     },
-    summary: () => store.summary(),
+    summary: (actor?: Actor) => store.summary(actor?.role === 'Admin' ? managedRoles(actor.role) : null),
     audits: (query: PageQuery) => store.audits(query),
     async create(actor: Actor, input: AccountInput) {
       if (!managedRoles(actor.role).includes(input.role!)) throw forbidden();

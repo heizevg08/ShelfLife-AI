@@ -17,6 +17,18 @@ export interface SessionUser {
   role: 'Super Admin' | 'Admin' | 'Manager' | 'Inventory Staff';
   isActive: boolean;
 }
+
+// Normalize only known legacy role-label identities. Real personal names remain untouched.
+export function sessionDisplayName(user: Pick<SessionUser, 'name' | 'role'>): string {
+  const name = user.name?.trim();
+  if (user.role === 'Admin' && (!name || name === 'Super Admin')) return 'Admin';
+  if (user.role === 'Super Admin' && (!name || name === 'Admin')) return 'Super Admin';
+  return name || user.role;
+}
+
+export function sessionInitials(user: Pick<SessionUser, 'name' | 'role'>): string {
+  return sessionDisplayName(user).split(/\s+/).filter(Boolean).map(part => part[0]).slice(0, 2).join('').toUpperCase();
+}
 function baseUrl() {
   if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, '');
   if (Platform.OS === 'web') return `http://${typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'localhost' : '127.0.0.1'}:5000`;

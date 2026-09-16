@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AuthRequestError, currentUser, logout as endSession, type SessionUser } from '../../services/auth';
+import { AuthRequestError, currentUser, logout as endSession, sessionDisplayName, sessionInitials, type SessionUser } from '../../services/auth';
 import { getSystemAvailability } from '../../services/system';
 import '../../styles/application.css';
 import { Brand } from './Brand';
@@ -50,7 +50,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const navigationGroups = destinations.reduce<{ label: string; items: typeof destinations }[]>((groups, item) => {
     const group = !user || item.path === dashboardPath ? 'Overview'
       : user.role === 'Super Admin' ? 'Administration'
-      : user.role === 'Admin' ? (['/UserManagement', '/Ingredients'].includes(item.path) ? 'Core data' : 'Oversight')
+      : user.role === 'Admin' ? (item.path === '/UserManagement' ? 'User management' : ['/Ingredients', '/InventoryBatches'].includes(item.path) ? 'Core data' : 'Oversight')
       : user.role === 'Manager' ? (item.path === '/InventoryBatches' ? 'Inventory' : ['/UsageWaste', '/ChangeRequests'].includes(item.path) ? 'Operations' : 'Intelligence')
       : ['/InventoryBatches', '/StockIn'].includes(item.path) ? 'Inventory' : ['/Usage', '/Waste'].includes(item.path) ? 'Records' : 'Follow-up';
     const existing = groups.find(entry => entry.label === group);
@@ -109,6 +109,11 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
       /* Preference storage is optional */
     }
   }, []);
+
+  useEffect(() => {
+    // Admin navigation is intentionally expanded by default so the canonical labels remain visible.
+    if (user?.role === 'Admin') setCollapsed(false);
+  }, [user?.role]);
 
   useEffect(() => {
     if (!accountOpen || confirmLogout) return;
@@ -493,12 +498,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
                 onClick={() => { accountHover.cancel(); setNotificationsOpen(false); setAccountOpen(value => !value); }}
               >
                 <span className="sl-avatar sl-account-avatar" aria-hidden="true">
-                  {user.name
-                    .split(/\s+/)
-                    .map(part => part[0])
-                    .slice(0, 2)
-                    .join('')
-                    .toUpperCase()}
+                  {sessionInitials(user)}
                 </span>
                 <ChevronDown size={14} aria-hidden="true" className="sl-account-chevron" />
               </button>
@@ -507,15 +507,10 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
                 <section id="sl-account-panel" className="sl-account-panel" aria-label="Account details">
                   <div className="sl-account-panel-header">
                     <span className="sl-avatar sl-avatar-lg" aria-hidden="true">
-                      {user.name
-                        .split(/\s+/)
-                        .map(part => part[0])
-                        .slice(0, 2)
-                        .join('')
-                        .toUpperCase()}
+                      {sessionInitials(user)}
                     </span>
                     <div className="sl-account-panel-info">
-                      <p className="sl-account-panel-name">{user.name}</p>
+                      <p className="sl-account-panel-name">{sessionDisplayName(user)}</p>
                       <p className="sl-account-panel-email">{user.email}</p>
                     </div>
                   </div>

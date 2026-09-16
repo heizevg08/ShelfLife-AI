@@ -17,7 +17,7 @@ export const modules = {
   ExpirationMonitoring: { label: 'Expiration Monitoring', Icon: Clock, roles: ['Manager', 'Inventory Staff'] },
   ChangeRequests: { label: 'Change Requests', Icon: ListChecks, roles: ['Super Admin', 'Manager', 'Inventory Staff'] },
   Forecasting: { label: 'Forecasting & Expiration Risk', Icon: ChartNoAxesCombined, roles: ['Manager'] },
-  Alerts: { label: 'Alerts', Icon: Bell, roles: ['Super Admin', 'Manager', 'Inventory Staff'] },
+  Alerts: { label: 'Alerts', Icon: Bell, roles: ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] },
   Reports: { label: 'Reports & Analytics', Icon: ChartNoAxesCombined, roles: ['Super Admin', 'Admin', 'Manager'] },
   AdministrativeAudit: { label: 'Audit Logs', Icon: ScrollText, roles: ['Super Admin', 'Admin'] },
   Roles: { label: 'Role responsibilities', Icon: Users, roles: ['Super Admin', 'Admin'] },
@@ -41,7 +41,7 @@ export const canonicalWorkspaceAccess = {
   '/ExpirationMonitoring': ['Manager', 'Inventory Staff'],
   '/ChangeRequests': ['Manager', 'Inventory Staff'],
   '/Forecasting': ['Manager'],
-  '/Alerts': ['Manager'],
+  '/Alerts': ['Admin', 'Manager'],
   '/Reports': ['Admin', 'Manager'],
   '/AdministrativeAudit': ['Super Admin', 'Admin'],
   '/Roles': ['Super Admin', 'Admin'],
@@ -57,7 +57,7 @@ export function workspaceNavigation(role: WorkspaceRole) {
   return navigation[role].map(id => ({
     ...modules[id],
     path: `/${id}`,
-    label: role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
+    label: role === 'Admin' && id === 'UserManagement' ? 'Users' : role === 'Admin' && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
   }));
 }
 export function canOpenWorkspacePath(role: WorkspaceRole, pathname: string) {

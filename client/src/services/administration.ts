@@ -12,6 +12,7 @@ export const getAccount = (id: string) => apiClient<{ user: Account }>(`/users/$
 export const createAccount = (fields: AccountFields & { password: string }) => apiClient<{ user: Account }>('/users', { method: 'POST', body: JSON.stringify(fields) });
 export const updateAccount = (id: string, fields: AccountFields) => apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(fields) });
 export const setAccountActive = (id: string, active: boolean) => apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}/${active ? 'reactivate' : 'deactivate'}`, { method: 'POST' });
+export const accountSummary = (signal?: AbortSignal) => apiClient<DashboardSummary>('/users/summary', { signal });
 export const dashboardSummary = (signal?: AbortSignal) => apiClient<DashboardSummary>('/dashboard/summary', { signal });
 export const listAuditRecords = (page = 1, pageSize = 25, sortOrder = 'desc', filters: AuditFilters = {}, signal?: AbortSignal) => {
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize), sortBy: 'timestamp', sortOrder });

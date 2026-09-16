@@ -1981,3 +1981,148 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   .sl-add-user-dialog > .sl-dialog-content { padding-inline: 16px !important; }
   .sl-add-user-dialog .sl-dialog-form-actions { margin-inline: -16px; padding-inline: 16px; }
 }
+
+
+/* ===== PATCH V15 follow-up: account action reference + edit-modal parity ===== */
+/* User-directory actions follow the supplied View / Edit / Deactivate reference. */
+.sl-data-table .sl-account-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+}
+.sl-data-table .sl-account-action {
+  min-width: 104px;
+  min-height: 38px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  gap: 7px;
+  font-weight: 600;
+  background: var(--sl-surface);
+}
+.sl-data-table .sl-account-action-view { border-color: var(--sl-border); color: var(--sl-text); }
+.sl-data-table .sl-account-action-edit { border-color: color-mix(in srgb, var(--sl-brand) 38%, var(--sl-border)); color: var(--sl-text); }
+.sl-data-table .sl-account-action-edit svg { color: var(--sl-brand); }
+.sl-data-table .sl-account-action-deactivate {
+  border-color: #b95359;
+  color: #a83e45;
+  background: #fff8f7;
+}
+.sl-data-table .sl-account-action-deactivate:hover:not(:disabled) { background: #fbeceb; border-color: #a8464d; }
+.sl-data-table .sl-account-action-reactivate { border-color: var(--sl-success); color: var(--sl-success); background: var(--sl-brand-light); }
+
+/* Edit User Account intentionally inherits the exact Add User Account shell/form geometry. */
+.sl-account-reference-dialog .sl-account-dialog-heading { display: grid; grid-template-columns: 40px 1fr; align-items: center; column-gap: 16px; width: 100%; }
+.sl-account-reference-dialog .sl-account-dialog-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; color: var(--sl-brand); background: var(--sl-brand-light); }
+.sl-account-reference-dialog .sl-account-dialog-heading > span:last-child { display: grid; gap: 3px; }
+.sl-account-reference-dialog .sl-account-dialog-title { font-size: 1.08rem; font-weight: 700; line-height: 1.25; color: var(--sl-text); }
+.sl-account-reference-dialog .sl-account-dialog-heading small { font-size: .82rem; line-height: 1.35; font-weight: 400; color: var(--sl-muted); }
+
+@media (max-width: 760px) {
+  .sl-data-table .sl-account-actions { flex-wrap: wrap; width: 100%; }
+  .sl-data-table .sl-account-action { min-width: 92px; flex: 1 1 92px; }
+}
+
+/* PATCH V17 — Admin workspace follows the Super Admin visual system while retaining role-specific information architecture. */
+.sl-admin-dashboard-v17 { gap: 1rem; }
+.sl-admin-insight-grid { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(15rem,.85fr) minmax(15rem,.9fr); gap:.9rem; align-items:stretch; }
+.sl-admin-insight-grid > .sl-card { min-width:0; height:100%; }
+.sl-admin-insight-grid .sl-card-body { height:100%; }
+.sl-admin-performance { min-height:245px; padding:1rem; display:grid; grid-template-columns:minmax(0,1fr) 64px; gap:.75rem 1rem; align-content:center; }
+.sl-admin-performance > div:not(.sl-admin-performance-ring):not(.sl-admin-performance-rule) { display:grid; gap:.3rem; }
+.sl-admin-performance strong { font-size:1.65rem; line-height:1.1; color:var(--sl-text); }
+.sl-admin-performance-ring { width:54px; height:54px; border-radius:50%; border:6px solid var(--sl-success); border-top-color:var(--sl-border-subtle); }
+.sl-admin-performance-rule { grid-column:1/-1; height:1px; background:var(--sl-border-subtle); }
+.sl-admin-request-preview { min-height:245px; align-content:center; }
+.sl-analytics-card-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:.75rem; }
+.sl-analytics-chip { flex:0 0 auto; padding:.25rem .55rem; border-radius:999px; font-size:.72rem; font-weight:700; }
+.sl-analytics-chip-success { color:var(--sl-success); background:var(--sl-success-subtle); }
+.sl-analytics-chip-critical { color:var(--sl-critical); background:var(--sl-critical-subtle); }
+.sl-analytics-value { display:block; margin-top:1.2rem; font-size:1.75rem; line-height:1; }
+.sl-analytics-saving { display:block; margin-top:1rem; color:var(--sl-success); font-weight:650; font-size:.82rem; }
+.sl-week-bars { height:92px; display:flex; align-items:flex-end; gap:.45rem; margin-top:1.1rem; }
+.sl-week-bars i { flex:1; min-width:0; background:var(--sl-freshness); border-radius:.25rem .25rem 0 0; opacity:.82; }
+.sl-week-bars i:nth-child(3) { background:var(--sl-brand); opacity:.62; }
+.sl-week-labels { display:grid; grid-template-columns:repeat(7,1fr); gap:.45rem; text-align:center; margin-top:.4rem; color:var(--sl-muted); font-size:.72rem; }
+.sl-forecast-mini-bars { height:58px; display:flex; align-items:flex-end; gap:.3rem; margin-top:1.2rem; width:58px; }
+.sl-forecast-mini-bars i { width:7px; background:var(--sl-freshness); border-radius:2px 2px 0 0; }
+@media (max-width:1200px) { .sl-admin-insight-grid { grid-template-columns:minmax(0,1fr) minmax(14rem,.8fr); } .sl-admin-insight-grid > :first-child { grid-column:1/-1; } }
+@media (max-width:800px) { .sl-admin-insight-grid { grid-template-columns:minmax(0,1fr); } .sl-admin-insight-grid > :first-child { grid-column:auto; } }
+
+/* PATCH V18 — Admin dashboard source-of-truth alignment */
+.sl-admin-dashboard-v17 .sl-admin-insight-grid { grid-template-columns: minmax(0, 1.65fr) minmax(18rem, .85fr); }
+@media (max-width: 1000px) { .sl-admin-dashboard-v17 .sl-admin-insight-grid { grid-template-columns: minmax(0, 1fr); } }
+
+
+/* ===== PATCH V19 — cross-role dashboard hierarchy + Admin reference parity ===== */
+.sl-dashboard-description { margin: -.25rem 0 .85rem; color: var(--sl-muted); font: var(--sl-font-supporting); }
+/* Admin Recent Audit Logs uses the same primary/secondary width ratio as Reports > Weekly Waste Cost. */
+.sl-admin-dashboard-v17 .sl-admin-insight-grid { grid-template-columns: minmax(0, 2.1fr) minmax(20rem, .68fr); }
+
+/* Ingredients Master Data follows the approved Admin reference without fabricating ingredient records. */
+.sl-ingredients-master-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; }
+.sl-ingredients-master-heading .sl-page-header { margin-bottom:0; }
+.sl-ingredients-master-tools { display:flex; align-items:center; gap:.75rem; padding-bottom:.15rem; }
+.sl-ingredients-master-tools .sl-directory-search { width:16.5rem; }
+.sl-ingredients-master-view { gap:.85rem; }
+.sl-ingredients-master-table { overflow:hidden; border:1px solid var(--sl-border); border-radius:var(--sl-radius-lg); background:var(--sl-surface); box-shadow:var(--sl-shadow-sm); }
+.sl-ingredients-master-table .sl-table-scroll { border:0; }
+.sl-ingredients-master-table .sl-data-table { min-width:72rem; }
+.sl-ingredients-master-table .sl-data-table th { font-size:.72rem; letter-spacing:.045em; text-transform:uppercase; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(1) { width:16%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(2) { width:13%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(3) { width:12%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(4) { width:8%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(5) { width:9%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(6) { width:10%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(7) { width:10%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(8) { width:12%; }
+.sl-ingredients-master-table .sl-data-table th:nth-child(9) { width:10%; }
+.sl-ingredients-master-footer { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.sl-page-number { min-width:36px; }
+@media (max-width:1000px) { .sl-admin-dashboard-v17 .sl-admin-insight-grid { grid-template-columns:1fr; } .sl-ingredients-master-heading { align-items:stretch; flex-direction:column; } .sl-ingredients-master-tools { padding-bottom:0; } }
+@media (max-width:620px) { .sl-ingredients-master-tools { align-items:stretch; flex-direction:column; } .sl-ingredients-master-tools .sl-directory-search { width:100%; } }
+
+/* ===== PATCH V20 — Admin parity, inventory terminology, connected-state controls ===== */
+/* User directory must fit the desktop panel like the Super Admin reference — no internal horizontal scrollbar. */
+.sl-user-management-panel .sl-table-scroll { overflow-x: hidden; }
+.sl-user-management-panel .sl-data-table { min-width: 0; width: 100%; table-layout: fixed; }
+.sl-user-management-panel .sl-data-table th:nth-child(1) { width: 23%; }
+.sl-user-management-panel .sl-data-table th:nth-child(2) { width: 24%; }
+.sl-user-management-panel .sl-data-table th:nth-child(3) { width: 15%; }
+.sl-user-management-panel .sl-data-table th:nth-child(4) { width: 12%; }
+.sl-user-management-panel .sl-data-table th:nth-child(5) { width: 26%; }
+.sl-user-management-panel .sl-account-actions { justify-content: center; gap: .45rem; flex-wrap: nowrap; }
+.sl-user-management-panel .sl-account-action { padding-inline: .65rem; white-space: nowrap; }
+
+/* Ingredient reference: retain the approved repository layout but expose the controls instead of disabled preview UI. */
+.sl-ingredients-master-tools { flex-wrap: wrap; justify-content: flex-end; }
+.sl-ingredients-master-tools .sl-button { white-space: nowrap; }
+
+@media (max-width: 1050px) {
+  .sl-user-management-panel .sl-table-scroll { overflow-x: auto; }
+  .sl-user-management-panel .sl-data-table { min-width: 760px; }
+}
+
+/* ===== PATCH V21 — Admin Change Requests density, live ingredient controls, unified pagination ===== */
+#admin-change-requests .sl-card-body { display:flex; align-items:center; }
+#admin-change-requests .sl-admin-request-preview { min-height:0; width:100%; padding:.45rem 1rem .75rem; align-content:center; row-gap:.35rem; }
+#admin-change-requests .sl-request-donut { align-self:center; }
+#admin-change-requests .sl-preview-legend { align-self:center; }
+#admin-change-requests .sl-admin-request-preview > .sl-supporting { margin-top:.1rem; }
+.sl-filter-menu { position:relative; }
+.sl-filter-popover { position:absolute; z-index:30; top:calc(100% + .4rem); right:0; width:12rem; padding:.35rem; border:1px solid var(--sl-border); border-radius:var(--sl-radius-md); background:var(--sl-surface); box-shadow:var(--sl-shadow-md); display:grid; }
+.sl-filter-popover button { border:0; background:transparent; border-radius:.45rem; padding:.55rem .65rem; text-align:left; color:var(--sl-text); cursor:pointer; }
+.sl-filter-popover button:hover, .sl-filter-popover button[aria-checked="true"] { background:var(--sl-brand-light); color:var(--sl-brand); }
+.sl-live-ingredient-form { padding:0; }
+.sl-live-ingredient-form .sl-form-grid { margin:0; }
+.sl-live-ingredient-form select.sl-admin-input { appearance:auto; }
+.sl-inline-notice-error { color:var(--sl-critical); background:var(--sl-critical-subtle); }
+.sl-system-pagination { display:flex; justify-content:flex-end; align-items:center; gap:.45rem; }
+.sl-page-number-active { background:var(--sl-brand) !important; border-color:var(--sl-brand) !important; color:#fff !important; }
+/* One pagination language across Super Admin, Admin, Manager, and Inventory Staff pages. */
+.sl-pagination .sl-row-actions, .sl-preview-pagination .sl-row-actions { gap:.45rem; }
+.sl-pagination .sl-button, .sl-preview-pagination .sl-button, .sl-system-pagination .sl-button { min-height:36px; border-radius:.55rem; }
+.sl-pagination .sl-button:disabled, .sl-preview-pagination .sl-button:disabled, .sl-system-pagination .sl-button:disabled { opacity:.5; cursor:not-allowed; }

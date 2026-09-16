@@ -13,7 +13,7 @@ export function administrationControllers(service: AdministrationService): Recor
     create: async (req, res) => { res.status(201).json({ user: await service.create(res.locals.user, accountInput(req.body, true)) }); },
     update: async (req, res) => { res.json({ user: await service.update(res.locals.user, objectId(req.params.id), accountInput(req.body, false)) }); },
     deactivate: lifecycle(false), reactivate: lifecycle(true),
-    summary: async (_req, res) => { res.json(await service.summary()); },
+    summary: async (_req, res) => { res.json(await service.summary(res.locals.user)); },
     audit: async (req, res) => { res.json(await service.audits(auditPagination(req.query))); },
   };
 }

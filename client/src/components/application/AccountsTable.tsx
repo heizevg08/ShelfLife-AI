@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Search, UserPlus } from 'lucide-react';
+import { Ban, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { createAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
@@ -176,7 +176,7 @@ export function AccountsTable() {
             <option value="createdAt">Newest</option><option value="email">Email</option><option value="lastName">Last name</option><option value="role">Role</option>
           </select>
         </label>
-        <button className="sl-button sl-button-primary" disabled={busy} onClick={() => { setMode('create'); setAssignedRole(superAdmin ? 'Admin' : 'Manager'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage(''); }}>{superAdmin ? '+ Add User' : 'Create account'}</button>
+        <button className="sl-button sl-button-primary" disabled={busy} onClick={() => { setMode('create'); setAssignedRole(superAdmin ? 'Admin' : 'Manager'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage(''); }}>{'+ Add User'}</button>
       </div>
     </div>
     {message && <p className="sl-section-note" role="status">{message}</p>}
@@ -188,7 +188,7 @@ export function AccountsTable() {
         : !visibleAccounts.length ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="empty" title="No matching accounts" description="Try another search term." /></td></tr>
         : visibleAccounts.map(account => <tr key={account.id}>
           <td>{account.name}</td><td>{account.email}</td><td>{account.role}</td><td><Status tone={account.isActive ? 'success' : 'neutral'}>{account.isActive ? 'Active' : 'Inactive'}</Status></td>
-          <td><div className="sl-row-actions"><button className="sl-button" disabled={busy} aria-label={`View ${account.name}`} onClick={() => open(account, 'view')}>View</button>{mayManage(account) && <><button className="sl-button" disabled={busy} aria-label={`Edit ${account.name}`} onClick={() => open(account, 'edit')}>Edit</button><button className="sl-button" disabled={busy} aria-label={`${account.isActive ? 'Deactivate' : 'Reactivate'} ${account.name}`} onClick={() => open(account, 'lifecycle')}>{account.isActive ? 'Deactivate' : 'Reactivate'}</button></>}</div></td>
+          <td><div className="sl-row-actions sl-account-actions"><button className="sl-button sl-account-action sl-account-action-view" disabled={busy} aria-label={`View ${account.name}`} onClick={() => open(account, 'view')}><Eye size={15} aria-hidden="true" />View</button>{mayManage(account) && <><button className="sl-button sl-account-action sl-account-action-edit" disabled={busy} aria-label={`Edit ${account.name}`} onClick={() => open(account, 'edit')}><Pencil size={15} aria-hidden="true" />Edit</button><button className={`sl-button sl-account-action ${account.isActive ? 'sl-account-action-deactivate' : 'sl-account-action-reactivate'}`} disabled={busy} aria-label={`${account.isActive ? 'Deactivate' : 'Reactivate'} ${account.name}`} onClick={() => open(account, 'lifecycle')}>{account.isActive ? <Ban size={15} aria-hidden="true" /> : <RotateCcw size={15} aria-hidden="true" />}{account.isActive ? 'Deactivate' : 'Reactivate'}</button></>}</div></td>
         </tr>)}
       </tbody></table>
     </div>
@@ -196,12 +196,14 @@ export function AccountsTable() {
 
     <Dialog
       open={mode === 'create' || mode === 'edit'}
-      title={mode === 'create' && superAdmin
+      title={mode === 'create'
         ? <span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><UserPlus size={21} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Add User Account</span><small>Create a new account and assign their role.</small></span></span>
-        : mode === 'create' ? 'Create account' : 'Edit account'}
+        : mode === 'edit'
+          ? <span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Pencil size={20} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Edit User Account</span><small>Update account details and assigned role.</small></span></span>
+          : 'Create account'}
       onDismiss={close}
       busy={busy}
-      className={mode === 'create' && superAdmin ? 'sl-add-user-dialog' : ''}
+      className={mode === 'create' || mode === 'edit' ? 'sl-add-user-dialog sl-account-reference-dialog' : ''}
     >
       <form className="sl-admin-form sl-account-form" onSubmit={save} noValidate>
         <div className="sl-form-grid">
@@ -218,8 +220,7 @@ export function AccountsTable() {
                 maxLength={key === 'firstName' || key === 'lastName' ? NAME_LIMIT : undefined}
                 aria-invalid={touched[key] && !!errors[key] ? true : undefined}
                 aria-describedby={[touched[key] && errors[key] ? `admin-${key}-error` : '', key === 'password' ? 'admin-password-help' : ''].filter(Boolean).join(' ') || undefined}
-                placeholder={key === 'firstName' ? 'Jamie' : key === 'lastName' ? 'Rivera' : key === 'password' ? 'Temporary Password' : undefined}
-                onBlur={() => { setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, fields[key]) })); }}
+                                onBlur={() => { setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, fields[key]) })); }}
                 onChange={event => { const value = event.target.value; setFields({ ...fields, [key]: value }); setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, value), form: '' })); }}
               />
               {key === 'password' && <button className="sl-password-toggle" type="button" disabled={busy} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-controls="admin-password" onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}</button>}
