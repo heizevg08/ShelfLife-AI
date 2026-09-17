@@ -8,6 +8,50 @@
 > **Authority:** This file is the highest project reference. Explicit team decisions made after this version may amend it; the current repository architecture and established contracts govern implementation details where this file intentionally leaves them open. Older ShelfLifeAI documents are subordinate where they conflict with this Master.\
 > **Important:** Items explicitly marked **OPEN / PENDING** are not to be treated as finalized requirements until the group/professor approves them.
 
+## Latest Role-Authority Amendment — 2026-09-17 — SUPER ADMIN SYSTEM-WIDE OVERSIGHT
+
+This amendment is the newest and authoritative definition of the Super Admin
+role. It supersedes every narrower statement elsewhere in this document that
+limits Super Admin to security, configuration, audit access, or Admin-account
+management alone. The four canonical roles remain exactly **Super Admin**,
+**Admin**, **Manager**, and **Inventory Staff**.
+
+**Super Admin** is the highest-privileged ShelfLife AI application role, with
+system-wide access, visibility, administration, and oversight. Super Admin may
+access all major system domains, users, roles and permissions, records,
+analytics, security controls, and implemented configuration. This includes
+Ingredients/master data, Inventory Batches, Usage Records, Waste Records,
+Change Requests, deterministic expiration and FEFO information, forecasting,
+alerts, Reports & Analytics, forecast-versus-actual and accuracy information
+where implemented, Audit Records, and security/system administration.
+
+System-wide authority does not make Super Admin the normal operator of every
+workflow. Admin remains the primary owner of establishment administration,
+authorized subordinate-account management, Ingredient/master-data
+administration, and administrative records. Manager remains the primary owner
+of inventory oversight, forecasting, alerts, analytics, reports, and
+operational decision-making. Inventory Staff remains the primary owner of
+stock-in, usage, waste, FEFO execution, and other day-to-day inventory work.
+Super Admin enters these domains for oversight, administration, investigation,
+support, or exceptional intervention.
+
+Super Admin intervention remains controlled application behavior. It must not
+bypass authentication, MFA requirements, RBAC, input validation, confirmation
+for sensitive or destructive actions, secure session handling, or audit
+logging. Application-level Super Admin is not unrestricted database/root
+access. Authorization must distinguish **view**, **create**, **update**,
+**delete**, **approve**, **administer**, and **override/intervene** instead of
+granting every write operation merely because system-wide visibility exists.
+
+The Super Admin dashboard and navigation must therefore represent system-wide
+oversight. They may include truthful summaries and access points for system
+health and administration, inventory health, critical/expiring inventory,
+alerts and exceptions, forecasting performance, waste/risk trends, security,
+and audit activity. Unimplemented services must retain honest unavailable
+states; no operational value may be fabricated. These oversight surfaces must
+not replace the role-specific dashboards or routine workflows of Admin,
+Manager, and Inventory Staff.
+
 ## Latest Architectural Amendment — 2026-09-16 — PRE-VITE CHECKPOINT
 
 This amendment is the newest and authoritative frontend architecture decision.
@@ -47,11 +91,12 @@ pixel parity with any external reference.
 
 ### Open migration-resolution items
 
-- The approved Super Admin visual sidebar still presents legacy destinations
-  that do not fully match the canonical authorization/navigation policy. Do not
-  change the current sidebar or grant Super Admin additional permissions merely
-  because a legacy visible link exists. The final Vite navigation must reconcile
-  presentation with approved capabilities without silently expanding RBAC.
+- The approved Super Admin visual sidebar is an interim pre-migration
+  presentation. The final Vite navigation must preserve its approved visual
+  language while adding reviewed access to major system domains under the
+  system-wide Super Admin authority defined by the 2026-09-17 amendment.
+  Navigation visibility must remain backed by explicit frontend and backend
+  authorization; a visible link alone never grants an operation.
 - The development Admin account has canonical role `Admin` but currently displays
   the name `Super Admin`. This is a non-blocking development-data cleanup
   observation; no Atlas record is changed by this checkpoint.
@@ -616,13 +661,21 @@ Older drafts containing Kitchen Staff are outdated.
 
 Purpose:
 
--   System-wide administration
--   Security controls
--   Admin account management
--   System configuration
--   Protected audit/security access
+-   Highest application-level authority and system-wide visibility
+-   System-wide administration, oversight, investigation, and support
+-   Users, roles/permissions, Admin accounts, security, and configuration
+-   Access to operational records, inventory/expiry/FEFO information,
+    forecasting, alerts, reports, analytics, and protected audit information
+-   Controlled and auditable exceptional intervention where authorized
+-   Oversight without replacing the normal workflow ownership of Admin,
+    Manager, or Inventory Staff
 
-Sidebar:
+The current pre-Vite sidebar is an approved interim visual baseline. The target
+information architecture must provide Super Admin access to the major ShelfLife
+AI domains listed in the latest role-authority amendment. Exact grouping and
+milestone timing may evolve without weakening backend authorization.
+
+Core administration destinations include:
 
 ``` text
 Dashboard
@@ -630,6 +683,10 @@ Admin Accounts
 System Settings
 Security & Activity
 ```
+
+Operational oversight destinations must also include, as their implementations
+become available, Ingredients, Inventory Batches, Usage, Waste, Change
+Requests, Expiration/FEFO, Forecasting, Alerts, and Reports & Analytics.
 
 ### Admin
 
@@ -1935,7 +1992,9 @@ Security rules:
 - Ordinary users must never receive a generic full-database dump.
 - Sensitive audit exports require stronger authorization.
 - Export actions should themselves create Audit Records where applicable.
-- Super Admin does not gain a separate Reports sidebar merely because contextual security/audit export may exist.
+- Super Admin may access Reports & Analytics for system-wide oversight. Report
+  and audit exports remain separately RBAC-controlled, and sensitive exports
+  require stronger authorization and appropriate audit records.
 
 ------------------------------------------------------------------------
 
@@ -2701,7 +2760,8 @@ Known stale concepts in older materials include, among others:
 - a mandatory `forecasts` collection
 - outdated role/dashboard ownership
 - multi-branch material from older proposals
-- Super Admin Reports as a separate sidebar module
+- restrictive Super Admin navigation that omits system-wide operational and
+  analytics oversight
 
 When an older document conflicts with this Master, this Master wins. Do not silently merge contradictory requirements.
 
@@ -3046,7 +3106,8 @@ The finalized role-specific questions are:
 
 Super Admin
 
-“Is the system secure and operating properly?”
+“Is the system secure, operating properly, and requiring system-wide
+administrative or operational intervention?”
 
 Admin
 
@@ -3067,15 +3128,23 @@ The original finalized specification already establishes that every role lands o
 ## 2. SUPER ADMIN DASHBOARD
 Primary Purpose
 
-The Super Admin Dashboard is the system-wide administrative, security, and operational-health overview of ShelfLifeAI.
+The Super Admin Dashboard is the system-wide administrative, security,
+operational-health, and intelligence overview of ShelfLifeAI.
 
 It answers:
 
-“Is the system secure and operating properly?”
+“Is the system secure, operating properly, and requiring system-wide
+administrative or operational intervention?”
 
-The Super Admin is concerned primarily with the ShelfLifeAI platform itself—not day-to-day restaurant inventory operations.
+The Super Admin oversees the ShelfLifeAI platform and the system-wide condition
+of its operational domains. Routine restaurant inventory work remains assigned
+to its normal roles, but Super Admin must not be blocked from truthful
+operational summaries, records, investigation, or authorized intervention.
 
-The finalized dashboard definition identifies system status, administrator accounts, active users/sessions, security events, recent audit activity, and system activity as the information this role should see.
+The dashboard may combine system status, administrator accounts, active
+users/sessions, security events, recent audit activity, inventory health,
+critical expiration/stock alerts, exception states, forecasting performance,
+and waste/risk trends where real backend data exists.
 
 Dashboard Content
 
@@ -3130,18 +3199,15 @@ Recent system-level activity relevant to Super Admin oversight may be displayed 
 
 Boundary
 
-The Super Admin Dashboard must not become a Manager inventory dashboard.
-
-It should not prioritize:
-
-predicted ingredient consumption;
-expiration-risk forecasts;
-FEFO operational recommendations;
-today's ingredient usage;
-today's ingredient waste;
-Stock-In actions.
-
-Those responsibilities belong to operational roles.
+The Super Admin Dashboard must present these domains as system-wide oversight,
+not as a copy of the Manager or Inventory Staff task dashboard. It may show
+high-level predicted consumption, forecast accuracy/versus-actual information,
+expiration/overstock/shortage risk, FEFO status, usage/waste trends, and
+critical inventory exceptions where implemented. Routine Stock-In, usage, and
+waste actions remain owned by Inventory Staff; routine forecast decisions and
+operational follow-up remain owned by Manager. Exceptional Super Admin actions
+must use explicit authorization, confirmation where sensitive, and audit
+logging.
 
 ## 3. ADMIN DASHBOARD
 Primary Purpose
@@ -3367,31 +3433,34 @@ The following mapping is the authoritative UI ownership/reference for ShelfLifeA
 | System Settings                   | Super Admin                                       |
 | Security & Activity               | Super Admin                                       |
 | Protected System Audit Oversight  | Super Admin                                       |
-| User Management                   | Admin                                             |
-| Ingredient Management             | Admin                                             |
-| Administrative Inventory Overview | Admin                                             |
-| Administrative Audit Logs         | Admin                                             |
-| Authorized Administrative Reports | Admin                                             |
-| Inventory Monitoring              | Manager / Inventory Staff according to permission |
-| Inventory Batch Operations        | Inventory Staff; Manager monitoring               |
-| Stock-In                          | Inventory Staff                                   |
-| Usage Recording                   | Inventory Staff                                   |
-| Waste Recording                   | Inventory Staff                                   |
+| User Management                   | Admin primary; Super Admin system-wide administration |
+| Ingredient Management             | Admin primary; Super Admin oversight/intervention |
+| Administrative Inventory Overview | Admin primary; Super Admin system-wide visibility |
+| Administrative Audit Logs         | Admin authorized scope; Super Admin system-wide oversight |
+| Authorized Administrative Reports | Admin authorized scope; Super Admin system-wide oversight |
+| Inventory Monitoring              | Manager / Inventory Staff primary; Super Admin visibility |
+| Inventory Batch Operations        | Inventory Staff primary; Manager monitoring; Super Admin controlled intervention |
+| Stock-In                          | Inventory Staff primary; Super Admin visibility/controlled intervention where authorized |
+| Usage Recording                   | Inventory Staff primary; Super Admin controlled intervention where authorized |
+| Waste Recording                   | Inventory Staff primary; Super Admin controlled intervention where authorized |
 | My Change Requests                | Inventory Staff                                   |
-| Change Request Review             | Manager                                           |
-| FEFO Monitoring / Priority        | Manager / Inventory Staff                         |
-| Expiration Monitoring             | Manager / Inventory Staff                         |
-| Low-Stock Monitoring              | Manager / Inventory Staff                         |
-| AI-Assisted Forecasting           | Manager                                           |
-| Expiration/Inventory Risk         | Manager                                           |
-| Recommended Actions               | Manager                                           |
-| Alerts                            | Manager                                           |
-| Reports & Analytics               | Manager                                           |
+| Change Request Review             | Manager primary; Super Admin authorized oversight/intervention |
+| FEFO Monitoring / Priority        | Manager / Inventory Staff primary; Super Admin visibility |
+| Expiration Monitoring             | Manager / Inventory Staff primary; Super Admin visibility |
+| Low-Stock Monitoring              | Manager / Inventory Staff primary; Super Admin visibility |
+| AI-Assisted Forecasting           | Manager primary; Super Admin visibility/oversight |
+| Expiration/Inventory Risk         | Manager primary; Super Admin visibility/oversight |
+| Recommended Actions               | Manager primary; Super Admin visibility/oversight |
+| Alerts                            | Manager primary; Super Admin system-wide visibility |
+| Reports & Analytics               | Manager primary; Admin authorized scope; Super Admin system-wide access |
 | Export                            | Authorized report/audit roles only                |
 | Profile                           | All authenticated roles                           |
 | Logout                            | All authenticated roles                           |
 
-This matrix refines the earlier finalized mapping that places Ingredient Management under Admin, Stock-In/Usage/Waste under Inventory Staff, forecasting and analytics under Manager, audit records under Admin/Super Admin, and system administration under Super Admin.
+This matrix separates normal workflow ownership from authority. Ingredient
+Management remains primarily under Admin, Stock-In/Usage/Waste under Inventory
+Staff, and forecasting/analytics under Manager, while Super Admin retains
+system-wide visibility and controlled intervention across those domains.
 
 RBAC remains the final authority.
 
@@ -3412,7 +3481,8 @@ Therefore:
 Super Admin
 
 System/security health → YES
-Daily chicken usage → NO
+System-wide inventory/forecast/usage/waste oversight → YES
+Routine daily transaction quick actions → normally NO
 
 Admin
 
@@ -3861,7 +3931,7 @@ FUTURE → PAST
 
 A time-aware train/validation/test split should therefore be used when appropriate.
 
-## 17. SUPER ADMIN REPORTS — CONFLICT RESOLUTION
+## 17. SUPER ADMIN REPORTS — SUPERSEDED CONFLICT RESOLUTION
 
 An inconsistency exists in the older Finalized ShelfLifeAI material.
 
@@ -3886,11 +3956,9 @@ Security & Activity
 Profile
 Logout
 
-MASTER RESOLUTION
-
-The later consolidated structure takes precedence.
-
-Therefore, the official Super Admin sidebar is:
+The 2026-09-17 Super Admin role-authority amendment supersedes the restrictive
+resolution previously recorded here. The following remains the core
+administration group:
 
 Dashboard
 
@@ -3904,11 +3972,12 @@ Profile
 
 Logout
 
-There is no separate Super Admin Reports sidebar module in the current approved baseline.
-
-If security/system information needs export functionality, it may be provided contextually inside an authorized Security & Activity/Audit interface rather than creating an additional navigation module.
-
-This may only change through an explicit future group decision.
+The target navigation must also provide reviewed access to Reports & Analytics
+and the other major ShelfLife AI domains required for system-wide Super Admin
+oversight. Exact navigation grouping may be finalized during the Vite
+implementation milestone. Reports, audit exports, and operational actions must
+remain protected by capability-specific RBAC and audit rules; navigation access
+does not grant unrestricted write or export authority.
 
 ## 18. FRONTEND ARCHITECTURE — SUPERSESSION RULE
 
