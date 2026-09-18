@@ -12206,3 +12206,44 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 @media(max-width:1180px){.sl-admin-reports-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-admin-reports-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-admin-reports-charts{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-admin-reports-charts>:last-child{grid-column:1/-1}}
 @media(max-width:680px){.sl-admin-reports-filters,.sl-admin-reports-kpis,.sl-admin-reports-charts{grid-template-columns:1fr}.sl-admin-reports-charts>:last-child{grid-column:auto}.sl-admin-reports-filters>.sl-button{width:100%}.sl-admin-reports-export .sl-download-control,.sl-admin-reports-export .sl-download-trigger{width:100%}}
 @media(resolution >= 1.25dppx){.sl-admin-reports-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12.5rem),1fr))}.sl-admin-reports-filters{grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr))}}
+
+/* V115 — Manager Dashboard reference UI; live-data-safe and responsive */
+.sl-manager-dashboard-v115{display:grid;gap:clamp(.65rem,.5rem + .3vw,.95rem);min-width:0}
+.sl-manager-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.sl-manager-kpi{min-width:0;min-height:clamp(6.3rem,5.7rem + 1.2vw,7.4rem)}
+.sl-manager-kpi[data-tone='violet']{background:linear-gradient(115deg,var(--sl-surface),#f8f4ff);border-color:#e8def7}.sl-manager-kpi[data-tone='violet'] .sl-sa-kpi-icon{background:#eee6ff;color:#7447dc}
+.sl-manager-analytics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.6rem,.48rem + .25vw,.85rem)}
+.sl-manager-triple{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.6rem,.48rem + .25vw,.85rem)}
+.sl-manager-analytics>.sl-card{min-width:0;min-height:clamp(14rem,18vw,18rem)}
+.sl-manager-triple>.sl-card{min-width:0;min-height:clamp(12rem,15vw,15rem)}
+.sl-manager-health>.sl-card{min-height:clamp(9rem,12vw,12rem)}
+.sl-manager-reference-state{width:100%;height:100%;min-height:inherit;display:grid;place-items:center;padding:clamp(1rem,2vw,1.75rem);text-align:center}
+.sl-manager-reference-state .sl-state{width:min(100%,30rem);margin:auto;display:grid;justify-items:center;align-content:center;text-align:center}
+.sl-manager-reference-state .sl-state>*{margin-inline:auto}
+.sl-manager-dashboard-v115 .sl-card-body{min-width:0;height:calc(100% - 3rem);display:flex}
+.sl-manager-dashboard-v115 .sl-text-link{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}
+@media(max-width:1180px){.sl-manager-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-manager-analytics,.sl-manager-triple{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-manager-analytics>:last-child,.sl-manager-triple>:last-child{grid-column:1/-1}}
+@media(max-width:680px){.sl-manager-kpis,.sl-manager-analytics,.sl-manager-triple{grid-template-columns:1fr}.sl-manager-analytics>:last-child,.sl-manager-triple>:last-child{grid-column:auto}.sl-manager-reference-state{padding:.8rem}}
+@media(resolution >= 1.25dppx){.sl-manager-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12.5rem),1fr))}.sl-manager-analytics,.sl-manager-triple{grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))}.sl-manager-analytics>:last-child,.sl-manager-triple>:last-child{grid-column:auto}}
+\n\n/* V116 — Manager dashboard reference layout. Scoped to Manager only. */
+.sl-manager-dashboard-v116{display:grid;gap:clamp(.65rem,.48rem + .35vw,.95rem);min-width:0}
+.sl-manager-reference-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.65rem,.48rem + .35vw,.95rem);min-width:0;align-items:stretch}
+.sl-manager-reference-grid>.sl-card{min-width:0;min-height:clamp(13.5rem,19vw,18.5rem);overflow:hidden}
+.sl-manager-reference-grid>.sl-card:nth-child(n+4){min-height:clamp(12rem,16vw,15.5rem)}
+.sl-manager-dashboard-v116 .sl-card-header{min-width:0;gap:.65rem;flex-wrap:wrap}
+.sl-manager-dashboard-v116 .sl-card-title{min-width:0;overflow-wrap:anywhere}
+.sl-manager-dashboard-v116 .sl-card-body{min-width:0;display:flex;flex:1}
+.sl-manager-dashboard-v116 .sl-manager-reference-state{width:100%;height:100%;min-height:clamp(8rem,12vw,12rem);display:grid;place-items:center;padding:clamp(.8rem,1.6vw,1.35rem);text-align:center}
+.sl-manager-dashboard-v116 .sl-manager-reference-state .sl-state{width:min(100%,27rem);margin:auto;display:grid;justify-items:center;align-content:center;text-align:center}
+.sl-manager-dashboard-v116 .sl-manager-reference-state .sl-state>*{margin-inline:auto}
+.sl-manager-dashboard-v116 .sl-text-link{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}
+@media(max-width:1180px){.sl-manager-reference-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.sl-manager-reference-grid{grid-template-columns:1fr}.sl-manager-reference-grid>.sl-card,.sl-manager-reference-grid>.sl-card:nth-child(n+4){min-height:clamp(12rem,48vw,16rem)}}
+@media(resolution >= 1.25dppx){.sl-manager-reference-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr))}}
+
+/* V118 Manager dashboard period filters */
+.sl-manager-dashboard-v116 .sl-dashboard-filter{display:inline-flex;align-items:center;min-width:0}
+.sl-manager-dashboard-v116 .sl-dashboard-filter select{appearance:auto;min-height:2rem;max-width:100%;padding:.35rem 1.8rem .35rem .7rem;border:1px solid var(--sl-border);border-radius:.5rem;background:var(--sl-surface);color:var(--sl-text);font:inherit;font-size:.78rem;line-height:1.2;cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease}
+.sl-manager-dashboard-v116 .sl-dashboard-filter select:hover{border-color:var(--sl-brand);background:var(--sl-surface-soft)}
+.sl-manager-dashboard-v116 .sl-dashboard-filter select:focus-visible{outline:none;border-color:var(--sl-brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--sl-brand) 16%,transparent)}
+@media(max-width:520px){.sl-manager-dashboard-v116 .sl-dashboard-filter{width:100%}.sl-manager-dashboard-v116 .sl-dashboard-filter select{width:100%}}

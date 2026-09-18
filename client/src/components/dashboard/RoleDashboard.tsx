@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowRight, Box, ListChecks, TriangleAlert } from 'lucide-react';
+import { ArrowRight, Box, ChartNoAxesCombined, ClipboardList, ListChecks, PhilippinePeso, TrendingUp, TriangleAlert } from 'lucide-react';
 import { Link } from 'expo-router';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
 import { Card, DataState, PageHeader, PlaceholderSummaryCards, PlaceholderTable, Status } from '../application/primitives';
@@ -64,6 +64,47 @@ function AdminDashboardContent({ userName }: { userName: string }) {
     </div>
   </>;
 }
+
+function ManagerDashboardContent({ userName }: { userName: string }) {
+  const [valueRange, setValueRange] = useState('30');
+  const [expiryRange, setExpiryRange] = useState('30');
+  const [topValueRange, setTopValueRange] = useState('month');
+  const pendingState = (description: string) => <div className="sl-manager-reference-state"><DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} /></div>;
+  return <>
+    <DashboardHeading userName={userName} />
+    <p className="sl-dashboard-description">Here&apos;s an overview of your inventory value, expiration risks, stock status, and pending inventory actions.</p>
+    <div className="sl-admin-view sl-manager-dashboard-v116">
+      <section className="sl-sa-kpis sl-manager-kpis" aria-label="Manager inventory overview">
+        <article className="sl-sa-kpi sl-manager-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso /></span><div><span>Total Inventory Value</span><strong>—</strong><small>Inventory valuation pending</small></div></article>
+        <article className="sl-sa-kpi sl-manager-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Items Near Expiry (≤ 7 days)</span><strong>—</strong><small>Expiration summary pending</small></div></article>
+        <article className="sl-sa-kpi sl-manager-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Low Stock Items</span><strong>—</strong><small>Stock summary pending</small></div></article>
+        <article className="sl-sa-kpi sl-manager-kpi" data-tone="violet"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast analytics pending</small></div></article>
+      </section>
+
+      <section className="sl-manager-reference-grid" aria-label="Manager inventory analytics and actions">
+        <Card id="manager-inventory-value" title="Inventory Value Trend" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Inventory value period</span><select value={valueRange} onChange={(event) => setValueRange(event.target.value)} aria-label="Inventory value period"><option value="7">Last 7 Days</option><option value="30">Last 30 Days</option><option value="90">Last 90 Days</option></select></label>}>
+          {pendingState('Inventory value trend')}
+        </Card>
+        <Card id="manager-expiring-items" title="Expiring Items Trend" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Expiring items period</span><select value={expiryRange} onChange={(event) => setExpiryRange(event.target.value)} aria-label="Expiring items period"><option value="7">Next 7 Days</option><option value="14">Next 14 Days</option><option value="30">Next 30 Days</option><option value="60">Next 60 Days</option></select></label>}>
+          {pendingState('Expiring items trend')}
+        </Card>
+        <Card id="manager-stock-distribution" title="Stock Status Distribution">
+          {pendingState('Stock status distribution')}
+        </Card>
+        <Card id="manager-top-value" title="Top Ingredients by Value" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Top ingredients period</span><select value={topValueRange} onChange={(event) => setTopValueRange(event.target.value)} aria-label="Top ingredients period"><option value="week">This Week</option><option value="month">This Month</option><option value="quarter">This Quarter</option><option value="year">This Year</option></select></label>}>
+          {pendingState('Top ingredients by inventory value')}
+        </Card>
+        <Card id="manager-upcoming-expirations" title="Upcoming Expirations (≤ 7 days)" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
+          {pendingState('Upcoming expiration records')}
+        </Card>
+        <Card id="manager-pending-requests" title="Pending Change Requests" action={<Link href="/ChangeRequests" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
+          {pendingState('Pending change requests')}
+        </Card>
+      </section>
+    </div>
+  </>;
+}
+
 function UnavailableSummary({ role }: { role: 'Manager' | 'Inventory Staff' }) {
   const items = role === 'Manager'
     ? ['Use-first batches', 'Low-stock items', 'Expiring batches', 'Pending requests']
@@ -82,6 +123,7 @@ export default function RoleDashboard() {
   if (admin) return <AdminDashboardContent userName={sessionDisplayName(user)} />;
   const staff = user.role === 'Inventory Staff';
   const manager = user.role === 'Manager';
+  if (manager) return <ManagerDashboardContent userName={sessionDisplayName(user)} />;
   const description = admin
     ? 'Manage operational accounts, ingredient master data and administrative oversight.'
     : manager
