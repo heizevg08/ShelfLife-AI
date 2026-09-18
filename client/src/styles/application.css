@@ -12108,3 +12108,88 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-admin-ingredient-table-card{border:1px solid #dfe5df;border-radius:12px;background:#fff;overflow:hidden}.sl-admin-ingredient-table-toolbar{min-height:58px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #e4e8e4;flex-wrap:wrap}.sl-admin-ingredient-table-toolbar>div{display:flex;gap:10px;flex-wrap:wrap}.sl-admin-ingredient-table-toolbar strong{font-size:.86rem;color:#23473a}.sl-admin-ingredient-table-scroll{width:100%;overflow:auto}.sl-admin-ingredient-table-scroll table{width:100%;border-collapse:collapse;min-width:850px}.sl-admin-ingredient-table-scroll th{background:#f5f7f5;color:#3f584e;font-size:.72rem;text-transform:none;letter-spacing:.02em;text-align:left;padding:10px 12px;border-bottom:1px solid #e2e7e3;white-space:nowrap}.sl-admin-ingredient-table-scroll td{padding:9px 12px;border-bottom:1px solid #edf0ed;color:#203c31;font-size:.8rem;vertical-align:middle;white-space:nowrap}.sl-admin-ingredient-table-scroll tbody tr:hover{background:#fbfdfb}.sl-admin-ingredient-name{border:0;background:transparent;padding:0;display:flex;align-items:center;gap:9px;color:inherit;cursor:pointer}.sl-admin-ingredient-name>span{width:30px;height:30px;border-radius:50%;background:#eaf6ec;color:#087647;display:grid;place-items:center;font-weight:700;font-size:.72rem}.sl-admin-ingredient-name strong{font-size:.8rem}.sl-admin-ingredient-menu{display:flex;align-items:center;gap:3px}.sl-admin-ingredient-menu .sl-icon-button{width:30px;height:30px}.sl-admin-ingredient-state{min-height:clamp(250px,32vh,430px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}.sl-admin-data-pending{display:inline-flex;margin-top:8px;padding:5px 9px;border-radius:999px;background:#eef6f0;color:#35624d;font-size:.72rem}.sl-admin-ingredient-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;flex-wrap:wrap}.sl-admin-ingredient-pagination>label{display:flex;align-items:center;gap:10px;font-size:.78rem;color:#3b554b}.sl-admin-ingredient-pagination select{height:36px;border:1px solid #d8dfda;border-radius:7px;background:#fff;padding:0 9px}
 @media(max-width:1100px){.sl-admin-ingredient-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-admin-ingredient-filter-card{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-admin-ingredient-search{grid-column:1/-1}}
 @media(max-width:680px){.sl-admin-ingredient-kpis{grid-template-columns:1fr}.sl-admin-ingredient-filter-card{grid-template-columns:1fr}.sl-admin-ingredient-search{grid-column:auto}.sl-admin-ingredient-filter-card>.sl-button{width:100%}.sl-admin-ingredient-table-toolbar{align-items:stretch}.sl-admin-ingredient-table-toolbar>div{width:100%}.sl-admin-ingredient-table-toolbar .sl-button{flex:1}.sl-admin-ingredient-pagination{align-items:stretch;flex-direction:column}.sl-admin-ingredient-kpis>article{min-height:96px}}
+
+
+/* PATCH V113 — Admin /AdministrativeAudit reference-aligned responsive polish. */
+.sl-admin-view .sl-audit-overview { gap: clamp(.7rem, 1.2vw, 1rem); margin-bottom: clamp(.7rem, 1.2vw, 1rem); }
+.sl-admin-view .sl-audit-overview > .sl-overview-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(.65rem, 1vw, .9rem);
+}
+.sl-admin-view .sl-audit-overview .sl-overview-card {
+  min-height: clamp(104px, 8vw, 124px);
+  padding: clamp(.8rem, 1.1vw, 1rem);
+  gap: .45rem;
+  border-top-width: 1px;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--sl-surface) 94%, var(--sl-brand-subtle));
+}
+.sl-admin-view .sl-audit-overview .sl-overview-card[data-tone='brand'],
+.sl-admin-view .sl-audit-overview .sl-overview-card[data-tone='success'] { background: color-mix(in srgb, var(--sl-surface) 88%, var(--sl-success-bg)); }
+.sl-admin-view .sl-audit-overview .sl-overview-card[data-tone='attention'] { background: color-mix(in srgb, var(--sl-surface) 88%, var(--sl-attention-bg)); }
+.sl-admin-view .sl-audit-overview .sl-overview-card[data-tone='critical'] { background: color-mix(in srgb, var(--sl-surface) 88%, var(--sl-critical-bg)); }
+.sl-admin-view .sl-audit-overview .sl-overview-card .sl-summary-value { font-size: clamp(1.45rem, 2vw, 2rem); line-height: 1.05; }
+.sl-admin-view .sl-audit-overview .sl-kpi-trend { display: none; }
+.sl-admin-view .sl-audit-overview .sl-overview-detail { margin-top: auto; }
+
+.sl-admin-view .sl-audit-filter-strip {
+  grid-template-columns: minmax(145px, 1.25fr) repeat(4, minmax(120px, 1fr)) auto;
+  gap: clamp(.55rem, .9vw, .8rem);
+  padding: clamp(.7rem, 1vw, .9rem);
+  box-shadow: none;
+}
+.sl-admin-view .sl-audit-filter-strip label { gap: .35rem; }
+.sl-admin-view .sl-audit-filter-strip .sl-admin-input,
+.sl-admin-view .sl-audit-apply { min-height: 42px; height: 42px; border-radius: 8px; }
+.sl-admin-view .sl-audit-specific-dates { grid-column: 1 / -1; width: min(100%, 430px); }
+
+.sl-admin-view .sl-audit-results-layout { display: block; width: 100%; }
+.sl-admin-view .sl-admin-audit-table-card { width: 100%; overflow: visible; }
+.sl-admin-view .sl-admin-audit-table-card > .sl-audit-table-heading {
+  min-height: 54px;
+  padding: .7rem .9rem !important;
+}
+.sl-admin-view .sl-admin-audit-table-card .sl-audit-table-controls { gap: .65rem; }
+.sl-admin-view .sl-admin-audit-table-card .sl-audit-search.sl-directory-search {
+  width: clamp(190px, 19vw, 260px);
+  min-width: 0;
+  height: 40px;
+}
+.sl-admin-view .sl-admin-audit-table-card .sl-download-trigger { min-height: 40px; white-space: nowrap; }
+.sl-admin-view .sl-admin-audit-table-card .sl-card-body { padding: 0; }
+.sl-admin-view .sl-admin-audit-table-card .sl-table-scroll { width: 100%; overflow-x: auto; }
+.sl-admin-view .sl-admin-audit-table-card .sl-data-table { width: 100%; min-width: 760px; table-layout: auto; }
+.sl-admin-view .sl-admin-audit-table-card .sl-data-table th,
+.sl-admin-view .sl-admin-audit-table-card .sl-data-table td { padding: clamp(.55rem, .7vw, .72rem) clamp(.55rem, .8vw, .8rem); vertical-align: middle; }
+.sl-admin-view .sl-admin-audit-table-card .sl-data-table th:nth-child(1) { width: 16%; }
+.sl-admin-view .sl-admin-audit-table-card .sl-data-table th:nth-child(2) { width: 18%; }
+.sl-admin-view .sl-admin-audit-table-card .sl-data-table th:nth-child(3) { width: 13%; }
+.sl-admin-view .sl-admin-audit-table-card .sl-data-table th:nth-child(4) { width: 15%; }
+.sl-admin-view .sl-admin-audit-table-card .sl-data-table th:nth-child(5) { width: 26%; }
+.sl-admin-view .sl-admin-audit-table-card .sl-data-table th:nth-child(6) { width: 12%; }
+.sl-admin-view .sl-admin-audit-table-card .sl-empty-cell .sl-state { min-height: clamp(220px, 28vh, 330px); align-content: center; justify-items: center; text-align: center; }
+.sl-admin-view .sl-admin-audit-table-card .sl-audit-table-footer { display: flex; align-items: center; padding: .8rem .9rem .25rem; }
+.sl-admin-view .sl-admin-audit-table-card .sl-audit-page-size-footer { font-size: var(--sl-font-size-sm, .875rem); gap: .65rem; }
+.sl-admin-view .sl-admin-audit-table-card .sl-audit-page-size-footer::before { content: none; }
+.sl-admin-view .sl-admin-audit-table-card .sl-audit-page-size-footer .sl-admin-input { width: 64px; min-height: 36px; height: 36px; }
+.sl-admin-view .sl-admin-audit-table-card .sl-pagination-compact { margin-top: -46px; min-height: 46px; padding: 0 .9rem .7rem; pointer-events: none; }
+.sl-admin-view .sl-admin-audit-table-card .sl-pagination-compact .sl-row-actions { pointer-events: auto; }
+
+@container (max-width: 72rem) {
+  .sl-admin-view .sl-audit-filter-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sl-admin-view .sl-audit-apply { width: 100%; }
+}
+@container (max-width: 58rem) {
+  .sl-admin-view .sl-audit-overview > .sl-overview-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sl-admin-view .sl-audit-filter-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (max-width: 40rem) {
+  .sl-admin-view .sl-audit-overview > .sl-overview-cards,
+  .sl-admin-view .sl-audit-filter-strip { grid-template-columns: minmax(0, 1fr); }
+  .sl-admin-view .sl-audit-specific-dates { grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .sl-admin-view .sl-admin-audit-table-card > .sl-audit-table-heading { flex-wrap: wrap; }
+  .sl-admin-view .sl-admin-audit-table-card .sl-audit-table-controls { width: 100%; justify-content: space-between; }
+  .sl-admin-view .sl-admin-audit-table-card .sl-audit-search.sl-directory-search { flex: 1 1 180px; width: auto; }
+  .sl-admin-view .sl-admin-audit-table-card .sl-pagination-compact { margin-top: 0; padding-top: .25rem; justify-content: flex-end; }
+  .sl-admin-view .sl-admin-audit-table-card .sl-audit-table-footer { padding-bottom: .5rem; }
+}
