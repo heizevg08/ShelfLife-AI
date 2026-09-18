@@ -32,6 +32,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const [searchOpen, setSearchOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [systemHealth, setSystemHealth] = useState<'checking' | 'healthy' | 'attention' | 'unavailable'>('checking');
+  const [topbarClock, setTopbarClock] = useState(() => new Date());
   const appRef = useRef<HTMLDivElement>(null);
   const dashboardPath = dashboardPaths[user?.role ?? 'Super Admin'];
   const destinations = [{ label: 'Dashboard', Icon: LayoutDashboard, path: dashboardPath }, ...(user?.role === 'Super Admin' ? administrationAreas.filter(area => !('hidden' in area && area.hidden)) : user ? workspaceNavigation(user.role) : [])];
@@ -49,7 +50,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
     : [];
   const navigationGroups = destinations.reduce<{ label: string; items: typeof destinations }[]>((groups, item) => {
     const group = !user || item.path === dashboardPath ? 'Overview'
-      : user.role === 'Super Admin' ? 'Administration'
+      : user.role === 'Super Admin' ? (['/AdminAccounts', '/SystemSettings', '/SecurityActivity'].includes(item.path ?? '') ? 'Administration' : 'System Oversight')
       : user.role === 'Admin' ? (item.path === '/UserManagement' ? 'User management' : ['/Ingredients', '/InventoryBatches'].includes(item.path) ? 'Core data' : 'Oversight')
       : user.role === 'Manager' ? (item.path === '/InventoryBatches' ? 'Inventory' : ['/UsageWaste', '/ChangeRequests'].includes(item.path) ? 'Operations' : 'Intelligence')
       : ['/InventoryBatches', '/StockIn'].includes(item.path) ? 'Inventory' : ['/Usage', '/Waste'].includes(item.path) ? 'Records' : 'Follow-up';
@@ -78,6 +79,14 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const accountButton = useRef<HTMLButtonElement>(null);
   const drawer = useRef<HTMLDialogElement>(null);
   const mobileButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setTopbarClock(new Date()), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const isDashboardRoute = user ? Object.values(dashboardPaths).some(path => path === pathname) : false;
+  const topbarDateTime = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' }).format(topbarClock);
 
   useEffect(() => {
     // Resolve identity through the existing auth boundary, never from cached role data.
@@ -475,6 +484,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
           </div>
 
           <div className="sl-topbar-right">
+            {(user.role === 'Super Admin' || isDashboardRoute) && <time className="sl-topbar-datetime" dateTime={topbarClock.toISOString()}>{topbarDateTime}</time>}
             <div className="sl-global-health" aria-label={`System status: ${systemHealth}`}>
               <span className="sl-global-health-label">System status</span>
               <span className="sl-global-health-value" data-state={systemHealth}>

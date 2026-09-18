@@ -12,19 +12,12 @@ import { sessionDisplayName } from '../../services/auth';
 import { WasteForecastAnalytics } from '../shared/dashboard/WasteForecastAnalytics';
 
 function DashboardHeading({ userName }: { userName: string }) {
-  const [clock, setClock] = useState(() => new Date());
   const [greeting, setGreeting] = useState('Welcome');
   useEffect(() => {
-    const update = () => {
-      const now = new Date(); setClock(now);
-      const hour = now.getHours();
-      setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening');
-    };
-    update(); const interval = window.setInterval(update, 30000);
-    return () => window.clearInterval(interval);
+    const update = () => { const hour = new Date().getHours(); setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'); };
+    update(); const interval = window.setInterval(update, 30000); return () => window.clearInterval(interval);
   }, []);
-  const label = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' }).format(clock);
-  return <div className="sl-dashboard-heading sl-dashboard-heading-v8"><PageHeader eyebrow="Dashboard" title={`${greeting}, ${userName}.`} /><time className="sl-dashboard-datetime" dateTime={clock.toISOString()}>{label}</time></div>;
+  return <div className="sl-dashboard-heading sl-dashboard-heading-v8"><PageHeader eyebrow="Dashboard" title={`${greeting}, ${userName}.`} /></div>;
 }
 
 function AdminDashboardContent({ userName }: { userName: string }) {
@@ -52,7 +45,7 @@ function AdminDashboardContent({ userName }: { userName: string }) {
 
       <section className="sl-admin-inventory-grid" aria-label="Inventory dashboard analytics">
         <Card id="admin-inventory-category" title="Inventory Status by Category"><div className="sl-reference-empty-chart"><div className="sl-inventory-donut" aria-label="Inventory category distribution awaiting analytics data"><svg viewBox="0 0 42 42" aria-hidden="true"><circle className="sl-inventory-donut-track" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-produce" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-meat" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-dairy" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-dry" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-condiments" cx="21" cy="21" r="15.9155"/><circle className="sl-inventory-donut-segment sl-inventory-donut-others" cx="21" cy="21" r="15.9155"/></svg><span><strong>{ingredientValue === 'Loading…' || ingredientValue === 'Unavailable' ? '—' : ingredientValue}</strong><small>Ingredients</small></span></div><div className="sl-reference-legend"><span><i/>Produce <b>—</b></span><span><i/>Meat <b>—</b></span><span><i/>Dairy <b>—</b></span><span><i/>Dry Goods <b>—</b></span><span><i/>Condiments <b>—</b></span><span><i/>Others <b>—</b></span></div></div><p className="sl-dashboard-empty-note">Category totals require inventory analytics data.</p></Card>
-        <Card id="admin-expiration-trend" title="Expiration Trend"><div className="sl-expiration-shell" aria-label="Expiration trend awaiting service"><div className="sl-chart-gridlines"/><div className="sl-chart-placeholder-bars">{[2,3,2,3,5,4,3].map((h,i)=><i key={i} style={{height:`${h*12}px`}} />)}</div><div className="sl-chart-labels"><span>Day 1</span><span>Day 3</span><span>Day 5</span><span>Day 7</span></div></div><p className="sl-dashboard-empty-note">Awaiting expiration analytics service</p></Card>
+        <Card id="admin-expiration-trend" title="Expiration Trend" action={<select className="sl-trend-range" defaultValue="14" aria-label="Expiration trend range"><option value="14">Next 14 Days</option><option value="30">Next 30 Days</option></select>}><div className="sl-expiration-reference" aria-label="Expiration trend awaiting analytics service"><div className="sl-expiration-y-axis"><span>10</span><span>8</span><span>6</span><span>4</span><span>2</span><span>0</span></div><div className="sl-expiration-plot"><div className="sl-expiration-grid"/><div className="sl-expiration-bars">{[['42','0','0'],['34','13','0'],['42','0','0'],['31','9','7'],['39','38','12'],['29','0','20'],['20','13','12']].map((parts,i)=><div className="sl-expiration-bar" key={i}>{parts.map((height,j)=><i key={j} className={`sl-expiration-part sl-expiration-part-${j}`} style={{height:`${height}px`}} />)}</div>)}</div><div className="sl-expiration-x-axis">{['Day 1','Day 3','Day 5','Day 7','Day 9','Day 11','Day 13'].map(day=><span key={day}>{day}</span>)}</div></div><div className="sl-expiration-legend"><span><i className="sl-normal"/>Normal</span><span><i className="sl-soon"/>Expiring Soon</span><span><i className="sl-expired"/>Expired</span></div></div><p className="sl-dashboard-empty-note sl-expiration-note">Awaiting expiration analytics service</p></Card>
         <Card id="admin-low-stock" title="Low Stock Ingredients" action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={15}/></Link>}><div className="sl-low-stock-empty"><TriangleAlert size={25}/><strong>No live low-stock summary yet</strong><span>Stock thresholds will appear when inventory batches are connected.</span></div></Card>
       </section>
 

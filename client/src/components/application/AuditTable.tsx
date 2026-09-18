@@ -118,8 +118,8 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
       </div>
     </div>}
     <div className={adminOverview ? "sl-audit-results-layout" : undefined}>
-    <section className={recent ? "sl-audit-fragment" : "sl-card"} aria-labelledby={recent ? undefined : "sl-system-audit-log"}>
-      {!recent && <div className="sl-card-header sl-audit-table-heading"><h2 className="sl-section-title" id="sl-system-audit-log">System Audit Logs</h2>{adminOverview && <div className="sl-audit-table-controls"><label className="sl-audit-page-size">Show<select className="sl-admin-input" value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{[10, 25, 50].map(size => <option key={size} value={size}>{size}</option>)}</select></label><label className="sl-audit-search"><Search size={16} aria-hidden="true" /><input value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="Search logs..." aria-label="Search audit logs" /></label></div>}</div>}
+    <section className={recent ? "sl-audit-fragment" : adminOverview ? "sl-card sl-admin-audit-table-card" : "sl-card"} aria-labelledby={recent ? undefined : "sl-system-audit-log"}>
+      {!recent && <div className="sl-card-header sl-audit-table-heading"><h2 className="sl-section-title" id="sl-system-audit-log">System Audit Logs</h2>{adminOverview && <div className="sl-audit-table-controls"><label className="sl-audit-page-size">Show<select className="sl-admin-input" value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{[10, 25, 50].map(size => <option key={size} value={size}>{size}</option>)}</select></label><label className="sl-directory-search sl-audit-search"><Search size={17} aria-hidden="true" /><input type="search" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="Search logs..." aria-label="Search audit logs" /></label></div>}</div>}
       <div className={recent ? "sl-audit-fragment-body" : "sl-card-body"}>
     {!recent && !adminOverview && <div className="sl-table-toolbar sl-audit-toolbar">
       <div className="sl-audit-toolbar-right">
@@ -201,7 +201,7 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
           </div>}
         </div>
       </div>
-      <Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="records" onPageChange={setPage} compact={adminOverview} />
+      <Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel={adminOverview ? "logs" : "records"} onPageChange={setPage} compact={adminOverview} />
     </>}
       </div>
     </section>

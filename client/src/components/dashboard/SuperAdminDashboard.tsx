@@ -1,56 +1,55 @@
 import { Link } from 'expo-router';
-import { ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { dashboardSummary, listAccounts, type Account, type DashboardSummary } from '../../services/administration';
-import type { SessionUser } from '../../services/auth';
-import { AuditTable } from '../application/AuditTable';
-import { Card, PageHeader, Status, SummaryCards } from '../application/primitives';
-import { ChangeRequestOverview } from '../shared/dashboard/ChangeRequestOverview';
-import { WasteForecastAnalytics } from '../shared/dashboard/WasteForecastAnalytics';
+import { AlertTriangle, ArrowRight, Box, FileText, LockKeyhole, ShieldCheck, UsersRound } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { dashboardSummary, listAccounts, listAuditRecords, type Account, type AuditRecord, type DashboardSummary } from '../../services/administration';
+import { sessionDisplayName, type SessionUser } from '../../services/auth';
+import { Card, DataState, Status, PageHeader} from '../application/primitives';
 
 const AUTO_REFRESH_MS = 15000;
+const roleOrder = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
+
+function UnavailableMetric({ label }: { label: string }) {
+  return <div className="sl-sa-unavailable"><strong>—</strong><span>{label}</span></div>;
+}
 
 export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
+  const [greeting, setGreeting] = useState('Good morning');
+
+  useEffect(() => {
+    const updateGreeting = () => {
+      const hour = new Date().getHours();
+      setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening');
+    };
+    updateGreeting();
+    const timer = window.setInterval(updateGreeting, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [refresh, setRefresh] = useState(0);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [summaryError, setSummaryError] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accountsTotal, setAccountsTotal] = useState<number | null>(null);
   const [accountsError, setAccountsError] = useState(false);
-  const [greeting, setGreeting] = useState('Welcome');
-  const [clock, setClock] = useState(() => new Date());
-
-  useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      setClock(now);
-      const hour = now.getHours();
-      setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening');
-    };
-    updateClock();
-    const interval = window.setInterval(updateClock, 30000);
-    return () => window.clearInterval(interval);
-  }, []);
+  const [audit, setAudit] = useState<{ items: AuditRecord[]; total: number } | null>(null);
+  const [auditError, setAuditError] = useState(false);
 
   useEffect(() => {
     const abort = new AbortController();
-    setSummaryError(false);
-    setAccountsError(false);
-
+    setSummaryError(false); setAccountsError(false); setAuditError(false);
     Promise.allSettled([
       dashboardSummary(abort.signal),
       listAccounts(1, 'createdAt', 'desc', abort.signal),
-    ]).then(([summaryResult, accountsResult]) => {
+      listAuditRecords(1, 5, 'desc', {}, abort.signal),
+    ]).then(([summaryResult, accountsResult, auditResult]) => {
       if (abort.signal.aborted) return;
-      if (summaryResult.status === 'fulfilled') setSummary(summaryResult.value);
-      else setSummaryError(true);
-
-      if (accountsResult.status === 'fulfilled') setAccounts(accountsResult.value.items.slice(0, 4));
-      else {
-        setAccounts([]);
-        setAccountsError(true);
-      }
+      if (summaryResult.status === 'fulfilled') setSummary(summaryResult.value); else setSummaryError(true);
+      if (accountsResult.status === 'fulfilled') {
+        setAccounts(accountsResult.value.items);
+        setAccountsTotal(accountsResult.value.total);
+      } else { setAccounts([]); setAccountsTotal(null); setAccountsError(true); }
+      if (auditResult.status === 'fulfilled') setAudit({ items: auditResult.value.items, total: auditResult.value.total });
+      else { setAudit(null); setAuditError(true); }
     });
-
     return () => abort.abort();
   }, [refresh]);
 
@@ -59,74 +58,43 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     return () => window.clearInterval(interval);
   }, []);
 
-  const displayName = user.name.trim();
-  const dateTimeLabel = new Intl.DateTimeFormat(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-    timeZoneName: 'short',
-  }).format(clock);
+  const completeRoleDistribution = useMemo(() => {
+    if (accountsTotal === null || accounts.length !== accountsTotal) return null;
+    return roleOrder.map(role => ({ role, count: accounts.filter(account => account.role === role).length }));
+  }, [accounts, accountsTotal]);
 
-  return (
-    <>
-      <div className="sl-dashboard-heading sl-dashboard-heading-v8">
-        <PageHeader
-          eyebrow="Dashboard"
-          title={displayName ? `${greeting}, ${displayName}.` : `${greeting}.`}
-        />
-        <time className="sl-dashboard-datetime" dateTime={clock.toISOString()}>{dateTimeLabel}</time>
-      </div>
+  const totalUsers = summary?.totalUsers ?? accountsTotal;
+  return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49">
+    <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
+      <PageHeader eyebrow="Dashboard" title={`${greeting}, ${sessionDisplayName(user)}.`} />
+    </div>
+    <p className="sl-dashboard-description">Monitor system-wide activity, security, operations and administrative oversight.</p>
+    <section className="sl-sa-kpis" aria-label="System overview">
+      <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Total Users</span><strong>{totalUsers?.toLocaleString() ?? (summaryError && accountsError ? 'Unavailable' : 'Loading…')}</strong><small>System-wide accounts</small></div></article>
+      <article className="sl-sa-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Active Accounts</span><strong>{summary?.activeUsers.toLocaleString() ?? (summaryError ? 'Unavailable' : 'Loading…')}</strong><small>{summary ? `${summary.inactiveUsers.toLocaleString()} inactive` : 'Live account status'}</small></div></article>
+      <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Ingredients Tracked</span><strong>—</strong><small>Awaiting oversight API</small></div></article>
+      <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Active Alerts</span><strong>—</strong><small>Awaiting alert summary API</small></div></article>
+    </section>
 
-      <div className="sl-admin-view sl-superadmin-dashboard">
-        <SummaryCards items={[
-          { label: 'Total users', value: summary?.totalUsers.toLocaleString() ?? (summaryError ? 'Unavailable' : 'Loading…'), detail: 'Real account records', tone: 'brand', trend: 'line' },
-          { label: 'Active accounts', value: summary?.activeUsers.toLocaleString() ?? (summaryError ? 'Unavailable' : 'Loading…'), detail: 'Real account records', tone: 'success', trend: 'accuracy' },
-          { label: 'Open alerts', value: <span className="sl-placeholder-value">—</span>, detail: 'Awaiting alert service', tone: 'attention', trend: 'bars' },
-          { label: 'Pending requests', value: <span className="sl-placeholder-value">—</span>, detail: 'Awaiting request service', tone: 'critical', trend: 'segments' },
-        ]} />
+    <section className="sl-sa-analytics-row">
+      <Card id="sl-sa-expiration" title="Expiration Status (All Ingredients)"><div className="sl-sa-preview-state"><DataState kind="empty" title="No live records yet" description="Expiration analytics" action={<Status>Preview · data pending</Status>} /></div></Card>
+      <Card id="sl-sa-waste" title="Waste Trend (Last 6 Months)"><div className="sl-sa-preview-state"><DataState kind="empty" title="No live records yet" description="Waste analytics" action={<Status>Preview · data pending</Status>} /></div></Card>
+      <Card id="sl-sa-forecast" title="Forecast Accuracy (Last 6 Months)"><div className="sl-sa-preview-state"><DataState kind="empty" title="No live records yet" description="Forecast accuracy" action={<Status>Preview · data pending</Status>} /></div></Card>
+    </section>
 
-        <div className="sl-superadmin-primary-grid">
-          <Card
-            id="sl-dashboard-users"
-            title="User Accounts"
-            action={<Link href="/UserManagement" className="sl-text-link">Manage users <ArrowRight size={15} aria-hidden="true" /></Link>}
-          >
-            {accountsError ? (
-              <p className="sl-state-inline">Account records could not be loaded.</p>
-            ) : (
-              <div className="sl-table-scroll" role="region" aria-label="Recent user accounts" tabIndex={0}>
-                <table className="sl-data-table sl-compact-table">
-                  <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Activity</th></tr></thead>
-                  <tbody>
-                    {!accounts.length && <tr><td colSpan={4} className="sl-empty-table-message">No subordinate accounts yet.</td></tr>}
-                    {accounts.map(account => <tr key={account.id}>
-                      <td>{account.name}</td>
-                      <td>{account.email}</td>
-                      <td>{account.role}</td>
-                      <td><Status tone={account.isActive ? 'success' : 'neutral'}>{account.isActive ? 'Active' : 'Last activity unavailable'}</Status></td>
-                    </tr>)}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
-          <ChangeRequestOverview />
-        </div>
+    <section className="sl-sa-middle-row">
+      <Card id="sl-sa-expiring-items" title="Critical / Expiring Items" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View all <ArrowRight size={14}/></Link>}>
+        <DataState kind="empty" title="No live records yet" description="Expiration / FEFO records" action={<Status>Preview · data pending</Status>} />
+      </Card>
+      <Card id="sl-sa-recent-activity" title="Recent System Activity" action={<Link href="/SecurityActivity" className="sl-text-link">View all <ArrowRight size={14}/></Link>}>
+        {auditError ? <DataState kind="error" title="Activity could not be loaded" description="Check connectivity and try again." /> : !audit ? <DataState kind="loading" title="Loading activity" description="" /> : <div className="sl-table-scroll"><table className="sl-data-table sl-sa-activity-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>{audit.items.length === 0 ? <tr><td colSpan={4} className="sl-empty-table-message">No system activity recorded yet.</td></tr> : audit.items.map(row => <tr key={row.id}><td>{new Date(row.timestamp).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',hour12:true})}</td><td>{row.actor.name}<small>{row.actor.role}</small></td><td>{row.action.replaceAll('_',' ')}</td><td>{row.targetType}<small>{row.targetId}</small></td></tr>)}</tbody></table></div>}
+      </Card>
+    </section>
 
-        <Card
-          id="sl-recent-audit"
-          title="Recent Audit Logs"
-          action={<Link href="/AdministrativeAudit" className="sl-text-link">View all logs <ArrowRight size={15} aria-hidden="true" /></Link>}
-        >
-          <AuditTable recent />
-        </Card>
-
-        <WasteForecastAnalytics />
-      </div>
-    </>
-  );
+    <section className="sl-sa-bottom-row">
+      <Card id="sl-sa-services" title="System Services"><div className="sl-sa-service-list"><div><span><ShieldCheck size={16}/> Application API</span><Status tone="success">Connected through current session</Status></div><div><span><Box size={16}/> Database</span><Status>Detailed health unavailable</Status></div><div><span><FileText size={16}/> File Storage</span><Status>Health unavailable</Status></div><div><span><LockKeyhole size={16}/> Authentication</span><Status tone="success">Session verified</Status></div></div></Card>
+      <Card id="sl-sa-distribution" title="User Distribution (All Roles)">{completeRoleDistribution ? <div className="sl-sa-role-distribution"><div className="sl-sa-role-total"><strong>{accountsTotal}</strong><span>Users</span></div><div className="sl-sa-role-legend">{completeRoleDistribution.map(item => <div key={item.role}><span>{item.role}</span><strong>{item.count}</strong></div>)}</div></div> : <DataState kind="empty" title="No live records yet" description="User distribution" action={<Status>Preview · data pending</Status>} />}</Card>
+      <Card id="sl-sa-security" title="Security Overview" action={<Link href="/SecurityActivity" className="sl-text-link">View all <ArrowRight size={14}/></Link>}><div className="sl-sa-security-grid"><div><ShieldCheck/><span>Audit Records</span><strong>{audit?.total.toLocaleString() ?? (auditError ? 'Unavailable' : 'Loading…')}</strong></div><div><LockKeyhole/><span>Security Events</span><UnavailableMetric label="No summary API" /></div><div><AlertTriangle/><span>Failed Login Attempts</span><UnavailableMetric label="No summary API" /></div><div><UsersRound/><span>Active Sessions</span><UnavailableMetric label="No summary API" /></div></div></Card>
+    </section>
+  </div>;
 }

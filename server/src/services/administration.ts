@@ -19,19 +19,19 @@ export interface AccountTransaction {
 export interface AdministrationStore {
   list(roles: string[] | null, query: PageQuery): Promise<Page<Account>>;
   get(id: string): Promise<Account | null>;
-  summary(roles?: string[] | null): Promise<{ totalUsers: number; activeUsers: number; inactiveUsers: number }>;
+  summary(roles?: string[] | null): Promise<{ totalUsers: number; activeUsers: number; inactiveUsers: number; roleCounts: Record<string, number> }>;
   audits(query: AuditPageQuery): Promise<Page<AuditRecord>>;
   transaction<T>(work: (tx: AccountTransaction) => Promise<T>): Promise<T>;
 }
 const managedRoles = (role: string) => role === 'Super Admin' ? ['Admin', 'Manager', 'Inventory Staff'] : role === 'Admin' ? ['Manager', 'Inventory Staff'] : [];
-function canRead(actor: Actor, user: Account) { return actor.id !== user.id && managedRoles(actor.role).includes(user.role); }
+function canRead(actor: Actor, user: Account) { return actor.role === 'Super Admin' || (actor.id !== user.id && managedRoles(actor.role).includes(user.role)); }
 function assertWrite(actor: Actor, user: Account) {
   if (actor.id === user.id || !managedRoles(actor.role).includes(user.role)) throw forbidden();
 }
 const missing = () => new AdministrationError(404, 'NOT_FOUND', 'Account not found');
 export function createAdministration(store: AdministrationStore) {
   return {
-    list: (actor: Actor, query: PageQuery) => store.list(managedRoles(actor.role), query),
+    list: (actor: Actor, query: PageQuery) => store.list(actor.role === 'Super Admin' ? null : managedRoles(actor.role), query),
     async get(actor: Actor, id: string) {
       const user = await store.get(id);
       if (!user || !canRead(actor, user)) throw missing();

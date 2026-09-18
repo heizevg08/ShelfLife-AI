@@ -1,22 +1,21 @@
-import { Bell, ChartNoAxesCombined, ListChecks, ScrollText, Settings2, ShieldCheck, UsersRound } from 'lucide-react';
+import { Bell, Boxes, ChartNoAxesCombined, ClipboardList, Clock, Leaf, ListChecks, ScrollText, Settings2, ShieldCheck, UsersRound, Utensils } from 'lucide-react';
 
 // Product responsibilities only; these definitions do not grant API permissions.
 export const administrationAreas = [
-  { id: 'accounts', path: '/UserManagement', label: 'User Management', Icon: UsersRound,
-    summary: 'Manage Admin, Manager and Inventory Staff accounts' },
-  { id: 'alerts', path: '/Alerts', label: 'Alerts', Icon: Bell,
-    summary: 'Inventory and expiration attention queue' },
-  { id: 'requests', path: '/ChangeRequests', label: 'Change Requests', Icon: ListChecks,
-    summary: 'Operational change-review workspace' },
-  { id: 'audit', path: '/AdministrativeAudit', label: 'Audit Logs', Icon: ScrollText,
-    summary: 'Protected administrative audit records' },
-  { id: 'reports', path: '/Reports', label: 'Reports', Icon: ChartNoAxesCombined,
-    summary: 'Waste and forecasting reporting workspace' },
-  { id: 'settings', path: '/SystemSettings', label: 'System Settings', Icon: Settings2,
-    summary: 'Application configuration' },
-  // Compatibility route retained for bookmarks; it is intentionally not duplicated in the sidebar.
-  { id: 'security', path: '/SecurityActivity', label: 'Security & Activity', Icon: ShieldCheck,
-    summary: 'Protected administrative audit records', hidden: true },
+  { id: 'accounts', path: '/AdminAccounts', label: 'Users', Icon: UsersRound, summary: 'Manage authorized user accounts' },
+  { id: 'settings', path: '/SystemSettings', label: 'System Settings', Icon: Settings2, summary: 'Application configuration' },
+  { id: 'security', path: '/SecurityActivity', label: 'Security & Activity', Icon: ShieldCheck, summary: 'Protected security and audit activity' },
+
+  { id: 'ingredients', path: '/Ingredients', label: 'Ingredients', Icon: Leaf, summary: 'Ingredient master-data oversight' },
+  { id: 'batches', path: '/InventoryBatches', label: 'Inventory Batches', Icon: Boxes, summary: 'Inventory batch oversight' },
+  { id: 'usage', path: '/Usage', label: 'Usage', Icon: Utensils, summary: 'Ingredient usage oversight' },
+  { id: 'waste', path: '/Waste', label: 'Waste', Icon: ClipboardList, summary: 'Waste record oversight' },
+  { id: 'requests', path: '/ChangeRequests', label: 'Change Requests', Icon: ListChecks, summary: 'Operational change-review oversight' },
+  { id: 'expiration', path: '/ExpirationMonitoring', label: 'Expiration / FEFO', Icon: Clock, summary: 'Expiration and FEFO oversight' },
+  { id: 'forecasting', path: '/Forecasting', label: 'Forecasting', Icon: ChartNoAxesCombined, summary: 'Forecasting oversight' },
+  { id: 'alerts', path: '/Alerts', label: 'Alerts', Icon: Bell, summary: 'Inventory and expiration attention queue' },
+  { id: 'reports', path: '/Reports', label: 'Reports & Analytics', Icon: ChartNoAxesCombined, summary: 'Reporting and analytics oversight' },
+  { id: 'audit', path: '/AdministrativeAudit', label: 'Audit Logs', Icon: ScrollText, summary: 'Protected administrative audit records', hidden: true },
 ] as const;
 
 export type AdministrationAreaId = typeof administrationAreas[number]['id'];

@@ -8,15 +8,9 @@ export function AdministrationPage({ areaId }: { areaId: AdministrationAreaId })
 
   if (areaId === 'accounts') {
     return <>
-      <PageHeader eyebrow="Administration" title={area.label} description="Manage Admin, Manager, and Inventory Staff accounts." />
-      <div className="sl-admin-view">
-        <SummaryCards items={[
-          { label: 'Account directory', value: 'Connected', detail: 'MongoDB account records', tone: 'success' },
-          { label: 'Managed roles', value: '3', detail: 'Admin · Manager · Inventory Staff', tone: 'brand' },
-          { label: 'Lifecycle', value: 'Available', detail: 'Create · update · deactivate · reactivate', tone: 'success' },
-          { label: 'Data updates', value: 'Automatic', detail: 'Directory refreshes in the background', tone: 'brand' },
-        ]} />
-        <Card id="sl-account-directory" title="Account directory"><AccountsTable /></Card>
+      <PageHeader eyebrow="Administration" title="User Management" description="System-wide user, role, and account-access oversight." />
+      <div className="sl-admin-view sl-superadmin-users-page-v56 sl-superadmin-users-page-v57 sl-superadmin-users-page-v58 sl-superadmin-users-page-v59 sl-superadmin-users-page-v60 sl-superadmin-users-page-v61 sl-superadmin-users-page-v62 sl-superadmin-users-page-v63 sl-superadmin-users-page-v64">
+        <AccountsTable />
       </div>
     </>;
   }
@@ -45,25 +39,87 @@ export function AdministrationPage({ areaId }: { areaId: AdministrationAreaId })
   }
 
   return <>
-    <PageHeader eyebrow="Administration" title={area.label} description="System-wide configuration." />
-    <div className="sl-admin-view">
-      {/* TODO: Replace these setup-state summaries with configuration API values when the backend contract exists. */}
-      <SummaryCards items={[
-        { label: 'Configuration groups', value: '—', detail: 'Awaiting configuration service', tone: 'brand' },
-        { label: 'Active policies', value: '—', detail: 'Awaiting configuration service', tone: 'success' },
-        { label: 'Pending review', value: '—', detail: 'Awaiting configuration service', tone: 'attention' },
-        { label: 'Policy alerts', value: '—', detail: 'Awaiting configuration service', tone: 'critical' },
-      ]} />
-      <section className="sl-settings-grid" aria-label="System configuration areas">
-        {[
-          ['Session policy', 'Authentication and persistent-session policy controls.'],
-          ['Notification delivery', 'Notification-channel and delivery configuration.'],
-          ['Inventory rules', 'System-wide inventory and expiry rule configuration.'],
-        ].map(([title, description]) => <article className="sl-settings-tile" key={title}><Status>Setup required</Status><h2 className="sl-card-title">{title}</h2><p className="sl-supporting">{description}</p></article>)}
-      </section>
-      <Card id="sl-settings-scope" title="Configuration workspace">
-        <DataState kind="unavailable" title="Configuration service not connected" description="Permission-controlled settings will appear here when the backend configuration service is available." />
-      </Card>
+    <PageHeader eyebrow="System Settings" title="System Settings" description="Manage the global configuration of ShelfLife AI." />
+    <div className="sl-admin-view sl-superadmin-settings-v65">
+      <nav className="sl-v65-settings-tabs" aria-label="System Settings sections">
+        <button type="button" className="is-active">General</button>
+        <button type="button">Security</button>
+        <button type="button">Notifications</button>
+        <button type="button">Inventory &amp; Expiry</button>
+        <button type="button">Forecasting</button>
+        <button type="button">Integrations</button>
+        <button type="button">System Maintenance</button>
+      </nav>
+
+      <div className="sl-v65-settings-layout">
+        <section className="sl-v65-settings-main" aria-labelledby="sl-v65-general-title">
+          <div className="sl-v65-section-head">
+            <div>
+              <h2 id="sl-v65-general-title">General Settings</h2>
+              <p>Configure basic system information and preferences.</p>
+            </div>
+          </div>
+
+          <div className="sl-v65-settings-form" aria-label="General system settings preview">
+            <label><span>System Name</span><input value="" placeholder="Configuration data pending" readOnly /></label>
+            <label><span>System Tagline</span><input value="" placeholder="Configuration data pending" readOnly /></label>
+
+            <label className="sl-v65-field-wide"><span>System Description</span><textarea value="" placeholder="Configuration data pending" readOnly /></label>
+
+            <label><span>Time Zone</span><select value="" disabled><option value="">Configuration data pending</option></select></label>
+            <label><span>Date Format</span><select value="" disabled><option value="">Configuration data pending</option></select></label>
+            <label><span>Default Language</span><select value="" disabled><option value="">Configuration data pending</option></select></label>
+            <label><span>Currency</span><select value="" disabled><option value="">Configuration data pending</option></select></label>
+
+            <div className="sl-v65-field-wide sl-v65-logo-field">
+              <span className="sl-v65-field-label">System Logo</span>
+              <div className="sl-v65-logo-row">
+                <div className="sl-v65-logo-preview">
+                  <strong>ShelfLife AI</strong>
+                  <small>System logo preview</small>
+                </div>
+                <div className="sl-v65-logo-actions">
+                  <button type="button" disabled>Change Logo</button>
+                  <button type="button" disabled>Remove</button>
+                  <small>Configuration service required before logo changes can be saved.</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="sl-v65-save-row">
+            <span>Settings are read-only until the configuration API is connected.</span>
+            <button type="button" disabled>Save Changes</button>
+          </div>
+        </section>
+
+        <aside className="sl-v65-settings-side" aria-label="System settings information">
+          <section className="sl-v65-side-card">
+            <div className="sl-v65-side-title"><h2>System Information</h2><span aria-hidden="true">✎</span></div>
+            <dl className="sl-v65-info-list">
+              <div><dt>Application Version</dt><dd>—</dd></div>
+              <div><dt>Environment</dt><dd><Status>Data pending</Status></dd></div>
+              <div><dt>Last Updated</dt><dd>—</dd></div>
+              <div><dt>Updated By</dt><dd>—</dd></div>
+              <div><dt>Deployment Status</dt><dd><Status>Data pending</Status></dd></div>
+            </dl>
+          </section>
+
+          <section className="sl-v65-side-card">
+            <div className="sl-v65-side-title"><h2>System Services</h2><span>View details →</span></div>
+            <ul className="sl-v65-service-list">
+              {['Web Application', 'API Server', 'Database (MongoDB Atlas)', 'File Storage (Cloudinary)', 'Email Service', 'AI Forecasting Service'].map(service =>
+                <li key={service}><span className="sl-v65-service-icon">◆</span><span>{service}</span><Status>Data pending</Status></li>
+              )}
+            </ul>
+          </section>
+
+          <section className="sl-v65-side-card">
+            <div className="sl-v65-side-title"><h2>Recent Configuration Changes</h2><span>View all →</span></div>
+            <DataState kind="empty" title="No live records yet" description="Configuration activity will appear here when its audit source is connected." />
+          </section>
+        </aside>
+      </div>
     </div>
   </>;
 }

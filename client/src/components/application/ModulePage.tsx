@@ -1,5 +1,5 @@
 import { Link, type Href } from 'expo-router';
-import { ArrowRight, Eye, FileInput, Filter, Info, Plus, Search, PackagePlus, Pencil, Trash2, MoreVertical } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, Users, UtensilsCrossed, MoreVertical } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
@@ -185,6 +185,1212 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
   </>;
 }
 
+
+function SuperAdminIngredientPending({ label, compact = false }: { label: string; compact?: boolean }) {
+  return <div className={`sl-sa-ingredients-pending${compact ? ' compact' : ''}`}>
+    <DataState
+      kind="empty"
+      title="No live records yet"
+      description={label}
+      action={<Status>Preview · data pending</Status>}
+    />
+  </div>;
+}
+
+function SuperAdminIngredientsPage() {
+  const [category, setCategory] = useState('All');
+  const [searchDraft, setSearchDraft] = useState('');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [refresh, setRefresh] = useState(0);
+  const [data, setData] = useState<{ items: Ingredient[]; page: number; pageSize: number; total: number } | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [viewIngredient, setViewIngredient] = useState<Ingredient | null>(null);
+
+  useEffect(() => {
+    const abort = new AbortController();
+    setLoadError(false);
+
+    listIngredients(page, 10, search.trim(), category === 'All' ? '' : category, abort.signal)
+      .then(value => {
+        if (!abort.signal.aborted) setData(value);
+      })
+      .catch(() => {
+        if (!abort.signal.aborted) {
+          setLoadError(true);
+          setData(null);
+        }
+      });
+
+    return () => abort.abort();
+  }, [page, search, category, refresh]);
+
+  const applyFilters = () => {
+    setPage(1);
+    setSearch(searchDraft.trim());
+  };
+
+  const resetFilters = () => {
+    setSearchDraft('');
+    setSearch('');
+    setCategory('All');
+    setPage(1);
+  };
+
+  const formatUpdated = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Unavailable';
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date);
+  };
+
+  const visibleStart = data && data.total > 0 ? ((data.page - 1) * data.pageSize) + 1 : 0;
+  const visibleEnd = data && data.total > 0 ? Math.min(data.page * data.pageSize, data.total) : 0;
+
+  return <>
+    <PageHeader
+      eyebrow="System Oversight"
+      title="Ingredients"
+      description="Manage and monitor ingredient master data across the establishment for inventory, forecasting, and waste oversight."
+    />
+
+    <div className="sl-admin-view sl-sa-ingredients-page">
+      <section className="sl-sa-ingredients-kpis" aria-label="Ingredient summary">
+        <article className="sl-sa-ingredients-kpi" data-tone="success">
+          <span className="sl-sa-ingredients-kpi-icon"><Leaf aria-hidden="true" /></span>
+          <div>
+            <span>Total Ingredients</span>
+            <strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong>
+            <small>{data ? 'Live ingredient catalogue total' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-ingredients-kpi sl-sa-ingredients-kpi-reference" data-tone="brand">
+          <span className="sl-sa-ingredients-kpi-icon"><Grid2X2 aria-hidden="true" /></span>
+          <div>
+            <span>Categories</span>
+            <strong>—</strong>
+            <small>Awaiting category summary API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-ingredients-kpi sl-sa-ingredients-kpi-reference" data-tone="success">
+          <span className="sl-sa-ingredients-kpi-icon"><Tag aria-hidden="true" /></span>
+          <div>
+            <span>Suppliers</span>
+            <strong>—</strong>
+            <small>Awaiting supplier summary API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-ingredients-kpi sl-sa-ingredients-kpi-reference" data-tone="critical">
+          <span className="sl-sa-ingredients-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+          <div>
+            <span>Low-Stock Ingredients</span>
+            <strong>—</strong>
+            <small>Awaiting stock summary API</small>
+          </div>
+        </article>
+      </section>
+
+      <div className="sl-sa-ingredients-layout">
+        <main className="sl-sa-ingredients-main">
+          <section className="sl-sa-ingredients-filter-card" aria-label="Ingredient filters">
+            <label className="sl-sa-ingredients-search">
+              <span>Search ingredients</span>
+              <div>
+                <Search size={16} aria-hidden="true" />
+                <input
+                  type="search"
+                  value={searchDraft}
+                  onChange={event => setSearchDraft(event.target.value)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      applyFilters();
+                    }
+                  }}
+                  placeholder="Search by ingredient name or brand…"
+                />
+              </div>
+            </label>
+
+            <label>
+              <span>Category</span>
+              <select
+                value={category}
+                onChange={event => {
+                  setCategory(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="All">All Categories</option>
+                {INGREDIENT_CATEGORIES.map(value => <option key={value} value={value}>{value}</option>)}
+              </select>
+            </label>
+
+            <label>
+              <span>Supplier</span>
+              <select disabled aria-label="Supplier filter unavailable">
+                <option>Data pending</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Status</span>
+              <select disabled aria-label="Status filter unavailable">
+                <option>Data pending</option>
+              </select>
+            </label>
+
+            <div className="sl-sa-ingredients-filter-actions">
+              <button type="button" className="sl-button sl-button-primary" onClick={applyFilters}>
+                <Filter size={15} aria-hidden="true" />Filter
+              </button>
+              <button type="button" className="sl-button" onClick={resetFilters}>Reset</button>
+            </div>
+          </section>
+
+          <section className="sl-sa-ingredients-table-card" aria-label="Ingredient catalogue">
+            <div className="sl-sa-ingredients-table-toolbar">
+              <span>
+                {data
+                  ? `Showing ${visibleStart.toLocaleString()}–${visibleEnd.toLocaleString()} of ${data.total.toLocaleString()} ingredients`
+                  : loadError
+                  ? 'Ingredient catalogue unavailable'
+                  : 'Loading ingredient catalogue'}
+              </span>
+              <button type="button" className="sl-button" disabled title="Export backend is not connected">
+                Export
+              </button>
+            </div>
+
+            {loadError ? (
+              <div className="sl-sa-ingredients-state">
+                <DataState
+                  kind="error"
+                  title="Ingredients could not be loaded"
+                  description="The ingredient service is temporarily unavailable."
+                  action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>}
+                />
+              </div>
+            ) : !data ? (
+              <div className="sl-sa-ingredients-state">
+                <DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." />
+              </div>
+            ) : data.items.length === 0 ? (
+              <SuperAdminIngredientPending label="Ingredient catalogue" />
+            ) : (
+              <div className="sl-sa-ingredients-table-scroll" role="region" aria-label="Live ingredient records" tabIndex={0}>
+                <table className="sl-sa-ingredients-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Ingredient Name</th>
+                      <th scope="col">Category</th>
+                      <th scope="col">Unit</th>
+                      <th scope="col">Default Shelf Life</th>
+                      <th scope="col">Brand</th>
+                      <th scope="col">Last Updated</th>
+                      <th scope="col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.items.map(item => <tr key={item.id}>
+                      <td>
+                        <span className="sl-sa-ingredient-name">
+                          <span className="sl-sa-ingredient-avatar" aria-hidden="true"><Leaf size={15} /></span>
+                          <strong>{item.name}</strong>
+                        </span>
+                      </td>
+                      <td><Status>{item.category}</Status></td>
+                      <td>{item.unitOfMeasure}</td>
+                      <td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td>
+                      <td>{item.brand || '—'}</td>
+                      <td>{formatUpdated(item.updatedAt)}</td>
+                      <td>
+                        <button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}>
+                          <Eye size={16} aria-hidden="true" />
+                        </button>
+                      </td>
+                    </tr>)}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {data && data.total > 0 && (
+              <div className="sl-sa-ingredients-pagination">
+                <Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} compact />
+              </div>
+            )}
+          </section>
+        </main>
+
+        <aside className="sl-sa-ingredients-rail" aria-label="Ingredient analytics">
+          <Card id="sa-ingredient-distribution" title="Ingredient Distribution">
+            <SuperAdminIngredientPending label="Ingredient distribution" compact />
+          </Card>
+
+          <Card id="sa-expiry-risk" title="Expiry Risk Overview">
+            <SuperAdminIngredientPending label="Expiry-risk analytics" compact />
+          </Card>
+
+          <Card id="sa-top-suppliers" title="Top Suppliers">
+            <SuperAdminIngredientPending label="Supplier analytics" compact />
+          </Card>
+
+          <Card id="sa-recent-ingredients" title="Recently Added Ingredients">
+            <SuperAdminIngredientPending label="Recent ingredient activity" compact />
+          </Card>
+        </aside>
+      </div>
+    </div>
+
+    <Dialog
+      open={!!viewIngredient}
+      title={<span className="sl-ingredient-reference-title">Ingredient Details</span>}
+      onDismiss={() => setViewIngredient(null)}
+      className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-view-dialog"
+    >
+      {viewIngredient && <div className="sl-ingredient-detail-reference">
+        <div className="sl-ingredient-detail-hero sl-ingredient-detail-no-photo">
+          <span className="sl-ingredient-detail-copy">
+            <span className="sl-ingredient-name-row"><strong>{viewIngredient.name}</strong></span>
+            <small>{viewIngredient.category} · {viewIngredient.brand || 'No brand specified'}</small>
+            {viewIngredient.description && <small>{viewIngredient.description}</small>}
+          </span>
+        </div>
+
+        <div className="sl-detail-grid">
+          <span><small>Unit of Measure</small><strong>{viewIngredient.unitOfMeasure}</strong></span>
+          <span><small>Minimum Stock Level</small><strong>{viewIngredient.minimumStock ?? '—'} {viewIngredient.unitOfMeasure}</strong></span>
+          <span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `₱${viewIngredient.standardUnitCost.toFixed(2)} / ${viewIngredient.unitOfMeasure}`}</strong></span>
+          <span><small>Default Shelf Life</small><strong>{viewIngredient.defaultShelfLifeDays ? `${viewIngredient.defaultShelfLifeDays} days` : '—'}</strong></span>
+        </div>
+
+        <SuperAdminIngredientPending label="Ingredient inventory statistics" />
+      </div>}
+    </Dialog>
+  </>;
+}
+
+
+
+function SuperAdminInventoryBatchesPage() {
+  return <>
+    <PageHeader
+      eyebrow="System Oversight"
+      title="Inventory Batches"
+      description="Monitor inventory batches, expiry status, and stock movement across the establishment."
+    />
+
+    <div className="sl-admin-view sl-sa-batches-page">
+      <section className="sl-sa-batches-kpis" aria-label="Inventory batch summary">
+        <article className="sl-sa-batches-kpi" data-tone="brand">
+          <span className="sl-sa-batches-kpi-icon"><Boxes aria-hidden="true" /></span>
+          <div>
+            <span>Total Batches</span>
+            <strong>—</strong>
+            <small>Awaiting inventory batch API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-batches-kpi" data-tone="success">
+          <span className="sl-sa-batches-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
+          <div>
+            <span>Active Batches</span>
+            <strong>—</strong>
+            <small>Awaiting batch status API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-batches-kpi" data-tone="attention">
+          <span className="sl-sa-batches-kpi-icon"><Clock3 aria-hidden="true" /></span>
+          <div>
+            <span>Expiring Soon</span>
+            <strong>—</strong>
+            <small>Awaiting expiration summary API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-batches-kpi" data-tone="critical">
+          <span className="sl-sa-batches-kpi-icon"><PackageX aria-hidden="true" /></span>
+          <div>
+            <span>Expired Batches</span>
+            <strong>—</strong>
+            <small>Awaiting expiration summary API</small>
+          </div>
+        </article>
+      </section>
+
+      <section className="sl-sa-batches-filter-card" aria-label="Inventory batch filters">
+        <label className="sl-sa-batches-search">
+          <span>Search batches</span>
+          <div>
+            <Search size={16} aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Search by batch ID, ingredient, or supplier…"
+              disabled
+              aria-label="Batch search unavailable until inventory batch API is connected"
+            />
+          </div>
+        </label>
+
+        <label>
+          <span>Ingredient</span>
+          <select disabled aria-label="Ingredient filter unavailable">
+            <option>All Ingredients</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Branch</span>
+          <select disabled aria-label="Branch filter unavailable">
+            <option>All Branches</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select disabled aria-label="Status filter unavailable">
+            <option>All Statuses</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Date Range</span>
+          <div className="sl-sa-batches-date">
+            <CalendarDays size={16} aria-hidden="true" />
+            <input type="text" value="Data pending" readOnly disabled />
+          </div>
+        </label>
+
+        <div className="sl-sa-batches-filter-actions">
+          <button type="button" className="sl-button sl-button-primary" disabled>
+            <Filter size={15} aria-hidden="true" />Filter
+          </button>
+          <button type="button" className="sl-button" disabled>Reset</button>
+        </div>
+      </section>
+
+      <section className="sl-sa-batches-table-card" aria-label="Inventory batch records">
+        <div className="sl-sa-batches-table-toolbar">
+          <span>Inventory batch records</span>
+          <button type="button" className="sl-button" disabled title="Export backend is not connected">
+            Export
+          </button>
+        </div>
+
+        <div className="sl-sa-batches-table-placeholder">
+          <DataState
+            kind="empty"
+            title="No live records yet"
+            description="Inventory batches"
+            action={<Status>Preview · data pending</Status>}
+          />
+        </div>
+
+        <footer className="sl-sa-batches-footer">
+          <label>
+            <span>Rows per page</span>
+            <select defaultValue="10" disabled><option>10</option></select>
+          </label>
+          <span>Pagination will activate when live inventory batch records are available.</span>
+        </footer>
+      </section>
+    </div>
+  </>;
+}
+
+
+
+
+function SuperAdminUsagePending({ label, compact = false }: { label: string; compact?: boolean }) {
+  return <div className={`sl-sa-usage-pending${compact ? ' compact' : ''}`}>
+    <DataState
+      kind="empty"
+      title="No live records yet"
+      description={label}
+      action={<Status>Preview · data pending</Status>}
+    />
+  </div>;
+}
+
+function SuperAdminUsagePage() {
+  return <>
+    <PageHeader
+      eyebrow="System Oversight"
+      title="Usage"
+      description="View and monitor ingredient usage across all branches. Track consumption, support forecasting, and identify usage trends."
+    />
+
+    <div className="sl-admin-view sl-sa-usage-page">
+      <section className="sl-sa-usage-kpis" aria-label="Usage summary">
+        <article className="sl-sa-usage-kpi" data-tone="brand">
+          <span className="sl-sa-usage-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
+          <div>
+            <span>Total Usage Records</span>
+            <strong>—</strong>
+            <small>Awaiting usage records API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-usage-kpi" data-tone="success">
+          <span className="sl-sa-usage-kpi-icon"><Leaf aria-hidden="true" /></span>
+          <div>
+            <span>Total Quantity Used</span>
+            <strong>—</strong>
+            <small>Awaiting consumption summary API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-usage-kpi" data-tone="attention">
+          <span className="sl-sa-usage-kpi-icon"><Building2 aria-hidden="true" /></span>
+          <div>
+            <span>Active Branches</span>
+            <strong>—</strong>
+            <small>Awaiting branch activity API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-usage-kpi" data-tone="success">
+          <span className="sl-sa-usage-kpi-icon"><Users aria-hidden="true" /></span>
+          <div>
+            <span>Users Recorded Usage</span>
+            <strong>—</strong>
+            <small>Awaiting recorder summary API</small>
+          </div>
+        </article>
+      </section>
+
+      <div className="sl-sa-usage-layout">
+        <div className="sl-sa-usage-main">
+          <section className="sl-sa-usage-filter-card" aria-label="Usage filters">
+            <label className="sl-sa-usage-search">
+              <span>Search usage records</span>
+              <div>
+                <Search size={16} aria-hidden="true" />
+                <input
+                  type="search"
+                  placeholder="Search by ingredient, batch ID, dish, or user…"
+                  disabled
+                  aria-label="Usage search unavailable until usage service is connected"
+                />
+              </div>
+            </label>
+
+            <label>
+              <span>Branch</span>
+              <select disabled aria-label="Branch filter unavailable">
+                <option>All Branches</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Ingredient</span>
+              <select disabled aria-label="Ingredient filter unavailable">
+                <option>All Ingredients</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Date Range</span>
+              <div className="sl-sa-usage-date">
+                <CalendarDays size={16} aria-hidden="true" />
+                <input type="text" value="Data pending" readOnly disabled />
+              </div>
+            </label>
+
+            <div className="sl-sa-usage-filter-actions">
+              <button type="button" className="sl-button sl-button-primary" disabled>
+                <Filter size={15} aria-hidden="true" />Filter
+              </button>
+              <button type="button" className="sl-button" disabled>Reset</button>
+            </div>
+          </section>
+
+          <section className="sl-sa-usage-table-card" aria-label="Usage records">
+            <div className="sl-sa-usage-table-toolbar">
+              <span>Usage records</span>
+              <button type="button" className="sl-button" disabled title="Export backend is not connected">Export</button>
+            </div>
+
+            <div className="sl-sa-usage-state">
+              <DataState
+                kind="empty"
+                title="No live records yet"
+                description="Usage records"
+                action={<Status>Preview · data pending</Status>}
+              />
+            </div>
+
+            <footer className="sl-sa-usage-footer">
+              <label>
+                <span>Rows per page</span>
+                <select defaultValue="10" disabled><option>10</option></select>
+              </label>
+              <span>Pagination will activate when live usage records are available.</span>
+            </footer>
+          </section>
+        </div>
+
+        <aside className="sl-sa-usage-rail" aria-label="Usage analytics panels">
+          <Card id="sa-usage-category" title="Ingredient Usage by Category">
+            <SuperAdminUsagePending label="Usage category analytics" compact />
+          </Card>
+          <Card id="sa-usage-top-ingredients" title="Top Ingredients by Usage">
+            <SuperAdminUsagePending label="Top ingredients by usage" compact />
+          </Card>
+          <Card id="sa-usage-trends" title="Usage Trends">
+            <SuperAdminUsagePending label="Usage trends" compact />
+          </Card>
+          <Card id="sa-usage-recent-activity" title="Recent Usage Activity">
+            <SuperAdminUsagePending label="Usage activity" compact />
+          </Card>
+        </aside>
+      </div>
+    </div>
+  </>;
+}
+
+
+
+function SuperAdminWastePending({ label, compact = false }: { label: string; compact?: boolean }) {
+  return <div className={`sl-sa-waste-pending${compact ? ' compact' : ''}`}>
+    <DataState
+      kind="empty"
+      title="No live records yet"
+      description={label}
+      action={<Status>Preview · data pending</Status>}
+    />
+  </div>;
+}
+
+function SuperAdminWastePage() {
+  return <>
+    <PageHeader
+      eyebrow="System Oversight"
+      title="Waste"
+      description="Track and analyze wasted ingredients across all branches. Identify key causes and support waste reduction initiatives."
+    />
+
+    <div className="sl-admin-view sl-sa-waste-page">
+      <section className="sl-sa-waste-kpis" aria-label="Waste summary">
+        <article className="sl-sa-waste-kpi" data-tone="brand">
+          <span className="sl-sa-waste-kpi-icon"><Trash2 aria-hidden="true" /></span>
+          <div>
+            <span>Total Waste</span>
+            <strong>—</strong>
+            <small>Awaiting waste volume API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-waste-kpi" data-tone="success">
+          <span className="sl-sa-waste-kpi-icon"><Leaf aria-hidden="true" /></span>
+          <div>
+            <span>Estimated Cost Loss</span>
+            <strong>—</strong>
+            <small>Awaiting waste valuation API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-waste-kpi" data-tone="critical">
+          <span className="sl-sa-waste-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+          <div>
+            <span>Waste Records</span>
+            <strong>—</strong>
+            <small>Awaiting waste records API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-waste-kpi" data-tone="attention">
+          <span className="sl-sa-waste-kpi-icon"><PackageX aria-hidden="true" /></span>
+          <div>
+            <span>Waste Rate</span>
+            <strong>—</strong>
+            <small>Awaiting waste-rate API</small>
+          </div>
+        </article>
+      </section>
+
+      <div className="sl-sa-waste-layout">
+        <div className="sl-sa-waste-main">
+          <section className="sl-sa-waste-filter-card" aria-label="Waste filters">
+            <label className="sl-sa-waste-search">
+              <span>Search waste records</span>
+              <div>
+                <Search size={16} aria-hidden="true" />
+                <input
+                  type="search"
+                  placeholder="Search by ingredient, batch ID, reason, or remarks…"
+                  disabled
+                  aria-label="Waste search unavailable until waste service is connected"
+                />
+              </div>
+            </label>
+
+            <label>
+              <span>Branch</span>
+              <select disabled aria-label="Branch filter unavailable">
+                <option>All Branches</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Reason</span>
+              <select disabled aria-label="Reason filter unavailable">
+                <option>All Reasons</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Date Range</span>
+              <div className="sl-sa-waste-date">
+                <CalendarDays size={16} aria-hidden="true" />
+                <input type="text" value="Data pending" readOnly disabled />
+              </div>
+            </label>
+
+            <div className="sl-sa-waste-filter-actions">
+              <button type="button" className="sl-button sl-button-primary" disabled>
+                <Filter size={15} aria-hidden="true" />Filter
+              </button>
+              <button type="button" className="sl-button" disabled>Reset</button>
+            </div>
+          </section>
+
+          <section className="sl-sa-waste-table-card" aria-label="Waste records">
+            <div className="sl-sa-waste-table-toolbar">
+              <span>Waste records</span>
+              <button type="button" className="sl-button" disabled title="Export backend is not connected">Export</button>
+            </div>
+
+            <div className="sl-sa-waste-state">
+              <DataState
+                kind="empty"
+                title="No live records yet"
+                description="Waste records"
+                action={<Status>Preview · data pending</Status>}
+              />
+            </div>
+
+            <footer className="sl-sa-waste-footer">
+              <label>
+                <span>Rows per page</span>
+                <select defaultValue="10" disabled><option>10</option></select>
+              </label>
+              <span>Pagination will activate when live waste records are available.</span>
+            </footer>
+          </section>
+        </div>
+
+        <aside className="sl-sa-waste-rail" aria-label="Waste analytics panels">
+          <Card id="sa-waste-reason" title="Waste by Reason">
+            <SuperAdminWastePending label="Waste distribution" compact />
+          </Card>
+          <Card id="sa-waste-trend" title="Waste Trend">
+            <SuperAdminWastePending label="Waste trend" compact />
+          </Card>
+          <Card id="sa-waste-top-ingredients" title="Top Wasted Ingredients">
+            <SuperAdminWastePending label="Wasted ingredients" compact />
+          </Card>
+          <Card id="sa-waste-recent-records" title="Recent Waste Records">
+            <SuperAdminWastePending label="Waste activity" compact />
+          </Card>
+        </aside>
+      </div>
+    </div>
+  </>;
+}
+
+
+
+function SuperAdminChangeRequestsPending({ label, compact = false }: { label: string; compact?: boolean }) {
+  return <div className={`sl-sa-change-pending${compact ? ' compact' : ''}`}>
+    <DataState
+      kind="empty"
+      title="No live records yet"
+      description={label}
+      action={<Status>Preview · data pending</Status>}
+    />
+  </div>;
+}
+
+function SuperAdminChangeRequestsPage() {
+  return <>
+    <PageHeader
+      eyebrow="System Oversight"
+      title="Change Requests"
+      description="Review and manage requests for changes to ingredients, inventory, and other master data."
+    />
+
+    <div className="sl-admin-view sl-sa-change-page">
+      <section className="sl-sa-change-kpis" aria-label="Change request summary">
+        <article className="sl-sa-change-kpi" data-tone="brand">
+          <span className="sl-sa-change-kpi-icon"><FileInput aria-hidden="true" /></span>
+          <div>
+            <span>Total Requests</span>
+            <strong>—</strong>
+            <small>Awaiting request-summary API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-change-kpi" data-tone="attention">
+          <span className="sl-sa-change-kpi-icon"><Clock3 aria-hidden="true" /></span>
+          <div>
+            <span>Pending Review</span>
+            <strong>—</strong>
+            <small>Awaiting review queue API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-change-kpi" data-tone="success">
+          <span className="sl-sa-change-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
+          <div>
+            <span>Approved</span>
+            <strong>—</strong>
+            <small>Awaiting approvals API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-change-kpi" data-tone="critical">
+          <span className="sl-sa-change-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+          <div>
+            <span>Rejected</span>
+            <strong>—</strong>
+            <small>Awaiting decision API</small>
+          </div>
+        </article>
+      </section>
+
+      <div className="sl-sa-change-layout">
+        <div className="sl-sa-change-main">
+          <section className="sl-sa-change-filter-card" aria-label="Change request filters">
+            <label className="sl-sa-change-search">
+              <span>Search requests</span>
+              <div>
+                <Search size={16} aria-hidden="true" />
+                <input
+                  type="search"
+                  placeholder="Search by request ID, ingredient, user, or details…"
+                  disabled
+                  aria-label="Change request search unavailable until request service is connected"
+                />
+              </div>
+            </label>
+
+            <label>
+              <span>Request Type</span>
+              <select disabled aria-label="Request type filter unavailable">
+                <option>All Types</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Status</span>
+              <select disabled aria-label="Status filter unavailable">
+                <option>All Statuses</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Requested By (Role)</span>
+              <select disabled aria-label="Role filter unavailable">
+                <option>All Roles</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Date Range</span>
+              <div className="sl-sa-change-date">
+                <CalendarDays size={16} aria-hidden="true" />
+                <input type="text" value="Data pending" readOnly disabled />
+              </div>
+            </label>
+
+            <div className="sl-sa-change-filter-actions">
+              <button type="button" className="sl-button sl-button-primary" disabled>
+                <Filter size={15} aria-hidden="true" />Filter
+              </button>
+              <button type="button" className="sl-button" disabled>Reset</button>
+            </div>
+          </section>
+
+          <section className="sl-sa-change-table-card" aria-label="Change requests">
+            <div className="sl-sa-change-table-toolbar">
+              <span>Change requests</span>
+              <button type="button" className="sl-button" disabled title="Export backend is not connected">Export</button>
+            </div>
+
+            <div className="sl-sa-change-state">
+              <DataState
+                kind="empty"
+                title="No live records yet"
+                description="Change requests"
+                action={<Status>Preview · data pending</Status>}
+              />
+            </div>
+
+            <footer className="sl-sa-change-footer">
+              <label>
+                <span>Rows per page</span>
+                <select defaultValue="10" disabled><option>10</option></select>
+              </label>
+              <span>Pagination will activate when live change-request records are available.</span>
+            </footer>
+          </section>
+        </div>
+
+        <aside className="sl-sa-change-rail" aria-label="Change request analytics panels">
+          <Card id="sa-change-type" title="Requests by Type">
+            <SuperAdminChangeRequestsPending label="Change request types" compact />
+          </Card>
+          <Card id="sa-change-status" title="Requests by Status">
+            <SuperAdminChangeRequestsPending label="Request statuses" compact />
+          </Card>
+          <Card id="sa-change-recent" title="Recent Activity">
+            <SuperAdminChangeRequestsPending label="Change request activity" compact />
+          </Card>
+        </aside>
+      </div>
+    </div>
+  </>;
+}
+
+
+function SuperAdminExpirationPending({ label, compact = false }: { label: string; compact?: boolean }) {
+  return <div className={`sl-sa-expiration-pending${compact ? ' compact' : ''}`}>
+    <DataState
+      kind="empty"
+      title="No live records yet"
+      description={label}
+      action={<Status>Preview · data pending</Status>}
+    />
+  </div>;
+}
+
+function SuperAdminExpirationMonitoringPage() {
+  return <>
+    <PageHeader
+      eyebrow="System Oversight"
+      title="Expiration / FEFO"
+      description="Monitor ingredient expiration dates and manage inventory using the FEFO (First-Expired, First-Out) approach."
+    />
+
+    <div className="sl-admin-view sl-sa-expiration-page">
+      <section className="sl-sa-expiration-kpis" aria-label="Expiration monitoring summary">
+        <article className="sl-sa-expiration-kpi" data-tone="critical">
+          <span className="sl-sa-expiration-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+          <div>
+            <span>Expiring Soon</span>
+            <strong>—</strong>
+            <small>Awaiting ≤ 7-day expiry API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-expiration-kpi" data-tone="attention">
+          <span className="sl-sa-expiration-kpi-icon"><Clock3 aria-hidden="true" /></span>
+          <div>
+            <span>Expiring (8–14 days)</span>
+            <strong>—</strong>
+            <small>Awaiting expiry summary API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-expiration-kpi" data-tone="success">
+          <span className="sl-sa-expiration-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
+          <div>
+            <span>Good Shelf Life</span>
+            <strong>—</strong>
+            <small>Awaiting shelf-life summary API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-expiration-kpi" data-tone="brand">
+          <span className="sl-sa-expiration-kpi-icon"><Boxes aria-hidden="true" /></span>
+          <div>
+            <span>Total Batches</span>
+            <strong>—</strong>
+            <small>Awaiting inventory batch API</small>
+          </div>
+        </article>
+      </section>
+
+      <div className="sl-sa-expiration-layout">
+        <main className="sl-sa-expiration-main">
+          <section className="sl-sa-expiration-filter-card" aria-label="Expiration monitoring filters">
+            <label className="sl-sa-expiration-search">
+              <span>Search by ingredient, batch ID, or supplier</span>
+              <div>
+                <Search size={16} aria-hidden="true" />
+                <input
+                  type="search"
+                  placeholder="Search by ingredient, batch ID, or supplier…"
+                  disabled
+                  aria-label="Expiration search unavailable until inventory batch service is connected"
+                />
+              </div>
+            </label>
+
+            <label>
+              <span>Branch</span>
+              <select disabled aria-label="Branch filter unavailable">
+                <option>All Branches</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Category</span>
+              <select disabled aria-label="Category filter unavailable">
+                <option>All Categories</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Expiration Status</span>
+              <select disabled aria-label="Expiration status filter unavailable">
+                <option>All Statuses</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Date Range</span>
+              <div className="sl-sa-expiration-date">
+                <CalendarDays size={16} aria-hidden="true" />
+                <input type="text" value="Data pending" readOnly disabled />
+              </div>
+            </label>
+
+            <div className="sl-sa-expiration-filter-actions">
+              <button type="button" className="sl-button sl-button-primary" disabled>
+                <Filter size={15} aria-hidden="true" />Filter
+              </button>
+              <button type="button" className="sl-button" disabled>Reset</button>
+            </div>
+          </section>
+
+          <section className="sl-sa-expiration-table-card" aria-label="Expiration monitoring records">
+            <div className="sl-sa-expiration-table-toolbar">
+              <span>Expiration and FEFO records</span>
+              <button type="button" className="sl-button" disabled title="Export backend is not connected">Export</button>
+            </div>
+
+            <div className="sl-sa-expiration-state">
+              <DataState
+                kind="empty"
+                title="No live records yet"
+                description="Expiration and FEFO records"
+                action={<Status>Preview · data pending</Status>}
+              />
+            </div>
+
+            <footer className="sl-sa-expiration-footer">
+              <label>
+                <span>Rows per page</span>
+                <select defaultValue="10" disabled><option>10</option></select>
+              </label>
+              <span>Pagination will activate when live expiration records are available.</span>
+            </footer>
+          </section>
+        </main>
+
+        <aside className="sl-sa-expiration-rail" aria-label="Expiration analytics panels">
+          <Card id="sa-expiration-status" title="Expiration Status Distribution">
+            <SuperAdminExpirationPending label="Expiration status distribution" compact />
+          </Card>
+
+          <Card id="sa-expiration-top-ingredients" title="Top Ingredients Nearing Expiration">
+            <SuperAdminExpirationPending label="Ingredients nearing expiration" compact />
+          </Card>
+
+          <Card id="sa-expiration-fefo" title="FEFO Compliance">
+            <SuperAdminExpirationPending label="FEFO compliance" compact />
+          </Card>
+
+          <Card id="sa-expiration-upcoming" title="Upcoming Expirations">
+            <SuperAdminExpirationPending label="Upcoming expirations" compact />
+          </Card>
+        </aside>
+      </div>
+    </div>
+  </>;
+}
+
+
+function SuperAdminForecastingPending({ label, compact = false }: { label: string; compact?: boolean }) {
+  return <div className={`sl-sa-forecast-pending${compact ? ' compact' : ''}`}>
+    <DataState
+      kind="empty"
+      title="No live records yet"
+      description={label}
+      action={<Status>Preview · data pending</Status>}
+    />
+  </div>;
+}
+
+function SuperAdminForecastingPage() {
+  return <>
+    <PageHeader
+      eyebrow="System Oversight"
+      title="Forecasting"
+      description="View AI-generated demand forecasts, compare with actual usage, and monitor forecast accuracy across all branches."
+    />
+
+    <div className="sl-admin-view sl-sa-forecast-page">
+      <section className="sl-sa-forecast-kpis" aria-label="Forecasting summary">
+        <article className="sl-sa-forecast-kpi" data-tone="brand">
+          <span className="sl-sa-forecast-kpi-icon"><BarChart3 aria-hidden="true" /></span>
+          <div>
+            <span>Forecasted Items</span>
+            <strong>—</strong>
+            <small>Awaiting forecast summary API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-forecast-kpi" data-tone="success">
+          <span className="sl-sa-forecast-kpi-icon"><Target aria-hidden="true" /></span>
+          <div>
+            <span>Average Forecast Accuracy</span>
+            <strong>—</strong>
+            <small>Awaiting forecast accuracy API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-forecast-kpi" data-tone="attention">
+          <span className="sl-sa-forecast-kpi-icon"><TrendingUp aria-hidden="true" /></span>
+          <div>
+            <span>High Demand Increase</span>
+            <strong>—</strong>
+            <small>Awaiting demand-change API</small>
+          </div>
+        </article>
+
+        <article className="sl-sa-forecast-kpi" data-tone="critical">
+          <span className="sl-sa-forecast-kpi-icon"><TrendingDown aria-hidden="true" /></span>
+          <div>
+            <span>Predicted Decrease</span>
+            <strong>—</strong>
+            <small>Awaiting demand-change API</small>
+          </div>
+        </article>
+      </section>
+
+      <div className="sl-sa-forecast-layout">
+        <main className="sl-sa-forecast-main">
+          <section className="sl-sa-forecast-filter-card" aria-label="Forecast filters">
+            <label>
+              <span>Branch</span>
+              <select disabled aria-label="Branch filter unavailable">
+                <option>All Branches</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Category</span>
+              <select disabled aria-label="Category filter unavailable">
+                <option>All Categories</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Ingredient</span>
+              <select disabled aria-label="Ingredient filter unavailable">
+                <option>All Ingredients</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Forecast Period</span>
+              <div className="sl-sa-forecast-date">
+                <CalendarDays size={16} aria-hidden="true" />
+                <input type="text" value="Data pending" readOnly disabled />
+              </div>
+            </label>
+
+            <label>
+              <span>Model View</span>
+              <select disabled aria-label="Forecast model filter unavailable">
+                <option>Demand Forecast</option>
+              </select>
+            </label>
+
+            <div className="sl-sa-forecast-filter-actions">
+              <button type="button" className="sl-button sl-button-primary" disabled>
+                Apply
+              </button>
+              <button type="button" className="sl-button" disabled>Reset</button>
+            </div>
+          </section>
+
+          <section className="sl-sa-forecast-chart-card">
+            <div className="sl-sa-forecast-section-head">
+              <div>
+                <h2>Forecast vs. Actual Usage</h2>
+                <p>Demand forecast compared with actual usage.</p>
+              </div>
+              <button type="button" className="sl-button" disabled>Last 14 days</button>
+            </div>
+
+            <div className="sl-sa-forecast-chart-state">
+              <SuperAdminForecastingPending label="Forecast vs. actual usage" />
+            </div>
+          </section>
+
+          <section className="sl-sa-forecast-table-card" aria-label="Forecast records">
+            <div className="sl-sa-forecast-table-toolbar">
+              <span>Forecast records</span>
+              <button type="button" className="sl-button" disabled title="Export backend is not connected">
+                Export
+              </button>
+            </div>
+
+            <div className="sl-sa-forecast-table-state">
+              <DataState
+                kind="empty"
+                title="No live records yet"
+                description="Forecast records"
+                action={<Status>Preview · data pending</Status>}
+              />
+            </div>
+
+            <footer className="sl-sa-forecast-footer">
+              <label>
+                <span>Rows per page</span>
+                <select defaultValue="10" disabled><option>10</option></select>
+              </label>
+              <span>Pagination will activate when live forecast records are available.</span>
+            </footer>
+          </section>
+        </main>
+
+        <aside className="sl-sa-forecast-rail" aria-label="Forecast analytics panels">
+          <Card id="sa-forecast-branch-accuracy" title="Forecast Accuracy by Branch">
+            <SuperAdminForecastingPending label="Branch forecast accuracy" compact />
+          </Card>
+
+          <Card id="sa-forecast-increase" title="Top Ingredients by Predicted Demand Increase">
+            <SuperAdminForecastingPending label="Predicted demand increases" compact />
+          </Card>
+
+          <Card id="sa-forecast-decrease" title="Top Ingredients by Predicted Demand Decrease">
+            <SuperAdminForecastingPending label="Predicted demand decreases" compact />
+          </Card>
+
+          <Card id="sa-forecast-insights" title="Forecast Insights">
+            <SuperAdminForecastingPending label="Forecast insights" compact />
+          </Card>
+        </aside>
+      </div>
+    </div>
+  </>;
+}
+
 export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   const { user } = useApplicationWorkspace();
   const [preview, setPreview] = useState<PreviewId | null>(null);
@@ -213,7 +1419,15 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
 
     </div>
   </>;
+  if (moduleId === 'Ingredients' && user.role === 'Super Admin') return <SuperAdminIngredientsPage />;
   if (moduleId === 'Ingredients' && user.role === 'Admin') return <IngredientsAdminPage preview={preview} setPreview={setPreview} />;
+
+  if (moduleId === 'InventoryBatches' && user.role === 'Super Admin') return <SuperAdminInventoryBatchesPage />;
+  if (moduleId === 'Usage' && user.role === 'Super Admin') return <SuperAdminUsagePage />;
+  if (moduleId === 'Waste' && user.role === 'Super Admin') return <SuperAdminWastePage />;
+  if (moduleId === 'ChangeRequests' && user.role === 'Super Admin') return <SuperAdminChangeRequestsPage />;
+  if (moduleId === 'ExpirationMonitoring' && user.role === 'Super Admin') return <SuperAdminExpirationMonitoringPage />;
+  if (moduleId === 'Forecasting' && user.role === 'Super Admin') return <SuperAdminForecastingPage />;
 
   if (moduleId === 'InventoryBatches' && user.role === 'Admin') return <>
     <PageHeader eyebrow="Inventory" title="Inventory" description="Manage your ingredients and inventory batches. Track quantities, expiration dates, and stock status." />

@@ -1,80 +1,158 @@
-import { Filter, X } from 'lucide-react';
-import { useState } from 'react';
-import { administrationFilterCatalog } from '../../components/application/administration';
-import { Card, PageHeader, PlaceholderSummaryCards, PlaceholderTable } from '../../components/application/primitives';
+import { AlertTriangle, CalendarDays, CheckCircle2, Clock3, FileInput, Filter, Search } from 'lucide-react';
+import { Card, DataState, PageHeader, Status } from '../../components/application/primitives';
+
+function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
+  return (
+    <div className={`sl-sa-change-pending${compact ? ' compact' : ''}`}>
+      <DataState
+        kind="empty"
+        title="No live records yet"
+        description={label}
+        action={<Status>Preview · data pending</Status>}
+      />
+    </div>
+  );
+}
 
 export default function ChangeRequests() {
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState<Record<string, string>>({ status: administrationFilterCatalog.changeRequests.status[0], requestType: administrationFilterCatalog.changeRequests.requestType[0], period: administrationFilterCatalog.changeRequests.period[0] });
-
   return <>
-    <PageHeader eyebrow="System Controls" title="Change Requests" description="Review operational overrides requested by authorized users." />
-    <div className="sl-admin-view">
-      <PlaceholderSummaryCards items={[
-        { label: 'Total requests', tone: 'brand' },
-        { label: 'Pending requests', tone: 'attention' },
-        { label: 'Approved this month', tone: 'success' },
-        { label: 'Rejected this month', tone: 'critical' },
-      ]} />
+    <PageHeader
+      eyebrow="System Controls"
+      title="Change Requests"
+      description="Review and manage requests for changes to ingredients, inventory, and other master data."
+    />
 
-      <Card
-        id="sl-change-request-table"
-        title="Request Queue"
-        action={
-          <div className="sl-filter-control">
-            <button
-              type="button"
-              className="sl-icon-button sl-filter-trigger"
-              aria-label="Open change request filters"
-              aria-expanded={filtersOpen}
-              aria-controls="sl-request-filter-panel"
-              onClick={() => setFiltersOpen(value => !value)}
-            >
-              <Filter size={18} aria-hidden="true" />
-            </button>
-            {filtersOpen && <div id="sl-request-filter-panel" className="sl-filter-popover" role="dialog" aria-label="Change request filters">
-              <div className="sl-filter-popover-header">
-                <strong>Filters</strong>
-                <button type="button" className="sl-icon-button sl-close-button" aria-label="Close change request filters" onClick={() => setFiltersOpen(false)}><X size={17} aria-hidden="true" /></button>
-              </div>
-              <div className="sl-filter-popover-body">
-                {Object.entries(administrationFilterCatalog.changeRequests).map(([key, values]) => <label key={key}>
-                  {key === 'status' ? 'Status' : key === 'requestType' ? 'Request type' : 'Date range'}
-                  <select className="sl-admin-input" value={filters[key as keyof typeof filters]} onChange={event => setFilters(current => ({ ...current, [key]: event.target.value }))}>
-                    {values.map(value => <option key={value}>{value}</option>)}
-                  </select>
-                </label>)}
-                <button type="button" className="sl-button sl-filter-clear" onClick={() => setFilters({ status: administrationFilterCatalog.changeRequests.status[0], requestType: administrationFilterCatalog.changeRequests.requestType[0], period: administrationFilterCatalog.changeRequests.period[0] })}>Clear filters</button>
-                <p className="sl-supporting" aria-live="polite">Filters are active. They will apply to request records as soon as the request service returns data.</p>
-              </div>
-            </div>}
+    <div className="sl-admin-view sl-sa-change-page">
+      <section className="sl-sa-change-kpis" aria-label="Change request summary">
+        <article className="sl-sa-change-kpi" data-tone="brand">
+          <span className="sl-sa-change-kpi-icon"><FileInput aria-hidden="true" /></span>
+          <div>
+            <span>Total Requests</span>
+            <strong>—</strong>
+            <small>Awaiting request-summary API</small>
           </div>
-        }
-      >
-        <PlaceholderTable
-          label="Change requests"
-          columns={['Target', 'Requested by', 'Request type', 'Reason', 'Status', 'Date', 'Actions']}
-          description="Operational change requests will appear here when the request service is connected."
-          rows={4}
-        />
-      </Card>
+        </article>
 
-      <Card id="sl-change-request-review" title="Request Review">
-        <div className="sl-request-detail-preview">
+        <article className="sl-sa-change-kpi" data-tone="attention">
+          <span className="sl-sa-change-kpi-icon"><Clock3 aria-hidden="true" /></span>
           <div>
-            <span className="sl-supporting">Requested change</span>
-            <strong>Select a request when connected</strong>
+            <span>Pending Review</span>
+            <strong>—</strong>
+            <small>Awaiting review queue API</small>
           </div>
+        </article>
+
+        <article className="sl-sa-change-kpi" data-tone="success">
+          <span className="sl-sa-change-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
           <div>
-            <span className="sl-supporting">Reason for request</span>
-            <p>No request is selected because the change-request backend is not connected yet.</p>
+            <span>Approved</span>
+            <strong>—</strong>
+            <small>Awaiting approvals API</small>
           </div>
-        </div>
-        <div className="sl-review-actions">
-          <button className="sl-button" disabled>Reject</button>
-          <button className="sl-button sl-button-primary" disabled>Approve</button>
-        </div>
-      </Card>
+        </article>
+
+        <article className="sl-sa-change-kpi" data-tone="critical">
+          <span className="sl-sa-change-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+          <div>
+            <span>Rejected</span>
+            <strong>—</strong>
+            <small>Awaiting decision API</small>
+          </div>
+        </article>
+      </section>
+
+      <div className="sl-sa-change-layout">
+        <main className="sl-sa-change-main">
+          <section className="sl-sa-change-filter-card" aria-label="Change request filters">
+            <label className="sl-sa-change-search">
+              <span>Search requests</span>
+              <div>
+                <Search size={16} aria-hidden="true" />
+                <input
+                  type="search"
+                  placeholder="Search by request ID, ingredient, user, or details…"
+                  disabled
+                  aria-label="Change request search unavailable until request service is connected"
+                />
+              </div>
+            </label>
+
+            <label>
+              <span>Request Type</span>
+              <select disabled aria-label="Request type filter unavailable">
+                <option>All Types</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Status</span>
+              <select disabled aria-label="Status filter unavailable">
+                <option>All Statuses</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Requested By (Role)</span>
+              <select disabled aria-label="Role filter unavailable">
+                <option>All Roles</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Date Range</span>
+              <div className="sl-sa-change-date">
+                <CalendarDays size={16} aria-hidden="true" />
+                <input type="text" value="Data pending" readOnly disabled />
+              </div>
+            </label>
+
+            <div className="sl-sa-change-filter-actions">
+              <button type="button" className="sl-button sl-button-primary" disabled>
+                <Filter size={15} aria-hidden="true" />Filter
+              </button>
+              <button type="button" className="sl-button" disabled>Reset</button>
+            </div>
+          </section>
+
+          <section className="sl-sa-change-table-card" aria-label="Change requests">
+            <div className="sl-sa-change-table-toolbar">
+              <span>Change requests</span>
+              <button type="button" className="sl-button" disabled title="Export backend is not connected">Export</button>
+            </div>
+
+            <div className="sl-sa-change-state">
+              <DataState
+                kind="empty"
+                title="No live records yet"
+                description="Change requests"
+                action={<Status>Preview · data pending</Status>}
+              />
+            </div>
+
+            <footer className="sl-sa-change-footer">
+              <label>
+                <span>Rows per page</span>
+                <select defaultValue="10" disabled><option>10</option></select>
+              </label>
+              <span>Pagination will activate when live change-request records are available.</span>
+            </footer>
+          </section>
+        </main>
+
+        <aside className="sl-sa-change-rail" aria-label="Change request analytics">
+          <Card id="sa-change-type" title="Requests by Type">
+            <PendingPanel label="Change request types" compact />
+          </Card>
+
+          <Card id="sa-change-status" title="Requests by Status">
+            <PendingPanel label="Request statuses" compact />
+          </Card>
+
+          <Card id="sa-change-recent" title="Recent Activity">
+            <PendingPanel label="Change request activity" compact />
+          </Card>
+        </aside>
+      </div>
     </div>
   </>;
 }

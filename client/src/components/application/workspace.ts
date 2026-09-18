@@ -5,7 +5,7 @@ export type WorkspaceRole = SessionUser['role'];
 export const dashboardPaths: Record<WorkspaceRole, string> = {
   'Super Admin': '/SuperAdminDashboard', Admin: '/AdminDashboard', Manager: '/ManagerDashboard', 'Inventory Staff': '/InventoryStaffDashboard',
 };
-const operational: WorkspaceRole[] = ['Admin', 'Manager', 'Inventory Staff'];
+const operational: WorkspaceRole[] = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'];
 export const modules = {
   UserManagement: { label: 'User Management', Icon: Users, roles: ['Super Admin', 'Admin'] },
   Ingredients: { label: 'Ingredients', Icon: Leaf, roles: operational },
@@ -32,17 +32,17 @@ export const canonicalWorkspaceAccess = {
   '/SystemSettings': ['Super Admin'],
   '/SecurityActivity': ['Super Admin'],
   '/UserManagement': ['Super Admin', 'Admin'],
-  '/Ingredients': ['Admin'],
-  '/InventoryBatches': ['Admin', 'Manager', 'Inventory Staff'],
+  '/Ingredients': ['Super Admin', 'Admin'],
+  '/InventoryBatches': ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'],
   '/StockIn': ['Inventory Staff'],
   '/UsageWaste': ['Manager'],
-  '/Usage': ['Manager', 'Inventory Staff'],
-  '/Waste': ['Manager', 'Inventory Staff'],
-  '/ExpirationMonitoring': ['Manager', 'Inventory Staff'],
-  '/ChangeRequests': ['Manager', 'Inventory Staff'],
-  '/Forecasting': ['Manager'],
-  '/Alerts': ['Admin', 'Manager'],
-  '/Reports': ['Admin', 'Manager'],
+  '/Usage': ['Super Admin', 'Manager', 'Inventory Staff'],
+  '/Waste': ['Super Admin', 'Manager', 'Inventory Staff'],
+  '/ExpirationMonitoring': ['Super Admin', 'Manager', 'Inventory Staff'],
+  '/ChangeRequests': ['Super Admin', 'Manager', 'Inventory Staff'],
+  '/Forecasting': ['Super Admin', 'Manager'],
+  '/Alerts': ['Super Admin', 'Admin', 'Manager'],
+  '/Reports': ['Super Admin', 'Admin', 'Manager'],
   '/AdministrativeAudit': ['Super Admin', 'Admin'],
   '/Roles': ['Super Admin', 'Admin'],
 } as const satisfies Record<string, readonly WorkspaceRole[]>;

@@ -30,8 +30,13 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
     },
     async summary(roles = null) {
       const roleFilter = roles ? { role: { $in: ROLES.filter(role => roles.includes(role)) } } : {};
-      const [counts] = await users.aggregate([{ $match: roleFilter }, { $group: { _id: null, totalUsers: { $sum: 1 }, activeUsers: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } }, inactiveUsers: { $sum: { $cond: [{ $eq: ['$isActive', false] }, 1, 0] } } } }]).exec();
-      return { totalUsers: counts?.totalUsers ?? 0, activeUsers: counts?.activeUsers ?? 0, inactiveUsers: counts?.inactiveUsers ?? 0 };
+      const [counts, roleRows] = await Promise.all([
+        users.aggregate([{ $match: roleFilter }, { $group: { _id: null, totalUsers: { $sum: 1 }, activeUsers: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } }, inactiveUsers: { $sum: { $cond: [{ $eq: ['$isActive', false] }, 1, 0] } } } }]).exec(),
+        users.aggregate([{ $match: roleFilter }, { $group: { _id: '$role', count: { $sum: 1 } } }]).exec(),
+      ]);
+      const roleCounts = Object.fromEntries(roleRows.map(row => [row._id, row.count]));
+      const totals = counts[0];
+      return { totalUsers: totals?.totalUsers ?? 0, activeUsers: totals?.activeUsers ?? 0, inactiveUsers: totals?.inactiveUsers ?? 0, roleCounts };
     },
     async audits(query) {
       const filter: Record<string, unknown> = {};
