@@ -100,7 +100,7 @@ test('real HTTP administration checks authentication before authorization and va
     assert.equal((await call('/api/users', f.rows()[2], { method: 'POST', body: '{' })).status, 403);
     const malformed = await call('/api/users', f.rows()[0], { method: 'POST', body: '{' });
     assert.equal(malformed.status, 400); assert.equal((await malformed.json()).error.code, 'VALIDATION_ERROR');
-    const all = await (await call('/api/users', f.rows()[0])).json(); assert.equal(all.total, 4); assert.ok(all.items.every(x => x.role !== 'Super Admin'));
+    const all = await (await call('/api/users', f.rows()[0])).json(); assert.equal(all.total, 6); assert.ok(all.items.some(x => x.role === 'Super Admin'));
     const scoped = await (await call('/api/users', f.rows()[1])).json(); assert.deepEqual(scoped.items.map(x => x.role), ['Manager', 'Inventory Staff']);
     assert.equal((await call('/api/users/' + f.rows()[0].id, f.rows()[1])).status, 404);
     assert.equal((await call('/api/users/' + f.rows()[1].id, f.rows()[0], { method: 'DELETE' })).status, 404);

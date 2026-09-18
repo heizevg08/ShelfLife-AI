@@ -9,6 +9,6 @@
     "server": "npm run start --workspace server",
     "dev": "npm run client",
     "typecheck": "tsc --noEmit",
-    "build:web": "npm run build:web --workspace client"
+    "build:web": "expo export --platform web"
   }
 }
