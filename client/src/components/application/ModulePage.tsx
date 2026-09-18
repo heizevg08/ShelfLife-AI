@@ -63,6 +63,47 @@ function FormPreview({ id }: { id: PreviewId }) {
   </div>;
 }
 
+
+function ManagerUsageWastePage() {
+  const [range, setRange] = useState('Current period');
+  const [category, setCategory] = useState('All Categories');
+  const [ingredient, setIngredient] = useState('All Ingredients');
+  const [location, setLocation] = useState('All Locations');
+  const [frequency, setFrequency] = useState('Daily');
+  const [wastePeriod, setWastePeriod] = useState('This Month');
+  const reset = () => { setRange('Current period'); setCategory('All Categories'); setIngredient('All Ingredients'); setLocation('All Locations'); setFrequency('Daily'); setWastePeriod('This Month'); };
+  const Pending = ({ description }: { description: string }) => <div className="sl-manager-usage-pending"><DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} /></div>;
+  return <>
+    <PageHeader title="Usage & Waste" description="Monitor ingredient usage and waste to identify trends, reduce losses, and improve efficiency." />
+    <div className="sl-admin-view sl-manager-usage-waste-v121">
+      <div className="sl-sa-kpis sl-admin-reference-kpis sl-manager-usage-kpis" aria-label="Usage and waste summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Total Ingredients Used</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Trash2 /></span><div><span>Total Waste</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3 /></span><div><span>Waste Rate</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Estimated Cost of Waste</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </div>
+      <section className="sl-manager-usage-filters" aria-label="Usage and waste filters">
+        <label><span>Date Range</span><select className="sl-admin-input" value={range} onChange={e=>setRange(e.target.value)}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option></select></label>
+        <label><span>Ingredient Category</span><select className="sl-admin-input" value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
+        <label><span>Ingredient</span><select className="sl-admin-input" value={ingredient} onChange={e=>setIngredient(e.target.value)}><option>All Ingredients</option></select></label>
+        <label><span>Location</span><select className="sl-admin-input" value={location} onChange={e=>setLocation(e.target.value)}><option>All Locations</option></select></label>
+        <div className="sl-manager-usage-filter-actions"><button className="sl-button" type="button" onClick={reset}>Reset</button><button className="sl-button sl-button-primary" type="button">Apply Filters</button></div>
+      </section>
+
+      <div className="sl-manager-usage-analytics">
+        <Card id="manager-usage-trend" title="Usage vs. Waste Trend" action={<label className="sl-dashboard-filter"><select value={frequency} onChange={e=>setFrequency(e.target.value)} aria-label="Usage trend frequency"><option>Daily</option><option>Weekly</option><option>Monthly</option></select></label>}><Pending description="Usage and waste trend analytics are not connected yet." /></Card>
+        <Card id="manager-waste-reason" title="Waste by Reason"><Pending description="Waste-reason analytics are not connected yet." /></Card>
+        <Card id="manager-top-waste" title="Top 5 Ingredients by Waste" action={<label className="sl-dashboard-filter"><select value={wastePeriod} onChange={e=>setWastePeriod(e.target.value)} aria-label="Top waste period"><option>This Week</option><option>This Month</option><option>This Quarter</option><option>This Year</option></select></label>}><Pending description="Ingredient waste rankings are not connected yet." /></Card>
+      </div>
+      <section className="sl-manager-usage-records" aria-label="Usage and waste records">
+        <header><div><FileInput size={18}/><strong>Usage & Waste Records</strong></div><button className="sl-button" type="button" disabled><Download size={16}/>Export</button></header>
+        <div className="sl-manager-usage-table-shell"><table className="sl-data-table"><thead><tr>{['Date','Ingredient','Type','Quantity','Related Batch','Reason / Notes','Recorded By','Actions'].map(x=><th key={x}>{x}</th>)}</tr></thead></table><Pending description="Usage and waste transaction records are not connected yet." /></div>
+        <footer><label>Rows per page <select className="sl-admin-input" disabled><option>10</option></select></label><span>Preview · data pending</span></footer>
+      </section>
+    </div>
+  </>;
+}
+
 function ManagerInventoryPage() {
   const [category, setCategory] = useState('All Categories');
   const [status, setStatus] = useState('All Statuses');
@@ -1545,6 +1586,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
       <dl className="sl-guidance-list"><div><dt>Choose an ingredient</dt><dd>Use the approved catalogue and its unit of measure.</dd></div><div><dt>Record the batch</dt><dd>Capture the received quantity, cost and actual expiration date.</dd></div></dl><div className="sl-related-actions"><WorkspaceLink to="/InventoryBatches">View inventory</WorkspaceLink></div>
     </Card></div></div>
   </>;
+  if (moduleId === 'UsageWaste' && user.role === 'Manager') return <ManagerUsageWastePage />;
   if (moduleId === 'UsageWaste') return <>
     <PageHeader eyebrow="Inventory oversight" title="Usage & Waste" description="Review consumption and loss as separate inventory transactions." />
     <div className="sl-admin-view"><div className="sl-workflow-links">
