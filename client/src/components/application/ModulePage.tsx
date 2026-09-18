@@ -1,5 +1,5 @@
 import { Link, type Href } from 'expo-router';
-import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, Users, UtensilsCrossed, MoreVertical } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
@@ -7,7 +7,7 @@ import { Dialog } from './Dialog';
 import { moduleContent, previewFields, type PreviewId } from './module-content';
 import { Card, DataState, PageHeader, Pagination, PlaceholderSummaryCards, PlaceholderTable, Status, SummaryCards } from './primitives';
 import { modules, type ModuleId } from './workspace';
-import { accountSummary } from '../../services/administration';
+import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { createIngredient, deleteIngredient, listIngredients, updateIngredient, type Ingredient, type IngredientInput } from '../../services/ingredients';
 
@@ -1394,7 +1394,7 @@ function SuperAdminForecastingPage() {
 export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   const { user } = useApplicationWorkspace();
   const [preview, setPreview] = useState<PreviewId | null>(null);
-  const [accountTotals, setAccountTotals] = useState<{ totalUsers: number; activeUsers: number; inactiveUsers: number } | null>(null);
+  const [accountTotals, setAccountTotals] = useState<DashboardSummary | null>(null);
   const [accountTotalsError, setAccountTotalsError] = useState(false);
   useEffect(() => {
     if (moduleId !== 'UserManagement') return;
@@ -1403,22 +1403,37 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
     return () => abort.abort();
   }, [moduleId]);
   const staff = user.role === 'Inventory Staff';
-  if (moduleId === 'UserManagement') return <>
-    <PageHeader eyebrow="Administration" title="User Management" description="Control access, manage permissions, and monitor system participants." />
-    <div className="sl-admin-view sl-user-management-view">
-      {/* TODO: Replace these preview values with account-summary / invitation data when those backend aggregates are available. */}
-      <SummaryCards items={[
-        { label: 'Total users', value: accountTotals?.totalUsers.toLocaleString() ?? (accountTotalsError ? 'Unavailable' : 'Loading…'), detail: 'Directory total from live account data', tone: 'brand', trend: 'line' },
-        { label: 'Active users', value: accountTotals?.activeUsers.toLocaleString() ?? (accountTotalsError ? 'Unavailable' : 'Loading…'), detail: 'Active account total', tone: 'success', trend: 'accuracy' },
-        { label: 'Pending invites', value: '—', detail: 'Invitation service not connected', tone: 'attention', trend: 'segments' },
-        { label: 'Deactivated', value: accountTotals?.inactiveUsers.toLocaleString() ?? (accountTotalsError ? 'Unavailable' : 'Loading…'), detail: 'Inactive account total', tone: 'critical', trend: 'bars' },
-      ]} />
-      <section className="sl-user-management-panel" aria-label="User account directory">
-        <AccountsTable />
-      </section>
-
-    </div>
-  </>;
+  if (moduleId === 'UserManagement') {
+    const adminUsers = user.role === 'Admin';
+    const liveValue = (value: number | undefined) => accountTotals ? (value ?? 0).toLocaleString() : (accountTotalsError ? 'Unavailable' : 'Loading…');
+    const total = accountTotals?.totalUsers ?? 0;
+    const roleCount = (role: 'Admin' | 'Manager' | 'Inventory Staff') => accountTotals?.roleCounts?.[role] ?? 0;
+    const pct = (value: number) => total ? `${Math.round((value / total) * 100)}%` : '0%';
+    return <>
+      <PageHeader eyebrow={adminUsers ? undefined : 'Administration'} title={adminUsers ? 'Users' : 'User Management'} description={adminUsers ? 'Manage establishment users, their roles, and access within ShelfLife AI.' : 'Control access, manage permissions, and monitor system participants.'} />
+      <div className={`sl-admin-view sl-user-management-view${adminUsers ? ' sl-admin-users-reference' : ''}`}>
+        {adminUsers ? <div className="sl-admin-users-kpis" aria-label="User summary">
+          {[
+            { label:'Total Users', value:liveValue(accountTotals?.totalUsers), detail:accountTotals ? `↑ ${accountTotals.totalUsers} live` : 'Awaiting account summary', tone:'total', Icon:Users },
+            { label:'Admin', value:liveValue(roleCount('Admin')), detail:accountTotals ? pct(roleCount('Admin')) : 'Awaiting role summary', tone:'admin', Icon:User },
+            { label:'Managers', value:liveValue(roleCount('Manager')), detail:accountTotals ? pct(roleCount('Manager')) : 'Awaiting role summary', tone:'manager', Icon:Users },
+            { label:'Inventory Staff', value:liveValue(roleCount('Inventory Staff')), detail:accountTotals ? pct(roleCount('Inventory Staff')) : 'Awaiting role summary', tone:'staff', Icon:Users },
+          ].map(({label,value,detail,tone,Icon}) => <section key={label} className="sl-admin-users-kpi" data-tone={tone}>
+            <span className="sl-admin-users-kpi-icon" aria-hidden="true"><Icon size={24}/></span>
+            <div className="sl-admin-users-kpi-copy"><strong>{value}</strong><span>{label}</span><small>{detail}</small></div>
+          </section>)}
+        </div> : <SummaryCards items={[
+          { label: 'Total users', value: liveValue(accountTotals?.totalUsers), detail: 'Directory total from live account data', tone: 'brand', trend: 'line' },
+          { label: 'Active users', value: liveValue(accountTotals?.activeUsers), detail: 'Active account total', tone: 'success', trend: 'accuracy' },
+          { label: 'Pending invites', value: '—', detail: 'Invitation service not connected', tone: 'attention', trend: 'segments' },
+          { label: 'Deactivated', value: liveValue(accountTotals?.inactiveUsers), detail: 'Inactive account total', tone: 'critical', trend: 'bars' },
+        ]} />}
+        <section className="sl-user-management-panel" aria-label="User account directory">
+          <AccountsTable />
+        </section>
+      </div>
+    </>;
+  }
   if (moduleId === 'Ingredients' && user.role === 'Super Admin') return <SuperAdminIngredientsPage />;
   if (moduleId === 'Ingredients' && user.role === 'Admin') return <IngredientsAdminPage preview={preview} setPreview={setPreview} />;
 
