@@ -2,7 +2,7 @@ import { Link } from 'expo-router';
 import { AlertTriangle, ArrowRight, Box, FileText, LockKeyhole, ShieldCheck, UsersRound } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { dashboardSummary, listAccounts, listAuditRecords, type Account, type AuditRecord, type DashboardSummary } from '../../services/administration';
-import { sessionDisplayName, type SessionUser } from '../../services/auth';
+import type { SessionUser } from '../../services/auth';
 import { Card, DataState, Status, PageHeader} from '../application/primitives';
 
 const AUTO_REFRESH_MS = 15000;
@@ -66,7 +66,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   const totalUsers = summary?.totalUsers ?? accountsTotal;
   return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49">
     <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
-      <PageHeader eyebrow="Dashboard" title={`${greeting}, ${sessionDisplayName(user)}.`} />
+      <PageHeader eyebrow="Dashboard" title={`${greeting}, ${user.firstName || 'Super Admin'}.`} />
     </div>
     <p className="sl-dashboard-description">Monitor system-wide activity, security, operations and administrative oversight.</p>
     <section className="sl-sa-kpis" aria-label="System overview">

@@ -11922,3 +11922,57 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
     grid-column:auto;
   }
 }
+
+/* V103 — Admin dashboard reference composition + system-wide responsive placeholder contract. */
+.sl-admin-dashboard-v103{display:grid;gap:clamp(.75rem,.6rem + .45vw,1.1rem);min-width:0}
+.sl-admin-dashboard-v103 .sl-card{min-width:0;border:1px solid var(--sl-border);border-radius:var(--sl-radius-lg);background:var(--sl-surface);box-shadow:var(--sl-shadow-sm);overflow:hidden}
+.sl-admin-dashboard-v103 .sl-card-header{min-height:clamp(3rem,2.6rem + .8vw,3.6rem);padding:clamp(.75rem,.65rem + .3vw,1rem) clamp(.9rem,.75rem + .45vw,1.2rem)}
+.sl-admin-dashboard-v103 .sl-card-body{min-width:0;padding:0 clamp(.9rem,.75rem + .45vw,1.2rem) clamp(.9rem,.75rem + .45vw,1.2rem)}
+.sl-admin-reference-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.65rem,.55rem + .3vw,.9rem)}
+.sl-admin-reference-kpis .sl-sa-kpi{min-width:0;min-height:clamp(6.6rem,6rem + 2vw,8rem);padding:clamp(.8rem,.7rem + .35vw,1.15rem);gap:clamp(.7rem,.55rem + .45vw,1rem)}
+.sl-admin-reference-kpis .sl-sa-kpi-icon{width:clamp(2.9rem,2.5rem + .8vw,3.6rem);height:clamp(2.9rem,2.5rem + .8vw,3.6rem);flex-basis:clamp(2.9rem,2.5rem + .8vw,3.6rem)}
+.sl-admin-reference-kpis .sl-sa-kpi strong{font-size:clamp(1.5rem,1.25rem + .65vw,2rem)}
+.sl-admin-reference-kpis .sl-sa-kpi span:not(.sl-sa-kpi-icon){font-size:clamp(.78rem,.72rem + .16vw,.9rem)}
+.sl-admin-reference-kpis .sl-sa-kpi small{font-size:clamp(.7rem,.65rem + .14vw,.82rem)}
+.sl-admin-reference-kpis .sl-sa-kpi[data-tone=info]{background:linear-gradient(110deg,#f6fbff,#fff);border-color:#dceaf7}.sl-admin-reference-kpis .sl-sa-kpi[data-tone=info] .sl-sa-kpi-icon{background:#e4f2ff;color:#0c5797}
+.sl-admin-reference-analytics{display:grid;grid-template-columns:1.25fr .88fr .88fr;gap:clamp(.65rem,.55rem + .3vw,.9rem);min-width:0}
+.sl-admin-reference-pairs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(.65rem,.55rem + .3vw,.9rem);min-width:0}
+.sl-admin-reference-analytics>.sl-card{min-height:clamp(15rem,18vw,18.5rem)}
+.sl-admin-reference-pairs>.sl-card{min-height:clamp(13.5rem,15vw,16.5rem)}
+.sl-admin-reference-state{width:100%;min-height:clamp(10rem,12vw,13.5rem);display:grid;place-items:center}
+.sl-admin-reference-state>.sl-state{width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:clamp(.55rem,.4rem + .3vw,.8rem);padding:clamp(1.15rem,1rem + .6vw,2rem)}
+.sl-admin-reference-state>.sl-state>div{display:grid;justify-items:center;gap:.35rem;max-width:min(100%,28rem)}
+.sl-admin-reference-state .sl-state-icon{width:clamp(2.5rem,2.2rem + .6vw,3.1rem);height:clamp(2.5rem,2.2rem + .6vw,3.1rem);padding:.65rem;border-radius:50%;color:var(--sl-brand);background:var(--sl-brand-subtle)}
+.sl-admin-reference-state .sl-card-title{font-size:clamp(.95rem,.88rem + .2vw,1.08rem);line-height:1.35}.sl-admin-reference-state .sl-supporting{font-size:clamp(.82rem,.76rem + .16vw,.94rem);line-height:1.45}.sl-admin-reference-state .sl-status{font-size:clamp(.72rem,.68rem + .12vw,.82rem)}
+.sl-admin-dashboard-v103 .sl-table-scroll{max-width:100%;overflow:auto}.sl-admin-dashboard-v103 .sl-data-table{width:100%;table-layout:auto}.sl-admin-dashboard-v103 .sl-data-table th,.sl-admin-dashboard-v103 .sl-data-table td{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:1180px){.sl-admin-reference-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-admin-reference-analytics{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-admin-reference-analytics>:first-child{grid-column:1/-1}}
+@media(max-width:760px){.sl-admin-reference-kpis,.sl-admin-reference-analytics,.sl-admin-reference-pairs{grid-template-columns:1fr}.sl-admin-reference-analytics>:first-child{grid-column:auto}.sl-admin-reference-kpis .sl-sa-kpi{min-height:auto}.sl-admin-dashboard-v103 .sl-card-header{align-items:flex-start;gap:.6rem;flex-wrap:wrap}}
+@media(max-width:480px){.sl-admin-reference-kpis .sl-sa-kpi{align-items:flex-start}.sl-admin-reference-kpis .sl-sa-kpi-icon{flex-shrink:0}.sl-admin-dashboard-v103 .sl-card-body{padding-inline:clamp(.7rem,4vw,.9rem)}}
+
+/* V105 — Admin Dashboard KPI geometry follows Admin /UserManagement KPI cards.
+   Preserve the Admin Dashboard KPI tone/color identity and icon treatment. */
+.sl-admin-dashboard-v103 .sl-admin-reference-kpis .sl-sa-kpi {
+  min-height: 132px;
+  height: 100%;
+  border-top-width: 4px;
+  border-top-style: solid;
+  border-radius: var(--sl-radius-lg);
+  box-shadow: 0 8px 20px color-mix(in oklab, var(--sl-text) 5%, transparent);
+  padding: clamp(.9rem, .78rem + .35vw, 1.15rem);
+  align-items: center;
+}
+.sl-admin-dashboard-v103 .sl-admin-reference-kpis .sl-sa-kpi[data-tone='brand'] { border-top-color: var(--sl-brand); }
+.sl-admin-dashboard-v103 .sl-admin-reference-kpis .sl-sa-kpi[data-tone='attention'] { border-top-color: var(--sl-attention); }
+.sl-admin-dashboard-v103 .sl-admin-reference-kpis .sl-sa-kpi[data-tone='critical'] { border-top-color: var(--sl-critical); }
+.sl-admin-dashboard-v103 .sl-admin-reference-kpis .sl-sa-kpi[data-tone='info'] { border-top-color: #0c5797; }
+.sl-admin-dashboard-v103 .sl-admin-reference-kpis .sl-sa-kpi > div {
+  min-width: 0;
+  align-content: center;
+  gap: .25rem;
+}
+.sl-admin-dashboard-v103 .sl-admin-reference-kpis .sl-sa-kpi strong {
+  line-height: 1.05;
+}
+@media (max-width: 760px) {
+  .sl-admin-dashboard-v103 .sl-admin-reference-kpis .sl-sa-kpi { min-height: 118px; }
+}

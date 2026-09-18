@@ -7,7 +7,7 @@
     "server"
   ],
   "scripts": {
-    "client": "npm run web --workspace client",
+    "client": "npm run start --workspace client",
     "server": "npm run start --workspace server",
     "dev": "npm run client",
     "typecheck": "npm run typecheck --workspaces",
