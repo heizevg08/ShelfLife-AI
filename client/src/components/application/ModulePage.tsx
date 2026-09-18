@@ -92,7 +92,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
     const abort = new AbortController();
     const timer = window.setTimeout(() => {
       setLoadError(false);
-      listIngredients(page, 25, search.trim(), category === 'All' ? '' : category, abort.signal).then(value => {
+      listIngredients(page, 10, search.trim(), category === 'All' ? '' : category, abort.signal).then(value => {
         if (!abort.signal.aborted) setData(value);
       }).catch(() => { if (!abort.signal.aborted) setLoadError(true); });
     }, 250);
@@ -139,23 +139,44 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
       } else setFormError('The ingredient could not be saved. Check your connection and try again.');
     } finally { setBusy(false); }
   };
+  const loadedCategories = data ? new Set(data.items.map(item => item.category).filter(Boolean)).size : 0;
+  const loadedUnits = data ? new Set(data.items.map(item => item.unitOfMeasure).filter(Boolean)).size : 0;
+  const visibleStart = data && data.total ? (data.page - 1) * data.pageSize + 1 : 0;
+  const visibleEnd = data ? Math.min(data.page * data.pageSize, data.total) : 0;
+  const exportVisible = () => {
+    if (!data?.items.length) return;
+    const rows = [['Ingredient','Category','Default Unit','Typical Shelf Life','Status','Date Added'], ...data.items.map(item => [item.name,item.category,item.unitOfMeasure,item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '', 'Active', new Date(item.createdAt).toLocaleDateString()])];
+    const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+    const anchor = document.createElement('a'); anchor.href=url; anchor.download='shelflifeai-ingredients-visible.csv'; anchor.click(); URL.revokeObjectURL(url);
+  };
   return <>
-    <div className="sl-ingredients-master-heading">
-      <PageHeader title="Ingredients" description="Manage ingredient master data. Add, edit, or remove ingredients used in your establishment." />
-      <button ref={addButtonRef} className="sl-button sl-button-primary" type="button" onClick={open}><Plus size={16} aria-hidden="true" />Add Ingredient</button>
-    </div>
-    <div className="sl-admin-view sl-ingredients-master-view">
-      <SummaryCards items={[
-        { label:'Total Ingredients', value:data ? data.total.toLocaleString() : (loadError ? 'Unavailable' : '—'), detail:'Registered ingredient records', tone:'success', trend:'line' },
-        { label:'Categories', value:'—', detail:'Category aggregate not connected', tone:'brand', trend:'segments' },
-        { label:'Low Stock Ingredients', value:'—', detail:'Requires live batch quantities', tone:'critical', trend:'bars' },
-        { label:'Archived Ingredients', value:'—', detail:'Archive state is not in the current ingredient schema', tone:'attention', trend:'segments' },
-      ]} />
-      <section className="sl-ingredients-master-table" aria-label="Ingredients">
-        <div className="sl-ingredient-list-toolbar"><strong>Ingredient List</strong><div className="sl-ingredients-master-tools"><div className="sl-filter-menu" ref={menuRef}><button className="sl-button" type="button" aria-haspopup="menu" aria-expanded={categoryOpen} onClick={() => setCategoryOpen(value => !value)}><Filter size={16} aria-hidden="true" />{category === 'All' ? 'All Categories' : category}</button>{categoryOpen && <div className="sl-filter-popover" role="menu">{['All', ...INGREDIENT_CATEGORIES].map(value => <button key={value} type="button" role="menuitemradio" aria-checked={category === value} onClick={() => { setCategory(value); setPage(1); setCategoryOpen(false); }}>{value === 'All' ? 'All categories' : value}</button>)}</div>}</div><div className="sl-directory-search" role="search"><Search size={17} aria-hidden="true" /><input type="search" placeholder="Search ingredients..." aria-label="Search ingredients" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} /></div></div></div>
-        {loadError ? <DataState kind="error" title="Ingredients could not be loaded" description="Check your connection and try again." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /> : !data ? <DataState kind="loading" title="Loading ingredients" description="" /> : <div className="sl-table-scroll"><table className="sl-data-table"><thead><tr>{['Name','Brand','Category','Unit','Min Stock','Unit Cost','Shelf Life','Created By','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody>{data.items.length ? data.items.map(item => <tr key={item.id}><td>{item.name}</td><td>{item.brand || '—'}</td><td><Status>{item.category}</Status></td><td>{item.unitOfMeasure}</td><td>{item.minimumStock ?? '—'}</td><td>{item.standardUnitCost === undefined ? '—' : `₱${item.standardUnitCost.toFixed(2)}`}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td>{item.createdBy.name}</td><td><div className="sl-row-actions sl-account-actions sl-ingredient-actions"><button type="button" className="sl-button sl-account-action sl-account-action-view" onClick={() => setViewIngredient(item)}><Eye size={15} aria-hidden="true" />View</button><button type="button" className="sl-button sl-account-action" onClick={() => openEdit(item)}><Pencil size={15} aria-hidden="true" />Edit</button><button type="button" className="sl-button sl-account-action sl-account-action-danger" onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><Trash2 size={15} aria-hidden="true" />Delete</button></div></td></tr>) : <tr><td colSpan={9} className="sl-empty-table-message">{search || category !== 'All' ? 'No ingredients match the selected filters.' : 'No live ingredient records yet — add an ingredient to begin.'}</td></tr>}</tbody></table></div>}
+    <PageHeader title="Ingredients" description="Manage ingredient master data used across your establishment." />
+    <div className="sl-admin-view sl-admin-ingredients-reference">
+      <section className="sl-admin-ingredient-kpis" aria-label="Ingredient summary">
+        <article data-tone="success"><span className="sl-admin-ingredient-kpi-icon"><Leaf /></span><div><small>Total Ingredients</small><strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong><span>{data ? 'Live ingredient catalogue' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</span></div></article>
+        <article data-tone="attention"><span className="sl-admin-ingredient-kpi-icon"><Grid2X2 /></span><div><small>Categories</small><strong>{data ? loadedCategories : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
+        <article data-tone="brand"><span className="sl-admin-ingredient-kpi-icon"><Tag /></span><div><small>Common Units</small><strong>{data ? loadedUnits : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
+        <article data-tone="critical"><span className="sl-admin-ingredient-kpi-icon"><AlertTriangle /></span><div><small>For Review</small><strong>—</strong><span>Requires inventory batch data</span></div></article>
       </section>
-      {data && <Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} />}
+
+      <section className="sl-admin-ingredient-filter-card" aria-label="Ingredient filters">
+        <label className="sl-admin-ingredient-search"><span>Search ingredients</span><div><Search size={17}/><input type="search" placeholder="Search by name, category, or description..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} /></div></label>
+        <label><span>Category</span><select value={category} onChange={e => { setCategory(e.target.value); setPage(1); }}><option value="All">All Categories</option>{INGREDIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select></label>
+        <label><span>Unit</span><select disabled title="Unit filtering will activate when supported by the ingredient API"><option>All Units</option></select></label>
+        <label><span>Status</span><select disabled title="Status filtering will activate when ingredient status is available in the API"><option>All Statuses</option></select></label>
+        <button className="sl-button" type="button" onClick={() => { setSearch(''); setCategory('All'); setPage(1); }}>Reset</button>
+        <button className="sl-button sl-button-primary" type="button" onClick={() => setRefresh(value => value + 1)}>Apply Filters</button>
+      </section>
+
+      <section className="sl-admin-ingredient-table-card" aria-label="Ingredients">
+        <div className="sl-admin-ingredient-table-toolbar">
+          <strong>{data ? `Showing ${visibleStart.toLocaleString()}–${visibleEnd.toLocaleString()} of ${data.total.toLocaleString()} ingredients` : loadError ? 'Ingredient records unavailable' : 'Loading ingredient records'}</strong>
+          <div><button className="sl-button" type="button" disabled={!data?.items.length} onClick={exportVisible}><Download size={16}/>Export</button><button ref={addButtonRef} className="sl-button sl-button-primary" type="button" onClick={open}><Plus size={16}/>Add Ingredient</button></div>
+        </div>
+        {loadError ? <div className="sl-admin-ingredient-state"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></div> : !data ? <div className="sl-admin-ingredient-state"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></div> : data.items.length ? <div className="sl-admin-ingredient-table-scroll"><table><thead><tr><th aria-label="Select"><input type="checkbox" disabled /></th><th>Ingredient</th><th>Category</th><th>Default Unit</th><th>Typical Shelf Life</th><th>Status</th><th>Date Added</th><th>Actions</th></tr></thead><tbody>{data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><Status>Active</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Remove ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button></div></td></tr>)}</tbody></table></div> : <div className="sl-admin-ingredient-state"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} /><span className="sl-admin-data-pending">Preview · data pending</span></div>}
+        {data && <div className="sl-admin-ingredient-pagination"><label>Rows per page <select value={data.pageSize} disabled><option>{data.pageSize}</option></select></label><Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} /></div>}
+      </section>
     </div>
     <Dialog
       open={preview === 'Ingredients'}
