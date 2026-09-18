@@ -1,5 +1,5 @@
 import { Link, type Href } from 'expo-router';
-import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
@@ -1445,15 +1445,28 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'Forecasting' && user.role === 'Super Admin') return <SuperAdminForecastingPage />;
 
   if (moduleId === 'InventoryBatches' && user.role === 'Admin') return <>
-    <PageHeader eyebrow="Inventory" title="Inventory" description="Manage your ingredients and inventory batches. Track quantities, expiration dates, and stock status." />
-    <div className="sl-admin-view sl-inventory-reference-view">
-      <SummaryCards items={[
-        { label:'Total Ingredients', value:'—', detail:'Connect inventory summary service', tone:'success', trend:'line' },
-        { label:'Total Batches', value:'—', detail:'Batch service not connected', tone:'brand', trend:'segments' },
-        { label:'Low Stock Items', value:'—', detail:'Awaiting stock summary', tone:'attention', trend:'bars' },
-        { label:'Expiring Soon (≤ 3 days)', value:'—', detail:'Awaiting expiration service', tone:'critical', trend:'segments' },
-      ]} />
-      <div className="sl-inventory-reference-grid"><Card id="inventory-batches-reference" title="Inventory Batches"><div className="sl-inventory-table-tools"><button className="sl-button" type="button">All Categories</button><button className="sl-button" type="button">All Statuses</button><button className="sl-button sl-button-primary" type="button"><Plus size={16}/>Add Batch</button></div><PlaceholderTable label="Inventory Batches" columns={['Ingredient','Batch Code','Quantity','Unit','Received Date','Expiration Date','Status','Actions']} description="Inventory batch data will appear when the batch backend is connected." /></Card><aside className="sl-inventory-reference-aside"><Card id="inventory-category-reference" title="Inventory by Category"><DataState kind="empty" title="No batch analytics yet" description="Category distribution will appear from live inventory data." /></Card><Card id="inventory-quick-actions" title="Quick Actions"><div className="sl-quick-actions-grid"><WorkspaceLink to="/Ingredients">Add Ingredient</WorkspaceLink><WorkspaceLink to="/StockIn">Record Stock-In</WorkspaceLink><WorkspaceLink to="/ExpirationMonitoring">View Expiring Items</WorkspaceLink><WorkspaceLink to="/Reports">Generate Report</WorkspaceLink></div></Card></aside></div>
+    <PageHeader eyebrow="Inventory" title="Inventory" description="View and monitor current stock levels, expiration status, and inventory distribution for your establishment." />
+    <div className="sl-admin-view sl-admin-inventory-v111">
+      <div className="sl-sa-kpis sl-admin-reference-kpis sl-admin-inventory-kpis" aria-label="Inventory summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Near Expiry (≤ 7 days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>Expired Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </div>
+      <section className="sl-admin-inventory-directory" aria-label="Inventory batches">
+        <div className="sl-admin-inventory-filterbar">
+          <label className="sl-admin-inventory-search"><span>Search inventory</span><span className="sl-directory-search"><Search size={17} aria-hidden="true" /><input type="search" placeholder="Search ingredient, batch ID, or supplier..." aria-label="Search inventory" disabled /></span></label>
+          <label><span>Category</span><select className="sl-admin-input" disabled><option>All Categories</option></select></label>
+          <label><span>Status</span><select className="sl-admin-input" disabled><option>All Statuses</option></select></label>
+          <div className="sl-admin-inventory-filter-actions"><button type="button" className="sl-button" disabled>Reset</button><button type="button" className="sl-button sl-button-primary" disabled>Apply Filters</button></div>
+        </div>
+        <div className="sl-admin-inventory-tablebar"><strong>Inventory items</strong><button type="button" className="sl-button" disabled><Download size={16} aria-hidden="true" />Export</button></div>
+        <div className="sl-admin-inventory-table-shell">
+          <table className="sl-data-table sl-admin-inventory-table" aria-label="Inventory items"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Unit','Expiry Date','Days Left','Status','Location','Supplier','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead></table>
+          <div className="sl-admin-inventory-empty"><DataState kind="empty" title="No live records yet" description="Inventory batch data is not connected yet." action={<Status>Preview · data pending</Status>} /></div>
+        </div>
+        <div className="sl-admin-inventory-footer"><label>Rows per page <select className="sl-admin-input" disabled><option>10</option></select></label><span className="sl-admin-inventory-pagination-placeholder">Preview · data pending</span></div>
+      </section>
     </div>
   </>;
   if (moduleId === 'Roles') return <>
