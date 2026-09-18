@@ -63,6 +63,48 @@ function FormPreview({ id }: { id: PreviewId }) {
   </div>;
 }
 
+function ManagerInventoryPage() {
+  const [category, setCategory] = useState('All Categories');
+  const [status, setStatus] = useState('All Statuses');
+  const [expiration, setExpiration] = useState('All');
+  const [search, setSearch] = useState('');
+  const [tab, setTab] = useState('All Items');
+  const reset = () => { setCategory('All Categories'); setStatus('All Statuses'); setExpiration('All'); setSearch(''); setTab('All Items'); };
+  return <>
+    <PageHeader eyebrow="Inventory" title="Inventory" description="Monitor stock levels, expiration dates, and FEFO priority for your branch." />
+    <div className="sl-admin-view sl-manager-inventory-v119">
+      <div className="sl-sa-kpis sl-admin-reference-kpis sl-manager-inventory-kpis" aria-label="Inventory summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Items Near Expiry (≤ 7 days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><PackageX /></span><div><span>Low Stock Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Total Inventory Value</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </div>
+      <section className="sl-manager-inventory-directory" aria-label="Inventory directory">
+        <div className="sl-manager-inventory-filters">
+          <label className="sl-manager-inventory-search"><span>Search</span><span className="sl-directory-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ingredient, batch ID, or supplier..." /></span></label>
+          <label><span>Category</span><select className="sl-admin-input" value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option><option>Produce</option><option>Dairy</option><option>Meat & Poultry</option><option>Pantry & Others</option></select></label>
+          <label><span>Stock Status</span><select className="sl-admin-input" value={status} onChange={e=>setStatus(e.target.value)}><option>All Statuses</option><option>In Stock</option><option>Low Stock</option><option>Near Expiry</option><option>Expired</option></select></label>
+          <label><span>Expiration</span><select className="sl-admin-input" value={expiration} onChange={e=>setExpiration(e.target.value)}><option>All</option><option>≤ 7 days</option><option>8–30 days</option><option>&gt; 30 days</option></select></label>
+          <div className="sl-manager-inventory-filter-actions"><button className="sl-button" type="button" onClick={reset}>Reset</button><button className="sl-button sl-button-primary" type="button">Apply Filters</button></div>
+        </div>
+        <div className="sl-manager-inventory-tabs-row">
+          <nav className="sl-manager-inventory-tabs" aria-label="Inventory status views">{['All Items','In Stock','Low Stock','Near Expiry','Expired'].map(x=><button type="button" key={x} className={tab===x?'is-active':''} onClick={()=>setTab(x)}>{x} <span>—</span></button>)}</nav>
+          <button className="sl-button" type="button" disabled><Download size={16}/>Export Inventory</button>
+        </div>
+        <div className="sl-manager-inventory-table-shell">
+          <table className="sl-data-table sl-manager-inventory-table" aria-label="Inventory items"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Unit','Expiration Date','Days Left','Status','Supplier','Actions'].map(c=><th key={c}>{c}</th>)}</tr></thead></table>
+          <div className="sl-manager-inventory-empty"><DataState kind="empty" title="No live records yet" description="Inventory batch records for this branch are not connected yet." action={<Status>Preview · data pending</Status>} /></div>
+        </div>
+        <div className="sl-manager-inventory-footer"><label>Rows per page <select className="sl-admin-input" disabled><option>10</option></select></label><span>Preview · data pending</span></div>
+      </section>
+      <div className="sl-manager-inventory-lower-grid">
+        <section className="sl-manager-inventory-panel"><header><div><strong>FEFO Priority</strong><small>Top batches to use first (First Expire, First Out)</small></div><Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="No live records yet" description="FEFO priority will appear when batch expiration data is connected." action={<Status>Preview · data pending</Status>} /></div></section>
+        <section className="sl-manager-inventory-panel"><header><strong>Inventory by Category</strong><Link href="/Reports" className="sl-text-link">View Details <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="No live records yet" description="Category distribution requires live inventory records." action={<Status>Preview · data pending</Status>} /></div></section>
+      </div>
+    </div>
+  </>;
+}
+
 function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | null; setPreview: (value: PreviewId | null) => void }) {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [category, setCategory] = useState('All');
@@ -1458,6 +1500,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'Ingredients' && user.role === 'Super Admin') return <SuperAdminIngredientsPage />;
   if (moduleId === 'Ingredients' && user.role === 'Admin') return <IngredientsAdminPage preview={preview} setPreview={setPreview} />;
 
+  if (moduleId === 'InventoryBatches' && user.role === 'Manager') return <ManagerInventoryPage />;
   if (moduleId === 'InventoryBatches' && user.role === 'Super Admin') return <SuperAdminInventoryBatchesPage />;
   if (moduleId === 'Usage' && user.role === 'Super Admin') return <SuperAdminUsagePage />;
   if (moduleId === 'Waste' && user.role === 'Super Admin') return <SuperAdminWastePage />;

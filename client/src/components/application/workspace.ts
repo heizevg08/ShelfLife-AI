@@ -33,7 +33,8 @@ export const canonicalWorkspaceAccess = {
   '/SecurityActivity': ['Super Admin'],
   '/UserManagement': ['Super Admin', 'Admin'],
   '/Ingredients': ['Super Admin', 'Admin'],
-  '/InventoryBatches': ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'],
+  '/InventoryBatches': ['Super Admin', 'Admin', 'Inventory Staff'],
+  '/Inventory': ['Manager'],
   '/StockIn': ['Inventory Staff'],
   '/UsageWaste': ['Manager'],
   '/Usage': ['Super Admin', 'Manager', 'Inventory Staff'],
@@ -56,8 +57,8 @@ const navigation: Record<WorkspaceRole, ModuleId[]> = {
 export function workspaceNavigation(role: WorkspaceRole) {
   return navigation[role].map(id => ({
     ...modules[id],
-    path: `/${id}`,
-    label: role === 'Admin' && id === 'UserManagement' ? 'Users' : role === 'Admin' && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
+    path: role === 'Manager' && id === 'InventoryBatches' ? '/Inventory' : `/${id}`,
+    label: role === 'Admin' && id === 'UserManagement' ? 'Users' : (role === 'Admin' || role === 'Manager') && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
   }));
 }
 export function canOpenWorkspacePath(role: WorkspaceRole, pathname: string) {
