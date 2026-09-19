@@ -1,3 +1,4 @@
+import { auditSnapshot } from './audit-snapshot';
 import type { ClientSession, Mongoose } from 'mongoose';
 import type { userModel } from '../models/user';
 import { ROLES } from '../models/user';
@@ -50,12 +51,12 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
         audits.find(filter).sort(sorting(query)).skip((query.page - 1) * query.pageSize).limit(query.pageSize).lean().exec(),
         audits.countDocuments(filter).exec(),
       ]);
-      const actorIds = [...new Set(rows.map(row => row.userId.toString()))];
+      const actorIds = [...new Set(rows.flatMap(row => row.userId ? [row.userId.toString()] : []))];
       const actorRows = await users.find({ _id: { $in: actorIds } }).select('_id firstName lastName role').lean().exec();
       const actorById = new Map(actorRows.map(actor => [actor._id.toString(), { id: actor._id.toString(), name: `${actor.firstName} ${actor.lastName}`, role: actor.role }]));
       return { items: rows.map(row => {
-        const userId = row.userId.toString();
-        return { id: row._id.toString(), userId, actor: actorById.get(userId) ?? { id: userId, name: 'Unknown account', role: 'Unavailable' }, action: row.action, targetType: row.targetType, targetId: row.targetId.toString(), timestamp: row.timestamp.toISOString() };
+        const userId = row.userId?.toString() ?? null;
+        return { id: row._id.toString(), userId, actorType: row.actorType ?? 'User', oldValue: auditSnapshot(row.targetType, row.oldValue), newValue: auditSnapshot(row.targetType, row.newValue), actor: userId ? actorById.get(userId) ?? { id: userId, name: 'Unknown account', role: 'Unavailable' } : { id: 'system', name: 'System maintenance', role: 'System' }, action: row.action, targetType: row.targetType, targetId: row.targetId.toString(), timestamp: row.timestamp.toISOString() };
       }), page: query.page, pageSize: query.pageSize, total };
     },
     async transaction(work) {
@@ -71,11 +72,11 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
           const row = await users.findByIdAndUpdate(id, {
             $set: input,
             ...(invalidate ? { $inc: { authVersion: 1 }, $unset: { resetTokenHash: 1, resetExpiresAt: 1 } } : {}),
-          }, { session, new: true, runValidators: true }).select(publicFields).lean().exec();
+          }, { session, returnDocument: 'after', runValidators: true }).select(publicFields).lean().exec();
           if (!row) throw new Error('Account changed during transaction');
           return account(row);
         },
-        async audit(userId, action, targetId) { await audits.create([{ userId, action, targetType: 'User', targetId }], { session }); },
+        async audit(userId, action, targetId, oldValue, newValue) { await audits.create([{ userId, action, targetType: 'User', targetId, oldValue: auditSnapshot('User', oldValue), newValue: auditSnapshot('User', newValue) }], { session }); },
       }));
     },
   };

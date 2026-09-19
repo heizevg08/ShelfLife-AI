@@ -24,7 +24,7 @@ export function pagination(query: Record<string, unknown>, sorts: string[], fall
   return { page, pageSize, sortBy, sortOrder: sortOrder as 'asc' | 'desc' };
 }
 export type PageQuery = ReturnType<typeof pagination>;
-const auditActions = ['CREATE', 'UPDATE', 'DEACTIVATE', 'REACTIVATE'] as const;
+const auditActions = ['CREATE', 'UPDATE', 'DELETE', 'DEACTIVATE', 'REACTIVATE'] as const;
 export type AuditActionFilter = typeof auditActions[number];
 export type AuditPageQuery = PageQuery & { actorRole?: typeof ROLES[number]; action?: AuditActionFilter; from?: Date; to?: Date };
 export function auditPagination(query: Record<string, unknown>): AuditPageQuery {

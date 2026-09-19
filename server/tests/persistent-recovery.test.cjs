@@ -26,8 +26,8 @@ async function fixture() {
 test('persistent sessions store hashes, rotate atomically, preserve expiry and load current user', async()=>{
   const f=await fixture(), first=await f.sessions.create(f.row._id);
   assert(!f.records.has(first.token));assert(f.records.has(tokenHash(first.token)));
-  f.row.role='Manager';const renewed=await f.sessions.refresh(first.token);
-  assert.equal(renewed.user.role,'Manager');assert.equal(+renewed.expiresAt,+first.expiresAt);
+  f.row.role='Inventory Manager';const renewed=await f.sessions.refresh(first.token);
+  assert.equal(renewed.user.role,'Inventory Manager');assert.equal(+renewed.expiresAt,+first.expiresAt);
   assert.notEqual(renewed.token,first.token);await assert.rejects(f.sessions.refresh(first.token));
   const results=await Promise.allSettled([f.sessions.refresh(renewed.token),f.sessions.refresh(renewed.token)]);
   assert.equal(results.filter(x=>x.status==='fulfilled').length,1);

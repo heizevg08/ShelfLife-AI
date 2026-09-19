@@ -1,7 +1,7 @@
 import { Schema, type Mongoose, type InferSchemaType } from 'mongoose';
 import { normalizeEmail } from '../validators/auth';
 
-export const ROLES = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
+export const ROLES = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'] as const;
 const schema = new Schema({
   email: { type: String, required: true, unique: true, set: (value: string) => value.trim().toLowerCase(), validate: (value: string) => normalizeEmail(value) === value },
   // Legacy/current database records may carry the canonical display name in `name`.

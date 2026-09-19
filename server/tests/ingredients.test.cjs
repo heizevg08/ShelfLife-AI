@@ -9,12 +9,12 @@ const { createIngredients } = require('../dist/services/ingredients');
 const { ingredientInput, ingredientPagination } = require('../dist/validators/ingredient');
 
 const admin = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Admin User', email: 'admin@shelflife.com', role: 'Admin', isActive: true, authVersion: 0 };
-const manager = { id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Manager User', email: 'manager@shelflife.com', role: 'Manager', isActive: true, authVersion: 0 };
+const manager = { id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Manager User', email: 'manager@shelflife.com', role: 'Inventory Manager', isActive: true, authVersion: 0 };
 
 test('ingredient validation preserves the ingredient/batch boundary and numeric rules', () => {
-  const valid = ingredientInput({ name: '  Whole   Milk ', brand: '', description: '', category: 'Dairy', unitOfMeasure: ' liter ', minimumStock: 0, standardUnitCost: 0, defaultShelfLifeDays: 7 });
+  const valid = ingredientInput({ name: '  Whole   Milk ', brand: '', description: '', category: 'Dairy', unitOfMeasure: ' L ', minimumStock: 0, standardUnitCost: 0, defaultShelfLifeDays: 7 });
   assert.equal(valid.name, 'Whole Milk');
-  assert.equal(valid.unitOfMeasure, 'liter');
+  assert.equal(valid.unitOfMeasure, 'L');
   for (const body of [
     { ...valid, expirationDate: '2030-01-01' },
     { ...valid, name: '' },
@@ -39,8 +39,8 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
       const row = { id: String(rows.length + 3).repeat(24).slice(0, 24), ...input, createdBy: { id: actorId, name: admin.name }, createdAt: now, updatedAt: now };
       rows.push(row); return row;
     },
-    async update(id, input) { const index = rows.findIndex(row => row.id === id); if (index < 0) return null; rows[index] = { ...rows[index], ...input, updatedAt: new Date().toISOString() }; return rows[index]; },
-    async remove(id) { const index = rows.findIndex(row => row.id === id); if (index < 0) return false; rows.splice(index, 1); return true; },
+    async update(actorId, id, input) { const index = rows.findIndex(row => row.id === id); if (index < 0) return null; rows[index] = { ...rows[index], ...input, updatedAt: new Date().toISOString() }; return rows[index]; },
+    async remove(actorId, id) { const index = rows.findIndex(row => row.id === id); if (index < 0) return false; rows.splice(index, 1); return true; },
   };
   const users = [admin, manager];
   const auth = createAuth({ byId: async id => users.find(user => user.id === id) || null, byEmail: async () => null }, randomBytes(48).toString('hex'));
@@ -49,7 +49,7 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
   const base = `http://127.0.0.1:${http.address().port}/api/ingredients`;
   const token = user => auth.issue(user).accessToken;
   const request = (user, method = 'GET', body, query = '') => fetch(base + query, { method, headers: { ...(user ? { Authorization: `Bearer ${token(user)}` } : {}), 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
-  const input = { name: 'Whole Milk', brand: 'Local', description: '', category: 'Dairy', unitOfMeasure: 'liter', minimumStock: 4, standardUnitCost: 82.5, defaultShelfLifeDays: 7 };
+  const input = { name: 'Whole Milk', brand: 'Local', description: '', category: 'Dairy', unitOfMeasure: 'L', minimumStock: 4, standardUnitCost: 82.5, defaultShelfLifeDays: 7 };
   try {
     assert.equal((await request(undefined)).status, 401);
     assert.equal((await request(manager)).status, 403);

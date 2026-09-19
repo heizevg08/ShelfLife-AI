@@ -1,3 +1,4 @@
+import { createLoginLimiter, memoryLoginAttemptStore, type LoginLimiter } from '../services/login-limiter';
 import { Router } from 'express';
 import type { AuthService } from '../services/auth';
 import { authenticate } from '../middleware/auth.middleware';
@@ -5,10 +6,11 @@ import type { PersistentSessions } from '../services/persistent-session';
 import type { PasswordRecovery } from '../services/password-recovery';
 import { HttpError } from '../middleware/error.middleware';
 
-export interface AuthExtensions { sessions?: PersistentSessions; recovery?: PasswordRecovery; secureCookies?: boolean }
+export interface AuthExtensions { loginLimiter?: LoginLimiter; sessions?: PersistentSessions; recovery?: PasswordRecovery; secureCookies?: boolean }
 
 export function authRoutes(auth: AuthService, origins: readonly string[] = [], extensions: AuthExtensions = {}) {
   const router = Router();
+  const limiter = extensions.loginLimiter ?? createLoginLimiter(memoryLoginAttemptStore());
   const cookieName = extensions.secureCookies ? '__Secure-shelflife.refresh' : 'shelflife.refresh';
   const cookieOptions = { httpOnly: true, secure: !!extensions.secureCookies, sameSite: 'lax' as const, path: '/api/auth' };
   const cookie = (header?: string) => {
@@ -20,7 +22,7 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
   };
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.post('/login', async (req, res) => {
-    const result = await auth.login(req.body);
+    const result = await limiter.run(req.body?.email, req.ip ?? req.socket.remoteAddress ?? 'unknown', () => auth.login(req.body), seconds => res.setHeader('Retry-After', String(seconds)));
     const previous = cookie(req.headers.cookie);
     if (req.body?.rememberMe === true || previous) {
       verifyOrigin(req.headers.origin);

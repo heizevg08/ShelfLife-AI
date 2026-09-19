@@ -78,7 +78,7 @@ test('HTTP login/me verify tokens and current user state, with safe responses', 
   async function me(token){return fetch(base+'/me',{headers:token?{Authorization:'Bearer '+token}:{}})}
   assert.equal((await me(result.accessToken)).status,200);
   for(const token of [null,'malformed',jwt.sign({},'wrong-secret',{subject:row._id}),jwt.sign({},secret,{algorithm:'HS256',issuer:'shelflifeai',audience:'shelflifeai-client',subject:row._id,expiresIn:-1}),jwt.sign({},secret,{algorithm:'HS384',issuer:'shelflifeai',audience:'shelflifeai-client',subject:row._id,expiresIn:900})]) assert.equal((await me(token)).status,401);
-  row.role='Manager';assert.equal((await (await me(result.accessToken)).json()).user.role,'Manager');
+  row.role='Inventory Manager';assert.equal((await (await me(result.accessToken)).json()).user.role,'Inventory Manager');
   row.isActive=false;assert.equal((await me(result.accessToken)).status,401);assert.equal((await login({email:seedInput.email,password:seedInput.password})).status,401);
   row=null;assert.equal((await me(result.accessToken)).status,401);
 });

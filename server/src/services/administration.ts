@@ -1,3 +1,4 @@
+import { auditSnapshot, type AuditSnapshot } from './audit-snapshot';
 import { AdministrationError, forbidden } from '../middleware/administration.middleware';
 import type { AccountInput, AuditPageQuery, PageQuery } from '../validators/administration';
 import { hashPassword } from './password';
@@ -7,14 +8,14 @@ export interface Account {
   role: string; isActive: boolean; createdAt: string; updatedAt: string;
 }
 export interface Actor { id: string; role: string }
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DEACTIVATE' | 'REACTIVATE';
-export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: AuditAction; targetType: string; targetId: string; timestamp: string }
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'DEACTIVATE' | 'REACTIVATE';
+export interface AuditRecord { id: string; userId: string | null; actorType?: string; oldValue: AuditSnapshot; newValue: AuditSnapshot; actor: { id: string; name: string; role: string }; action: AuditAction; targetType: string; targetId: string; timestamp: string }
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface AccountTransaction {
   get(id: string): Promise<Account | null>;
   create(input: Omit<AccountInput, 'password'> & { passwordHash: string }): Promise<Account>;
   update(id: string, input: Omit<AccountInput, 'password'> & { isActive?: boolean }): Promise<Account>;
-  audit(actorId: string, action: AuditAction, targetId: string): Promise<void>;
+  audit(actorId: string, action: AuditAction, targetId: string, oldValue: AuditSnapshot, newValue: AuditSnapshot): Promise<void>;
 }
 export interface AdministrationStore {
   list(roles: string[] | null, query: PageQuery): Promise<Page<Account>>;
@@ -23,7 +24,7 @@ export interface AdministrationStore {
   audits(query: AuditPageQuery): Promise<Page<AuditRecord>>;
   transaction<T>(work: (tx: AccountTransaction) => Promise<T>): Promise<T>;
 }
-const managedRoles = (role: string) => role === 'Super Admin' ? ['Admin', 'Manager', 'Inventory Staff'] : role === 'Admin' ? ['Manager', 'Inventory Staff'] : [];
+const managedRoles = (role: string) => role === 'Super Admin' ? ['Admin', 'Inventory Manager', 'Inventory Staff'] : role === 'Admin' ? ['Inventory Manager', 'Inventory Staff'] : [];
 function canRead(actor: Actor, user: Account) { return actor.role === 'Super Admin' || (actor.id !== user.id && managedRoles(actor.role).includes(user.role)); }
 function assertWrite(actor: Actor, user: Account) {
   if (actor.id === user.id || !managedRoles(actor.role).includes(user.role)) throw forbidden();
@@ -45,7 +46,7 @@ export function createAdministration(store: AdministrationStore) {
       const passwordHash = await hashPassword(password!);
       return store.transaction(async tx => {
         const user = await tx.create({ ...fields, passwordHash });
-        await tx.audit(actor.id, 'CREATE', user.id);
+        await tx.audit(actor.id, 'CREATE', user.id, null, auditSnapshot('User', user));
         return user;
       });
     },
@@ -58,8 +59,9 @@ export function createAdministration(store: AdministrationStore) {
         // Unchanged email/role fields must not revoke sessions during a name-only edit.
         const changes = Object.fromEntries(Object.entries(input).filter(([key, value]) => user[key as keyof Account] !== value)) as AccountInput;
         if (!Object.keys(changes).length) return user;
+        const oldValue = auditSnapshot('User', user);
         const result = await tx.update(id, changes);
-        await tx.audit(actor.id, 'UPDATE', id);
+        await tx.audit(actor.id, 'UPDATE', id, oldValue, auditSnapshot('User', result));
         return result;
       });
     },
@@ -70,8 +72,9 @@ export function createAdministration(store: AdministrationStore) {
         assertWrite(actor, user);
         // Repeating a lifecycle request is a no-op, not a second administrative event.
         if (user.isActive === active) return user;
+        const oldValue = auditSnapshot('User', user);
         const result = await tx.update(id, { isActive: active });
-        await tx.audit(actor.id, active ? 'REACTIVATE' : 'DEACTIVATE', id);
+        await tx.audit(actor.id, active ? 'REACTIVATE' : 'DEACTIVATE', id, oldValue, auditSnapshot('User', result));
         return result;
       });
     },

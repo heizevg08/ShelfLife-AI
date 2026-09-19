@@ -3,6 +3,8 @@ import type { ingredientModel } from '../models/ingredient';
 import type { userModel } from '../models/user';
 import type { Ingredient, IngredientStore } from './ingredients';
 import type { IngredientInput, IngredientPageQuery } from '../validators/ingredient';
+import type { auditRecordModel } from '../models/audit-record';
+import { auditSnapshot } from './audit-snapshot';
 
 type Row = {
   _id: { toString(): string };
@@ -12,7 +14,10 @@ type Row = {
 };
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export function createIngredientStore(_driver: Mongoose, ingredients: ReturnType<typeof ingredientModel>, users: ReturnType<typeof userModel>): IngredientStore {
+export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<typeof ingredientModel>, users: ReturnType<typeof userModel>, audits: ReturnType<typeof auditRecordModel>): IngredientStore {
+  const snapshot = (row: Row | null) => row ? auditSnapshot('Ingredient', {
+    ...row, id: row._id.toString(), createdBy: row.createdBy.toString(),
+  }) : null;
   const creators = async (rows: Row[]) => {
     const ids = [...new Set(rows.map(row => row.createdBy.toString()))];
     const records = await users.find({ _id: { $in: ids } }).select('_id firstName lastName name').lean().exec();
@@ -43,19 +48,34 @@ export function createIngredientStore(_driver: Mongoose, ingredients: ReturnType
       return { items: rows.map(row => serialize(row, names)), page: query.page, pageSize: query.pageSize, total };
     },
     async create(actorId: string, input: IngredientInput) {
-      const row = await ingredients.create({ ...input, createdBy: actorId });
-      const names = await creators([row.toObject() as Row]);
-      return serialize(row.toObject() as Row, names);
+      const row = await driver.connection.transaction(async session => {
+        const [created] = await ingredients.create([{ ...input, createdBy: actorId }], { session });
+        const value = created.toObject() as Row;
+        await audits.create([{ userId: actorId, action: 'CREATE', targetType: 'Ingredient', targetId: created._id, oldValue: null, newValue: snapshot(value) }], { session });
+        return value;
+      });
+      return serialize(row, await creators([row]));
     },
-    async update(id: string, input: IngredientInput) {
-      const row = await ingredients.findByIdAndUpdate(id, { $set: input }, { new: true, runValidators: true }).lean().exec() as Row | null;
+    async update(actorId: string, id: string, input: IngredientInput) {
+      const row = await driver.connection.transaction(async session => {
+        const before = await ingredients.findById(id).session(session).lean().exec() as Row | null;
+        if (!before) return null;
+        const after = await ingredients.findByIdAndUpdate(id, { $set: input }, { session, returnDocument: 'after', runValidators: true }).lean().exec() as Row | null;
+        if (!after) throw new Error('Ingredient changed during transaction');
+        await audits.create([{ userId: actorId, action: 'UPDATE', targetType: 'Ingredient', targetId: id, oldValue: snapshot(before), newValue: snapshot(after) }], { session });
+        return after;
+      });
       if (!row) return null;
       const names = await creators([row]);
       return serialize(row, names);
     },
-    async remove(id: string) {
-      const result = await ingredients.deleteOne({ _id: id }).exec();
-      return result.deletedCount === 1;
+    async remove(actorId: string, id: string) {
+      return driver.connection.transaction(async session => {
+        const before = await ingredients.findByIdAndDelete(id, { session }).lean().exec() as Row | null;
+        if (!before) return false;
+        await audits.create([{ userId: actorId, action: 'DELETE', targetType: 'Ingredient', targetId: id, oldValue: snapshot(before), newValue: null }], { session });
+        return true;
+      });
     },
   };
 }

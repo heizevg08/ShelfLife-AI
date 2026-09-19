@@ -10,7 +10,7 @@ const { verifyPassword } = require('../dist/services/password');
 const { pagination, auditPagination, accountInput } = require('../dist/validators/administration');
 
 function fixture() {
-  let rows = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff', 'Super Admin', 'Admin'].map((role, i) => ({
+  let rows = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff', 'Super Admin', 'Admin'].map((role, i) => ({
     id: (i + 1).toString(16).padStart(24, '0'), firstName: 'Test', lastName: String(i), name: `Test ${i}`,
     email: `test${i}@shelflife.com`, role, isActive: true, createdAt: new Date(0).toISOString(), updatedAt: new Date(0).toISOString(),
   }));
@@ -31,10 +31,10 @@ function fixture() {
         get: store.get,
         create: async input => { hash = input.passwordHash; const { passwordHash, ...fields } = input; const row = { ...rows[1], ...fields, id: 'f'.repeat(24) }; rows.push(row); return row; },
         update: async (id, input) => { lastUpdate = input; const row = rows.find(x => x.id === id); Object.assign(row, input); return row; },
-        audit: async (userId, action, targetId) => {
+        audit: async (userId, action, targetId, oldValue, newValue) => {
           if (failAudit) throw new Error('Audit unavailable');
           const actor = rows.find(row => row.id === userId);
-          records.push({ id: (records.length + 1).toString(16).padStart(24, 'a'), userId, actor: { id: userId, name: actor.name, role: actor.role }, action, targetId, targetType: 'User', timestamp: new Date().toISOString() });
+          records.push({ oldValue, newValue, id: (records.length + 1).toString(16).padStart(24, 'a'), userId, actor: { id: userId, name: actor.name, role: actor.role }, action, targetId, targetType: 'User', timestamp: new Date().toISOString() });
         },
       }); } catch (error) { rows = original; records = originalRecords; throw error; }
     },
@@ -47,7 +47,7 @@ test('administration validation rejects injection, unknown fields, role strings 
   assert.deepEqual(pagination({}, ['createdAt'], 'createdAt'), { page: 1, pageSize: 25, sortBy: 'createdAt', sortOrder: 'desc' });
   for (const query of [{ page: '0' }, { pageSize: '101' }, { sortBy: '$where' }, { sortOrder: 'other' }, { page: {} }, { role: 'Admin' }]) assert.throws(() => pagination(query, ['createdAt'], 'createdAt'));
   assert.deepEqual(auditPagination({ actorRole: 'Admin', action: 'UPDATE' }), { page: 1, pageSize: 25, sortBy: 'timestamp', sortOrder: 'desc', actorRole: 'Admin', action: 'UPDATE' });
-  for (const query of [{ actorRole: 'Staff' }, { action: 'DELETE' }, { from: 'yesterday' }, { targetId: 'x' }]) assert.throws(() => auditPagination(query));
+  for (const query of [{ actorRole: 'Staff' }, { action: 'PURGE' }, { from: 'yesterday' }, { targetId: 'x' }]) assert.throws(() => auditPagination(query));
   for (const body of [{ isActive: false }, { password: 'new-password' }, { authVersion: 0 }, { role: 'Staff' }, { email: { $ne: null } }, { firstName: '' }]) assert.throws(() => accountInput(body, false));
   assert.equal(accountInput({ email: ' VALID@SHELFLIFE.COM ' }, false).email, 'valid@shelflife.com');
 });
@@ -55,14 +55,14 @@ test('administration validation rejects injection, unknown fields, role strings 
 test('administrative writes enforce all actor/target role combinations and self protection', async () => {
   const f = fixture();
   for (const actor of f.rows()) for (const target of f.rows()) {
-    const allowed = actor.id !== target.id && (actor.role === 'Super Admin' && ['Admin', 'Manager', 'Inventory Staff'].includes(target.role) || actor.role === 'Admin' && ['Manager', 'Inventory Staff'].includes(target.role));
+    const allowed = actor.id !== target.id && (actor.role === 'Super Admin' && ['Admin', 'Inventory Manager', 'Inventory Staff'].includes(target.role) || actor.role === 'Admin' && ['Inventory Manager', 'Inventory Staff'].includes(target.role));
     if (allowed) await f.service.update(actor, target.id, { firstName: 'Permitted' });
     else await assert.rejects(f.service.update(actor, target.id, { firstName: 'Denied' }), e => e.status === 403);
   }
   const roleChanges = fixture();
   await assert.rejects(roleChanges.service.update(roleChanges.rows()[1], roleChanges.rows()[2].id, { role: 'Super Admin' }), e => e.status === 403);
   await roleChanges.service.update(roleChanges.rows()[1], roleChanges.rows()[2].id, { role: 'Inventory Staff' });
-  await roleChanges.service.update(roleChanges.rows()[0], roleChanges.rows()[1].id, { role: 'Manager' });
+  await roleChanges.service.update(roleChanges.rows()[0], roleChanges.rows()[1].id, { role: 'Inventory Manager' });
   await assert.rejects(roleChanges.service.update(roleChanges.rows()[1], roleChanges.rows()[3].id, { firstName: 'Denied after demotion' }), e => e.status === 403);
 });
 
@@ -75,6 +75,13 @@ test('creation hashes passwords; lifecycle is idempotent and audit failure rolls
   await f.service.setActive(actor, user.id, false);
   await f.service.setActive(actor, user.id, true);
   assert.deepEqual(f.records().map(x => x.action), ['CREATE', 'DEACTIVATE', 'REACTIVATE']);
+  assert.equal(f.records()[0].oldValue, null);
+  assert.equal(f.records()[0].newValue.isActive, true);
+  assert.equal(f.records()[1].oldValue.isActive, true);
+  assert.equal(f.records()[1].newValue.isActive, false);
+  assert.equal(f.records()[2].oldValue.isActive, false);
+  assert.equal(f.records()[2].newValue.isActive, true);
+  assert.equal(/password|authVersion|resetToken/.test(JSON.stringify(f.records())), false);
   f.failAudit();
   await assert.rejects(f.service.update(actor, user.id, { firstName: 'Must roll back' }));
   assert.equal((await f.store.get(user.id)).firstName, 'New');
@@ -84,6 +91,8 @@ test('name-only updates omit unchanged identity/role fields from credential inva
   const f = fixture(), target = f.rows()[1];
   await f.service.update(f.rows()[0], target.id, { firstName: 'Changed', lastName: target.lastName, email: target.email, role: target.role });
   assert.deepEqual(f.lastUpdate(), { firstName: 'Changed' });
+  assert.equal(f.records()[0].oldValue.firstName, 'Test');
+  assert.equal(f.records()[0].newValue.firstName, 'Changed');
 });
 
 test('real HTTP administration checks authentication before authorization and validation, current roles, safe data and read-only audit', async () => {
@@ -101,15 +110,15 @@ test('real HTTP administration checks authentication before authorization and va
     const malformed = await call('/api/users', f.rows()[0], { method: 'POST', body: '{' });
     assert.equal(malformed.status, 400); assert.equal((await malformed.json()).error.code, 'VALIDATION_ERROR');
     const all = await (await call('/api/users', f.rows()[0])).json(); assert.equal(all.total, 6); assert.ok(all.items.some(x => x.role === 'Super Admin'));
-    const scoped = await (await call('/api/users', f.rows()[1])).json(); assert.deepEqual(scoped.items.map(x => x.role), ['Manager', 'Inventory Staff']);
+    const scoped = await (await call('/api/users', f.rows()[1])).json(); assert.deepEqual(scoped.items.map(x => x.role), ['Inventory Manager', 'Inventory Staff']);
     assert.equal((await call('/api/users/' + f.rows()[0].id, f.rows()[1])).status, 404);
     assert.equal((await call('/api/users/' + f.rows()[1].id, f.rows()[0], { method: 'DELETE' })).status, 404);
     assert.equal((await call('/api/audit-records', f.rows()[1])).status, 200);
-    assert.equal((await call('/api/audit-records?action=DELETE', f.rows()[0])).status, 400);
+    assert.equal((await call('/api/audit-records?action=PURGE', f.rows()[0])).status, 400);
     assert.equal((await call('/api/audit-records', f.rows()[0], { method: 'POST', body: '{}' })).status, 404);
     assert.deepEqual(await (await call('/api/dashboard/summary', f.rows()[0])).json(), { totalUsers: 6, activeUsers: 6, inactiveUsers: 0 });
     assert.equal((await call('/api/dashboard/summary', f.rows()[1])).status, 403);
-    const old = token(f.rows()[0]); f.rows()[0].role = 'Manager';
+    const old = token(f.rows()[0]); f.rows()[0].role = 'Inventory Manager';
     assert.equal((await call('/api/users', old)).status, 403);
     f.rows()[0].isActive = false;
     const denied = await call('/api/users', old); assert.equal(denied.status, 401);

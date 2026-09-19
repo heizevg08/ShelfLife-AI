@@ -50,6 +50,73 @@ memory fallback; native sessions are memory-only. User identity comes from
 which can remain valid until expiration. Session storage is accessible to scripts
 on the same origin, so this is a development session boundary, not an XSS defense.
 
-Role-based navigation is not API authorization. RBAC, account management,
-refresh/revocation, rate limiting, lockout, MFA and production secret management
-remain separate milestones. Use HTTPS outside local development.
+Role-based navigation is not API authorization. Backend account and ingredient
+routes have authentication and role guards. Persistent login uses rotating,
+hashed refresh tokens in an HttpOnly cookie. MFA and production secret management
+remain separate work. Use HTTPS outside local development.
+
+## Backend hardening
+
+From the repository root, after configuring `server/.env`:
+
+```sh
+npm run maintenance:harden --workspace server
+npm test --workspace server
+npm run server
+```
+
+The maintenance command is idempotent. It explicitly creates/verifies the
+case-insensitive unique ingredient-name index (English collation, strength 2)
+and the login-attempt TTL index. It never drops unrelated indexes or deletes
+conflicting ingredient records. Duplicate names or conflicting indexes stop
+provisioning and need investigation. Startup provisions these indexes before
+listening too, despite automatic Mongoose index/collection creation being disabled.
+
+The command also migrates legacy `Manager` accounts to `Inventory Manager` in a
+transaction, invalidates their existing access/refresh sessions and pending reset
+tokens, and records sanitized before/after snapshots as a System audit event.
+Canonical role strings are `Inventory Staff`, `Inventory Manager`, `Admin`, and
+`Super Admin`. New writes reject `Manager`. Existing role privileges are unchanged;
+ingredient CRUD remains Admin-only. Run maintenance before starting this revision
+against any database containing the old role.
+
+**Client transition:** the unchanged Expo client still uses `Manager` in role
+pickers and navigation. Manager login/routing and role submission require the
+canonical mapping in the separate Vite/frontend pass. No frontend code or route
+test was changed in this backend pass.
+
+Login allows five failed attempts per normalized email/socket-IP pair in a
+15-minute fixed window. The sixth returns HTTP 429 and `Retry-After`, including
+when the supplied password is correct. Success before lockout clears that pair's
+counter. Expiry permits login again. Concurrent password checks reserve slots;
+only credential failures retain them. Infrastructure errors release their slots.
+Counters persist in MongoDB `loginAttempts`, with SHA-256 pair identifiers and a
+TTL index; email/IP values and passwords are not stored in these records. Expiry
+is checked during login, independently of asynchronous TTL cleanup. Express does
+not trust forwarded IP headers; deployments behind a reverse proxy currently
+use the proxy socket IP and need an explicit trusted-proxy configuration before
+relying on end-user IP separation.
+
+Audit records now expose `oldValue` and `newValue` for account lifecycle changes
+and ingredient CREATE/UPDATE/DELETE. Creation has a null old value; deletion has a
+null new value. Historical records without snapshots return null, not reconstructed
+history. Mutation and audit insertion share a MongoDB transaction (replica set or
+Atlas required). Snapshot allowlists omit credentials, hashes and reset tokens.
+`targetType` accepts User, Ingredient, InventoryBatch, UsageRecord, WasteRecord,
+AuditRecord, ChangeRequest, Alert, Forecast and SystemConfig. Future writers must
+add a safe snapshot allowlist before exposing their fields. System migrations use
+`actorType: System` and null `userId`; normal writes require the authenticated user.
+
+Ingredient schema and request validators share these exact controlled lists:
+- Categories: Dairy, Produce, Bakery, Pantry, Meat, Seafood, Frozen, Beverages, Other.
+- Units: kg, g, L, mL, pcs, pack, box, bottle, can, tray.
+
+The optional MongoDB integration test creates and removes only randomly named
+`hardening_test_*` collections. Run from the repository root in PowerShell:
+
+```powershell
+npm run build --workspace server
+$env:RUN_MONGO_HARDENING_TESTS = 'true'
+node --env-file=server/.env --test server/tests/hardening-mongo.test.cjs
+Remove-Item Env:RUN_MONGO_HARDENING_TESTS
+```

@@ -17,15 +17,15 @@ export interface Ingredient {
 export interface IngredientStore {
   list(query: IngredientPageQuery): Promise<{ items: Ingredient[]; page: number; pageSize: number; total: number }>;
   create(actorId: string, input: IngredientInput): Promise<Ingredient>;
-  update(id: string, input: IngredientInput): Promise<Ingredient | null>;
-  remove(id: string): Promise<boolean>;
+  update(actorId: string, id: string, input: IngredientInput): Promise<Ingredient | null>;
+  remove(actorId: string, id: string): Promise<boolean>;
 }
 export function createIngredients(store: IngredientStore) {
   return {
     list: (query: IngredientPageQuery) => store.list(query),
     create: (actorId: string, input: IngredientInput) => store.create(actorId, input),
-    update: (id: string, input: IngredientInput) => store.update(id, input),
-    remove: (id: string) => store.remove(id),
+    update: (actorId: string, id: string, input: IngredientInput) => store.update(actorId, id, input),
+    remove: (actorId: string, id: string) => store.remove(actorId, id),
   };
 }
 export type IngredientService = ReturnType<typeof createIngredients>;

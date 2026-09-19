@@ -1,12 +1,13 @@
 import { invalid, pagination } from './administration';
 
-export const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
+import { INGREDIENT_CATEGORIES, INGREDIENT_UNITS } from '../models/ingredient-options';
+export { INGREDIENT_CATEGORIES, INGREDIENT_UNITS } from '../models/ingredient-options';
 export type IngredientInput = {
   name: string;
   brand: string;
   description: string;
   category: typeof INGREDIENT_CATEGORIES[number];
-  unitOfMeasure: string;
+  unitOfMeasure: typeof INGREDIENT_UNITS[number];
   minimumStock?: number;
   standardUnitCost?: number;
   defaultShelfLifeDays?: number;
@@ -31,12 +32,14 @@ export function ingredientInput(body: unknown): IngredientInput {
   const fields = ['name', 'brand', 'description', 'category', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays'];
   for (const key of Object.keys(input)) if (!fields.includes(key)) invalid(key, 'Field is not permitted');
   if (typeof input.category !== 'string' || !INGREDIENT_CATEGORIES.includes(input.category as typeof INGREDIENT_CATEGORIES[number])) invalid('category', 'Select a valid category');
+  const unit = cleanText('unitOfMeasure', input.unitOfMeasure, true, 50);
+  if (!INGREDIENT_UNITS.includes(unit as typeof INGREDIENT_UNITS[number])) invalid('unitOfMeasure', 'Select a valid unit');
   const result: IngredientInput = {
     name: cleanText('name', input.name, true, 100),
     brand: cleanText('brand', input.brand, false, 100),
     description: cleanText('description', input.description, false, 500),
     category: input.category as typeof INGREDIENT_CATEGORIES[number],
-    unitOfMeasure: cleanText('unitOfMeasure', input.unitOfMeasure, true, 50),
+    unitOfMeasure: unit as typeof INGREDIENT_UNITS[number],
   };
   if (input.minimumStock !== undefined && input.minimumStock !== '') result.minimumStock = number('minimumStock', input.minimumStock, 0);
   if (input.standardUnitCost !== undefined && input.standardUnitCost !== '') result.standardUnitCost = number('standardUnitCost', input.standardUnitCost, 0);

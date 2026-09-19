@@ -1,3 +1,6 @@
+import { loginAttemptModel } from './models/login-attempt';
+import { createLoginLimiter, mongoLoginAttemptStore } from './services/login-limiter';
+import { provisionHardeningIndexes } from './services/backend-maintenance';
 import { createServer } from 'node:http';
 import type { EventEmitter } from 'node:events';
 import { createApp } from './app';
@@ -136,9 +139,18 @@ if (require.main === module) {
         return result.modifiedCount === 1;
       },
     }, createResetEmail(process.env));
-    const administration = createAdministration(createAdministrationStore(driver, users, auditRecordModel(driver)));
-    const ingredients = createIngredients(createIngredientStore(driver, ingredientModel(driver), users));
-    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients);
+    const audits = auditRecordModel(driver);
+    const administration = createAdministration(createAdministrationStore(driver, users, audits));
+    const ingredientRows = ingredientModel(driver);
+    const ingredients = createIngredients(createIngredientStore(driver, ingredientRows, users, audits));
+    const attempts = loginAttemptModel(driver);
+    const loginLimiter = createLoginLimiter(mongoLoginAttemptStore(attempts));
+    const database = createDatabase(driver);
+    const indexedDatabase = { ...database, connect: async (uri: string) => {
+      await database.connect(uri);
+      await provisionHardeningIndexes(ingredientRows, attempts);
+    } };
+    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');
