@@ -484,7 +484,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
           </div>
 
           <div className="sl-topbar-right">
-            {(user.role === 'Super Admin' || isDashboardRoute) && <time className="sl-topbar-datetime" dateTime={topbarClock.toISOString()}>{topbarDateTime}</time>}
+            {(user.role === 'Super Admin' || user.role === 'Inventory Staff' || isDashboardRoute) && <time className="sl-topbar-datetime" dateTime={topbarClock.toISOString()}>{topbarDateTime}</time>}
             <div className="sl-global-health" aria-label={`System status: ${systemHealth}`}>
               <span className="sl-global-health-label">System status</span>
               <span className="sl-global-health-value" data-state={systemHealth}>

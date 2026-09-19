@@ -7,25 +7,20 @@ import { useApplicationWorkspace } from '../../components/application/Applicatio
 const Empty = ({label,compact=false}:{label:string;compact?:boolean}) => <div className={`sl-staff-requests-pending${compact?' compact':''}`}><DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} /></div>;
 
 function InventoryStaffChangeRequests(){
-  const [tab,setTab]=useState<'requests'|'submit'>('requests');
   const [search,setSearch]=useState(''); const [type,setType]=useState('All Types'); const [status,setStatus]=useState('All Statuses'); const [range,setRange]=useState('Last 30 Days'); const [rows,setRows]=useState('10');
-  const [submitOpen,setSubmitOpen]=useState(false); const submitButton=useRef<HTMLButtonElement>(null);
   const [quickType,setQuickType]=useState<string | null>(null); const quickTypeButton=useRef<HTMLButtonElement>(null);
-  const [requestType,setRequestType]=useState(''); const [target,setTarget]=useState(''); const [reason,setReason]=useState('');
-  const clear=()=>{setRequestType('');setTarget('');setReason('')};
   return <>
-    <PageHeader title="My Requests" description="Track the status of your change requests. Submit a new request when you cannot make a change directly." />
+    <PageHeader title="My Requests" description="Track the status of your inventory change requests." />
     <div className="sl-admin-view sl-staff-requests-v162">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-requests-kpis" aria-label="Request summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput/></span><div><span>Total Requests</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3/></span><div><span>Pending Review</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><CheckCircle2/></span><div><span>Approved</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><XCircle/></span><div><span>Rejected</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput/></span><div><span>Total Requests</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><CheckCircle2/></span><div><span>Approved</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3/></span><div><span>Pending Review</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><XCircle/></span><div><span>Rejected</span><strong>—</strong><small>Preview · data pending</small></div></article>
       </section>
       <div className="sl-staff-requests-layout">
         <main className="sl-staff-requests-main">
           <section className="sl-staff-requests-card sl-staff-requests-records">
-            <div className="sl-staff-requests-tabs" role="tablist"><button type="button" className={tab==='requests'?'active':''} onClick={()=>setTab('requests')}>My Requests</button><button ref={submitButton} type="button" className={tab==='submit'?'active':''} onClick={()=>{setTab('submit');setSubmitOpen(true)}}>Submit New Request</button></div>
             <div className="sl-staff-requests-toolbar"><label className="sl-staff-requests-search"><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, request ID, or reason..."/></label><select value={type} onChange={e=>setType(e.target.value)}><option>All Types</option><option>Batch Correction</option><option>Quantity Adjustment</option><option>Unit Correction</option><option>Add Missing Batch</option><option>Other</option></select><select value={status} onChange={e=>setStatus(e.target.value)}><option>All Statuses</option><option>Pending</option><option>Approved</option><option>Rejected</option></select><select value={range} onChange={e=>setRange(e.target.value)}><option>Last 30 Days</option><option>Last 7 Days</option><option>Last 90 Days</option></select></div>
             <div className="sl-staff-requests-table-shell"><table className="sl-data-table sl-staff-requests-table"><thead><tr>{['Request ID','Date Submitted','Ingredient','Request Type','Details / Reason','Status','Reviewed By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead></table><Empty label="Change requests"/></div>
             <footer className="sl-staff-requests-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>setRows(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label><span>Pagination will activate when live request records are available.</span></footer>
@@ -49,9 +44,6 @@ function InventoryStaffChangeRequests(){
         {quickType==='Other' && <label className="wide"><span>Request Details <b>*</b></span><textarea placeholder="Describe the inventory-related correction needed..." /></label>}
         <div className="wide actions"><button type="button" className="sl-button" onClick={()=>setQuickType(null)}>Cancel</button><button type="button" className="sl-button sl-button-primary" title="Change request API is not connected yet"><FileInput size={16}/>Submit Request</button></div>
       </form>
-    </Dialog>
-    <Dialog open={submitOpen} title="Submit New Request" onDismiss={()=>{setSubmitOpen(false);setTab('requests')}} returnFocus={submitButton} className="sl-staff-requests-dialog">
-      <form className="sl-staff-requests-form" onSubmit={e=>e.preventDefault()}><label><span>Request Type <b>*</b></span><select value={requestType} onChange={e=>setRequestType(e.target.value)}><option value="">Select request type...</option><option>Batch Correction</option><option>Quantity Adjustment</option><option>Unit Correction</option><option>Add Missing Batch</option><option>Other</option></select></label><label><span>Ingredient / Batch <b>*</b></span><input value={target} onChange={e=>setTarget(e.target.value)} placeholder="Search or select target..."/></label><label className="wide"><span>Details / Reason <b>*</b></span><textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="Describe the requested change and why it is needed..."/></label><div className="wide actions"><button type="button" className="sl-button" onClick={clear}>Clear</button><button type="button" className="sl-button sl-button-primary" title="Change request API is not connected yet"><FileInput size={16}/>Submit Request</button></div></form>
     </Dialog>
   </>;
 }
