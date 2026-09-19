@@ -64,6 +64,58 @@ function FormPreview({ id }: { id: PreviewId }) {
 }
 
 
+
+function InventoryStaffWastePage() {
+  const [addOpen,setAddOpen]=useState(false);
+  const [wasteAction,setWasteAction]=useState<'view'|'edit'|'delete'|null>(null);
+  const addButton=useRef<HTMLButtonElement>(null);
+  const [ingredient,setIngredient]=useState(''); const [batch,setBatch]=useState(''); const [qty,setQty]=useState(''); const [reason,setReason]=useState(''); const [method,setMethod]=useState(''); const [notes,setNotes]=useState('');
+  const [date,setDate]=useState(''); const [time,setTime]=useState(''); const [search,setSearch]=useState(''); const [reasonFilter,setReasonFilter]=useState('All Reasons'); const [range,setRange]=useState('Last 7 Days'); const [rows,setRows]=useState('10');
+  const clear=()=>{setIngredient('');setBatch('');setQty('');setReason('');setMethod('');setNotes('');setDate('');setTime('')};
+  const Pending=({label,compact=false}:{label:string;compact?:boolean})=><div className={`sl-staff-waste-pending${compact?' compact':''}`}><DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} /></div>;
+  const WasteForm=()=> <form className="sl-staff-waste-form" onSubmit={e=>e.preventDefault()}>
+    <label><span>Ingredient <b>*</b></span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option value="">Search or select ingredient...</option></select></label>
+    <label><span>Batch ID <b>*</b></span><select value={batch} onChange={e=>setBatch(e.target.value)}><option value="">Select batch ID...</option></select></label>
+    <label><span>Expiry Date</span><input disabled placeholder="Auto-filled from selected batch" /></label>
+    <label><span>Quantity Wasted <b>*</b></span><div className="sl-staff-waste-quantity"><input inputMode="decimal" value={qty} onChange={e=>setQty(e.target.value.replace(/[^0-9.]/g,''))} placeholder="Enter quantity"/><select aria-label="Unit"><option>kg</option></select></div></label>
+    <label><span>Date &amp; Time <b>*</b></span><div className="sl-staff-waste-datetime"><input type="date" value={date} onChange={e=>setDate(e.target.value)}/><input type="time" value={time} onChange={e=>setTime(e.target.value)}/></div></label>
+    <label><span>Reason for Waste <b>*</b></span><select value={reason} onChange={e=>setReason(e.target.value)}><option value="">Select reason...</option><option>Expired</option><option>Spoiled</option><option>Trimming</option><option>Over-preparation</option><option>Damaged Packaging</option><option>Other</option></select></label>
+    <label><span>Disposition Method <b>*</b></span><select value={method} onChange={e=>setMethod(e.target.value)}><option value="">Select method...</option><option>Compost</option><option>Landfill</option><option>Other</option></select></label>
+    <label><span>Notes (Optional)</span><input value={notes} onChange={e=>setNotes(e.target.value)} placeholder="e.g., spoiled, damaged packaging, over-prepared..."/></label>
+    <div className="sl-staff-waste-form-actions"><button type="button" className="sl-button" onClick={clear}>Clear</button><button type="button" className="sl-button sl-button-primary" title="Waste API is not connected yet"><Trash2 size={16}/>Save Waste Record</button></div>
+  </form>;
+  return <>
+    <PageHeader title="Waste Recording" description="Record ingredients that are discarded or no longer usable. Help us reduce food waste." />
+    <div className="sl-admin-view sl-staff-waste-v159">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-waste-kpis" aria-label="Waste summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Today</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Most Wasted Ingredient</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3/></span><div><span>Common Waste Reason</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown/></span><div><span>Estimated Value Lost</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </section>
+      <div className="sl-staff-waste-layout">
+        <main className="sl-staff-waste-main">
+          <section className="sl-staff-waste-card sl-staff-waste-form-card"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><Trash2/></span><div><h2>New Waste Record</h2><p>Enter the details of the discarded ingredient.</p></div></header><WasteForm/></section>
+          <section className="sl-staff-waste-card sl-staff-waste-records"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><Clock3/></span><h2>Recent Waste Records</h2></header>
+            <div className="sl-staff-waste-toolbar"><label className="sl-staff-waste-search"><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or reason..."/></label><select value={reasonFilter} onChange={e=>setReasonFilter(e.target.value)}><option>All Reasons</option><option>Expired</option><option>Spoiled</option><option>Trimming</option><option>Over-preparation</option></select><select value={range} onChange={e=>setRange(e.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select><button type="button" className="sl-button" title="Export will become available when waste records are connected"><Download size={16}/>Export</button><button ref={addButton} type="button" className="sl-button sl-button-primary" onClick={()=>setAddOpen(true)}><Plus size={16}/>Add Waste</button></div>
+            <div className="sl-staff-waste-table-shell"><table className="sl-data-table sl-staff-waste-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity','Unit','Reason','Disposition','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody><tr className="sl-staff-waste-preview-row"><td colSpan={8}><Pending label="Waste records"/></td><td className="sl-staff-waste-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste record actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View waste record" title="View" onClick={()=>setWasteAction('view')}><Eye size={16}/></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit waste record" title="Edit" onClick={()=>setWasteAction('edit')}><Pencil size={16}/></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete waste record" title="Delete" onClick={()=>setWasteAction('delete')}><Trash2 size={16}/></button></div></td></tr></tbody></table></div>
+            <footer className="sl-staff-waste-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>setRows(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label><span>Pagination will activate when live waste records are available.</span><div className="sl-staff-waste-pagination"><button type="button">‹</button><button type="button" aria-current="page">1</button><button type="button">›</button></div></footer>
+          </section>
+        </main>
+        <aside className="sl-staff-waste-rail">
+          <section className="sl-staff-waste-card sl-staff-waste-sidecard"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><BarChart3/></span><h2>Waste by Reason (Last 30 Days)</h2></header><Pending label="Waste by reason" compact/></section>
+          <section className="sl-staff-waste-card sl-staff-waste-sidecard"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><Leaf/></span><h2>Top Wasted Ingredients (Last 30 Days)</h2></header><Pending label="Top wasted ingredients" compact/></section>
+        </aside>
+      </div>
+    </div>
+    <Dialog open={addOpen} title={<span className="sl-staff-usage-dialog-title"><span className="sl-staff-waste-head-icon"><Trash2/></span><span><strong>New Waste Record</strong><small>Enter the details of the discarded ingredient.</small></span></span>} onDismiss={()=>setAddOpen(false)} returnFocus={addButton} className="sl-staff-waste-dialog"><section className="sl-staff-waste-card sl-staff-waste-modal-card"><WasteForm/></section></Dialog>
+    <Dialog open={wasteAction!==null} title={wasteAction==='delete'?'Confirm Delete':wasteAction==='edit'?'Edit Waste Record':'Waste Record Details'} onDismiss={()=>setWasteAction(null)} className="sl-staff-waste-action-dialog">
+      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={wasteAction==='delete'?'A live waste record is required before deletion can be confirmed.':wasteAction==='edit'?'A live waste record is required before editing.':'Waste record details will appear here when the backend is connected.'} action={<Status>Preview · data pending</Status>} /></div>
+      {wasteAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={()=>setWasteAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live backend record">Confirm Delete</button></div>}
+    </Dialog>
+  </>;
+}
+
 function ManagerUsageWastePage() {
   const [range, setRange] = useState('Current period');
   const [category, setCategory] = useState('All Categories');
@@ -1947,6 +1999,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'Usage' && user.role === 'Super Admin') return <SuperAdminUsagePage />;
   if (moduleId === 'Usage' && user.role === 'Inventory Staff') return <InventoryStaffUsagePage />;
   if (moduleId === 'Waste' && user.role === 'Super Admin') return <SuperAdminWastePage />;
+  if (moduleId === 'Waste' && user.role === 'Inventory Staff') return <InventoryStaffWastePage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Manager') return <ManagerChangeRequestsPage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Super Admin') return <SuperAdminChangeRequestsPage />;
   if (moduleId === 'ExpirationMonitoring' && user.role === 'Super Admin') return <SuperAdminExpirationMonitoringPage />;
