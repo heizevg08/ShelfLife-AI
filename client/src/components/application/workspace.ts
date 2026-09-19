@@ -43,7 +43,8 @@ export const canonicalWorkspaceAccess = {
   '/ChangeRequests': ['Super Admin', 'Manager', 'Inventory Staff'],
   '/Forecasting': ['Super Admin', 'Manager'],
   '/Alerts': ['Super Admin', 'Admin', 'Manager'],
-  '/Reports': ['Super Admin', 'Admin', 'Manager'],
+  '/Reports': ['Super Admin', 'Admin'],
+  '/ReportsAnalytics': ['Manager'],
   '/AdministrativeAudit': ['Super Admin', 'Admin'],
   '/Roles': ['Super Admin', 'Admin'],
 } as const satisfies Record<string, readonly WorkspaceRole[]>;
@@ -57,7 +58,7 @@ const navigation: Record<WorkspaceRole, ModuleId[]> = {
 export function workspaceNavigation(role: WorkspaceRole) {
   return navigation[role].map(id => ({
     ...modules[id],
-    path: role === 'Manager' && id === 'InventoryBatches' ? '/Inventory' : `/${id}`,
+    path: role === 'Manager' && id === 'InventoryBatches' ? '/Inventory' : role === 'Manager' && id === 'Reports' ? '/ReportsAnalytics' : `/${id}`,
     label: role === 'Admin' && id === 'UserManagement' ? 'Users' : (role === 'Admin' || role === 'Manager') && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
   }));
 }

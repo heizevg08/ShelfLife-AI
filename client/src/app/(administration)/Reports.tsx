@@ -1,23 +1,32 @@
-import { CalendarDays, ChevronDown, ClipboardList, Download, FileBarChart2, Leaf, Package, RotateCcw, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { BarChart3, CalendarDays, ChevronDown, ClipboardList, Download, FileBarChart2, Leaf, Package, PieChart, RotateCcw, SlidersHorizontal, Trash2, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { reportExportFormats } from '../../components/application/module-content';
 import { Card, DataState, PageHeader, Status } from '../../components/application/primitives';
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 
 function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
-  return <div className={`sl-sa-reports-pending${compact ? ' compact' : ''}`}><DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} /></div>;
+  return (
+    <div className={`sl-manager-reports-pending${compact ? ' compact' : ''}`}>
+      <DataState
+        kind="empty"
+        title="No live records yet"
+        description={label}
+        action={<Status>Preview · data pending</Status>}
+      />
+    </div>
+  );
 }
 
 function AdminReports() {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const reports = [
-    ['Inventory Summary','Current stock levels and inventory value per ingredient.','Inventory'],
-    ['Expiration Report','Ingredients nearing or past expiration.','Expiration'],
-    ['Waste Report','Recorded waste quantities and costs.','Waste'],
-    ['Ingredient Usage Report','Total ingredient usage over the selected period.','Usage'],
-    ['Inventory Movement','Stock-in and stock-out history.','Inventory'],
-    ['Low Stock Report','Ingredients below minimum stock level.','Inventory'],
-    ['Master Data List','List of all ingredients and their details.','Master Data'],
+    ['Inventory Summary', 'Current stock levels and inventory value per ingredient.', 'Inventory'],
+    ['Expiration Report', 'Ingredients nearing or past expiration.', 'Expiration'],
+    ['Waste Report', 'Recorded waste quantities and costs.', 'Waste'],
+    ['Ingredient Usage Report', 'Total ingredient usage over the selected period.', 'Usage'],
+    ['Inventory Movement', 'Stock-in and stock-out history.', 'Inventory'],
+    ['Low Stock Report', 'Ingredients below minimum stock level.', 'Inventory'],
+    ['Master Data List', 'List of all ingredients and their details.', 'Master Data'],
   ];
   return <>
     <PageHeader title="Reports" description="Generate and view reports on inventory, usage, waste, and ingredient data for your establishment." />
@@ -61,6 +70,93 @@ function AdminReports() {
   </>;
 }
 
+function ManagerReports() {
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const reportTemplates = [
+    ['Inventory Summary', 'Stock levels, usage, and current inventory value', 'Custom', 'PDF / Excel'],
+    ['Usage & Waste Report', 'Ingredient usage, waste amounts, and waste rate', 'Custom', 'PDF / Excel'],
+    ['Expiration Risk Report', 'Items nearing expiration and FEFO analysis', 'Custom', 'PDF / Excel'],
+    ['Forecast vs. Actual Report', 'Forecast accuracy and demand comparison', 'Custom', 'PDF / Excel'],
+    ['Category Analysis', 'Usage, waste, and value by ingredient category', 'Custom', 'PDF / Excel'],
+  ] as const;
+
+  return <>
+    <PageHeader title="Reports & Analytics" description="Turn your inventory data into actionable insights." />
+    <div className="sl-admin-view sl-manager-reports-v139">
+      <section className="sl-manager-reports-kpis" aria-label="Report summary">
+        <article className="sl-manager-reports-kpi" data-tone="green"><span className="sl-manager-reports-kpi-icon"><BarChart3 /></span><div><span>Total Ingredients Used</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-manager-reports-kpi" data-tone="critical"><span className="sl-manager-reports-kpi-icon"><Trash2 /></span><div><span>Total Waste</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-manager-reports-kpi" data-tone="attention"><span className="sl-manager-reports-kpi-icon"><PieChart /></span><div><span>Waste Rate</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-manager-reports-kpi" data-tone="brand"><span className="sl-manager-reports-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </section>
+
+      <section className="sl-manager-reports-grid sl-manager-reports-grid-top" aria-label="Analytics overview">
+        <Card id="manager-reports-movement" title="Inventory Movement Trend" action={<div className="sl-manager-reports-card-select"><select disabled><option>Daily</option></select></div>}><PendingPanel label="Inventory movement trend" compact /></Card>
+        <Card id="manager-reports-waste-reason" title="Waste by Reason"><PendingPanel label="Waste reason breakdown" compact /></Card>
+        <Card id="manager-reports-top-usage" title="Top 5 Ingredients by Usage" action={<div className="sl-manager-reports-card-select"><select disabled><option>This Month</option></select></div>}><PendingPanel label="Top ingredient usage" compact /></Card>
+      </section>
+
+      <section className="sl-manager-reports-grid sl-manager-reports-grid-bottom" aria-label="Forecast and category analytics">
+        <Card id="manager-reports-forecast-actual" title="Forecast vs. Actual Usage" action={<div className="sl-manager-reports-card-select"><select disabled><option>Last 30 Days</option></select></div>}><PendingPanel label="Forecast versus actual usage" compact /></Card>
+        <Card id="manager-reports-expiration-risk" title="Expiration Risk Distribution"><PendingPanel label="Expiration risk distribution" compact /></Card>
+        <Card id="manager-reports-category-value" title="Inventory Value by Category"><PendingPanel label="Inventory value by category" compact /></Card>
+      </section>
+
+      <section className="sl-manager-reports-filter-bar" aria-label="Report filters">
+        <label>
+          <span>Date Range</span>
+          <div className="sl-manager-reports-date"><CalendarDays size={16}/><span>Data pending</span><ChevronDown size={15}/></div>
+        </label>
+        <label>
+          <span>Location</span>
+          <select disabled><option>All Locations</option></select>
+        </label>
+        <label>
+          <span>Report Category</span>
+          <select disabled><option>All Categories</option></select>
+        </label>
+        <button className="sl-button sl-button-primary" type="button" disabled>
+          <BarChart3 size={15} /> Generate Report
+        </button>
+      </section>
+
+      <section className="sl-manager-reports-bottom" aria-label="Available reports">
+        <Card id="manager-reports-available" title="Available Reports">
+          <div className="sl-manager-reports-table-scroll">
+            <div className="sl-manager-reports-table" role="table" aria-label="Available reports">
+              <div className="sl-manager-reports-row sl-manager-reports-head" role="row">
+                <span>Report Name</span>
+                <span>Description</span>
+                <span>Data Range</span>
+                <span>Format</span>
+                <span>Action</span>
+              </div>
+              {reportTemplates.map(([name, description, range, format]) => (
+                <div className="sl-manager-reports-row" role="row" key={name}>
+                  <span className="sl-manager-report-name"><i><FileBarChart2 size={15} /></i>{name}</span>
+                  <span>{description}</span>
+                  <span className="sl-manager-report-muted">{range}</span>
+                  <span className="sl-manager-report-muted">{format}</span>
+                  <span><button type="button" disabled>Generate</button></span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="sl-manager-reports-export">
+            <div className="sl-download-control">
+              <button type="button" className="sl-button sl-download-trigger" aria-expanded={downloadOpen} onClick={() => setDownloadOpen(v => !v)}>
+                <Download size={16} /> Export <ChevronDown size={15} />
+              </button>
+              {downloadOpen && <div className="sl-download-menu" role="menu">{reportExportFormats.map(f => <button key={f.id} disabled className="sl-download-option">{f.label}</button>)}</div>}
+            </div>
+          </div>
+        </Card>
+
+      </section>
+    </div>
+  </>;
+}
+
 function LegacyReports() {
   const [downloadOpen, setDownloadOpen] = useState(false);
   return <><PageHeader eyebrow="Analytics" title="Reports" description="Waste, inventory, and forecast reporting for system-wide oversight."/><div className="sl-admin-view sl-sa-reports-page">
@@ -70,4 +166,9 @@ function LegacyReports() {
   </div></>;
 }
 
-export default function Reports(){ const {user}=useApplicationWorkspace(); return user.role === 'Admin' ? <AdminReports/> : <LegacyReports/>; }
+export default function Reports(){
+  const { user } = useApplicationWorkspace();
+  if (user.role === 'Admin') return <AdminReports />;
+  if (user.role === 'Manager') return <ManagerReports />;
+  return <LegacyReports />;
+}

@@ -140,7 +140,7 @@ function ManagerInventoryPage() {
       </section>
       <div className="sl-manager-inventory-lower-grid">
         <section className="sl-manager-inventory-panel"><header><div><strong>FEFO Priority</strong><small>Top batches to use first (First Expire, First Out)</small></div><Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="No live records yet" description="FEFO priority will appear when batch expiration data is connected." action={<Status>Preview · data pending</Status>} /></div></section>
-        <section className="sl-manager-inventory-panel"><header><strong>Inventory by Category</strong><Link href="/Reports" className="sl-text-link">View Details <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="No live records yet" description="Category distribution requires live inventory records." action={<Status>Preview · data pending</Status>} /></div></section>
+        <section className="sl-manager-inventory-panel"><header><strong>Inventory by Category</strong><Link href="/ReportsAnalytics" className="sl-text-link">View Details <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="No live records yet" description="Category distribution requires live inventory records." action={<Status>Preview · data pending</Status>} /></div></section>
       </div>
     </div>
   </>;
