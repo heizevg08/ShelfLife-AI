@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowRight, Box, ChartNoAxesCombined, ClipboardList, ListChecks, PhilippinePeso, TrendingUp, TriangleAlert } from 'lucide-react';
+import { ArrowRight, Box, Boxes, ClipboardList, ListChecks, PhilippinePeso, TrendingUp, TriangleAlert } from 'lucide-react';
 import { Link } from 'expo-router';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
 import { Card, DataState, PageHeader, PlaceholderSummaryCards, PlaceholderTable, Status } from '../application/primitives';
@@ -105,6 +105,66 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
   </>;
 }
 
+function InventoryStaffDashboardContent({ userName }: { userName: string }) {
+  const [timelineRange, setTimelineRange] = useState('30');
+  const pendingState = (description: string) => (
+    <div className="sl-inventory-staff-dashboard-state">
+      <DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} />
+    </div>
+  );
+
+  return <>
+    <DashboardHeading userName={userName} />
+    <p className="sl-dashboard-description">Your inventory overview for today. Keep track, record accurately, and help reduce food waste.</p>
+
+    <div className="sl-admin-view sl-inventory-staff-dashboard-v140">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis" aria-label="Inventory staff dashboard summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Box aria-hidden="true" /></span><div><span>Total Ingredients</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><TriangleAlert aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList aria-hidden="true" /></span><div><span>Low Stock</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </section>
+
+      <section className="sl-inventory-staff-analytics" aria-label="Inventory staff dashboard analytics">
+        <Card
+          id="inventory-staff-expiration-timeline"
+          title="Expiration Timeline"
+          action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Expiration timeline period</span><select value={timelineRange} onChange={(event) => setTimelineRange(event.target.value)} aria-label="Expiration timeline period"><option value="7">Next 7 Days</option><option value="14">Next 14 Days</option><option value="30">Next 30 Days</option><option value="60">Next 60 Days</option></select></label>}
+        >
+          {pendingState('Expiration timeline')}
+        </Card>
+        <Card id="inventory-staff-stock-status" title="Stock Status">
+          {pendingState('Ingredient stock status')}
+        </Card>
+        <Card id="inventory-staff-fefo" title="Use First · FEFO" action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
+          <PlaceholderTable
+            label="Use First · FEFO"
+            columns={['#', 'Ingredient', 'Earliest Expiry', 'Days Left']}
+            description="Use-first FEFO batches"
+          />
+        </Card>
+      </section>
+
+      <section className="sl-inventory-staff-bottom" aria-label="Inventory staff dashboard records">
+        <Card id="inventory-staff-recent-activity" title="Recent Inventory Activity" action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
+          <PlaceholderTable
+            label="Recent Inventory Activity"
+            columns={['Date & Time', 'Type', 'Ingredient', 'Batch ID', 'Quantity', 'Performed By']}
+            description="Recent inventory activity"
+          />
+        </Card>
+        <Card id="inventory-staff-my-pending-requests" title="My Pending Requests" action={<Link href="/ChangeRequests" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
+          <PlaceholderTable
+            label="My Pending Requests"
+            columns={['#', 'Request Type', 'Submitted On', 'Status']}
+            description="My pending requests"
+          />
+        </Card>
+      </section>
+    </div>
+  </>;
+}
+
 function UnavailableSummary({ role }: { role: 'Manager' | 'Inventory Staff' }) {
   const items = role === 'Manager'
     ? ['Use-first batches', 'Low-stock items', 'Expiring batches', 'Pending requests']
@@ -124,6 +184,7 @@ export default function RoleDashboard() {
   const staff = user.role === 'Inventory Staff';
   const manager = user.role === 'Manager';
   if (manager) return <ManagerDashboardContent userName={sessionDisplayName(user)} />;
+  if (staff) return <InventoryStaffDashboardContent userName={sessionDisplayName(user)} />;
   const description = admin
     ? 'Manage operational accounts, ingredient master data and administrative oversight.'
     : manager

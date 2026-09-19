@@ -1,5 +1,5 @@
 import { Link, type Href } from 'expo-router';
-import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical, Truck, ClipboardCheck, PackageCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
@@ -100,6 +100,123 @@ function ManagerUsageWastePage() {
         <div className="sl-manager-usage-table-shell"><table className="sl-data-table"><thead><tr>{['Date','Ingredient','Type','Quantity','Related Batch','Reason / Notes','Recorded By','Actions'].map(x=><th key={x}>{x}</th>)}</tr></thead></table><Pending description="Usage and waste transaction records are not connected yet." /></div>
         <footer><label>Rows per page <select className="sl-admin-input" disabled><option>10</option></select></label><span>Preview · data pending</span></footer>
       </section>
+    </div>
+  </>;
+}
+
+
+function InventoryStaffStockInPage() {
+  const Pending = ({ description, compact = false }: { description: string; compact?: boolean }) => (
+    <div className={`sl-staff-stockin-pending${compact ? ' compact' : ''}`}>
+      <DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} />
+    </div>
+  );
+
+  return <>
+    <PageHeader
+      title="Stock-In"
+      description="Record newly received ingredients into inventory. Make sure all details are accurate."
+    />
+
+    <div className="sl-admin-view sl-staff-stockin-v142">
+      <section className="sl-staff-stockin-kpis" aria-label="Stock-in summary">
+        <article className="sl-staff-stockin-kpi" data-tone="green"><span className="sl-staff-stockin-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Total Stock-In Today</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-staff-stockin-kpi" data-tone="slate"><span className="sl-staff-stockin-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Quantity Received</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-staff-stockin-kpi" data-tone="green"><span className="sl-staff-stockin-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Active Deliveries</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-staff-stockin-kpi" data-tone="amber"><span className="sl-staff-stockin-kpi-icon"><Users aria-hidden="true" /></span><div><span>Suppliers This Month</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </section>
+
+      <div className="sl-staff-stockin-layout">
+        <main className="sl-staff-stockin-main">
+          <section className="sl-staff-stockin-entry" aria-labelledby="staff-stockin-entry-title">
+            <header className="sl-staff-stockin-entry-head"><span className="sl-staff-stockin-entry-icon"><Plus aria-hidden="true" /></span><div><h2 id="staff-stockin-entry-title">New Stock-In Entry</h2><p>Fill in the details of the received ingredients.</p></div></header>
+            <form className="sl-staff-stockin-form" aria-label="New stock-in entry preview">
+              <label><span>Supplier <b>*</b></span><select disabled><option>Select supplier...</option></select></label>
+              <label><span>Delivery Receipt No. (Optional)</span><input disabled placeholder="Enter receipt number..." /></label>
+              <label><span>Date Received <b>*</b></span><div className="sl-staff-stockin-date"><CalendarDays size={16} aria-hidden="true" /><input disabled value="Data pending" readOnly /></div></label>
+              <label><span>Ingredient <b>*</b></span><div className="sl-staff-stockin-search"><Search size={16} aria-hidden="true" /><input disabled placeholder="Search or select ingredient..." /></div></label>
+              <label><span>Batch ID <b>*</b></span><input disabled placeholder="Auto-generate or enter batch ID..." /></label>
+              <label><span>Expiry Date <b>*</b></span><div className="sl-staff-stockin-date"><input disabled placeholder="Select date" /><CalendarDays size={16} aria-hidden="true" /></div></label>
+              <label><span>Quantity Received <b>*</b></span><div className="sl-staff-stockin-quantity"><input disabled placeholder="Enter quantity" /><select disabled><option>kg</option></select></div></label>
+              <label><span>Unit Cost (Optional)</span><div className="sl-staff-stockin-money"><span>₱</span><input disabled value="0.00" readOnly /></div></label>
+              <label><span>Storage Location <b>*</b></span><select disabled><option>Select location...</option></select></label>
+              <label className="sl-staff-stockin-notes"><span>Notes (Optional)</span><input disabled placeholder="e.g., delivery condition, remarks, invoice reference..." /></label>
+              <div className="sl-staff-stockin-form-actions"><button type="button" className="sl-button" disabled>Clear</button><button type="button" className="sl-button sl-button-primary" disabled><PackageCheck size={15} aria-hidden="true" />Save Stock-In</button></div>
+            </form>
+          </section>
+
+          <section className="sl-staff-stockin-history" aria-labelledby="staff-stockin-history-title">
+            <header><div><Clock3 size={18} aria-hidden="true" /><h2 id="staff-stockin-history-title">Stock-In History</h2></div></header>
+            <div className="sl-staff-stockin-history-filters">
+              <label className="sl-staff-stockin-history-search"><span className="sl-sr-only">Search stock-in history</span><div><Search size={16} aria-hidden="true" /><input disabled placeholder="Search by ingredient, batch ID, or supplier..." /></div></label>
+              <label><span className="sl-sr-only">Supplier</span><select disabled><option>All Suppliers</option></select></label>
+              <label><span className="sl-sr-only">Date range</span><select disabled><option>Last 30 Days</option></select></label>
+              <button type="button" className="sl-button" disabled><Download size={15} aria-hidden="true" />Export</button>
+            </div>
+            <div className="sl-staff-stockin-table-wrap">
+              <table className="sl-staff-stockin-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Supplier','Quantity','Unit','Expiry Date','Location','Recorded By','Actions'].map(column => <th key={column}>{column}</th>)}</tr></thead></table>
+              <div className="sl-staff-stockin-table-state"><Pending description="Stock-in history" /></div>
+            </div>
+            <footer className="sl-staff-stockin-footer"><label>Rows per page <select defaultValue="10" disabled><option>10</option></select></label><span>Pagination will activate when live stock-in records are available.</span></footer>
+          </section>
+        </main>
+
+        <aside className="sl-staff-stockin-rail" aria-label="Stock-in support panels">
+          <section className="sl-staff-stockin-guidelines" aria-labelledby="stockin-guidelines-title">
+            <header><div><Truck size={18} aria-hidden="true" /><h2 id="stockin-guidelines-title">Receiving Guidelines</h2></div></header>
+            <ol><li>Verify supplier and delivery details</li><li>Check quantity and unit of measurement</li><li>Confirm expiry date and batch condition</li><li>Ensure proper storage location</li><li>Keep the delivery receipt for reference</li></ol>
+          </section>
+          <Card id="staff-stockin-recent-deliveries" title="Recent Deliveries" action={<span className="sl-staff-stockin-view-placeholder">View All</span>}><Pending description="Recent deliveries" compact /></Card>
+          <Card id="staff-stockin-low-stock" title="Low Stock Ingredients" action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}><Pending description="Low-stock ingredients" compact /></Card>
+        </aside>
+      </div>
+    </div>
+  </>;
+}
+
+function InventoryStaffInventoryBatchesPage() {
+  const [category, setCategory] = useState('All Categories');
+  const [batchStatus, setBatchStatus] = useState('All Statuses');
+  const [location, setLocation] = useState('All Locations');
+  const [sortBy, setSortBy] = useState('FEFO (Earliest Expiry)');
+  const Pending = ({ description, compact = false }: { description: string; compact?: boolean }) => (
+    <div className={`sl-staff-inventory-pending${compact ? ' compact' : ''}`}>
+      <DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} />
+    </div>
+  );
+  return <>
+    <PageHeader title="Inventory Batches" description="View and monitor all ingredient batches. Check stock levels, expiration dates, and FEFO order." />
+    <div className="sl-admin-view sl-staff-inventory-v141">
+      <section className="sl-sa-kpis sl-staff-inventory-kpis" aria-label="Inventory batch summary">
+        <article className="sl-sa-kpi sl-staff-inventory-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-staff-inventory-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Batches Near Expiry (≤ 7 days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-staff-inventory-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-staff-inventory-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </section>
+      <div className="sl-staff-inventory-layout">
+        <main className="sl-staff-inventory-main">
+          <section className="sl-staff-inventory-directory" aria-label="Inventory batches">
+            <div className="sl-staff-inventory-filters">
+              <label className="sl-staff-inventory-search"><span className="sl-sr-only">Search inventory batches</span><div><Search size={16}/><input type="search" placeholder="Search ingredient or batch ID..." disabled /></div></label>
+              <label><span className="sl-sr-only">Category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
+              <label><span className="sl-sr-only">Status</span><select value={batchStatus} onChange={e=>setBatchStatus(e.target.value)}><option>All Statuses</option></select></label>
+              <label><span className="sl-sr-only">Location</span><select value={location} onChange={e=>setLocation(e.target.value)}><option>All Locations</option></select></label>
+              <label className="sl-staff-inventory-sort"><span>Sort by</span><select value={sortBy} onChange={e=>setSortBy(e.target.value)}><option>FEFO (Earliest Expiry)</option><option>Latest Received</option><option>Ingredient Name</option></select></label>
+            </div>
+            <div className="sl-staff-inventory-table-title"><div><FileInput size={18}/><strong>Inventory Batches</strong></div></div>
+            <div className="sl-staff-inventory-table-wrap">
+              <table className="sl-staff-inventory-table"><thead><tr>{['','Ingredient','Batch ID','Category','Date Received','Expiry Date','Days Left','Current Stock','Unit','Status','Location','Actions'].map((x,i)=><th key={`${x}-${i}`}>{x}</th>)}</tr></thead></table>
+              <div className="sl-staff-inventory-table-state"><Pending description="Inventory batch records" /></div>
+            </div>
+            <footer className="sl-staff-inventory-footer"><label>Rows per page <select defaultValue="10" disabled><option>10</option></select></label><span>Pagination will activate when live batch records are available.</span></footer>
+          </section>
+        </main>
+        <aside className="sl-staff-inventory-rail" aria-label="Inventory analytics">
+          <Card id="staff-inventory-storage" title="Storage Distribution"><Pending description="Storage distribution" compact /></Card>
+          <Card id="staff-inventory-status" title="Status Breakdown"><Pending description="Inventory status breakdown" compact /></Card>
+          <Card id="staff-inventory-upcoming" title="Upcoming Expirations" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View All <ArrowRight size={14}/></Link>}><Pending description="Upcoming expiration batches" compact /></Card>
+        </aside>
+      </div>
     </div>
   </>;
 }
@@ -1618,6 +1735,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'Ingredients' && user.role === 'Super Admin') return <SuperAdminIngredientsPage />;
   if (moduleId === 'Ingredients' && user.role === 'Admin') return <IngredientsAdminPage preview={preview} setPreview={setPreview} />;
 
+  if (moduleId === 'InventoryBatches' && user.role === 'Inventory Staff') return <InventoryStaffInventoryBatchesPage />;
   if (moduleId === 'InventoryBatches' && user.role === 'Manager') return <ManagerInventoryPage />;
   if (moduleId === 'InventoryBatches' && user.role === 'Super Admin') return <SuperAdminInventoryBatchesPage />;
   if (moduleId === 'Usage' && user.role === 'Super Admin') return <SuperAdminUsagePage />;
@@ -1659,6 +1777,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
       {[['Super Admin', 'System-wide administration, Admin accounts and protected security oversight.'], ['Admin', 'Operational accounts, ingredient master data and administrative monitoring.'], ['Manager', 'Inventory oversight, request review and decision support.'], ['Inventory Staff', 'Stock-in, usage, waste and own change requests.']].map(([title, text]) => <div key={title}><dt>{title}</dt><dd>{text}</dd></div>)}
     </dl></Card></div>
   </>;
+  if (moduleId === 'StockIn' && user.role === 'Inventory Staff') return <InventoryStaffStockInPage />;
   if (moduleId === 'StockIn') return <>
     <PageHeader eyebrow="Inventory" title="Stock-In" description="Receive a new inventory batch against an existing ingredient." />
     <div className="sl-admin-view"><div className="sl-module-columns"><Card id="stock-in" title="Receive stock"><FormPreview id="StockIn" /></Card><Card id="stock-in-guide" title="Before receiving">
