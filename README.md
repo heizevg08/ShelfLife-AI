@@ -1,78 +1,102 @@
-# Welcome to your Expo app 👋
+# ShelfLife AI
 
-## ShelfLifeAI development runtime
+Expo SDK 57 web client and an Express/Mongoose API, managed with npm workspaces.
+Run commands below from `C:\Final_Project\ShelfLife-AI` unless noted otherwise.
 
-Use **Node.js 24.20.0** for this repository. The root `.nvmrc` records the
-verified development version; `server/package.json` requires Node `24.x`
-and keeps the backend compiled module format as CommonJS.
+## Requirements
 
-Select this version before installing dependencies or starting either workspace:
+- Node.js 24.x and npm. `.nvmrc` records 24.20.0; a newer Node 24 patch also satisfies the backend's engine requirement.
+- A reachable MongoDB database. Account administration uses transactions, so use MongoDB Atlas or a replica set for those operations.
 
-```bash
-nvm use 24.20.0
-node --version
+## First-time setup
+
+```powershell
+npm install
 ```
 
-The version check must print `v24.20.0`. With another version manager, select
-the version in `.nvmrc` using that manager's command. `.nvmrc` does not switch
-Node automatically in every shell, and npm's `engines` check is normally a
-warning rather than a runtime guard.
+Install from the repository root so npm installs both workspaces and uses the root `package-lock.json`.
 
-From the repository root, use `npm run client` for Expo and
-`npm --prefix server run dev` for the canonical backend. Keep local server
-configuration in ignored `server/.env`; do not commit credentials.
+If `server/.env` does not already exist:
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```powershell
+Copy-Item server/.env.example server/.env
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Fill in `MONGO_URI` and `JWT_SECRET` locally. For the default web setup, use:
 
-### Other setup steps
+```dotenv
+NODE_ENV=development
+HOST=127.0.0.1
+PORT=5000
+CORS_ORIGINS=http://localhost:8081
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Generate a JWT secret and paste it into `server/.env`:
 
-## Learn more
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Do not commit `.env` or put server secrets in Expo public variables.
+The API always selects the `shelflifeai` database.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+To create the initial development account, fill in `DEV_ADMIN_EMAIL`,
+`DEV_ADMIN_FIRST_NAME`, `DEV_ADMIN_LAST_NAME`, and `DEV_ADMIN_PASSWORD` in
+`server/.env`, then run:
 
-## Join the community
+```powershell
+npm --prefix server run seed:dev-admin
+```
 
-Join our community of developers creating universal apps.
+The email must use the `shelflife.com` domain and the password must be at least
+12 characters. Seeding leaves an existing account unchanged, including its password.
+Email recovery settings are optional for normal login.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Run locally: two terminals
+
+Terminal 1 (API, automatically reloads source changes and reads `server/.env`):
+
+```powershell
+npm run server
+```
+
+Terminal 2 (Expo web client):
+
+```powershell
+npm run client
+```
+
+Open http://localhost:8081 and keep both terminals running. Ctrl+C stops each process.
+`npm run dev` is an alias for the web client only; it does not start both services.
+Inside `client`, `npm run dev` or `npm run web` starts the web client and `npm start`
+starts the general Expo development server. Inside `server`, use `npm run dev`.
+
+The API readiness URL is http://127.0.0.1:5000/api/health/ready; a healthy response
+is `{"status":"ready"}`. Use `localhost` consistently in the browser for login and
+persistent cookies. If Expo uses another port, update `CORS_ORIGINS` and restart
+the API. `EXPO_PUBLIC_API_URL` can override the API origin when needed.
+
+## Verification and compiled backend
+
+```powershell
+npm run typecheck
+npm test --workspace server
+npm run build:web
+npm run build --workspace server
+npm run start --workspace server
+```
+
+The last command runs the compiled backend and reads `server/.env`; run the build
+first, and stop the development API before starting a second API on the same port.
+
+## Common startup failures
+
+- `'expo' is not recognized`: run `npm install` from the root; the client manifest must contain its Expo/React dependencies.
+- `Cannot find module .../dist/server.js`: use `npm run server` for development, or build the server before its production-style `start` command.
+- `EADDRINUSE`: another process already occupies the configured port. Check the readiness URL before starting another API; stop the existing server in its terminal if a restart is needed.
+- `Invalid configuration`: check the named fields in `server/.env`.
+- `database-connection` failure: check the MongoDB URI, database availability, network access, and database credentials.
+- Browser CORS error: the exact frontend origin must be in `CORS_ORIGINS` (no trailing slash).
+
+See `server/.env.example` for configuration fields. Some dashboard modules are UI
+previews awaiting backend services; those placeholders do not indicate a startup failure.
