@@ -105,6 +105,181 @@ function ManagerUsageWastePage() {
 }
 
 
+function InventoryStaffUsagePage() {
+  const [rowsPerPage, setRowsPerPage] = useState('10');
+  const [search, setSearch] = useState('');
+  const [purpose, setPurpose] = useState('All Purposes');
+  const [range, setRange] = useState('Last 7 Days');
+  const [filtersApplied, setFiltersApplied] = useState(false);
+  const [ingredient, setIngredient] = useState('');
+  const [batch, setBatch] = useState('');
+  const [dateUsed, setDateUsed] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [usedFor, setUsedFor] = useState('');
+  const [menu, setMenu] = useState('');
+  const [notes, setNotes] = useState('');
+  const [addUsageOpen, setAddUsageOpen] = useState(false);
+  const [previewAction, setPreviewAction] = useState<'view' | 'edit' | 'delete' | null>(null);
+  const addUsageButton = useRef<HTMLButtonElement>(null);
+  const clearForm = () => { setIngredient(''); setBatch(''); setDateUsed(''); setQuantity(''); setUsedFor(''); setMenu(''); setNotes(''); };
+  const Pending = ({ label, compact = false }: { label: string; compact?: boolean }) => (
+    <div className={`sl-staff-usage-pending${compact ? ' compact' : ''}`}>
+      <DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} />
+    </div>
+  );
+
+  return <>
+    <PageHeader
+      title="Usage Recording"
+      description="Record ingredients used in food preparation. Keep your inventory accurate."
+    />
+
+    <div className="sl-admin-view sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Usage summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
+          <div><span>Total Usage Today</span><strong>—</strong><small>Preview · data pending</small></div>
+        </article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info">
+          <span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span>
+          <div><span>Total Records Today</span><strong>—</strong><small>Preview · data pending</small></div>
+        </article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
+          <div><span>Most Used Ingredient</span><strong>—</strong><small>Preview · data pending</small></div>
+        </article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
+          <div><span>Current Stock (After Usage)</span><strong>—</strong><small>Preview · data pending</small></div>
+        </article>
+      </section>
+
+      <div className="sl-staff-usage-layout">
+        <main className="sl-staff-usage-main">
+          <section className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="recent-usage-title">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+              <span className="sl-staff-usage-head-icon"><Clock3 aria-hidden="true" /></span>
+              <h2 id="recent-usage-title">Recent Usage Records</h2>
+              <div className="sl-staff-usage-head-actions">
+                <button ref={addUsageButton} type="button" className="sl-button sl-button-primary sl-staff-usage-add" onClick={()=>setAddUsageOpen(true)}><Plus size={16} aria-hidden="true" />Add Usage</button>
+              </div>
+            </header>
+            <div className="sl-staff-usage-toolbar">
+              <label className="sl-staff-usage-search"><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or menu..." aria-label="Search usage records" /></label>
+              <select value={purpose} onChange={e=>{setPurpose(e.target.value);setFiltersApplied(false)}} aria-label="Filter by purpose"><option>All Purposes</option><option>Menu Preparation</option><option>Staff Meal</option><option>Testing / R&amp;D</option><option>Others</option></select>
+              <select value={range} onChange={e=>{setRange(e.target.value);setFiltersApplied(false)}} aria-label="Filter by date range"><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select>
+              <button type="button" className={`sl-button ${filtersApplied ? '' : 'sl-button-primary'} sl-staff-usage-filter-apply`} onClick={()=>{ if(filtersApplied){ setSearch(''); setPurpose('All Purposes'); setRange('Last 7 Days'); setFiltersApplied(false); } else { setFiltersApplied(true); } }}>{filtersApplied ? 'Reset' : 'Apply'}</button>
+            </div>
+            <div className="sl-staff-usage-table-shell">
+              <table className="sl-data-table sl-staff-usage-table">
+                <thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Used','Unit','Used For','Menu','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+                <tbody>
+                  <tr className="sl-staff-usage-preview-row">
+                    <td colSpan={8} className="sl-staff-usage-preview-state-cell"><Pending label="Usage records" /></td>
+                    <td className="sl-staff-usage-preview-actions-cell">
+                      <div className="sl-staff-usage-row-actions" aria-label="Usage record action preview">
+                        <button type="button" className="sl-icon-button" aria-label="View usage record" title="View" onClick={()=>setPreviewAction('view')}><Eye size={16} aria-hidden="true" /></button>
+                        <button type="button" className="sl-icon-button" aria-label="Edit usage record" title="Edit" onClick={()=>setPreviewAction('edit')}><Pencil size={16} aria-hidden="true" /></button>
+                        <button type="button" className="sl-icon-button sl-staff-usage-delete-action" aria-label="Delete usage record" title="Delete" onClick={()=>setPreviewAction('delete')}><Trash2 size={16} aria-hidden="true" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <footer className="sl-staff-usage-footer">
+              <label><span>Rows per page</span><select value={rowsPerPage} onChange={e=>setRowsPerPage(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label>
+              <span className="sl-staff-usage-pagination-note">Pagination will activate when live usage records are available.</span>
+              <div className="sl-staff-usage-pagination" aria-label="Usage pagination preview"><button type="button" aria-label="Previous page">‹</button><button type="button" aria-current="page">1</button><button type="button" aria-label="Next page">›</button></div>
+            </footer>
+          </section>
+        </main>
+
+        <aside className="sl-staff-usage-rail">
+          <section className="sl-staff-usage-card sl-staff-usage-sidecard">
+            <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><Leaf aria-hidden="true" /></span><h2>FEFO Reminder</h2></header>
+            <p className="sl-staff-usage-sidehint">Use batches with the earliest expiry date first.</p>
+            <Pending label="FEFO reminders" compact />
+          </section>
+          <section className="sl-staff-usage-card sl-staff-usage-sidecard">
+            <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileInput aria-hidden="true" /></span><h2>Today&apos;s Usage by Purpose</h2></header>
+            <Pending label="Usage by purpose" compact />
+          </section>
+          <section className="sl-staff-usage-card sl-staff-usage-sidecard">
+            <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon attention"><AlertTriangle aria-hidden="true" /></span><h2>Low Stock Warning</h2></header>
+            <Pending label="Low-stock warnings" compact />
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <Dialog
+      open={addUsageOpen}
+      title={<span className="sl-staff-usage-dialog-title"><span className="sl-staff-usage-head-icon"><FileInput aria-hidden="true" /></span><span><strong>New Usage Record</strong><small>Enter the details of the ingredient used.</small></span></span>}
+      onDismiss={()=>setAddUsageOpen(false)}
+      returnFocus={addUsageButton}
+      className="sl-staff-usage-dialog sl-staff-usage-dialog-exact"
+    >
+      <section className="sl-staff-usage-card sl-staff-usage-form-card sl-staff-usage-modal-card">
+        <form className="sl-staff-usage-form" onSubmit={(e)=>e.preventDefault()}>
+          <label><span>Ingredient <b>*</b></span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option value="">Search or select ingredient...</option></select></label>
+          <label><span>Batch ID <b>*</b></span><select value={batch} onChange={e=>setBatch(e.target.value)}><option value="">Select batch...</option></select></label>
+          <label><span>Date Used <b>*</b></span><input type="date" value={dateUsed} onChange={e=>setDateUsed(e.target.value)} /></label>
+          <label><span>Quantity Used <b>*</b></span><div className="sl-staff-usage-quantity"><input inputMode="decimal" value={quantity} onChange={e=>setQuantity(e.target.value.replace(/[^0-9.]/g,''))} placeholder="Enter quantity" /><select aria-label="Unit"><option>kg</option></select></div></label>
+          <label><span>Used For <b>*</b></span><select value={usedFor} onChange={e=>setUsedFor(e.target.value)}><option value="">Select purpose...</option><option>Menu Preparation</option><option>Staff Meal</option><option>Testing / R&amp;D</option><option>Others</option></select></label>
+          <label><span>Prepared Menu (Optional)</span><input value={menu} onChange={e=>setMenu(e.target.value)} placeholder="Enter menu name..." /></label>
+          <label className="sl-staff-usage-notes"><span>Notes (Optional)</span><input value={notes} onChange={e=>setNotes(e.target.value)} placeholder="e.g., breakfast service, staff meal, etc." /></label>
+          <div className="sl-staff-usage-form-actions">
+            <button type="button" className="sl-button" onClick={clearForm}>Clear</button>
+            <button type="button" className="sl-button sl-button-primary" title="Usage API is not connected yet"><CheckCircle2 size={16} aria-hidden="true" />Save Usage Record</button>
+          </div>
+        </form>
+      </section>
+    </Dialog>
+
+    <Dialog
+      open={previewAction === 'view'}
+      title="Usage Record Details"
+      onDismiss={()=>setPreviewAction(null)}
+      className="sl-staff-usage-action-dialog"
+    >
+      <div className="sl-staff-usage-action-state">
+        <DataState kind="empty" title="No live records yet" description="Usage record details will be available when the Usage Recording backend is connected." action={<Status>Preview · data pending</Status>} />
+        <div className="sl-dialog-form-actions"><button type="button" className="sl-button" onClick={()=>setPreviewAction(null)}>Close</button></div>
+      </div>
+    </Dialog>
+
+    <Dialog
+      open={previewAction === 'edit'}
+      title="Edit Usage Record"
+      onDismiss={()=>setPreviewAction(null)}
+      className="sl-staff-usage-action-dialog"
+    >
+      <div className="sl-staff-usage-action-state">
+        <DataState kind="empty" title="No live records yet" description="A live usage record is required before its details can be edited." action={<Status>Preview · data pending</Status>} />
+        <div className="sl-dialog-form-actions"><button type="button" className="sl-button" onClick={()=>setPreviewAction(null)}>Close</button></div>
+      </div>
+    </Dialog>
+
+    <Dialog
+      open={previewAction === 'delete'}
+      title="Delete Usage Record?"
+      onDismiss={()=>setPreviewAction(null)}
+      className="sl-staff-usage-action-dialog sl-staff-usage-delete-dialog"
+    >
+      <div className="sl-staff-usage-delete-confirm">
+        <span className="sl-staff-usage-delete-icon"><Trash2 size={22} aria-hidden="true" /></span>
+        <div><strong>No live record is selected.</strong><p>Deletion will become available for each real usage row once Usage Recording is connected to the backend.</p></div>
+      </div>
+      <div className="sl-dialog-form-actions">
+        <button type="button" className="sl-button" onClick={()=>setPreviewAction(null)}>Cancel</button>
+        <button type="button" className="sl-button sl-button-danger" disabled title="Requires a live usage record">Delete</button>
+      </div>
+    </Dialog>
+  </>;
+}
+
+
 function InventoryStaffStockInPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const addStockInButton = useRef<HTMLButtonElement>(null);
@@ -1770,6 +1945,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'InventoryBatches' && user.role === 'Manager') return <ManagerInventoryPage />;
   if (moduleId === 'InventoryBatches' && user.role === 'Super Admin') return <SuperAdminInventoryBatchesPage />;
   if (moduleId === 'Usage' && user.role === 'Super Admin') return <SuperAdminUsagePage />;
+  if (moduleId === 'Usage' && user.role === 'Inventory Staff') return <InventoryStaffUsagePage />;
   if (moduleId === 'Waste' && user.role === 'Super Admin') return <SuperAdminWastePage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Manager') return <ManagerChangeRequestsPage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Super Admin') return <SuperAdminChangeRequestsPage />;

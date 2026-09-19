@@ -221,7 +221,7 @@ export default function RoleDashboard() {
       <section aria-labelledby="role-actions"><div className="sl-section-heading"><h2 id="role-actions" className="sl-section-title">{staff ? 'Daily actions' : 'Workspace tools'}</h2></div>
         <div className={`sl-workflow-links${staff ? ' sl-workflow-links-three' : ''}`}>
           {admin ? <><WorkflowLink to="/AdministrativeAudit" title="Audit Logs" description="Review administrative account changes." /><WorkflowLink to="/Reports" title="Reports & Analytics" description="Open the reporting workspace." /></>
-            : staff ? <><WorkflowLink to="/StockIn" title="Stock-In" description="Receive a batch against an ingredient." /><WorkflowLink to="/Usage" title="Record usage" description="Log quantities consumed from a batch." /><WorkflowLink to="/Waste" title="Record waste" description="Log discarded quantities and reasons." /></>
+            : staff ? <><WorkflowLink to="/StockIn" title="Stock-In" description="Receive a batch against an ingredient." /><WorkflowLink to="/UsageRecording" title="Record usage" description="Log quantities consumed from a batch." /><WorkflowLink to="/Waste" title="Record waste" description="Log discarded quantities and reasons." /></>
             : <><WorkflowLink to="/UsageWaste" title="Usage & Waste" description="Review consumption and loss transactions." /><WorkflowLink to="/Alerts" title="Alerts" description="Review inventory and expiration attention." /></>}
         </div>
       </section>

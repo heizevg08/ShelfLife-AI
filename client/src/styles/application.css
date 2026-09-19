@@ -13539,3 +13539,254 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   .sl-staff-inventory-v149 .sl-staff-inventory-filters{grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr))}
   .sl-staff-inventory-v149 .sl-staff-inventory-reset{width:100%}
 }
+
+
+/* Inventory Staff — Usage Recording (V150) */
+.sl-staff-usage-v150 { display:grid; gap:clamp(.8rem,1.4vw,1.15rem); }
+.sl-staff-usage-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(.65rem,1vw,.9rem); }
+.sl-staff-usage-kpi { min-width:0; min-height:clamp(92px,8vw,112px); padding:clamp(.8rem,1.2vw,1rem); border:1px solid var(--sl-border); border-radius:var(--sl-radius-lg); background:var(--sl-surface); box-shadow:var(--sl-shadow-sm); display:flex; align-items:center; gap:.8rem; overflow:hidden; }
+.sl-staff-usage-kpi-icon { width:clamp(40px,4vw,50px); height:clamp(40px,4vw,50px); border-radius:var(--sl-radius-lg); flex:0 0 auto; display:grid; place-items:center; background:var(--sl-brand-light); color:var(--sl-success); }
+.sl-staff-usage-kpi-icon svg { width:55%; height:55%; }
+.sl-staff-usage-kpi[data-tone="info"] .sl-staff-usage-kpi-icon { background:oklch(95% .035 245); color:oklch(52% .15 245); }
+.sl-staff-usage-kpi[data-tone="success"] .sl-staff-usage-kpi-icon { background:var(--sl-success-bg); color:var(--sl-success); }
+.sl-staff-usage-kpi[data-tone="critical"] .sl-staff-usage-kpi-icon { background:var(--sl-critical-bg); color:var(--sl-critical); }
+.sl-staff-usage-kpi > div { min-width:0; display:grid; gap:.12rem; }
+.sl-staff-usage-kpi span:not(.sl-staff-usage-kpi-icon) { font:var(--sl-font-label); color:var(--sl-muted); }
+.sl-staff-usage-kpi strong { font:var(--sl-font-numeric); }
+.sl-staff-usage-kpi small { color:var(--sl-muted); font-size:clamp(.68rem,.75vw,.75rem); white-space:normal; }
+
+.sl-staff-usage-layout { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(.8rem,1.3vw,1rem); align-items:start; }
+.sl-staff-usage-main { grid-column:1 / span 3; min-width:0; display:grid; gap:clamp(.8rem,1.3vw,1rem); }
+.sl-staff-usage-rail { grid-column:4; min-width:0; display:grid; gap:clamp(.8rem,1.3vw,1rem); }
+.sl-staff-usage-card { min-width:0; background:var(--sl-surface); border:1px solid var(--sl-border); border-radius:var(--sl-radius-lg); box-shadow:var(--sl-shadow-sm); overflow:hidden; }
+.sl-staff-usage-card-head { min-height:52px; padding:.75rem clamp(.8rem,1.2vw,1rem); display:flex; align-items:center; gap:.65rem; border-bottom:1px solid var(--sl-border-subtle); }
+.sl-staff-usage-card-head h2 { font:var(--sl-font-section-title); }
+.sl-staff-usage-card-head p { margin-top:.12rem; color:var(--sl-muted); font:var(--sl-font-supporting); }
+.sl-staff-usage-head-icon { width:32px; height:32px; flex:0 0 auto; border-radius:var(--sl-radius); display:grid; place-items:center; background:var(--sl-brand-light); color:var(--sl-success); }
+.sl-staff-usage-head-icon.attention { background:var(--sl-attention-bg); color:var(--sl-attention); }
+.sl-staff-usage-head-icon svg { width:18px; height:18px; }
+.sl-staff-usage-viewall { margin-left:auto; border:0; background:transparent; color:var(--sl-success); font-weight:600; padding:.4rem; border-radius:var(--sl-radius-sm); }
+.sl-staff-usage-viewall:hover { background:var(--sl-brand-subtle); }
+
+.sl-staff-usage-form { padding:clamp(.85rem,1.5vw,1.15rem); display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.85rem clamp(.75rem,1.2vw,1rem); }
+.sl-staff-usage-form label { min-width:0; display:grid; gap:.35rem; font:var(--sl-font-label); }
+.sl-staff-usage-form label > span b { color:var(--sl-critical); }
+.sl-staff-usage-form input,.sl-staff-usage-form select,.sl-staff-usage-toolbar input,.sl-staff-usage-toolbar select,.sl-staff-usage-footer select { width:100%; min-width:0; height:40px; padding:0 .75rem; border:1px solid var(--sl-border); border-radius:var(--sl-radius); background:var(--sl-surface); color:var(--sl-text); font:var(--sl-font-supporting); }
+.sl-staff-usage-form :is(input,select):focus,.sl-staff-usage-toolbar :is(input,select):focus,.sl-staff-usage-footer select:focus { outline:2px solid var(--sl-focus); outline-offset:1px; border-color:var(--sl-focus); }
+.sl-staff-usage-quantity { display:grid; grid-template-columns:minmax(0,1fr) 86px; gap:.5rem; }
+.sl-staff-usage-notes { grid-column:1/-1; }
+.sl-staff-usage-form-actions { grid-column:1/-1; display:flex; justify-content:flex-end; gap:.6rem; padding-top:.1rem; }
+.sl-staff-usage-form-actions .sl-button { min-width:100px; justify-content:center; }
+.sl-staff-usage-form-actions .sl-button-primary { min-width:160px; }
+
+.sl-staff-usage-records-head h2 { margin-right:auto; }
+.sl-staff-usage-toolbar { padding:.65rem .8rem; display:grid; grid-template-columns:minmax(220px,1fr) minmax(130px,.32fr) minmax(120px,.28fr); gap:.65rem; border-bottom:1px solid var(--sl-border-subtle); }
+.sl-staff-usage-search { position:relative; min-width:0; }
+.sl-staff-usage-search svg { position:absolute; left:.7rem; top:50%; transform:translateY(-50%); color:var(--sl-muted); pointer-events:none; }
+.sl-staff-usage-search input { padding-left:2.15rem; }
+.sl-staff-usage-table-shell { min-height:clamp(230px,28vh,330px); display:flex; flex-direction:column; overflow:auto; }
+.sl-staff-usage-table { min-width:860px; }
+.sl-staff-usage-table-shell .sl-staff-usage-pending { flex:1; min-height:190px; }
+.sl-staff-usage-pending { width:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:clamp(1rem,3vw,2rem); }
+.sl-staff-usage-pending .sl-data-state { margin:auto; }
+.sl-staff-usage-pending.compact { min-height:clamp(145px,18vh,190px); }
+.sl-staff-usage-footer { min-height:54px; padding:.6rem .8rem; border-top:1px solid var(--sl-border-subtle); display:flex; align-items:center; gap:.8rem; flex-wrap:wrap; }
+.sl-staff-usage-footer label { display:flex; align-items:center; gap:.5rem; color:var(--sl-muted); font:var(--sl-font-supporting); }
+.sl-staff-usage-footer select { width:72px; height:36px; padding:0 .5rem; }
+.sl-staff-usage-pagination-note { color:var(--sl-muted); font:var(--sl-font-supporting); }
+.sl-staff-usage-pagination { margin-left:auto; display:flex; gap:.35rem; }
+.sl-staff-usage-pagination button { width:34px; height:34px; border:1px solid var(--sl-border); border-radius:var(--sl-radius-sm); background:var(--sl-surface); }
+.sl-staff-usage-pagination button[aria-current="page"] { background:var(--sl-brand); color:var(--sl-on-brand); border-color:var(--sl-brand); }
+
+.sl-staff-usage-sidecard { min-height:0; }
+.sl-staff-usage-sidehint { padding:.55rem .9rem 0; color:var(--sl-muted); font:var(--sl-font-supporting); }
+.sl-staff-usage-sidecard .sl-staff-usage-card-head { border-bottom:0; padding-bottom:.45rem; }
+
+@media (max-width:1100px) {
+  .sl-staff-usage-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-staff-usage-layout { grid-template-columns:1fr; }
+  .sl-staff-usage-main,.sl-staff-usage-rail { grid-column:1; }
+  .sl-staff-usage-rail { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media (max-width:820px) {
+  .sl-staff-usage-form { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-staff-usage-toolbar { grid-template-columns:1fr 1fr; }
+  .sl-staff-usage-search { grid-column:1/-1; }
+  .sl-staff-usage-rail { grid-template-columns:1fr; }
+}
+@media (max-width:600px) {
+  .sl-staff-usage-kpis,.sl-staff-usage-form,.sl-staff-usage-toolbar { grid-template-columns:1fr; }
+  .sl-staff-usage-search,.sl-staff-usage-notes { grid-column:auto; }
+  .sl-staff-usage-form-actions { flex-wrap:wrap; }
+  .sl-staff-usage-form-actions .sl-button { flex:1 1 130px; }
+  .sl-staff-usage-footer { align-items:flex-start; }
+  .sl-staff-usage-pagination { width:100%; margin-left:0; justify-content:flex-end; }
+}
+
+/* Inventory Staff — Usage Recording V151 refinements */
+.sl-staff-usage-head-actions{margin-left:auto;display:flex;align-items:center;justify-content:flex-end;gap:.45rem;flex-wrap:wrap}
+.sl-staff-usage-head-actions .sl-staff-usage-viewall{margin-left:0}
+.sl-staff-usage-add{min-height:36px;padding:.45rem .8rem;white-space:nowrap}
+.sl-staff-usage-dialog{width:min(760px,calc(100vw - 2rem));max-width:calc(100vw - 2rem);max-height:min(88vh,760px);overflow:auto}
+.sl-staff-usage-dialog .sl-dialog-content{padding:0}
+.sl-staff-usage-dialog-copy{padding:.8rem 1rem 0;color:var(--sl-muted);font:var(--sl-font-supporting)}
+.sl-staff-usage-modal-form{grid-template-columns:repeat(2,minmax(0,1fr));padding:1rem}
+.sl-staff-usage-dialog .sl-dialog-actions{position:sticky;bottom:0;background:var(--sl-surface);border-top:1px solid var(--sl-border-subtle);z-index:1}
+@media(max-width:600px){
+  .sl-staff-usage-records-head{align-items:flex-start;flex-wrap:wrap}
+  .sl-staff-usage-head-actions{width:100%;margin-left:0;justify-content:flex-end}
+  .sl-staff-usage-modal-form{grid-template-columns:1fr}
+  .sl-staff-usage-dialog{width:calc(100vw - 1rem);max-width:calc(100vw - 1rem);max-height:92vh}
+}
+
+
+/* Inventory Staff — Usage Recording V152 parity polish */
+.sl-staff-usage-v150 .sl-staff-usage-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.75rem,.6rem + .35vw,1rem)}
+.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi{min-width:0;min-height:clamp(6.6rem,6rem + 2vw,8rem);padding:clamp(.8rem,.7rem + .35vw,1.15rem);gap:clamp(.7rem,.55rem + .45vw,1rem);border-top-width:3px}
+.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='brand']{border-top-color:var(--sl-brand)}
+.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='info']{border-top-color:#0c5797}
+.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='attention']{border-top-color:var(--sl-attention)}
+.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='critical']{border-top-color:var(--sl-critical)}
+.sl-staff-usage-dialog-exact{width:min(920px,calc(100vw - 2rem));max-width:calc(100vw - 2rem);max-height:min(92vh,820px);overflow:auto}
+.sl-staff-usage-dialog-exact .sl-dialog-content{padding:0}
+.sl-staff-usage-modal-card{border:0;border-radius:0;box-shadow:none}
+.sl-staff-usage-dialog-exact .sl-staff-usage-modal-card .sl-staff-usage-card-head{padding:.75rem clamp(.8rem,1.2vw,1rem)}
+@media(max-width:1100px){.sl-staff-usage-v150 .sl-staff-usage-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.sl-staff-usage-v150 .sl-staff-usage-kpis{grid-template-columns:1fr}.sl-staff-usage-dialog-exact{width:calc(100vw - 1rem);max-width:calc(100vw - 1rem);max-height:94vh}}
+
+/* V153 — Usage Recording modal header de-duplication */
+.sl-staff-usage-dialog-exact > .sl-popover-header{padding:clamp(.8rem,1.4vw,1rem) clamp(.9rem,1.6vw,1.15rem);align-items:center}
+.sl-staff-usage-dialog-exact > .sl-popover-header .sl-section-title{min-width:0;flex:1}
+.sl-staff-usage-dialog-title{display:flex;align-items:center;gap:.75rem;min-width:0}
+.sl-staff-usage-dialog-title>span:last-child{display:grid;gap:.12rem;min-width:0}
+.sl-staff-usage-dialog-title strong{font:var(--sl-font-section-title);color:var(--sl-text);line-height:1.2}
+.sl-staff-usage-dialog-title small{font:var(--sl-font-supporting);font-weight:400;color:var(--sl-muted);line-height:1.35}
+.sl-staff-usage-dialog-exact .sl-staff-usage-modal-card .sl-staff-usage-form{padding-top:clamp(.85rem,1.4vw,1rem)}
+
+/* V155 — Inventory Staff /UsageRecording vertical alignment
+   Recent Usage Records stretches to the full desktop row height so its lower edge
+   aligns with the lower edge of Low Stock Warning. */
+@media (min-width:1101px){
+  .sl-staff-usage-v150 .sl-staff-usage-layout{align-items:stretch;}
+  .sl-staff-usage-v150 .sl-staff-usage-main{height:100%;align-self:stretch;}
+  .sl-staff-usage-v150 .sl-staff-usage-records{height:100%;display:flex;flex-direction:column;}
+  .sl-staff-usage-v150 .sl-staff-usage-table-shell{flex:1;min-height:clamp(300px,38vh,470px);}
+  .sl-staff-usage-v150 .sl-staff-usage-rail{height:100%;align-self:stretch;grid-template-rows:repeat(3,minmax(0,1fr));}
+  .sl-staff-usage-v150 .sl-staff-usage-sidecard{height:100%;display:flex;flex-direction:column;}
+  .sl-staff-usage-v150 .sl-staff-usage-sidecard .sl-staff-usage-pending{flex:1;min-height:0;}
+}
+
+/* V156 — Inventory Staff /UsageRecording: routed View All + action controls preview */
+.sl-staff-usage-viewall{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  cursor:pointer;
+}
+.sl-staff-usage-empty-with-actions{
+  position:relative;
+  flex:1;
+  min-height:190px;
+  display:flex;
+}
+.sl-staff-usage-empty-with-actions > .sl-staff-usage-pending{
+  flex:1;
+  min-width:0;
+}
+.sl-staff-usage-action-preview{
+  width:clamp(112px,12vw,150px);
+  border-left:1px solid var(--sl-border);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:.55rem;
+  padding:clamp(.65rem,1.2vw,1rem);
+  text-align:center;
+}
+.sl-staff-usage-action-preview > span{
+  font-size:.72rem;
+  font-weight:700;
+  color:var(--sl-text-muted);
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.sl-staff-usage-action-preview > div{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:.35rem;
+}
+.sl-staff-usage-action-preview small{
+  font-size:.68rem;
+  color:var(--sl-text-muted);
+  line-height:1.25;
+}
+.sl-staff-usage-action-preview .sl-icon-button{
+  cursor:pointer;
+}
+@media (max-width: 760px){
+  .sl-staff-usage-empty-with-actions{flex-direction:column;}
+  .sl-staff-usage-action-preview{
+    width:100%;
+    border-left:0;
+    border-top:1px solid var(--sl-border);
+    flex-direction:row;
+    flex-wrap:wrap;
+  }
+}
+
+/* V157 — Inventory Staff /UsageRecording: filters + row-action alignment */
+.sl-staff-usage-v150 .sl-staff-usage-toolbar{
+  display:grid;
+  grid-template-columns:minmax(240px,1fr) minmax(145px,.34fr) minmax(130px,.28fr) auto;
+  align-items:center;
+}
+.sl-staff-usage-filter-apply{min-width:clamp(72px,6vw,88px);white-space:nowrap}
+.sl-staff-usage-table td:last-child .sl-staff-usage-row-actions{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:flex-start;
+  flex-wrap:nowrap;
+  gap:.35rem;
+  white-space:nowrap;
+}
+.sl-staff-usage-table td:last-child .sl-icon-button{flex:0 0 auto}
+.sl-staff-usage-empty-with-actions{display:flex;align-items:stretch;justify-content:stretch}
+.sl-staff-usage-empty-with-actions>.sl-staff-usage-pending{width:100%;flex:1}
+@media(max-width:900px){
+  .sl-staff-usage-v150 .sl-staff-usage-toolbar{grid-template-columns:minmax(0,1fr) minmax(130px,.45fr);}
+  .sl-staff-usage-v150 .sl-staff-usage-search{grid-column:1/-1}
+}
+@media(max-width:600px){
+  .sl-staff-usage-v150 .sl-staff-usage-toolbar{grid-template-columns:1fr;}
+  .sl-staff-usage-v150 .sl-staff-usage-search{grid-column:auto}
+  .sl-staff-usage-filter-apply{width:100%}
+}
+
+/* V158 — Inventory Staff /UsageRecording: keep the complete Recent Usage Records
+   structure visible before backend records exist, including per-row action controls. */
+.sl-staff-usage-v150 .sl-staff-usage-table-shell{overflow:auto}
+.sl-staff-usage-v150 .sl-staff-usage-table{height:100%;min-height:clamp(230px,28vh,330px)}
+.sl-staff-usage-v150 .sl-staff-usage-table tbody{height:100%}
+.sl-staff-usage-v150 .sl-staff-usage-preview-row{height:100%}
+.sl-staff-usage-v150 .sl-staff-usage-preview-row:hover{background:transparent}
+.sl-staff-usage-v150 .sl-staff-usage-preview-state-cell{height:100%;padding:0!important;vertical-align:middle;border-bottom:0}
+.sl-staff-usage-v150 .sl-staff-usage-preview-state-cell .sl-staff-usage-pending{min-height:clamp(210px,27vh,310px);height:100%}
+.sl-staff-usage-v150 .sl-staff-usage-preview-actions-cell{width:clamp(126px,12vw,160px);min-width:126px;padding:.75rem!important;vertical-align:middle;border-bottom:0;border-left:1px solid var(--sl-border-subtle)}
+.sl-staff-usage-v150 .sl-staff-usage-preview-actions-cell .sl-staff-usage-row-actions{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:.4rem;white-space:nowrap}
+.sl-staff-usage-v150 .sl-staff-usage-preview-actions-cell .sl-icon-button{cursor:pointer;flex:0 0 auto}
+.sl-staff-usage-v150 .sl-staff-usage-delete-action{color:var(--sl-critical)}
+.sl-staff-usage-action-dialog{width:min(520px,calc(100vw - 2rem));max-width:calc(100vw - 2rem)}
+.sl-staff-usage-action-state{display:grid;gap:1rem;padding:clamp(.9rem,2vw,1.25rem)}
+.sl-staff-usage-action-state .sl-data-state{min-height:clamp(180px,25vh,240px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.sl-staff-usage-delete-confirm{display:flex;align-items:flex-start;gap:.85rem;padding:clamp(1rem,2vw,1.25rem)}
+.sl-staff-usage-delete-confirm p{margin:.3rem 0 0;color:var(--sl-muted);font:var(--sl-font-supporting);line-height:1.5}
+.sl-staff-usage-delete-icon{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:50%;background:var(--sl-critical-bg);color:var(--sl-critical)}
+@media(max-width:600px){
+  .sl-staff-usage-action-dialog{width:calc(100vw - 1rem);max-width:calc(100vw - 1rem)}
+  .sl-staff-usage-v150 .sl-staff-usage-preview-actions-cell{min-width:118px}
+}
