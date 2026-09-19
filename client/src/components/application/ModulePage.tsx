@@ -184,46 +184,68 @@ function InventoryStaffStockInPage() {
 }
 
 function InventoryStaffInventoryBatchesPage() {
+  const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All Categories');
   const [batchStatus, setBatchStatus] = useState('All Statuses');
-  const [location, setLocation] = useState('All Locations');
   const [sortBy, setSortBy] = useState('FEFO (Earliest Expiry)');
+  const reset = () => {
+    setSearch('');
+    setCategory('All Categories');
+    setBatchStatus('All Statuses');
+    setSortBy('FEFO (Earliest Expiry)');
+  };
   const Pending = ({ description, compact = false }: { description: string; compact?: boolean }) => (
     <div className={`sl-staff-inventory-pending${compact ? ' compact' : ''}`}>
       <DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} />
     </div>
   );
+
   return <>
     <PageHeader title="Inventory Batches" description="View and monitor all ingredient batches. Check stock levels, expiration dates, and FEFO order." />
-    <div className="sl-admin-view sl-staff-inventory-v141">
-      <section className="sl-sa-kpis sl-staff-inventory-kpis" aria-label="Inventory batch summary">
-        <article className="sl-sa-kpi sl-staff-inventory-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-staff-inventory-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Batches Near Expiry (≤ 7 days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-staff-inventory-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-staff-inventory-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
+
+    <div className="sl-admin-view sl-staff-inventory-v149">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-inventory-kpis" aria-label="Inventory batch summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Batches Near Expiry (≤ 7 days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
       </section>
+
       <div className="sl-staff-inventory-layout">
         <main className="sl-staff-inventory-main">
-          <section className="sl-staff-inventory-directory" aria-label="Inventory batches">
-            <div className="sl-staff-inventory-filters">
-              <label className="sl-staff-inventory-search"><span className="sl-sr-only">Search inventory batches</span><div><Search size={16}/><input type="search" placeholder="Search ingredient or batch ID..." disabled /></div></label>
-              <label><span className="sl-sr-only">Category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
-              <label><span className="sl-sr-only">Status</span><select value={batchStatus} onChange={e=>setBatchStatus(e.target.value)}><option>All Statuses</option></select></label>
-              <label><span className="sl-sr-only">Location</span><select value={location} onChange={e=>setLocation(e.target.value)}><option>All Locations</option></select></label>
-              <label className="sl-staff-inventory-sort"><span>Sort by</span><select value={sortBy} onChange={e=>setSortBy(e.target.value)}><option>FEFO (Earliest Expiry)</option><option>Latest Received</option><option>Ingredient Name</option></select></label>
+          <section className="sl-card sl-staff-inventory-directory" aria-labelledby="staff-inventory-batches-title">
+            <div className="sl-card-header sl-staff-inventory-table-title">
+              <h2 id="staff-inventory-batches-title" className="sl-section-title">Inventory Batches</h2>
             </div>
-            <div className="sl-staff-inventory-table-title"><div><FileInput size={18}/><strong>Inventory Batches</strong></div></div>
-            <div className="sl-staff-inventory-table-wrap">
-              <table className="sl-staff-inventory-table"><thead><tr>{['','Ingredient','Batch ID','Category','Date Received','Expiry Date','Days Left','Current Stock','Unit','Status','Location','Actions'].map((x,i)=><th key={`${x}-${i}`}>{x}</th>)}</tr></thead></table>
-              <div className="sl-staff-inventory-table-state"><Pending description="Inventory batch records" /></div>
+
+            <div className="sl-card-body sl-staff-inventory-card-body">
+              <div className="sl-staff-inventory-filters">
+                <label className="sl-staff-inventory-search"><span className="sl-sr-only">Search inventory batches</span><div><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ingredient or batch ID..." /></div></label>
+                <label><span className="sl-sr-only">Category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
+                <label><span className="sl-sr-only">Status</span><select value={batchStatus} onChange={e=>setBatchStatus(e.target.value)}><option>All Statuses</option></select></label>
+                <label className="sl-staff-inventory-sort"><span className="sl-sr-only">Sort by</span><select value={sortBy} onChange={e=>setSortBy(e.target.value)} aria-label="Sort inventory batches"><option>FEFO (Earliest Expiry)</option><option>Latest Received</option><option>Ingredient Name</option></select></label>
+                <button type="button" className="sl-button sl-staff-inventory-reset" onClick={reset}>Reset</button>
+              </div>
+
+              <div className="sl-table-scroll sl-staff-inventory-table-wrap" role="region" aria-label="Inventory Batches preview" tabIndex={0}>
+                <table className="sl-data-table sl-placeholder-table sl-staff-inventory-table">
+                  <thead><tr>{['','Ingredient','Batch ID','Category','Date Received','Expiry Date','Days Left','Current Stock','Unit','Status','Actions'].map((x,i)=><th scope="col" key={`${x}-${i}`}>{x}</th>)}</tr></thead>
+                  <tbody><tr className="sl-placeholder-state-row"><td colSpan={11} className="sl-empty-cell"><Pending description="Inventory batch records" /></td></tr></tbody>
+                </table>
+              </div>
+
+              <footer className="sl-staff-inventory-footer">
+                <label>Rows per page <select defaultValue="10"><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
+                <span>Pagination will activate when live batch records are available.</span>
+              </footer>
             </div>
-            <footer className="sl-staff-inventory-footer"><label>Rows per page <select defaultValue="10" disabled><option>10</option></select></label><span>Pagination will activate when live batch records are available.</span></footer>
           </section>
         </main>
+
         <aside className="sl-staff-inventory-rail" aria-label="Inventory analytics">
           <Card id="staff-inventory-storage" title="Storage Distribution"><Pending description="Storage distribution" compact /></Card>
           <Card id="staff-inventory-status" title="Status Breakdown"><Pending description="Inventory status breakdown" compact /></Card>
-          <Card id="staff-inventory-upcoming" title="Upcoming Expirations" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View All <ArrowRight size={14}/></Link>}><Pending description="Upcoming expiration batches" compact /></Card>
+          <Card id="staff-inventory-upcoming" title="Upcoming Expirations" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View All</Link>}><Pending description="Upcoming expiration batches" compact /></Card>
         </aside>
       </div>
     </div>

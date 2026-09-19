@@ -13054,3 +13054,488 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 }
 @media(max-width:560px){.sl-staff-stockin-v145 .sl-staff-stockin-kpis{grid-template-columns:1fr}}
 @media(min-resolution:1.25dppx){.sl-staff-stockin-v145 .sl-staff-stockin-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))}}
+
+/* V146 — Inventory Staff /InventoryBatches refinements */
+.sl-staff-inventory-v146,
+.sl-staff-inventory-v146 *{box-sizing:border-box}
+
+/* Use the Inventory Staff dashboard KPI geometry and visual language. */
+.sl-staff-inventory-v146 .sl-staff-inventory-kpis{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.6rem + .35vw,1rem)
+}
+.sl-staff-inventory-v146 .sl-inventory-staff-kpi{
+  min-width:0;
+  min-height:clamp(6.6rem,6rem + 2vw,8rem);
+  padding:clamp(.8rem,.7rem + .35vw,1.15rem);
+  gap:clamp(.7rem,.55rem + .45vw,1rem);
+  border-top-width:3px
+}
+.sl-staff-inventory-v146 .sl-inventory-staff-kpi[data-tone='brand']{border-top-color:var(--sl-brand)}
+.sl-staff-inventory-v146 .sl-inventory-staff-kpi[data-tone='success']{border-top-color:var(--sl-success)}
+.sl-staff-inventory-v146 .sl-inventory-staff-kpi[data-tone='attention']{border-top-color:var(--sl-attention)}
+.sl-staff-inventory-v146 .sl-inventory-staff-kpi[data-tone='info']{border-top-color:#0c5797}
+
+/* Inventory Batches now stretches to the same bottom edge as Upcoming Expirations. */
+.sl-staff-inventory-v146 .sl-staff-inventory-layout{align-items:stretch}
+.sl-staff-inventory-v146 .sl-staff-inventory-main{height:100%;align-self:stretch}
+.sl-staff-inventory-v146 .sl-staff-inventory-directory{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-self:stretch
+}
+.sl-staff-inventory-v146 .sl-staff-inventory-table-wrap{
+  flex:1;
+  display:flex;
+  flex-direction:column
+}
+.sl-staff-inventory-v146 .sl-staff-inventory-table-state{
+  flex:1;
+  min-height:clamp(20rem,31vw,28rem)
+}
+.sl-staff-inventory-v146 .sl-staff-inventory-rail{
+  height:100%;
+  align-self:stretch
+}
+
+/* Location has been removed; remaining filters expand naturally. */
+.sl-staff-inventory-v146 .sl-staff-inventory-filters{
+  grid-template-columns:minmax(13rem,1.45fr) repeat(2,minmax(8rem,.9fr)) minmax(10rem,1.05fr)
+}
+.sl-staff-inventory-v146 .sl-staff-inventory-table{min-width:61rem}
+
+/* Inventory Batches title is text-only; View All uses the established text-link style without an arrow. */
+.sl-staff-inventory-v146 .sl-staff-inventory-table-title>div{gap:0}
+.sl-staff-inventory-v146 .sl-staff-inventory-rail .sl-text-link{cursor:pointer}
+
+/* Backend-dependent controls stay interactable; live results will populate once services are connected. */
+.sl-staff-inventory-v146 input:not(:disabled),
+.sl-staff-inventory-v146 select:not(:disabled),
+.sl-staff-inventory-v146 button:not(:disabled),
+.sl-staff-inventory-v146 a{cursor:pointer}
+
+@media(max-width:1180px){
+  .sl-staff-inventory-v146 .sl-staff-inventory-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-staff-inventory-v146 .sl-staff-inventory-layout{align-items:start}
+  .sl-staff-inventory-v146 .sl-staff-inventory-directory,
+  .sl-staff-inventory-v146 .sl-staff-inventory-main,
+  .sl-staff-inventory-v146 .sl-staff-inventory-rail{height:auto}
+  .sl-staff-inventory-v146 .sl-staff-inventory-filters{grid-template-columns:minmax(12rem,1.4fr) repeat(2,minmax(8rem,1fr))}
+}
+@media(max-width:820px){
+  .sl-staff-inventory-v146 .sl-staff-inventory-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-staff-inventory-v146 .sl-staff-inventory-search{grid-column:1/-1}
+}
+@media(max-width:560px){
+  .sl-staff-inventory-v146 .sl-staff-inventory-kpis,
+  .sl-staff-inventory-v146 .sl-staff-inventory-filters{grid-template-columns:1fr}
+  .sl-staff-inventory-v146 .sl-staff-inventory-search{grid-column:auto}
+}
+@media(min-resolution:1.25dppx){
+  .sl-staff-inventory-v146 .sl-staff-inventory-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))}
+  .sl-staff-inventory-v146 .sl-staff-inventory-filters{grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr))}
+}
+
+/* V147 — Inventory Staff /InventoryBatches refinements */
+.sl-staff-inventory-v147,
+.sl-staff-inventory-v147 *{box-sizing:border-box}
+
+/* Match Inventory Staff dashboard KPI geometry and update requested tone mapping. */
+.sl-staff-inventory-v147 .sl-staff-inventory-kpis{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.6rem + .35vw,1rem)
+}
+.sl-staff-inventory-v147 .sl-inventory-staff-kpi{
+  min-width:0;
+  min-height:clamp(6.6rem,6rem + 2vw,8rem);
+  padding:clamp(.8rem,.7rem + .35vw,1.15rem);
+  gap:clamp(.7rem,.55rem + .45vw,1rem);
+  border-top-width:3px
+}
+.sl-staff-inventory-v147 .sl-inventory-staff-kpi[data-tone='brand']{border-top-color:var(--sl-brand)}
+.sl-staff-inventory-v147 .sl-inventory-staff-kpi[data-tone='info']{border-top-color:#0c5797}
+.sl-staff-inventory-v147 .sl-inventory-staff-kpi[data-tone='attention']{border-top-color:var(--sl-attention)}
+.sl-staff-inventory-v147 .sl-inventory-staff-kpi[data-tone='critical']{border-top-color:var(--sl-critical)}
+
+/* Inventory Batches adopts the same card-header language as Recent Inventory Activity. */
+.sl-staff-inventory-v147 .sl-staff-inventory-table-title{
+  min-width:0;
+  min-height:unset;
+  padding:var(--sl-space-4) var(--sl-space-5);
+  border-bottom:1px solid var(--sl-border-subtle)
+}
+.sl-staff-inventory-v147 .sl-staff-inventory-table-title .sl-section-title{
+  min-width:0;
+  margin:0;
+  overflow-wrap:anywhere
+}
+
+/* Header first, then controls. Reset sits beside Sort by. */
+.sl-staff-inventory-v147 .sl-staff-inventory-filters{
+  grid-template-columns:minmax(13rem,1.45fr) repeat(2,minmax(8rem,.9fr)) minmax(10rem,1.05fr) auto;
+  align-items:end
+}
+.sl-staff-inventory-v147 .sl-staff-inventory-reset{
+  height:clamp(2.25rem,2.12rem + .22vw,2.42rem);
+  min-width:5rem;
+  align-self:end
+}
+
+/* Main Inventory Batches card remains aligned with the bottom of Upcoming Expirations. */
+.sl-staff-inventory-v147 .sl-staff-inventory-layout{align-items:stretch}
+.sl-staff-inventory-v147 .sl-staff-inventory-main{height:100%;align-self:stretch}
+.sl-staff-inventory-v147 .sl-staff-inventory-directory{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-self:stretch
+}
+.sl-staff-inventory-v147 .sl-staff-inventory-table-wrap{
+  flex:1;
+  display:flex;
+  flex-direction:column
+}
+.sl-staff-inventory-v147 .sl-staff-inventory-table-state{
+  flex:1;
+  min-height:clamp(20rem,31vw,28rem)
+}
+.sl-staff-inventory-v147 .sl-staff-inventory-rail{height:100%;align-self:stretch}
+.sl-staff-inventory-v147 .sl-staff-inventory-table{min-width:61rem}
+
+/* All visible controls stay interactive; backend-backed results remain pending until services are connected. */
+.sl-staff-inventory-v147 input,
+.sl-staff-inventory-v147 select,
+.sl-staff-inventory-v147 button,
+.sl-staff-inventory-v147 a{cursor:pointer}
+
+@media(max-width:1180px){
+  .sl-staff-inventory-v147 .sl-staff-inventory-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-staff-inventory-v147 .sl-staff-inventory-layout{align-items:start}
+  .sl-staff-inventory-v147 .sl-staff-inventory-directory,
+  .sl-staff-inventory-v147 .sl-staff-inventory-main,
+  .sl-staff-inventory-v147 .sl-staff-inventory-rail{height:auto}
+  .sl-staff-inventory-v147 .sl-staff-inventory-filters{grid-template-columns:minmax(12rem,1.4fr) repeat(2,minmax(8rem,1fr)) auto}
+}
+@media(max-width:820px){
+  .sl-staff-inventory-v147 .sl-staff-inventory-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-staff-inventory-v147 .sl-staff-inventory-search{grid-column:1/-1}
+  .sl-staff-inventory-v147 .sl-staff-inventory-reset{width:100%}
+}
+@media(max-width:560px){
+  .sl-staff-inventory-v147 .sl-staff-inventory-kpis,
+  .sl-staff-inventory-v147 .sl-staff-inventory-filters{grid-template-columns:1fr}
+  .sl-staff-inventory-v147 .sl-staff-inventory-search{grid-column:auto}
+}
+@media(min-resolution:1.25dppx){
+  .sl-staff-inventory-v147 .sl-staff-inventory-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))}
+  .sl-staff-inventory-v147 .sl-staff-inventory-filters{grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr))}
+}
+
+/* V148 — Inventory Staff /InventoryBatches: match dashboard/StockIn patterns exactly. */
+.sl-staff-inventory-v148,
+.sl-staff-inventory-v148 *{box-sizing:border-box}
+
+/* KPI geometry remains identical to Inventory Staff /InventoryStaffDashboard. */
+.sl-staff-inventory-v148 .sl-staff-inventory-kpis{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.6rem + .35vw,1rem)
+}
+.sl-staff-inventory-v148 .sl-inventory-staff-kpi{
+  min-width:0;
+  min-height:clamp(6.6rem,6rem + 2vw,8rem);
+  padding:clamp(.8rem,.7rem + .35vw,1.15rem);
+  gap:clamp(.7rem,.55rem + .45vw,1rem);
+  border-top-width:3px
+}
+.sl-staff-inventory-v148 .sl-inventory-staff-kpi[data-tone='brand']{border-top-color:var(--sl-brand)}
+.sl-staff-inventory-v148 .sl-inventory-staff-kpi[data-tone='info']{border-top-color:#0c5797}
+.sl-staff-inventory-v148 .sl-inventory-staff-kpi[data-tone='attention']{border-top-color:var(--sl-attention)}
+.sl-staff-inventory-v148 .sl-inventory-staff-kpi[data-tone='critical']{border-top-color:var(--sl-critical)}
+
+/* Four-column page geometry: analytics rail begins exactly where the fourth KPI begins. */
+.sl-staff-inventory-v148 .sl-staff-inventory-layout{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.6rem + .35vw,1rem);
+  align-items:stretch;
+  min-width:0
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-main{
+  grid-column:1 / 4;
+  min-width:0;
+  height:100%;
+  align-self:stretch
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-rail{
+  grid-column:4;
+  min-width:0;
+  height:100%;
+  align-self:stretch;
+  display:grid;
+  gap:clamp(.68rem,.55rem + .25vw,.85rem)
+}
+
+/* Inventory Batches uses the same card/header geometry as Recent Inventory Activity. */
+.sl-staff-inventory-v148 .sl-staff-inventory-directory{
+  width:100%;
+  height:100%;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  border:1px solid var(--sl-border);
+  border-radius:var(--sl-radius-lg);
+  background:var(--sl-surface);
+  box-shadow:var(--sl-shadow);
+  overflow:hidden
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-table-title{
+  min-height:52px;
+  padding:.75rem 1rem;
+  border-bottom:1px solid var(--sl-border-subtle);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:var(--sl-space-3)
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-table-title .sl-section-title{
+  margin:0;
+  min-width:0;
+  overflow-wrap:anywhere
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-card-body{
+  min-width:0;
+  padding:0;
+  display:flex;
+  flex:1;
+  flex-direction:column;
+  align-items:stretch
+}
+
+/* Filters inherit Stock History sizing/format on Inventory Staff /StockIn. */
+.sl-staff-inventory-v148 .sl-staff-inventory-filters{
+  display:grid;
+  grid-template-columns:minmax(14rem,1.55fr) minmax(8.5rem,.7fr) minmax(8rem,.65fr) minmax(10rem,.8fr) auto;
+  gap:.55rem;
+  align-items:end;
+  padding:.65rem .78rem;
+  border-bottom:1px solid var(--sl-border-subtle)
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-filters label{min-width:0;display:grid;gap:.25rem}
+.sl-staff-inventory-v148 .sl-staff-inventory-filters input,
+.sl-staff-inventory-v148 .sl-staff-inventory-filters select,
+.sl-staff-inventory-v148 .sl-staff-inventory-filters .sl-button{
+  width:100%;
+  min-width:0;
+  height:2.3rem;
+  border:1px solid var(--sl-border);
+  border-radius:.42rem;
+  background:#fff;
+  color:var(--sl-muted);
+  font:inherit
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-search>div{position:relative}
+.sl-staff-inventory-v148 .sl-staff-inventory-search svg{
+  position:absolute;
+  left:.7rem;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--sl-muted)
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-search input{padding-left:2.15rem}
+.sl-staff-inventory-v148 .sl-staff-inventory-reset{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:5rem;
+  padding:0 .75rem
+}
+
+/* Table uses the same standard table format as Recent Inventory Activity. */
+.sl-staff-inventory-v148 .sl-staff-inventory-table-wrap{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  flex:1;
+  overflow-x:auto
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-table{
+  width:100%;
+  min-width:61rem;
+  table-layout:fixed;
+  border-collapse:collapse;
+  text-align:left;
+  font:var(--sl-font-body)
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-table th{
+  height:44px;
+  padding:.625rem .875rem;
+  white-space:nowrap;
+  vertical-align:middle;
+  text-align:center;
+  font:var(--sl-font-label);
+  text-transform:uppercase;
+  letter-spacing:.045em;
+  background:var(--sl-surface-subtle);
+  border-block:1px solid var(--sl-border)
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-table th:first-child{padding-left:1rem;text-align:left}
+.sl-staff-inventory-v148 .sl-staff-inventory-table th:last-child{padding-right:1rem}
+.sl-staff-inventory-v148 .sl-staff-inventory-table .sl-empty-cell{height:clamp(16rem,26vw,20rem);padding:0!important;text-align:center!important}
+.sl-staff-inventory-v148 .sl-staff-inventory-table .sl-staff-inventory-pending{
+  min-height:clamp(16rem,26vw,20rem)
+}
+
+/* Keep footer compact and attached to the standard table card. */
+.sl-staff-inventory-v148 .sl-staff-inventory-footer{
+  margin-top:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  flex-wrap:wrap;
+  padding:.68rem .78rem;
+  border-top:1px solid var(--sl-border-subtle);
+  color:var(--sl-muted);
+  font-size:clamp(.66rem,.62rem + .08vw,.73rem)
+}
+.sl-staff-inventory-v148 .sl-staff-inventory-footer label{display:flex;align-items:center;gap:.5rem}
+.sl-staff-inventory-v148 .sl-staff-inventory-footer select{
+  height:2rem;
+  border:1px solid var(--sl-border);
+  border-radius:.4rem;
+  background:#fff
+}
+
+/* The right rail keeps the ShelfLifeAI card language and centered pending state. */
+.sl-staff-inventory-v148 .sl-staff-inventory-rail .sl-card{min-width:0;overflow:hidden}
+.sl-staff-inventory-v148 .sl-staff-inventory-rail .sl-card-body{min-height:clamp(9.5rem,13vw,11.5rem);display:flex}
+.sl-staff-inventory-v148 .sl-staff-inventory-rail .sl-text-link{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}
+
+/* Visible controls remain clickable; live backend-backed behavior activates when services are connected. */
+.sl-staff-inventory-v148 input,
+.sl-staff-inventory-v148 select,
+.sl-staff-inventory-v148 button,
+.sl-staff-inventory-v148 a{cursor:pointer}
+
+@media(max-width:1180px){
+  .sl-staff-inventory-v148 .sl-staff-inventory-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-staff-inventory-v148 .sl-staff-inventory-layout{grid-template-columns:1fr;align-items:start}
+  .sl-staff-inventory-v148 .sl-staff-inventory-main,
+  .sl-staff-inventory-v148 .sl-staff-inventory-rail{grid-column:auto;height:auto}
+  .sl-staff-inventory-v148 .sl-staff-inventory-rail{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sl-staff-inventory-v148 .sl-staff-inventory-filters{grid-template-columns:minmax(12rem,1.4fr) repeat(2,minmax(8rem,1fr)) minmax(9rem,1fr) auto}
+}
+@media(max-width:860px){
+  .sl-staff-inventory-v148 .sl-staff-inventory-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-staff-inventory-v148 .sl-staff-inventory-search{grid-column:1/-1}
+  .sl-staff-inventory-v148 .sl-staff-inventory-reset{width:100%}
+  .sl-staff-inventory-v148 .sl-staff-inventory-rail{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .sl-staff-inventory-v148 .sl-staff-inventory-kpis,
+  .sl-staff-inventory-v148 .sl-staff-inventory-filters{grid-template-columns:1fr}
+  .sl-staff-inventory-v148 .sl-staff-inventory-search{grid-column:auto}
+  .sl-staff-inventory-v148 .sl-staff-inventory-footer{align-items:flex-start;flex-direction:column}
+}
+@media(min-resolution:1.25dppx){
+  .sl-staff-inventory-v148 .sl-staff-inventory-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))}
+  .sl-staff-inventory-v148 .sl-staff-inventory-filters{grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr))}
+  .sl-staff-inventory-v148 .sl-staff-inventory-reset{width:100%}
+}
+
+/* V149 — Inventory Staff /InventoryBatches: table/filter polish. */
+.sl-staff-inventory-v149,
+.sl-staff-inventory-v149 *{box-sizing:border-box}
+
+/* Preserve the established four-KPI / right-rail alignment from V148. */
+.sl-staff-inventory-v149 .sl-staff-inventory-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.75rem,.6rem + .35vw,1rem)}
+.sl-staff-inventory-v149 .sl-inventory-staff-kpi{min-width:0;min-height:clamp(6.6rem,6rem + 2vw,8rem);padding:clamp(.8rem,.7rem + .35vw,1.15rem);gap:clamp(.7rem,.55rem + .45vw,1rem);border-top-width:3px}
+.sl-staff-inventory-v149 .sl-inventory-staff-kpi[data-tone='brand']{border-top-color:var(--sl-brand)}
+.sl-staff-inventory-v149 .sl-inventory-staff-kpi[data-tone='info']{border-top-color:#0c5797}
+.sl-staff-inventory-v149 .sl-inventory-staff-kpi[data-tone='attention']{border-top-color:var(--sl-attention)}
+.sl-staff-inventory-v149 .sl-inventory-staff-kpi[data-tone='critical']{border-top-color:var(--sl-critical)}
+
+.sl-staff-inventory-v149 .sl-staff-inventory-layout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.75rem,.6rem + .35vw,1rem);align-items:stretch;min-width:0}
+.sl-staff-inventory-v149 .sl-staff-inventory-main{grid-column:1 / 4;min-width:0;height:100%;align-self:stretch}
+.sl-staff-inventory-v149 .sl-staff-inventory-rail{grid-column:4;min-width:0;height:100%;align-self:stretch;display:grid;gap:clamp(.68rem,.55rem + .25vw,.85rem)}
+
+/* Inventory Batches keeps the same card language as Recent Inventory Activity. */
+.sl-staff-inventory-v149 .sl-staff-inventory-directory{width:100%;height:100%;min-width:0;display:flex;flex-direction:column;border:1px solid var(--sl-border);border-radius:var(--sl-radius-lg);background:var(--sl-surface);box-shadow:var(--sl-shadow);overflow:hidden}
+.sl-staff-inventory-v149 .sl-staff-inventory-table-title{min-height:52px;padding:.75rem 1rem;border-bottom:1px solid var(--sl-border-subtle);display:flex;align-items:center;justify-content:space-between;gap:var(--sl-space-3)}
+.sl-staff-inventory-v149 .sl-staff-inventory-table-title .sl-section-title{margin:0;min-width:0;overflow-wrap:anywhere}
+.sl-staff-inventory-v149 .sl-staff-inventory-card-body{min-width:0;padding:0;display:flex;flex:1;flex-direction:column;align-items:stretch}
+
+/* Match Stock History filter/search styling exactly. */
+.sl-staff-inventory-v149 .sl-staff-inventory-filters{display:grid;grid-template-columns:minmax(14rem,1.55fr) minmax(8.5rem,.7fr) minmax(8rem,.65fr) minmax(10rem,.8fr) auto;gap:.55rem;padding:.65rem .78rem;border-bottom:1px solid var(--sl-border-subtle);align-items:end}
+.sl-staff-inventory-v149 .sl-staff-inventory-filters label{min-width:0;display:grid;gap:.25rem}
+.sl-staff-inventory-v149 .sl-staff-inventory-filters input,
+.sl-staff-inventory-v149 .sl-staff-inventory-filters select,
+.sl-staff-inventory-v149 .sl-staff-inventory-filters .sl-button{width:100%;min-width:0;height:2.3rem;border:1px solid var(--sl-border);border-radius:.42rem;background:#fff;color:var(--sl-muted);font:inherit}
+.sl-staff-inventory-v149 .sl-staff-inventory-search>div{position:relative}
+.sl-staff-inventory-v149 .sl-staff-inventory-search svg{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--sl-muted)}
+.sl-staff-inventory-v149 .sl-staff-inventory-search input{padding-left:2.15rem}
+.sl-staff-inventory-v149 .sl-staff-inventory-reset{display:inline-flex;align-items:center;justify-content:center;min-width:5rem;padding:0 .75rem}
+
+/* Recent Inventory Activity table rhythm: fixed column geometry, centered headers, consistent padding. */
+.sl-staff-inventory-v149 .sl-staff-inventory-table-wrap{width:100%;max-width:100%;min-width:0;flex:1;overflow-x:auto}
+.sl-staff-inventory-v149 .sl-staff-inventory-table{width:100%;min-width:76rem;table-layout:fixed;border-collapse:collapse;text-align:left;font:var(--sl-font-body)}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th{height:44px;padding:.625rem .875rem;white-space:nowrap;vertical-align:middle;text-align:center;font:var(--sl-font-label);text-transform:uppercase;letter-spacing:.045em;background:var(--sl-surface-subtle);border-block:1px solid var(--sl-border)}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:first-child{padding-left:1rem}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:last-child{padding-right:1rem}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(1){width:4%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(2){width:12%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(3){width:10%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(4){width:10%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(5){width:11%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(6){width:11%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(7){width:8%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(8){width:12%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(9){width:7%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(10){width:8%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(11){width:7%}
+.sl-staff-inventory-v149 .sl-staff-inventory-table .sl-empty-cell{height:clamp(16rem,26vw,20rem);padding:0!important;text-align:center!important;border-bottom:0!important}
+.sl-staff-inventory-v149 .sl-staff-inventory-table tbody tr:last-child td{border-bottom:0!important}
+.sl-staff-inventory-v149 .sl-staff-inventory-table .sl-staff-inventory-pending{min-height:clamp(16rem,26vw,20rem)}
+
+/* No divider line below the centered Preview · data pending state. */
+.sl-staff-inventory-v149 .sl-staff-inventory-footer{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:.68rem .78rem;border-top:0;color:var(--sl-muted);font-size:clamp(.66rem,.62rem + .08vw,.73rem)}
+.sl-staff-inventory-v149 .sl-staff-inventory-footer label{display:flex;align-items:center;gap:.5rem}
+.sl-staff-inventory-v149 .sl-staff-inventory-footer select{height:2rem;border:1px solid var(--sl-border);border-radius:.4rem;background:#fff;cursor:pointer}
+
+.sl-staff-inventory-v149 .sl-staff-inventory-rail .sl-card{min-width:0;overflow:hidden}
+.sl-staff-inventory-v149 .sl-staff-inventory-rail .sl-card-body{min-height:clamp(9.5rem,13vw,11.5rem);display:flex}
+.sl-staff-inventory-v149 .sl-staff-inventory-rail .sl-text-link{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}
+
+/* Backend-pending controls stay enabled/clickable; backend-dependent results remain pending. */
+.sl-staff-inventory-v149 input,
+.sl-staff-inventory-v149 select,
+.sl-staff-inventory-v149 button,
+.sl-staff-inventory-v149 a{cursor:pointer}
+
+@media(max-width:1180px){
+  .sl-staff-inventory-v149 .sl-staff-inventory-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-staff-inventory-v149 .sl-staff-inventory-layout{grid-template-columns:1fr;align-items:start}
+  .sl-staff-inventory-v149 .sl-staff-inventory-main,.sl-staff-inventory-v149 .sl-staff-inventory-rail{grid-column:auto;height:auto}
+  .sl-staff-inventory-v149 .sl-staff-inventory-rail{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sl-staff-inventory-v149 .sl-staff-inventory-filters{grid-template-columns:minmax(12rem,1.4fr) repeat(2,minmax(8rem,1fr)) minmax(9rem,1fr) auto}
+}
+@media(max-width:860px){
+  .sl-staff-inventory-v149 .sl-staff-inventory-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-staff-inventory-v149 .sl-staff-inventory-search{grid-column:1/-1}
+  .sl-staff-inventory-v149 .sl-staff-inventory-reset{width:100%}
+  .sl-staff-inventory-v149 .sl-staff-inventory-rail{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .sl-staff-inventory-v149 .sl-staff-inventory-kpis,.sl-staff-inventory-v149 .sl-staff-inventory-filters{grid-template-columns:1fr}
+  .sl-staff-inventory-v149 .sl-staff-inventory-search{grid-column:auto}
+  .sl-staff-inventory-v149 .sl-staff-inventory-footer{align-items:flex-start;flex-direction:column}
+}
+@media(min-resolution:1.25dppx){
+  .sl-staff-inventory-v149 .sl-staff-inventory-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))}
+  .sl-staff-inventory-v149 .sl-staff-inventory-filters{grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr))}
+  .sl-staff-inventory-v149 .sl-staff-inventory-reset{width:100%}
+}
