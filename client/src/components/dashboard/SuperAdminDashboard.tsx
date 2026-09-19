@@ -64,16 +64,16 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   }, [accounts, accountsTotal]);
 
   const totalUsers = summary?.totalUsers ?? accountsTotal;
-  return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49">
+  return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49 sl-staff-usage-v150">
     <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
       <PageHeader eyebrow="Dashboard" title={`${greeting}, ${user.firstName || 'Super Admin'}.`} />
     </div>
     <p className="sl-dashboard-description">Monitor system-wide activity, security, operations and administrative oversight.</p>
-    <section className="sl-sa-kpis" aria-label="System overview">
-      <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Total Users</span><strong>{totalUsers?.toLocaleString() ?? (summaryError && accountsError ? 'Unavailable' : 'Loading…')}</strong><small>System-wide accounts</small></div></article>
-      <article className="sl-sa-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Active Accounts</span><strong>{summary?.activeUsers.toLocaleString() ?? (summaryError ? 'Unavailable' : 'Loading…')}</strong><small>{summary ? `${summary.inactiveUsers.toLocaleString()} inactive` : 'Live account status'}</small></div></article>
-      <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Ingredients Tracked</span><strong>—</strong><small>Awaiting oversight API</small></div></article>
-      <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Active Alerts</span><strong>—</strong><small>Awaiting alert summary API</small></div></article>
+    <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v168" aria-label="System overview">
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Total Users</span><strong>{totalUsers?.toLocaleString() ?? (summaryError && accountsError ? 'Unavailable' : 'Loading…')}</strong><small>System-wide accounts</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Active Accounts</span><strong>{summary?.activeUsers.toLocaleString() ?? (summaryError ? 'Unavailable' : 'Loading…')}</strong><small>{summary ? `${summary.inactiveUsers.toLocaleString()} inactive` : 'Live account status'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Ingredients Tracked</span><strong>—</strong><small>Awaiting oversight API</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Active Alerts</span><strong>—</strong><small>Awaiting alert summary API</small></div></article>
     </section>
 
     <section className="sl-sa-analytics-row">

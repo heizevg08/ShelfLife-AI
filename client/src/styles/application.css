@@ -13919,3 +13919,90 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
     height:100%;
   }
 }
+
+
+/* V168 — Super Admin dashboard KPI parity with Inventory Staff dashboard */
+.sl-superadmin-dashboard-kpis-v168 .sl-inventory-staff-kpi[data-tone='success']{border-top-color:var(--sl-success)}
+
+/* V169 — Super Admin dashboard KPI visual parity correction.
+   V168 only shared class names, so the cards remained visually unchanged at large viewports.
+   These scoped rules apply the compact Inventory Staff dashboard KPI proportions directly. */
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.625rem,.5rem + .25vw,.75rem);
+  align-items:stretch;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-inventory-staff-kpi{
+  min-width:0;
+  min-height:clamp(5.5rem,5.15rem + .75vw,6.15rem);
+  padding:clamp(.7rem,.62rem + .2vw,.85rem) clamp(.8rem,.7rem + .3vw,1rem);
+  gap:clamp(.65rem,.55rem + .25vw,.8rem);
+  border-top-width:3px;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi-icon{
+  width:clamp(2.65rem,2.45rem + .4vw,3rem);
+  height:clamp(2.65rem,2.45rem + .4vw,3rem);
+  flex:0 0 clamp(2.65rem,2.45rem + .4vw,3rem);
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi-icon svg{
+  width:clamp(1.25rem,1.15rem + .2vw,1.5rem);
+  height:clamp(1.25rem,1.15rem + .2vw,1.5rem);
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi>div{min-width:0;gap:.1rem}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi span:not(.sl-sa-kpi-icon){font-size:clamp(.68rem,.64rem + .08vw,.74rem)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi strong{font-size:clamp(1.35rem,1.22rem + .3vw,1.55rem)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi small{font-size:clamp(.64rem,.61rem + .06vw,.69rem);overflow-wrap:anywhere}
+@media(max-width:1100px){.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168{grid-template-columns:1fr}.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-inventory-staff-kpi{min-height:auto}}
+
+
+/* V170 — Super Admin dashboard KPI exact parity with Inventory Staff /UsageRecording.
+   Mapping: Total Users=Total Usage Today, Active Accounts=Total Records Today,
+   Ingredients Tracked=Most Used Ingredient, Active Alerts=Current Stock (After Usage). */
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.6rem + .35vw,1rem);
+  align-items:stretch;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-inventory-staff-kpi{
+  min-width:0;
+  min-height:clamp(6.6rem,6rem + 2vw,8rem);
+  padding:clamp(.8rem,.7rem + .35vw,1.15rem);
+  gap:clamp(.7rem,.55rem + .45vw,1rem);
+  border:1px solid var(--sl-border);
+  border-top-width:3px;
+  border-radius:7px;
+  box-shadow:none;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi-icon{
+  width:48px;height:48px;flex:0 0 48px;border-radius:50%;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi-icon svg{width:24px;height:24px}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi>div{display:grid;min-width:0;gap:1px}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi span:not(.sl-sa-kpi-icon){font-size:.72rem;color:var(--sl-muted)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi strong{font-size:1.55rem;line-height:1.05;color:var(--sl-text)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi small{font-size:.68rem;color:var(--sl-muted);overflow-wrap:anywhere}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='brand']{border-top-color:var(--sl-brand);background:linear-gradient(110deg,#f7fffb,#fff)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='brand'] .sl-sa-kpi-icon{background:#e3f7ee;color:#08764f}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='info']{border-top-color:#0c5797;background:linear-gradient(110deg,#f6fbff,#fff)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='info'] .sl-sa-kpi-icon{background:#e4f2ff;color:#0c5797}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='attention']{border-top-color:var(--sl-attention);background:linear-gradient(110deg,#fffaf0,#fff)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='attention'] .sl-sa-kpi-icon{background:#fff1cf;color:#b97900}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='critical']{border-top-color:var(--sl-critical);background:linear-gradient(110deg,#fff6f7,#fff)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='critical'] .sl-sa-kpi-icon{background:#ffe4e8;color:#d92943}
+@media(max-width:1100px){.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168{grid-template-columns:1fr}}
+
+
+/* V171 — Super Admin KPI cards inherit the exact Inventory Staff /UsageRecording KPI component rules. */
+.sl-superadmin-dashboard-v49.sl-staff-usage-v150 .sl-superadmin-dashboard-kpis-v168.sl-staff-usage-kpis .sl-inventory-staff-kpi{
+  border-radius:var(--sl-radius-lg);
+  box-shadow:var(--sl-shadow-sm);
+}
+.sl-superadmin-dashboard-v49.sl-staff-usage-v150 .sl-superadmin-dashboard-kpis-v168.sl-staff-usage-kpis .sl-sa-kpi-icon{
+  width:clamp(2.75rem,2.5rem + .6vw,3.25rem);
+  height:clamp(2.75rem,2.5rem + .6vw,3.25rem);
+  flex:0 0 clamp(2.75rem,2.5rem + .6vw,3.25rem);
+}
