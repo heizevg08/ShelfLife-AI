@@ -13886,3 +13886,36 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-staff-request-type-dialog{width:min(720px,calc(100vw - 2rem));max-width:calc(100vw - 2rem);max-height:90vh;overflow:auto}
 @media(max-width:900px){.sl-staff-requests-v162 .sl-staff-requests-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.sl-staff-requests-v162 .sl-staff-requests-kpis{grid-template-columns:1fr}.sl-staff-request-type-dialog{width:calc(100vw - 1rem);max-width:calc(100vw - 1rem)}}
+
+/* V167 — Inventory Staff /WasteRecording: synchronized records + analytics rail height */
+@media (min-width:1051px){
+  .sl-staff-waste-v159 .sl-staff-waste-layout{
+    align-items:stretch;
+  }
+  .sl-staff-waste-v159 .sl-staff-waste-main,
+  .sl-staff-waste-v159 .sl-staff-waste-rail{
+    height:100%;
+    min-height:0;
+  }
+  .sl-staff-waste-v159 .sl-staff-waste-main{
+    display:flex;
+  }
+  .sl-staff-waste-v159 .sl-staff-waste-records{
+    flex:1 1 auto;
+    height:100%;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+  }
+  .sl-staff-waste-v159 .sl-staff-waste-table-shell{
+    flex:1 1 auto;
+  }
+  .sl-staff-waste-v159 .sl-staff-waste-rail{
+    grid-template-rows:repeat(2,minmax(0,1fr));
+    align-self:stretch;
+  }
+  .sl-staff-waste-v159 .sl-staff-waste-sidecard{
+    min-height:0;
+    height:100%;
+  }
+}
