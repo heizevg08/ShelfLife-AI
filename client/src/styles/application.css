@@ -12299,3 +12299,25 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 @media(max-width:640px){.sl-mgr-cr-kpis{grid-template-columns:1fr}.sl-mgr-cr-filters{grid-template-columns:1fr}.sl-mgr-cr-footer{align-items:flex-start;flex-direction:column}.sl-mgr-cr-details>footer{grid-template-columns:1fr}.sl-mgr-cr-kpi{min-height:96px}}
 
 /* V125 MANAGER CHANGE REQUESTS ROUTE FIX — 2026-09-19 */
+
+/* V126 — Manager Forecasting reference UI */
+.sl-mgr-forecast-page{display:grid;gap:clamp(.65rem,.5rem + .35vw,1rem);min-width:0}
+.sl-mgr-forecast-kpis{margin:0}
+.sl-mgr-forecast-filters{display:grid;grid-template-columns:minmax(180px,1.15fr) minmax(160px,1fr) minmax(160px,.9fr) auto;gap:clamp(8px,1vw,14px);align-items:end;padding:clamp(10px,1vw,14px);border:1px solid var(--sl-border);border-radius:12px;background:var(--sl-surface,#fff)}
+.sl-mgr-forecast-filters label{display:grid;gap:5px;min-width:0;color:#31547a;font-size:.75rem}.sl-mgr-forecast-filters select{width:100%;min-width:0;height:38px;border:1px solid var(--sl-border);border-radius:7px;background:#fff;color:var(--sl-text);padding:0 10px}.sl-mgr-forecast-filters button{height:38px;min-width:120px}
+.sl-mgr-forecast-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(245px,.9fr);gap:clamp(10px,1vw,14px);align-items:start;min-width:0}.sl-mgr-forecast-main{display:grid;gap:clamp(10px,1vw,14px);min-width:0}.sl-mgr-forecast-charts{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,.9fr);gap:clamp(10px,1vw,14px);min-width:0}.sl-mgr-forecast-rail{display:grid;gap:clamp(10px,1vw,14px);min-width:0}
+.sl-mgr-forecast-page .sl-card{min-width:0}.sl-mgr-forecast-page .sl-card-body{min-width:0}.sl-mgr-forecast-pending{min-height:clamp(210px,23vw,300px);width:100%;display:grid;place-items:center;padding:clamp(12px,2vw,24px);text-align:center}.sl-mgr-forecast-pending.compact{min-height:clamp(145px,15vw,205px)}.sl-mgr-forecast-pending .sl-state{width:min(100%,25rem);margin:auto;display:grid;justify-items:center;align-content:center;text-align:center}.sl-mgr-forecast-pending .sl-state>*{margin-inline:auto}
+.sl-mgr-forecast-table-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sl-mgr-forecast-table-actions .sl-directory-search{min-width:min(220px,100%)}.sl-mgr-forecast-table-actions input{min-width:0}.sl-mgr-forecast-tablewrap{overflow:auto;min-width:0}.sl-mgr-forecast-tablewrap table{width:100%;min-width:900px;border-collapse:collapse}.sl-mgr-forecast-tablewrap th{padding:10px 8px;text-align:left;white-space:normal;font-size:.72rem;color:#294867;background:#f8fafb;border-bottom:1px solid var(--sl-border)}.sl-mgr-forecast-tablewrap .sl-mgr-forecast-pending{min-height:260px}
+.sl-mgr-forecast-sustainability{min-height:118px;border:1px solid color-mix(in srgb,var(--sl-brand) 12%,var(--sl-border));border-radius:12px;background:linear-gradient(135deg,#f4fbf7,#e9f7f1);display:flex;align-items:center;justify-content:center;gap:14px;padding:clamp(14px,2vw,22px);color:#277657}.sl-mgr-forecast-sustainability svg{width:42px;height:42px;flex:0 0 auto}.sl-mgr-forecast-sustainability span{font-size:.86rem;line-height:1.35}
+.sl-mgr-forecast-page .sl-dashboard-filter select{min-height:32px;border:1px solid var(--sl-border);border-radius:7px;background:#fff;color:var(--sl-text);padding:.3rem 1.8rem .3rem .65rem}
+@media(max-width:1100px){.sl-mgr-forecast-grid{grid-template-columns:1fr}.sl-mgr-forecast-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-mgr-forecast-sustainability{grid-column:1/-1}.sl-mgr-forecast-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-mgr-forecast-filters button{width:100%}}
+@media(max-width:760px){.sl-mgr-forecast-charts,.sl-mgr-forecast-rail{grid-template-columns:1fr}.sl-mgr-forecast-sustainability{grid-column:auto}.sl-mgr-forecast-table-actions{width:100%}.sl-mgr-forecast-table-actions>*{flex:1 1 180px}}
+@media(max-width:560px){.sl-mgr-forecast-filters{grid-template-columns:1fr}.sl-mgr-forecast-kpis{grid-template-columns:1fr}.sl-mgr-forecast-page .sl-card-header{align-items:flex-start;flex-wrap:wrap}.sl-mgr-forecast-page .sl-dashboard-filter,.sl-mgr-forecast-page .sl-dashboard-filter select{width:100%}}
+
+/* V130 — Manager Forecasting layout refinement */
+.sl-mgr-forecast-analytics{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:clamp(10px,1vw,14px);align-items:stretch;min-width:0}
+.sl-mgr-forecast-analytics>.sl-card{height:100%;min-width:0;display:flex;flex-direction:column}
+.sl-mgr-forecast-analytics>.sl-card .sl-card-body{flex:1;display:flex;min-width:0}
+.sl-mgr-forecast-analytics>.sl-card .sl-mgr-forecast-pending{flex:1;min-height:clamp(220px,22vw,300px)}
+@media(max-width:1100px){.sl-mgr-forecast-analytics{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-mgr-forecast-analytics>#mgr-forecast-insights{grid-column:1/-1}}
+@media(max-width:760px){.sl-mgr-forecast-analytics{grid-template-columns:1fr}.sl-mgr-forecast-analytics>#mgr-forecast-insights{grid-column:auto}}

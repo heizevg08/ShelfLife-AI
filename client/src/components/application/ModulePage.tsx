@@ -1496,6 +1496,43 @@ function SuperAdminForecastingPage() {
 }
 
 
+function ManagerForecastingPage() {
+  const [range, setRange] = useState('Current period');
+  const [category, setCategory] = useState('All Categories');
+  const [branch, setBranch] = useState('Current Branch');
+  const [trendPeriod, setTrendPeriod] = useState('Last 30 Days');
+  const Pending = ({ label, compact = false }: { label: string; compact?: boolean }) => <div className={`sl-mgr-forecast-pending${compact ? ' compact' : ''}`}><DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} /></div>;
+  return <>
+    <PageHeader title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
+    <div className="sl-admin-view sl-mgr-forecast-page">
+      <section className="sl-sa-kpis sl-admin-reference-kpis sl-mgr-forecast-kpis" aria-label="Forecasting summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At Risk of Overstock</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </section>
+
+      <section className="sl-mgr-forecast-filters" aria-label="Forecast filters">
+        <label><span>Date Range</span><select value={range} onChange={e=>setRange(e.target.value)}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option></select></label>
+        <label><span>Ingredient Category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
+        <label><span>Branch</span><select value={branch} onChange={e=>setBranch(e.target.value)}><option>Current Branch</option></select></label>
+        <button className="sl-button sl-button-primary" type="button">Apply Filters</button>
+      </section>
+
+      <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
+        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual Usage" action={<label className="sl-dashboard-filter"><select aria-label="Forecast trend period" value={trendPeriod} onChange={e=>setTrendPeriod(e.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></label>}><Pending label="Forecast vs. actual usage" /></Card>
+        <Card id="mgr-category-demand" title="Category Demand Forecast (Next 30 Days)"><Pending label="Category demand forecast" /></Card>
+        <Card id="mgr-forecast-insights" title="Forecast Insights"><Pending label="Forecast insights" /></Card>
+      </section>
+
+      <Card id="mgr-ingredient-forecasts" title="Ingredient Forecasts" action={<div className="sl-mgr-forecast-table-actions"><span className="sl-directory-search"><Search size={16}/><input disabled placeholder="Search ingredients..." /></span><button className="sl-button" disabled><Download size={16}/> Export Forecast</button></div>}>
+        <div className="sl-mgr-forecast-tablewrap"><table><thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th><th>Actions</th></tr></thead></table><Pending label="Ingredient forecasts" /></div>
+      </Card>
+    </div>
+  </>;
+}
+
+
 function ManagerChangeRequestsPage() {
   const Pending = ({ label }: { label: string }) => <DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} />;
   return <>
@@ -1588,6 +1625,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'ChangeRequests' && user.role === 'Manager') return <ManagerChangeRequestsPage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Super Admin') return <SuperAdminChangeRequestsPage />;
   if (moduleId === 'ExpirationMonitoring' && user.role === 'Super Admin') return <SuperAdminExpirationMonitoringPage />;
+  if (moduleId === 'Forecasting' && user.role === 'Manager') return <ManagerForecastingPage />;
   if (moduleId === 'Forecasting' && user.role === 'Super Admin') return <SuperAdminForecastingPage />;
 
   if (moduleId === 'InventoryBatches' && user.role === 'Admin') return <>
