@@ -106,11 +106,23 @@ function ManagerUsageWastePage() {
 
 
 function InventoryStaffStockInPage() {
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const addStockInButton = useRef<HTMLButtonElement>(null);
   const Pending = ({ description, compact = false }: { description: string; compact?: boolean }) => (
     <div className={`sl-staff-stockin-pending${compact ? ' compact' : ''}`}>
       <DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} />
     </div>
   );
+  const StockInFormPreview = ({ asDialog = false }: { asDialog?: boolean }) => <form className={`sl-staff-stockin-form${asDialog ? ' sl-staff-stockin-form-dialog' : ''}`} aria-label="New stock-in entry preview">
+    <label><span>Supplier <b>*</b></span><select disabled><option>Select supplier...</option></select></label>
+    <label><span>Date Received <b>*</b></span><div className="sl-staff-stockin-date"><CalendarDays size={16} aria-hidden="true" /><input disabled value="Data pending" readOnly /></div></label>
+    <label><span>Ingredient <b>*</b></span><div className="sl-staff-stockin-search"><Search size={16} aria-hidden="true" /><input disabled placeholder="Search or select ingredient..." /></div></label>
+    <label><span>Batch ID <b>*</b></span><input disabled placeholder="Auto-generate or enter batch ID..." /></label>
+    <label><span>Expiry Date <b>*</b></span><div className="sl-staff-stockin-date"><input disabled placeholder="Select date" /><CalendarDays size={16} aria-hidden="true" /></div></label>
+    <label><span>Quantity Received <b>*</b></span><div className="sl-staff-stockin-quantity"><input disabled placeholder="Enter quantity" /><select disabled><option>kg</option></select></div></label>
+    <label><span>Unit Cost (Optional)</span><div className="sl-staff-stockin-money"><span>₱</span><input disabled value="0.00" readOnly /></div></label>
+    <label className="sl-staff-stockin-notes"><span>Notes (Optional)</span><input disabled placeholder="e.g., delivery condition, remarks, invoice reference..." /></label>
+  </form>;
 
   return <>
     <PageHeader
@@ -118,43 +130,26 @@ function InventoryStaffStockInPage() {
       description="Record newly received ingredients into inventory. Make sure all details are accurate."
     />
 
-    <div className="sl-admin-view sl-staff-stockin-v142">
-      <section className="sl-staff-stockin-kpis" aria-label="Stock-in summary">
-        <article className="sl-staff-stockin-kpi" data-tone="green"><span className="sl-staff-stockin-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Total Stock-In Today</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-staff-stockin-kpi" data-tone="slate"><span className="sl-staff-stockin-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Quantity Received</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-staff-stockin-kpi" data-tone="green"><span className="sl-staff-stockin-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Active Deliveries</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-staff-stockin-kpi" data-tone="amber"><span className="sl-staff-stockin-kpi-icon"><Users aria-hidden="true" /></span><div><span>Suppliers This Month</span><strong>—</strong><small>Preview · data pending</small></div></article>
+    <div className="sl-admin-view sl-staff-stockin-v145">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-stockin-kpis" aria-label="Stock-in summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Total Stock-In Today</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Quantity Received</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Active Deliveries</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Suppliers This Month</span><strong>—</strong><small>Preview · data pending</small></div></article>
       </section>
 
       <div className="sl-staff-stockin-layout">
         <main className="sl-staff-stockin-main">
-          <section className="sl-staff-stockin-entry" aria-labelledby="staff-stockin-entry-title">
-            <header className="sl-staff-stockin-entry-head"><span className="sl-staff-stockin-entry-icon"><Plus aria-hidden="true" /></span><div><h2 id="staff-stockin-entry-title">New Stock-In Entry</h2><p>Fill in the details of the received ingredients.</p></div></header>
-            <form className="sl-staff-stockin-form" aria-label="New stock-in entry preview">
-              <label><span>Supplier <b>*</b></span><select disabled><option>Select supplier...</option></select></label>
-              <label><span>Delivery Receipt No. (Optional)</span><input disabled placeholder="Enter receipt number..." /></label>
-              <label><span>Date Received <b>*</b></span><div className="sl-staff-stockin-date"><CalendarDays size={16} aria-hidden="true" /><input disabled value="Data pending" readOnly /></div></label>
-              <label><span>Ingredient <b>*</b></span><div className="sl-staff-stockin-search"><Search size={16} aria-hidden="true" /><input disabled placeholder="Search or select ingredient..." /></div></label>
-              <label><span>Batch ID <b>*</b></span><input disabled placeholder="Auto-generate or enter batch ID..." /></label>
-              <label><span>Expiry Date <b>*</b></span><div className="sl-staff-stockin-date"><input disabled placeholder="Select date" /><CalendarDays size={16} aria-hidden="true" /></div></label>
-              <label><span>Quantity Received <b>*</b></span><div className="sl-staff-stockin-quantity"><input disabled placeholder="Enter quantity" /><select disabled><option>kg</option></select></div></label>
-              <label><span>Unit Cost (Optional)</span><div className="sl-staff-stockin-money"><span>₱</span><input disabled value="0.00" readOnly /></div></label>
-              <label><span>Storage Location <b>*</b></span><select disabled><option>Select location...</option></select></label>
-              <label className="sl-staff-stockin-notes"><span>Notes (Optional)</span><input disabled placeholder="e.g., delivery condition, remarks, invoice reference..." /></label>
-              <div className="sl-staff-stockin-form-actions"><button type="button" className="sl-button" disabled>Clear</button><button type="button" className="sl-button sl-button-primary" disabled><PackageCheck size={15} aria-hidden="true" />Save Stock-In</button></div>
-            </form>
-          </section>
-
           <section className="sl-staff-stockin-history" aria-labelledby="staff-stockin-history-title">
-            <header><div><Clock3 size={18} aria-hidden="true" /><h2 id="staff-stockin-history-title">Stock-In History</h2></div></header>
+            <header><div><h2 id="staff-stockin-history-title" className="sl-section-title">Stock History</h2></div></header>
             <div className="sl-staff-stockin-history-filters">
               <label className="sl-staff-stockin-history-search"><span className="sl-sr-only">Search stock-in history</span><div><Search size={16} aria-hidden="true" /><input disabled placeholder="Search by ingredient, batch ID, or supplier..." /></div></label>
               <label><span className="sl-sr-only">Supplier</span><select disabled><option>All Suppliers</option></select></label>
               <label><span className="sl-sr-only">Date range</span><select disabled><option>Last 30 Days</option></select></label>
-              <button type="button" className="sl-button" disabled><Download size={15} aria-hidden="true" />Export</button>
+              <div className="sl-staff-stockin-history-actions"><button type="button" className="sl-button" onClick={() => {}} title="Export will become available when the backend is fully connected"><Download size={15} aria-hidden="true" />Export</button><button ref={addStockInButton} type="button" className="sl-button sl-button-primary" onClick={() => setAddModalOpen(true)}><Plus size={15} aria-hidden="true" />Add Stock-In</button></div>
             </div>
             <div className="sl-staff-stockin-table-wrap">
-              <table className="sl-staff-stockin-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Supplier','Quantity','Unit','Expiry Date','Location','Recorded By','Actions'].map(column => <th key={column}>{column}</th>)}</tr></thead></table>
+              <table className="sl-staff-stockin-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Supplier','Quantity','Unit','Expiry Date','Recorded By','Actions'].map(column => <th key={column}>{column}</th>)}</tr></thead></table>
               <div className="sl-staff-stockin-table-state"><Pending description="Stock-in history" /></div>
             </div>
             <footer className="sl-staff-stockin-footer"><label>Rows per page <select defaultValue="10" disabled><option>10</option></select></label><span>Pagination will activate when live stock-in records are available.</span></footer>
@@ -164,13 +159,27 @@ function InventoryStaffStockInPage() {
         <aside className="sl-staff-stockin-rail" aria-label="Stock-in support panels">
           <section className="sl-staff-stockin-guidelines" aria-labelledby="stockin-guidelines-title">
             <header><div><Truck size={18} aria-hidden="true" /><h2 id="stockin-guidelines-title">Receiving Guidelines</h2></div></header>
-            <ol><li>Verify supplier and delivery details</li><li>Check quantity and unit of measurement</li><li>Confirm expiry date and batch condition</li><li>Ensure proper storage location</li><li>Keep the delivery receipt for reference</li></ol>
+            <ol><li>Verify supplier and delivery details</li><li>Check quantity and unit of measurement</li><li>Confirm expiry date and batch condition</li><li>Keep the delivery receipt for reference</li></ol>
           </section>
-          <Card id="staff-stockin-recent-deliveries" title="Recent Deliveries" action={<span className="sl-staff-stockin-view-placeholder">View All</span>}><Pending description="Recent deliveries" compact /></Card>
+          <Card id="staff-stockin-recent-deliveries" title="Recent Deliveries" action={<button type="button" className="sl-text-link sl-staff-stockin-view-all" onClick={() => {}} title="Live delivery records will open when the backend is fully connected">View All <ArrowRight size={14} /></button>}><Pending description="Recent deliveries" compact /></Card>
           <Card id="staff-stockin-low-stock" title="Low Stock Ingredients" action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}><Pending description="Low-stock ingredients" compact /></Card>
         </aside>
       </div>
     </div>
+
+    <Dialog
+      open={addModalOpen}
+      onDismiss={() => setAddModalOpen(false)}
+      returnFocus={addStockInButton}
+      className="sl-staff-stockin-dialog"
+      title={<span className="sl-staff-stockin-dialog-heading"><span className="sl-staff-stockin-entry-icon"><Plus aria-hidden="true" /></span><span><span className="sl-staff-stockin-dialog-title">Add Stock-In</span><small>Fill in the details of the received ingredients.</small></span></span>}
+      actions={<><button type="button" className="sl-button" data-initial-focus onClick={() => setAddModalOpen(false)}>Cancel</button><button type="button" className="sl-button sl-button-primary" onClick={() => {}} title="Saving will become available when the backend is fully connected">Save Stock-In</button></>}
+    >
+      <div className="sl-staff-stockin-dialog-body">
+        <Status>Preview · data pending</Status>
+        <StockInFormPreview asDialog />
+      </div>
+    </Dialog>
   </>;
 }
 
