@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express';
 import type { IngredientService } from '../services/ingredients';
-import { objectId } from '../validators/administration';
 import { ingredientInput, ingredientPagination } from '../validators/ingredient';
+import { objectId } from '../validators/administration';
 
 export function ingredientControllers(service: IngredientService): Record<'list' | 'create' | 'update' | 'remove', RequestHandler> {
   return {

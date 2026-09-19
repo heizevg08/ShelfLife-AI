@@ -52,7 +52,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
     const group = !user || item.path === dashboardPath ? 'Overview'
       : user.role === 'Super Admin' ? (['/AdminAccounts', '/SystemSettings', '/SecurityActivity'].includes(item.path ?? '') ? 'Administration' : 'System Oversight')
       : user.role === 'Admin' ? (item.path === '/UserManagement' ? 'User management' : ['/Ingredients', '/InventoryBatches'].includes(item.path) ? 'Core data' : 'Oversight')
-      : user.role === 'Manager' ? (item.path === '/InventoryBatches' ? 'Inventory' : ['/UsageWaste', '/ChangeRequests'].includes(item.path) ? 'Operations' : 'Intelligence')
+      : user.role === 'Manager' ? (['/InventoryBatches', '/Inventory'].includes(item.path ?? '') ? 'Inventory' : ['/UsageWaste', '/ChangeRequests'].includes(item.path) ? 'Operations' : 'Intelligence')
       : ['/InventoryBatches', '/StockIn'].includes(item.path) ? 'Inventory' : ['/Usage', '/Waste'].includes(item.path) ? 'Records' : 'Follow-up';
     const existing = groups.find(entry => entry.label === group);
     if (existing) existing.items.push(item);
