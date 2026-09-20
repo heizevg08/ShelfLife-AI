@@ -14139,3 +14139,112 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi[data-tone='critical'] .sl-sa-kpi-icon{background:#ffe4e8;color:#d92943}
 @media(max-width:1100px){.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173{grid-template-columns:1fr}}
+
+/* V175 — Super Admin /UserManagement: exact UsageRecording section/table language + View All direction + purpose-chart palette */
+.sl-superadmin-users-page-v64 .sl-v175-user-directory{
+  min-width:0;
+  background:var(--sl-surface);
+  border:1px solid var(--sl-border);
+  border-radius:var(--sl-radius-lg);
+  box-shadow:var(--sl-shadow-sm);
+  overflow:hidden;
+  padding:0;
+}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory>.sl-staff-usage-card-head{
+  min-height:52px;
+  padding:.75rem clamp(.8rem,1.2vw,1rem);
+  display:flex;
+  align-items:center;
+  gap:.65rem;
+  border-bottom:1px solid var(--sl-border-subtle);
+}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory>.sl-staff-usage-card-head h2{font:var(--sl-font-section-title);margin-right:auto}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory-body{min-width:0}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-filter-row{
+  margin:0!important;
+  padding:.65rem .8rem!important;
+  border:0!important;
+  border-bottom:1px solid var(--sl-border-subtle)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:var(--sl-surface)!important;
+}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table-wrap{
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:auto!important;
+  background:var(--sl-surface);
+  min-height:clamp(230px,28vh,330px);
+}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table{width:100%;min-width:860px}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table th{
+  background:var(--sl-surface-subtle)!important;
+  color:var(--sl-text)!important;
+  font-size:.7rem!important;
+}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table th,
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table td{
+  padding:clamp(.62rem,.52rem + .18vw,.78rem) clamp(.55rem,.45rem + .2vw,.72rem)!important;
+}
+.sl-superadmin-users-page-v64 .sl-v175-user-footer{
+  margin:0!important;
+  min-height:54px;
+  padding:.6rem .8rem;
+  border-top:1px solid var(--sl-border-subtle);
+  display:flex;
+  align-items:center;
+  gap:.8rem;
+  flex-wrap:wrap;
+}
+.sl-superadmin-users-page-v64 .sl-v175-user-footer .sl-pagination{margin-left:auto}
+.sl-superadmin-users-page-v64 .sl-v60-activity-head a{display:inline-flex;align-items:center;gap:.3rem}
+.sl-superadmin-users-page-v64 .sl-v60-activity-head a::before{content:none!important;display:none!important}
+.sl-superadmin-users-page-v64 .sl-v60-activity-head a svg{flex:0 0 auto}
+/* User Distribution uses the exact established purpose-chart palette order. */
+.sl-superadmin-users-page-v64 .sl-v56-dot[data-role='Super Admin']{background:#35b978!important}
+.sl-superadmin-users-page-v64 .sl-v56-dot[data-role='Admin']{background:#2582d5!important}
+.sl-superadmin-users-page-v64 .sl-v56-dot[data-role='Manager']{background:#f5b43b!important}
+.sl-superadmin-users-page-v64 .sl-v56-dot[data-role='Inventory Staff']{background:#f4a986!important}
+@media(max-width:760px){
+  .sl-superadmin-users-page-v64 .sl-v175-user-footer{align-items:flex-start}
+  .sl-superadmin-users-page-v64 .sl-v175-user-footer .sl-pagination{width:100%;margin-left:0;justify-content:flex-end}
+}
+
+
+/* V176 — Super Admin /UserManagement: exact UsageRecording table/action language + aligned insight rail */
+.sl-superadmin-users-page-v64 .sl-v56-main-grid{align-items:stretch!important}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory{height:100%;display:flex;flex-direction:column}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory-body{display:flex;flex:1;min-height:0;flex-direction:column}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table-wrap{flex:1}
+.sl-superadmin-users-page-v64 .sl-v56-side{height:100%;display:flex!important;flex-direction:column}
+.sl-superadmin-users-page-v64 .sl-v56-side .sl-v56-activity{flex:1;min-height:0}
+
+/* The User Accounts action controls are the same horizontal icon-button pattern as Recent Usage Records. */
+.sl-superadmin-users-page-v64 .sl-v176-user-actions{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:.4rem;white-space:nowrap}
+.sl-superadmin-users-page-v64 .sl-v176-user-actions .sl-icon-button{cursor:pointer;flex:0 0 auto}
+.sl-superadmin-users-page-v64 .sl-v176-user-actions .sl-staff-usage-delete-action{color:var(--sl-critical)}
+
+/* Equal header/cell gutters; prevent the legacy fixed table layout from creating an oversized #→Name gap. */
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table{table-layout:auto!important;border-collapse:collapse}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table th,
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table td{padding-inline:clamp(.55rem,.45rem + .2vw,.72rem)!important}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table th:first-child,
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table td:first-child{width:1%;min-width:3rem;max-width:4rem;white-space:nowrap}
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table th:last-child,
+.sl-superadmin-users-page-v64 .sl-v175-user-directory .sl-v56-table td:last-child{width:1%;min-width:8rem;white-space:nowrap;text-align:center}
+
+/* Today's Usage by Purpose palette, copied as the four-role User Distribution sequence. */
+.sl-superadmin-users-page-v64 .sl-v56-dot[data-role='Super Admin']{background:#0b8755!important}
+.sl-superadmin-users-page-v64 .sl-v56-dot[data-role='Admin']{background:#79c9a3!important}
+.sl-superadmin-users-page-v64 .sl-v56-dot[data-role='Manager']{background:#ffd166!important}
+.sl-superadmin-users-page-v64 .sl-v56-dot[data-role='Inventory Staff']{background:#67a98f!important}
+
+/* View All direction is always text then arrow; never a leading arrow. */
+.sl-superadmin-users-page-v64 .sl-v60-activity-head a{display:inline-flex;flex-direction:row;align-items:center;gap:.3rem}
+.sl-superadmin-users-page-v64 .sl-v60-activity-head a::before{content:none!important;display:none!important}
+.sl-superadmin-users-page-v64 .sl-v60-activity-head a svg{order:2;flex:0 0 auto}
+@media(max-width:1100px){
+  .sl-superadmin-users-page-v64 .sl-v56-side{height:auto}
+  .sl-superadmin-users-page-v64 .sl-v56-side .sl-v56-activity{flex:initial}
+}
