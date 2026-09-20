@@ -1,5 +1,19 @@
-import { CircleDashed, Inbox, LoaderCircle, LockKeyhole, TriangleAlert } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ChevronDown, CircleDashed, Download, Inbox, LoaderCircle, LockKeyhole, TriangleAlert } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { reportExportFormats } from './module-content';
+
+export function ExportControl({ label = 'Export', menuId, available = false, onExport }: { label?: string; menuId: string; available?: boolean; onExport?: (format: (typeof reportExportFormats)[number]['id']) => void }) {
+  const [open, setOpen] = useState(false);
+  return <div className={`sl-download-control${open ? ' is-open' : ''}`} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} onFocusCapture={() => setOpen(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false); }}>
+    <button type="button" className="sl-button sl-download-trigger" aria-haspopup="menu" aria-expanded={open} aria-controls={menuId} onClick={() => setOpen(value => !value)}>
+      <Download size={16} aria-hidden="true" />{label}<ChevronDown size={15} aria-hidden="true" />
+    </button>
+    <div id={menuId} className="sl-download-menu" role="menu" aria-label={`${label} formats`} aria-hidden={!open}>
+      {reportExportFormats.map(format => <button key={format.id} type="button" role="menuitem" disabled={!available} className="sl-download-option" onClick={() => { if (available && onExport) onExport(format.id); setOpen(false); }}><span>{format.label}</span></button>)}
+      {!available && <p className="sl-supporting">Exports activate when the export service and permissions are available.</p>}
+    </div>
+  </div>;
+}
 
 export function PageHeader({ eyebrow, title, description }: { eyebrow?: string; title: string; description?: string }) {
   return <header className="sl-page-header">{eyebrow && <p className="sl-eyebrow">{eyebrow}</p>}
@@ -50,7 +64,7 @@ export function PlaceholderSummaryCards({ items }: { items: { label: string; ton
   return <SummaryCards items={items.map(({ label, tone = 'neutral' }) => ({
     label,
     value: <><span className="sl-placeholder-value" aria-hidden="true">—</span><span className="sl-sr-only">Data unavailable</span></>,
-    detail: 'Preview · awaiting live data',
+    detail: undefined,
     tone,
   }))} />;
 }
@@ -63,7 +77,7 @@ export function PlaceholderTable({ label, columns, description, rows = 4 }: { la
       <thead><tr>{columns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
       <tbody>
         <tr className="sl-placeholder-state-row"><td colSpan={columns.length} className="sl-empty-cell">
-          <DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} />
+          <DataState kind="empty" title="No live records yet" description={description} />
         </td></tr>
 
       </tbody>

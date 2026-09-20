@@ -5,7 +5,7 @@ import { AccountsTable } from './AccountsTable';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
 import { moduleContent, previewFields, type PreviewId } from './module-content';
-import { Card, DataState, PageHeader, Pagination, PlaceholderSummaryCards, PlaceholderTable, Status, SummaryCards } from './primitives';
+import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSummaryCards, PlaceholderTable, Status, SummaryCards } from './primitives';
 import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
@@ -525,6 +525,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
   const [category, setCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [refresh, setRefresh] = useState(0);
   const [data, setData] = useState<{ items: Ingredient[]; page: number; pageSize: number; total: number } | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -539,6 +540,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
   const [deleteTarget, setDeleteTarget] = useState<Ingredient | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [previewAction, setPreviewAction] = useState<'view'|'edit'|'delete'|null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -682,19 +684,30 @@ function SuperAdminIngredientPending({ label, compact = false }: { label: string
 
 function SuperAdminIngredientsPage() {
   const [category, setCategory] = useState('All');
+  const [supplierFilter, setSupplierFilter] = useState('All Suppliers');
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [searchDraft, setSearchDraft] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [refresh, setRefresh] = useState(0);
   const [data, setData] = useState<{ items: Ingredient[]; page: number; pageSize: number; total: number } | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [viewIngredient, setViewIngredient] = useState<Ingredient | null>(null);
+  const [editIngredient, setEditIngredient] = useState<Ingredient | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Ingredient | null>(null);
+  const [form, setForm] = useState<IngredientDraft>(emptyIngredient);
+  const [errors, setErrors] = useState<Partial<Record<IngredientField, string>>>({});
+  const [formError, setFormError] = useState('');
+  const [actionBusy, setActionBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [previewAction, setPreviewAction] = useState<'view' | 'edit' | 'delete' | null>(null);
 
   useEffect(() => {
     const abort = new AbortController();
     setLoadError(false);
 
-    listIngredients(page, 10, search.trim(), category === 'All' ? '' : category, abort.signal)
+    listIngredients(page, pageSize, search.trim(), category === 'All' ? '' : category, abort.signal)
       .then(value => {
         if (!abort.signal.aborted) setData(value);
       })
@@ -706,7 +719,7 @@ function SuperAdminIngredientsPage() {
       });
 
     return () => abort.abort();
-  }, [page, search, category, refresh]);
+  }, [page, pageSize, search, category, refresh]);
 
   const applyFilters = () => {
     setPage(1);
@@ -717,7 +730,46 @@ function SuperAdminIngredientsPage() {
     setSearchDraft('');
     setSearch('');
     setCategory('All');
+    setSupplierFilter('All Suppliers');
+    setStatusFilter('All Statuses');
     setPage(1);
+  };
+
+
+  const setField = (key: IngredientField, value: string) => {
+    setForm(current => ({ ...current, [key]: value }));
+    setErrors(current => ({ ...current, [key]: undefined }));
+    setFormError('');
+  };
+  const setFieldError = (key: IngredientField, value?: string) => setErrors(current => ({ ...current, [key]: value }));
+  const openEdit = (item: Ingredient) => {
+    setEditIngredient(item);
+    setForm({ name:item.name, brand:item.brand || '', category:item.category, unit:item.unitOfMeasure, minStock:item.minimumStock === undefined ? '' : String(item.minimumStock), unitCost:item.standardUnitCost === undefined ? '' : String(item.standardUnitCost), shelfLife:item.defaultShelfLifeDays === undefined ? '' : String(item.defaultShelfLifeDays), description:item.description || '' });
+    setErrors({}); setFormError('');
+  };
+  const saveEdit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!editIngredient || actionBusy) return;
+    const next: Partial<Record<IngredientField, string>> = {};
+    const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
+    if (!clean.name) next.name = 'Enter an ingredient name.';
+    if (!clean.category) next.category = 'Select a category.';
+    if (!clean.unit) next.unit = 'Enter a unit of measure.';
+    for (const [key, label] of [['minStock', 'Minimum stock'], ['unitCost', 'Standard unit cost']] as const) if (clean[key] !== '' && (!Number.isFinite(Number(clean[key])) || Number(clean[key]) < 0)) next[key] = `${label} must be 0 or greater.`;
+    if (clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1)) next.shelfLife = 'Shelf life must be a whole number of at least 1 day.';
+    if (Object.keys(next).length) { setErrors(next); return; }
+    const input: IngredientInput = { name: clean.name, brand: clean.brand, description: clean.description, category: clean.category, unitOfMeasure: clean.unit, ...(clean.minStock === '' ? {} : { minimumStock: Number(clean.minStock) }), ...(clean.unitCost === '' ? {} : { standardUnitCost: Number(clean.unitCost) }), ...(clean.shelfLife === '' ? {} : { defaultShelfLifeDays: Number(clean.shelfLife) }) };
+    setActionBusy(true); setFormError('');
+    try { await updateIngredient(editIngredient.id, input); setEditIngredient(null); setRefresh(value => value + 1); }
+    catch (error) { setFormError(error instanceof ApiError ? error.message : 'The ingredient could not be updated. Check your connection and try again.'); }
+    finally { setActionBusy(false); }
+  };
+  const removeIngredient = async () => {
+    if (!deleteTarget || actionBusy) return;
+    setActionBusy(true); setDeleteError('');
+    try { await deleteIngredient(deleteTarget.id); setDeleteTarget(null); setRefresh(value => value + 1); }
+    catch (error) { setDeleteError(error instanceof ApiError ? error.message : 'The ingredient could not be removed. Check your connection and try again.'); }
+    finally { setActionBusy(false); }
   };
 
   const formatUpdated = (value: string) => {
@@ -736,11 +788,13 @@ function SuperAdminIngredientsPage() {
   const visibleEnd = data && data.total > 0 ? Math.min(data.page * data.pageSize, data.total) : 0;
 
   return <>
-    <PageHeader
-      eyebrow="System Oversight"
-      title="Ingredients"
-      description="Manage and monitor ingredient master data across the establishment for inventory, forecasting, and waste oversight."
-    />
+    <div className="sl-sa-ingredients-heading">
+      <PageHeader
+        eyebrow="System Oversight"
+        title="Ingredients"
+        description="Manage and monitor ingredient master data across the establishment for inventory, forecasting, and waste oversight."
+      />
+    </div>
 
     <div className="sl-admin-view sl-sa-ingredients-page">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Ingredient summary">
@@ -827,21 +881,23 @@ function SuperAdminIngredientsPage() {
 
             <label>
               <span>Supplier</span>
-              <select disabled aria-label="Supplier filter unavailable">
-                <option>Data pending</option>
+              <select value={supplierFilter} onChange={event => { setSupplierFilter(event.target.value); setPage(1); }} aria-label="Supplier filter">
+                <option>All Suppliers</option>
+                <option disabled>Supplier values · data pending</option>
               </select>
             </label>
 
             <label>
               <span>Status</span>
-              <select disabled aria-label="Status filter unavailable">
-                <option>Data pending</option>
+              <select value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(1); }} aria-label="Status filter">
+                <option>All Statuses</option>
+                <option disabled>Status values · data pending</option>
               </select>
             </label>
 
             <div className="sl-sa-ingredients-filter-actions">
               <button type="button" className="sl-button" onClick={resetFilters}>Reset</button>
-              <button type="button" className="sl-button" disabled title="Export backend is not connected"><Download size={16} aria-hidden="true" />Export</button>
+              <ExportControl label="Export" menuId="sl-sa-ingredients-export-menu" />
             </div>
               </div>
 
@@ -862,15 +918,15 @@ function SuperAdminIngredientsPage() {
                 </thead>
                 <tbody>
                   {loadError ? (
-                    <tr className="sl-sa-ingredients-empty-row"><td colSpan={7}>
+                    <tr className="sl-sa-ingredients-empty-row sl-sa-ingredients-preview-row"><td colSpan={6}>
                       <DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} />
-                    </td></tr>
+                    </td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Ingredient actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View ingredient" title="View" onClick={() => setPreviewAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit ingredient" title="Edit" onClick={() => setPreviewAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete ingredient" title="Delete" onClick={() => setPreviewAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr>
                   ) : !data ? (
-                    <tr className="sl-sa-ingredients-empty-row"><td colSpan={7}>
+                    <tr className="sl-sa-ingredients-empty-row sl-sa-ingredients-preview-row"><td colSpan={6}>
                       <DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." />
-                    </td></tr>
+                    </td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Ingredient actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View ingredient" title="View" onClick={() => setPreviewAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit ingredient" title="Edit" onClick={() => setPreviewAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete ingredient" title="Delete" onClick={() => setPreviewAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr>
                   ) : data.items.length === 0 ? (
-                    <tr className="sl-sa-ingredients-empty-row"><td colSpan={7}><SuperAdminIngredientPending label="Ingredient catalogue" /></td></tr>
+                    <tr className="sl-sa-ingredients-empty-row sl-sa-ingredients-preview-row"><td colSpan={6}><SuperAdminIngredientPending label="Ingredient catalogue" /></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Ingredient actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View ingredient" title="View" onClick={() => setPreviewAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit ingredient" title="Edit" onClick={() => setPreviewAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete ingredient" title="Delete" onClick={() => setPreviewAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr>
                   ) : data.items.map(item => <tr key={item.id}>
                     <td><span className="sl-sa-ingredient-name"><span className="sl-sa-ingredient-avatar" aria-hidden="true"><Leaf size={15} /></span><strong>{item.name}</strong></span></td>
                     <td><Status>{item.category}</Status></td>
@@ -878,17 +934,39 @@ function SuperAdminIngredientsPage() {
                     <td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td>
                     <td>{item.brand || '—'}</td>
                     <td>{formatUpdated(item.updatedAt)}</td>
-                    <td><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16} aria-hidden="true" /></button></td>
+                    <td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label={`${item.name} actions`}><button type="button" className="sl-button sl-icon-button" aria-label={`View ${item.name}`} title="View" onClick={() => setViewIngredient(item)}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label={`Edit ${item.name}`} title="Edit" onClick={() => openEdit(item)}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label={`Delete ${item.name}`} title="Delete" onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><Trash2 size={16} aria-hidden="true" /></button></div></td>
                   </tr>)}
                 </tbody>
               </table>
             </div>
 
-            {data && data.total > 0 && (
-              <div className="sl-sa-ingredients-pagination">
-                <Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} compact />
-              </div>
-            )}
+            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+              <label>
+                <span>Rows per page</span>
+                <select
+                  value={pageSize}
+                  aria-label="Rows per page"
+                  onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={150}>150</option>
+                </select>
+              </label>
+              <span className="sl-staff-usage-pagination-note">
+                {data && data.total > 0 ? `Showing ${visibleStart}–${visibleEnd} of ${data.total} ingredients` : 'No live records yet'}
+              </span>
+              <Pagination
+                compact
+                page={data?.page ?? page}
+                pageSize={data?.pageSize ?? pageSize}
+                total={data?.total ?? 0}
+                itemLabel="ingredients"
+                onPageChange={setPage}
+              />
+            </div>
           </section>
         </main>
 
@@ -937,12 +1015,43 @@ function SuperAdminIngredientsPage() {
         <SuperAdminIngredientPending label="Ingredient inventory statistics" />
       </div>}
     </Dialog>
+
+    <Dialog open={previewAction!==null} title={previewAction==='delete'?'Confirm Delete':previewAction==='edit'?'Edit Ingredient':'Ingredient Details'} onDismiss={() => setPreviewAction(null)} className="sl-staff-waste-action-dialog">
+      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={previewAction==='delete'?'A live ingredient record is required before deletion can be confirmed.':previewAction==='edit'?'A live ingredient record is required before editing.':'Ingredient details will appear here when live records are available.'} action={<Status>Preview · data pending</Status>} /></div>
+      {previewAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={() => setPreviewAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live ingredient record">Confirm Delete</button></div>}
+    </Dialog>
+
+    <Dialog open={!!editIngredient} title="Edit Ingredient" onDismiss={() => { if (!actionBusy) setEditIngredient(null); }} busy={actionBusy} className="sl-add-user-dialog sl-account-reference-dialog">
+      {editIngredient && <IngredientForm form={form} errors={errors} busy={actionBusy} formError={formError} set={setField} setError={setFieldError} onSubmit={saveEdit} />}
+      <div className="sl-dialog-inline-actions"><button type="button" className="sl-button" disabled={actionBusy} onClick={() => setEditIngredient(null)}>Cancel</button><button type="submit" form="sl-ingredient-form" className="sl-button sl-button-primary" disabled={actionBusy}>{actionBusy ? 'Saving…' : 'Save Changes'}</button></div>
+    </Dialog>
+
+    <Dialog open={!!deleteTarget} title="Delete Ingredient" onDismiss={() => { if (!actionBusy) setDeleteTarget(null); }} busy={actionBusy} className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-delete-dialog" actions={<><button className="sl-button" type="button" disabled={actionBusy} onClick={() => setDeleteTarget(null)}>Cancel</button><button className="sl-button sl-button-danger" type="button" disabled={actionBusy} onClick={removeIngredient}><Trash2 size={15} aria-hidden="true" />{actionBusy ? 'Deleting…' : 'Delete'}</button></>}>
+      {deleteTarget && <div className="sl-delete-reference-body">{deleteError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{deleteError}</p>}<p>Delete <strong>{deleteTarget.name}</strong>? This action uses the live ingredient service and cannot be undone.</p></div>}
+    </Dialog>
   </>;
 }
 
 
 
 function SuperAdminInventoryBatchesPage() {
+  const [batchSearch, setBatchSearch] = useState('');
+  const [batchIngredient, setBatchIngredient] = useState('All Ingredients');
+  const [batchBranch, setBatchBranch] = useState('All Branches');
+  const [batchStatus, setBatchStatus] = useState('All Statuses');
+  const [batchRange, setBatchRange] = useState('Any date');
+  const [batchRows, setBatchRows] = useState('10');
+
+  const resetBatchFilters = () => {
+    setBatchSearch('');
+    setBatchIngredient('All Ingredients');
+    setBatchBranch('All Branches');
+    setBatchStatus('All Statuses');
+    setBatchRange('Any date');
+  };
+
+
+
   return <>
     <PageHeader
       eyebrow="System Oversight"
@@ -952,118 +1061,34 @@ function SuperAdminInventoryBatchesPage() {
 
     <div className="sl-admin-view sl-sa-batches-page sl-staff-usage-v150">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-batches-kpis" aria-label="Inventory batch summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
-          <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
-          <div>
-            <span>Total Batches</span>
-            <strong>—</strong>
-            <small>Awaiting inventory batch API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
-          <span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
-          <div>
-            <span>Active Batches</span>
-            <strong>—</strong>
-            <small>Awaiting batch status API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
-          <span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span>
-          <div>
-            <span>Expiring Soon</span>
-            <strong>—</strong>
-            <small>Awaiting expiration summary API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
-          <span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span>
-          <div>
-            <span>Expired Batches</span>
-            <strong>—</strong>
-            <small>Awaiting expiration summary API</small>
-          </div>
-        </article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>—</strong><small>Awaiting inventory batch API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span><div><span>Active Batches</span><strong>—</strong><small>Awaiting batch status API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>—</strong><small>Awaiting expiration summary API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span><div><span>Expired Batches</span><strong>—</strong><small>Awaiting expiration summary API</small></div></article>
       </section>
 
       <section className="sl-sa-batches-filter-card" aria-label="Inventory batch filters">
-        <label className="sl-sa-batches-search">
-          <span>Search batches</span>
-          <div>
-            <Search size={16} aria-hidden="true" />
-            <input
-              type="search"
-              placeholder="Search by batch ID, ingredient, or supplier…"
-              disabled
-              aria-label="Batch search unavailable until inventory batch API is connected"
-            />
-          </div>
-        </label>
-
-        <label>
-          <span>Ingredient</span>
-          <select disabled aria-label="Ingredient filter unavailable">
-            <option>All Ingredients</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Branch</span>
-          <select disabled aria-label="Branch filter unavailable">
-            <option>All Branches</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Status</span>
-          <select disabled aria-label="Status filter unavailable">
-            <option>All Statuses</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Date Range</span>
-          <div className="sl-sa-batches-date">
-            <CalendarDays size={16} aria-hidden="true" />
-            <input type="text" value="Data pending" readOnly disabled />
-          </div>
-        </label>
-
-        <div className="sl-sa-batches-filter-actions">
-          <button type="button" className="sl-button" disabled>Reset</button>
-          <button type="button" className="sl-button" disabled title="Export backend is not connected"><Download size={16} aria-hidden="true" />Export</button>
-        </div>
+        <label className="sl-sa-batches-search"><span>Search batches</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by batch ID, ingredient, or supplier…" value={batchSearch} onChange={event => setBatchSearch(event.target.value)} /></div></label>
+        <label><span>Ingredient</span><select value={batchIngredient} onChange={event => setBatchIngredient(event.target.value)}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+        <label><span>Branch</span><select value={batchBranch} onChange={event => setBatchBranch(event.target.value)}><option>All Branches</option><option disabled>Branch values · data pending</option></select></label>
+        <label><span>Status</span><select value={batchStatus} onChange={event => setBatchStatus(event.target.value)}><option>All Statuses</option><option disabled>Status values · data pending</option></select></label>
+        <label><span>Date Range</span><div className="sl-sa-batches-date"><CalendarDays size={16} aria-hidden="true" /><select value={batchRange} onChange={event => setBatchRange(event.target.value)} aria-label="Date range"><option>Any date</option><option>Last 7 days</option><option>Last 30 days</option><option>Last 90 days</option><option>This year</option></select></div></label>
+        <div className="sl-sa-batches-filter-actions"><button type="button" className="sl-button" onClick={resetBatchFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-batches-export-menu" /></div>
       </section>
 
       <section className="sl-sa-batches-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Inventory batch records">
-        <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
-          <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
-          <h2>Inventory Batch Records</h2>
-
-        </header>
-
+        <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>Inventory Batch Records</h2></header>
         <div className="sl-staff-usage-table-shell sl-sa-batches-table-shell" role="region" aria-label="Inventory batch records" tabIndex={0}>
           <table className="sl-data-table sl-staff-usage-table sl-sa-batches-table sl-security-activity-reference-table">
             <thead><tr><th>Batch ID</th><th>Ingredient</th><th>Quantity</th><th>Expiration Date</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={6} className="sl-staff-usage-preview-state-cell"><div className="sl-sa-batches-table-placeholder"><DataState kind="empty" title="No live records yet" description="Inventory batches" action={<Status>Preview · data pending</Status>} /></div></td></tr></tbody>
           </table>
         </div>
-
-        <footer className="sl-sa-batches-footer">
-          <label>
-            <span>Rows per page</span>
-            <select defaultValue="10" disabled><option>10</option></select>
-          </label>
-          <span>Pagination will activate when live inventory batch records are available.</span>
-        </footer>
+        <footer className="sl-sa-batches-footer"><label><span>Rows per page</span><select value={batchRows} onChange={event => setBatchRows(event.target.value)}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label><span>No live records yet</span></footer>
       </section>
     </div>
   </>;
 }
-
 
 
 

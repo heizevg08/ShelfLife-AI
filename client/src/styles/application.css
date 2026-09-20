@@ -891,6 +891,11 @@
   background: var(--sl-surface);
   box-shadow: var(--sl-shadow-lg);
 }
+.sl-download-menu[aria-hidden='true'] { opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(4px); }
+.sl-download-menu[aria-hidden='false'],
+.sl-download-control:hover .sl-download-menu,
+.sl-download-control:focus-within .sl-download-menu { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); }
+.sl-download-menu { transition: opacity .14s ease, transform .14s ease, visibility .14s ease; }
 .sl-download-option { width: 100%; min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .65rem .8rem; border: 0; border-bottom: 1px solid var(--sl-border-subtle); background: transparent; color: var(--sl-text); text-align: left; }
 .sl-download-option:disabled { opacity: .55; cursor: not-allowed; }
 .sl-download-menu .sl-supporting { display: block; padding: .75rem .8rem; line-height: 1.45; }
@@ -15685,4 +15690,88 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   min-height:clamp(14rem,30vh,24rem);
   display:grid;
   place-items:center;
+}
+
+/* V239 — system-wide Export schema: Reports Download control is canonical. */
+.sl-sa-ingredients-filter-actions .sl-download-control,
+.sl-sa-batches-filter-actions .sl-download-control { align-self: stretch; }
+.sl-sa-ingredients-filter-actions .sl-download-menu,
+.sl-sa-batches-filter-actions .sl-download-menu { left: auto; right: 0; bottom: auto; top: calc(100% + .5rem); }
+@media (max-width: 680px) {
+  .sl-sa-ingredients-filter-actions .sl-download-control,
+  .sl-sa-batches-filter-actions .sl-download-control,
+  .sl-sa-ingredients-filter-actions .sl-download-trigger,
+  .sl-sa-batches-filter-actions .sl-download-trigger { width: 100%; }
+}
+
+/* V241 — Super Admin /Ingredients only: persistent UserManagement-style table footer. */
+.sl-sa-ingredients-page .sl-sa-ingredients-footer{
+  margin:0!important;
+  min-height:54px;
+  padding:clamp(.55rem,.48rem + .2vw,.7rem) clamp(.7rem,.58rem + .28vw,.85rem);
+  border-top:1px solid var(--sl-border-subtle);
+  display:flex;
+  align-items:center;
+  gap:clamp(.55rem,.45rem + .25vw,.8rem);
+  flex-wrap:wrap;
+  background:var(--sl-surface);
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-footer .sl-pagination{margin-left:auto}
+@media(max-width:760px){
+  .sl-sa-ingredients-page .sl-sa-ingredients-footer{align-items:flex-start}
+  .sl-sa-ingredients-page .sl-sa-ingredients-footer .sl-pagination{width:100%;margin-left:0;justify-content:flex-end}
+}
+
+/* V242 — Super Admin /Ingredients only: exact Inventory Staff /WasteRecording row-action button treatment. */
+.sl-sa-ingredients-page .sl-sa-ingredients-actions-cell{white-space:nowrap;text-align:center}
+.sl-sa-ingredients-page .sl-staff-waste-row-actions{justify-content:center;flex-wrap:nowrap}
+
+/* V243 — Super Admin /Ingredients only: keep the WasteRecording action controls visible in non-live table states. */
+.sl-sa-ingredients-page .sl-sa-ingredients-preview-row > .sl-sa-ingredients-actions-cell{
+  width:14.285714%!important;
+  padding:clamp(.48rem,.39rem + .18vw,.62rem)!important;
+  border-bottom:0;
+  vertical-align:middle;
+  text-align:center;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-preview-row > td:first-child{
+  min-height:clamp(14rem,30vh,24rem);
+}
+
+
+/* V246 — Super Admin /Ingredients only: keep the requested page description on one line. */
+.sl-sa-ingredients-heading .sl-description{
+  max-width:none;
+  width:max-content;
+  min-width:0;
+  white-space:nowrap;
+}
+.sl-sa-ingredients-heading{
+  min-width:0;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:thin;
+}
+
+/* V247 — Super Admin /Ingredients only: preserve the full page description as one uninterrupted line. */
+.sl-sa-ingredients-heading .sl-page-header{
+  min-width:max-content;
+}
+.sl-sa-ingredients-heading .sl-description{
+  display:block;
+  margin:0;
+  max-width:none;
+  width:auto;
+  white-space:nowrap;
+  line-height:1.45;
+  font-size:clamp(.78rem,.73rem + .16vw,.94rem);
+}
+.sl-sa-ingredients-heading{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
 }

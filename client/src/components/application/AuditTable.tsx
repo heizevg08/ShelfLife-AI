@@ -183,9 +183,9 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
         </table>
       </div>
 
-    {!recent && data && <>
+    {!recent && <>
       {adminOverview ? <div className="sl-audit-table-footer"><label className="sl-audit-page-size sl-audit-page-size-footer">Rows per page<select className="sl-admin-input" value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{[10, 25, 50].map(size => <option key={size} value={size}>{size}</option>)}</select></label></div> : <div className="sl-audit-export-row"><div className="sl-download-control"><button type="button" className="sl-button sl-download-trigger" aria-expanded={downloadOpen} aria-controls="sl-audit-download-menu" onClick={() => setDownloadOpen(value => !value)}><Download size={17} aria-hidden="true" />Export<ChevronDown size={16} aria-hidden="true" /></button>{downloadOpen && <div id="sl-audit-download-menu" className="sl-download-menu" role="menu" aria-label="Audit export formats">{reportExportFormats.map(format => <button key={format.id} type="button" role="menuitem" disabled className="sl-download-option"><span>{format.label}</span></button>)}<p className="sl-supporting">Exports activate when the audit export service and permissions are available.</p></div>}</div></div>}
-      <Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel={adminOverview ? "logs" : "records"} onPageChange={setPage} compact={adminOverview} />
+      <Pagination page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel={adminOverview ? "logs" : "records"} onPageChange={setPage} compact={adminOverview} />
     </>}
       </div>
     </section>
