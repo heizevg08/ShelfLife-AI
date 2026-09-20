@@ -50,7 +50,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
     : [];
   const navigationGroups = destinations.reduce<{ label: string; items: typeof destinations }[]>((groups, item) => {
     const group = !user || item.path === dashboardPath ? 'Overview'
-      : user.role === 'Super Admin' ? (['/AdminAccounts', '/SystemSettings', '/SecurityActivity'].includes(item.path ?? '') ? 'Administration' : 'System Oversight')
+      : user.role === 'Super Admin' ? (['/UserManagement', '/SystemSettings', '/SecurityActivity'].includes(item.path ?? '') ? 'Administration' : 'System Oversight')
       : user.role === 'Admin' ? (item.path === '/UserManagement' ? 'User management' : ['/Ingredients', '/InventoryBatches'].includes(item.path) ? 'Core data' : 'Oversight')
       : user.role === 'Manager' ? (['/InventoryBatches', '/Inventory'].includes(item.path ?? '') ? 'Inventory' : ['/UsageWaste', '/ChangeRequests'].includes(item.path) ? 'Operations' : 'Intelligence')
       : ['/InventoryBatches', '/StockIn'].includes(item.path) ? 'Inventory' : ['/Usage', '/UsageRecording', '/Waste', '/WasteRecording'].includes(item.path) ? 'Records' : 'Follow-up';

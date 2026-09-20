@@ -28,7 +28,6 @@ export const canonicalWorkspaceAccess = {
   '/AdminDashboard': ['Admin'],
   '/ManagerDashboard': ['Manager'],
   '/InventoryStaffDashboard': ['Inventory Staff'],
-  '/AdminAccounts': ['Super Admin'],
   '/SystemSettings': ['Super Admin'],
   '/SecurityActivity': ['Super Admin'],
   '/UserManagement': ['Super Admin', 'Admin'],

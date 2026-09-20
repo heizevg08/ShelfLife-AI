@@ -1,4 +1,4 @@
-import { Ban, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus, Activity } from 'lucide-react';
+import { Ban, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus, Activity, Users, UserCheck, UserX, ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { accountSummary, createAccount, getAccount, listAccounts, listAuditRecords, setAccountActive, updateAccount, type Account, type AuditRecord, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
@@ -200,12 +200,12 @@ export function AccountsTable() {
   };
 
   return <>
-    {superAdmin && <SummaryCards items={[
-      { label: 'Total Users', value: summary ? totalUsers : '—', detail: summary ? 'System-wide accounts' : 'Awaiting account summary', tone: 'brand' },
-      { label: 'Active Accounts', value: summary ? activeUsers : '—', detail: summary ? `▲ ${activePercent}% active` : 'Awaiting account summary', tone: 'success' },
-      { label: 'Inactive Accounts', value: summary ? inactiveUsers : '—', detail: summary ? `${inactivePercent}% inactive` : 'Awaiting account summary', tone: 'critical' },
-      { label: 'Roles', value: 4, detail: 'Super Admin, Admin, Manager, Inventory Staff', tone: 'attention' },
-    ]} />}
+    {superAdmin && <section className="sl-sa-kpis sl-inventory-staff-kpis" aria-label="User management summary">
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Total Users</span><strong>{summary ? totalUsers : '—'}</strong><small>{summary ? 'System-wide accounts' : 'Preview · data pending'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UserCheck aria-hidden="true" /></span><div><span>Active Accounts</span><strong>{summary ? activeUsers : '—'}</strong><small>{summary ? `▲ ${activePercent}% active` : 'Preview · data pending'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><UserX aria-hidden="true" /></span><div><span>Inactive Accounts</span><strong>{summary ? inactiveUsers : '—'}</strong><small>{summary ? `${inactivePercent}% inactive` : 'Preview · data pending'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ShieldCheck aria-hidden="true" /></span><div><span>Roles</span><strong>4</strong><small>Super Admin, Admin, Manager, Inventory Staff</small></div></article>
+    </section>}
 
     <div className={superAdmin ? 'sl-v56-main-grid' : undefined}>
       <section className={superAdmin ? 'sl-v56-directory' : undefined}>

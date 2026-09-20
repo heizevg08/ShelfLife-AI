@@ -1,5 +1,2 @@
-import { AdministrationPage } from '../../components/application/AdministrationPage';
-
-export default function AdminAccounts() {
-  return <AdministrationPage areaId="accounts" />;
-}
+import { Redirect } from 'expo-router';
+export default function AdminAccounts() { return <Redirect href="/UserManagement" />; }
