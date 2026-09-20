@@ -15968,3 +15968,196 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 @media(max-width:600px){
   .sl-sa-usage-inventory-pattern .sl-sa-usage-analytics-rail{grid-template-columns:1fr!important;}
 }
+
+/* V257 — ONLY Super Admin /Usage: hard-enforce the full description as one uninterrupted line. */
+.sl-sa-usage-heading .sl-sa-usage-page-header{
+  min-width:max-content!important;
+  width:max-content!important;
+}
+.sl-sa-usage-heading .sl-sa-usage-description{
+  display:block!important;
+  max-width:none!important;
+  width:max-content!important;
+  white-space:nowrap!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  hyphens:none!important;
+}
+
+/* V258 — ONLY Super Admin /Waste: finalized InventoryBatches records UI inheritance.
+   Uses the exact Ingredients/InventoryBatches class chain for records, filters, table,
+   WasteRecording action controls, Audit Logs date-range schema, footer and pagination. */
+.sl-sa-waste-inventory-pattern .sl-sa-waste-ingredients-layout{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.7rem + .25vw,1rem);
+  align-items:stretch;
+}
+.sl-sa-waste-inventory-pattern .sl-sa-waste-ingredients-main{grid-column:1 / span 3;min-width:0;}
+.sl-sa-waste-inventory-pattern .sl-sa-waste-analytics-rail{
+  grid-column:4;
+  min-width:0;
+  display:grid;
+  grid-template-rows:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.7rem + .25vw,1rem);
+}
+.sl-sa-waste-inventory-pattern .sl-sa-waste-analytics-rail>.sl-card{min-width:0;height:100%;}
+.sl-sa-waste-inventory-pattern .sl-sa-ingredients-table-card{height:100%;}
+.sl-sa-waste-inventory-pattern .sl-sa-ingredients-filter-card{
+  grid-template-columns:minmax(220px,1fr) repeat(3,minmax(120px,.32fr)) auto;
+}
+.sl-sa-waste-inventory-pattern .sl-security-activity-reference-table th,
+.sl-sa-waste-inventory-pattern .sl-security-activity-reference-table td{width:14.285714%;}
+@media(max-width:1450px){
+  .sl-sa-waste-inventory-pattern .sl-sa-ingredients-filter-card{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .sl-sa-waste-inventory-pattern .sl-sa-ingredients-search{grid-column:1/-1;}
+  .sl-sa-waste-inventory-pattern .sl-sa-ingredients-filter-actions{justify-content:flex-end;}
+}
+@media(max-width:1120px){
+  .sl-sa-waste-inventory-pattern .sl-sa-waste-ingredients-layout{grid-template-columns:1fr;}
+  .sl-sa-waste-inventory-pattern .sl-sa-waste-ingredients-main,
+  .sl-sa-waste-inventory-pattern .sl-sa-waste-analytics-rail{grid-column:1;}
+  .sl-sa-waste-inventory-pattern .sl-sa-waste-analytics-rail{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto;}
+}
+@media(max-width:900px){.sl-sa-waste-inventory-pattern .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:620px){
+  .sl-sa-waste-inventory-pattern .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}
+  .sl-sa-waste-inventory-pattern .sl-sa-ingredients-search{grid-column:auto;}
+  .sl-sa-waste-inventory-pattern .sl-sa-ingredients-filter-actions{justify-content:stretch;}
+  .sl-sa-waste-inventory-pattern .sl-sa-waste-analytics-rail{grid-template-columns:1fr;}
+}
+
+/* V259 — ONLY Super Admin /Waste: hard-enforce the page description as one uninterrupted line while preserving responsive access. */
+.sl-sa-waste-heading{
+  min-width:0;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:thin;
+}
+.sl-sa-waste-heading .sl-sa-waste-page-header{
+  min-width:max-content!important;
+  width:max-content!important;
+}
+.sl-sa-waste-heading .sl-sa-waste-description{
+  display:block!important;
+  max-width:none!important;
+  width:max-content!important;
+  white-space:nowrap!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  hyphens:none!important;
+  line-height:1.45;
+  font-size:clamp(.78rem,.73rem + .16vw,.94rem);
+}
+
+
+/* V260 — Super Admin modules only: page descriptions inherit the exact
+   typography of the Super Admin Dashboard description. Keep module
+   descriptions on one uninterrupted line while preserving responsive access. */
+.sl-shell[data-role="Super Admin"] .sl-main .sl-page-header > .sl-description{
+  margin:0 0 clamp(1rem,1.35vw,1.4rem)!important;
+  font:var(--sl-font-supporting)!important;
+  font-size:clamp(0.95rem,0.82rem + 0.22vw,1.08rem)!important;
+  line-height:1.5!important;
+  color:var(--sl-muted)!important;
+  display:block!important;
+  max-width:none!important;
+  width:max-content!important;
+  white-space:nowrap!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  hyphens:none!important;
+}
+.sl-shell[data-role="Super Admin"] .sl-main .sl-page-header:has(> .sl-description){
+  min-width:max-content;
+}
+.sl-shell[data-role="Super Admin"] .sl-main > :has(> .sl-page-header),
+.sl-shell[data-role="Super Admin"] .sl-main > .sl-page-header,
+.sl-shell[data-role="Super Admin"] .sl-main .sl-sa-ingredients-heading,
+.sl-shell[data-role="Super Admin"] .sl-main .sl-sa-usage-heading,
+.sl-shell[data-role="Super Admin"] .sl-main .sl-sa-waste-heading{
+  max-width:100%;
+  min-width:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:thin;
+}
+
+/* V261 — Super Admin /ChangeRequests only: restore the established complete UI. */
+.sl-sa-change-page .sl-sa-change-table-scroll{min-width:0;overflow:auto;flex:1 1 auto;}
+.sl-sa-change-page .sl-sa-change-table{width:100%;min-width:72rem;border-collapse:collapse;}
+.sl-sa-change-page .sl-sa-change-empty-row td{height:clamp(18rem,38vh,32rem);text-align:center;vertical-align:middle;}
+.sl-sa-change-page .sl-sa-change-empty-row .sl-state{margin-inline:auto;}
+.sl-sa-change-page .sl-sa-change-pagination{display:flex;align-items:center;gap:var(--sl-space-2);}
+.sl-sa-change-page .sl-v219-custom-date-range{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sl-space-2);min-width:0;}
+.sl-sa-change-page .sl-v219-custom-date-range label{display:grid;gap:.28rem;min-width:0;}
+.sl-sa-change-page .sl-v219-custom-date-range input{width:100%;min-width:0;min-height:clamp(2.18rem,2.04rem + .34vw,2.45rem);padding:.47rem .56rem;border:1px solid var(--sl-border);border-radius:var(--sl-radius);background:var(--sl-surface);color:var(--sl-text);font:inherit;}
+@media(max-width:920px){.sl-sa-change-page .sl-v219-custom-date-range{grid-column:1/-1;}}
+@media(max-width:640px){.sl-sa-change-page .sl-v219-custom-date-range{grid-template-columns:1fr;}.sl-sa-change-page .sl-sa-change-footer{align-items:stretch;}.sl-sa-change-page .sl-sa-change-pagination{width:100%;}.sl-sa-change-page .sl-sa-change-pagination .sl-button{flex:1;}}
+
+/* V266 — ONLY Super Admin /ChangeRequests: responsive/adaptive containment.
+   This intentionally comes after the inherited InventoryBatches rules so the
+   shared .sl-sa-batches-page desktop grid cannot override ChangeRequests at
+   narrower widths. No other role/module is targeted. */
+.sl-sa-change-page{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow-x:hidden;
+}
+.sl-sa-change-page .sl-sa-ingredients-layout,
+.sl-sa-change-page .sl-sa-ingredients-main,
+.sl-sa-change-page .sl-sa-ingredients-table-card,
+.sl-sa-change-page .sl-sa-ingredients-table-filters,
+.sl-sa-change-page .sl-sa-ingredients-filter-card{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+.sl-sa-change-page .sl-sa-ingredients-filter-card{
+  grid-template-columns:minmax(260px,1fr) repeat(4,minmax(130px,.34fr)) auto;
+}
+.sl-sa-change-page .sl-v219-custom-date-range{
+  grid-column:1 / -1;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.sl-sa-change-page .sl-sa-ingredients-table-scroll{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.sl-sa-change-page .sl-sa-ingredients-table{
+  min-width:860px;
+}
+.sl-sa-change-page .sl-staff-usage-footer{
+  max-width:100%;
+  min-width:0;
+  flex-wrap:wrap;
+  row-gap:.65rem;
+}
+@media(max-width:1450px){
+  .sl-sa-change-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .sl-sa-change-page .sl-sa-ingredients-search{grid-column:1 / -1;}
+  .sl-sa-change-page .sl-sa-ingredients-filter-actions{justify-content:flex-end;}
+}
+@media(max-width:900px){
+  .sl-sa-change-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sl-sa-change-page .sl-sa-ingredients-search{grid-column:1 / -1;}
+  .sl-sa-change-page .sl-sa-ingredients-filter-actions{grid-column:1 / -1;justify-content:flex-end;}
+}
+@media(max-width:620px){
+  .sl-sa-change-page .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}
+  .sl-sa-change-page .sl-sa-ingredients-search,
+  .sl-sa-change-page .sl-sa-ingredients-filter-actions,
+  .sl-sa-change-page .sl-v219-custom-date-range{grid-column:auto;}
+  .sl-sa-change-page .sl-v219-custom-date-range{grid-template-columns:1fr;}
+  .sl-sa-change-page .sl-sa-ingredients-filter-actions{justify-content:stretch;flex-wrap:wrap;}
+  .sl-sa-change-page .sl-sa-ingredients-filter-actions > *{flex:1 1 100%;min-width:0;}
+  .sl-sa-change-page .sl-sa-ingredients-filter-actions .sl-button{width:100%;}
+  .sl-sa-change-page .sl-staff-usage-footer{align-items:stretch;flex-direction:column;}
+}

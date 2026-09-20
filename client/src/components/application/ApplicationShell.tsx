@@ -326,6 +326,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
     <div
       ref={appRef}
       className="sl-app sl-shell"
+      data-role={user.role}
       data-collapsed={railCollapsed}
       onScroll={event => setShowBackToTop(event.currentTarget.scrollTop > 520)}
     >

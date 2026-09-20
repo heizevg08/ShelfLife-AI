@@ -1158,11 +1158,16 @@ function SuperAdminUsagePage() {
 
   return <>
     <div className="sl-sa-usage-heading">
-      <PageHeader
-        eyebrow="System Oversight"
-        title="Usage"
-        description="View and monitor ingredient usage across all branches. Track consumption, support forecasting, and identify usage trends."
-      />
+      <header className="sl-page-header sl-sa-usage-page-header">
+        <p className="sl-eyebrow">System Oversight</p>
+        <h1 className="sl-page-title">Usage</h1>
+        <p
+          className="sl-description sl-sa-usage-description"
+          style={{ whiteSpace: 'nowrap', maxWidth: 'none', width: 'max-content' }}
+        >
+          View and monitor ingredient usage across all branches. Track consumption, support forecasting, and identify usage trends.
+        </p>
+      </header>
     </div>
 
     <div className="sl-admin-view sl-sa-usage-page sl-sa-ingredients-page sl-sa-usage-inventory-pattern sl-staff-usage-v150">
@@ -1243,142 +1248,97 @@ function SuperAdminWastePending({ label, compact = false }: { label: string; com
 }
 
 function SuperAdminWastePage() {
+  const [wasteSearch, setWasteSearch] = useState('');
+  const [wasteIngredient, setWasteIngredient] = useState('All Ingredients');
+  const [wasteReason, setWasteReason] = useState('All Reasons');
+  const [wasteDateRange, setWasteDateRange] = useState('any');
+  const [wasteDateFrom, setWasteDateFrom] = useState('');
+  const [wasteDateTo, setWasteDateTo] = useState('');
+  const [wasteRows, setWasteRows] = useState(10);
+  const [wastePage, setWastePage] = useState(1);
+  const [wasteAction, setWasteAction] = useState<'view' | 'edit' | 'delete' | null>(null);
+
+  const resetWasteFilters = () => {
+    setWasteSearch('');
+    setWasteIngredient('All Ingredients');
+    setWasteReason('All Reasons');
+    setWasteDateRange('any');
+    setWasteDateFrom('');
+    setWasteDateTo('');
+    setWastePage(1);
+  };
+
   return <>
-    <PageHeader
-      eyebrow="System Oversight"
-      title="Waste"
-      description="Track and analyze wasted ingredients across all branches. Identify key causes and support waste reduction initiatives."
-    />
+    <div className="sl-sa-waste-heading">
+      <header className="sl-page-header sl-sa-waste-page-header">
+        <p className="sl-eyebrow">System Oversight</p>
+        <h1 className="sl-page-title">Waste</h1>
+        <p
+          className="sl-description sl-sa-waste-description"
+          style={{ whiteSpace: 'nowrap', maxWidth: 'none', width: 'max-content' }}
+        >
+          Track and analyze wasted ingredients across all branches. Identify key causes and support waste reduction initiatives.
+        </p>
+      </header>
+    </div>
 
-    <div className="sl-admin-view sl-sa-waste-page sl-staff-usage-v150">
+    <div className="sl-admin-view sl-sa-waste-page sl-sa-ingredients-page sl-sa-waste-inventory-pattern sl-staff-usage-v150">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-waste-kpis" aria-label="Waste summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
-          <span className="sl-sa-kpi-icon"><Trash2 aria-hidden="true" /></span>
-          <div>
-            <span>Total Waste</span>
-            <strong>—</strong>
-            <small>Awaiting waste volume API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
-          <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
-          <div>
-            <span>Estimated Cost Loss</span>
-            <strong>—</strong>
-            <small>Awaiting waste valuation API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
-          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
-          <div>
-            <span>Waste Records</span>
-            <strong>—</strong>
-            <small>Awaiting waste records API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
-          <span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span>
-          <div>
-            <span>Waste Rate</span>
-            <strong>—</strong>
-            <small>Awaiting waste-rate API</small>
-          </div>
-        </article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2 aria-hidden="true" /></span><div><span>Total Waste</span><strong>—</strong><small>Awaiting waste volume API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span><div><span>Estimated Cost Loss</span><strong>—</strong><small>Awaiting waste valuation API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>Waste Records</span><strong>—</strong><small>Awaiting waste records API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span><div><span>Waste Rate</span><strong>—</strong><small>Awaiting waste-rate API</small></div></article>
       </section>
 
-      <div className="sl-sa-waste-layout">
-        <div className="sl-sa-waste-main">
-          <section className="sl-sa-waste-filter-card" aria-label="Waste filters">
-            <label className="sl-sa-waste-search">
-              <span>Search waste records</span>
-              <div>
-                <Search size={16} aria-hidden="true" />
-                <input
-                  type="search"
-                  placeholder="Search by ingredient, batch ID, reason, or remarks…"
-                  disabled
-                  aria-label="Waste search unavailable until waste service is connected"
-                />
+      <div className="sl-sa-ingredients-layout sl-sa-waste-ingredients-layout">
+        <main className="sl-sa-ingredients-main sl-sa-waste-ingredients-main">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Waste records">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+              <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+              <h2>Waste Records</h2>
+            </header>
+
+            <div className="sl-sa-ingredients-table-filters">
+              <div className="sl-sa-ingredients-filter-card" aria-label="Waste filters">
+                <label className="sl-sa-ingredients-search"><span>Search waste records</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by ingredient, batch ID, reason, or remarks…" value={wasteSearch} onChange={event => { setWasteSearch(event.target.value); setWastePage(1); }} /></div></label>
+                <label><span>Ingredient</span><select value={wasteIngredient} onChange={event => { setWasteIngredient(event.target.value); setWastePage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+                <label><span>Reason</span><select value={wasteReason} onChange={event => { setWasteReason(event.target.value); setWastePage(1); }}><option>All Reasons</option><option disabled>Reason values · data pending</option></select></label>
+                <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={wasteDateRange} onChange={event => { setWasteDateRange(event.target.value); setWastePage(1); }} aria-label="Waste date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
+                {wasteDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom waste date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={wasteDateFrom} max={wasteDateTo || undefined} onChange={event => { setWasteDateFrom(event.target.value); setWastePage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={wasteDateTo} min={wasteDateFrom || undefined} onChange={event => { setWasteDateTo(event.target.value); setWastePage(1); }} /></label></div>}
+                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={resetWasteFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-waste-export-menu" /></div>
               </div>
-            </label>
+            </div>
 
-            <label>
-              <span>Branch</span>
-              <select disabled aria-label="Branch filter unavailable">
-                <option>All Branches</option>
-              </select>
-            </label>
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Waste records" tabIndex={0}>
+              <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
+                <thead><tr><th scope="col">Date</th><th scope="col">Ingredient</th><th scope="col">Batch ID</th><th scope="col">Quantity Wasted</th><th scope="col">Reason</th><th scope="col">Recorded By</th><th scope="col">Actions</th></tr></thead>
+                <tbody><tr className="sl-sa-ingredients-empty-row sl-sa-ingredients-preview-row"><td colSpan={6}><DataState kind="empty" title="No live records yet" description="Waste records will appear here when the waste backend is connected." /></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View waste record" title="View" onClick={() => setWasteAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit waste record" title="Edit" onClick={() => setWasteAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete waste record" title="Delete" onClick={() => setWasteAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+              </table>
+            </div>
 
-            <label>
-              <span>Reason</span>
-              <select disabled aria-label="Reason filter unavailable">
-                <option>All Reasons</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Date Range</span>
-              <div className="sl-sa-waste-date">
-                <CalendarDays size={16} aria-hidden="true" />
-                <input type="text" value="Data pending" readOnly disabled />
-              </div>
-            </label>
-
-            <div className="sl-sa-waste-filter-actions">
-              <button type="button" className="sl-button sl-button-primary" disabled>
-                <Filter size={15} aria-hidden="true" />Filter
-              </button>
-              <button type="button" className="sl-button" disabled>Reset</button>
+            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+              <label><span>Rows per page</span><select value={wasteRows} aria-label="Rows per page" onChange={event => { setWasteRows(Number(event.target.value)); setWastePage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
+              <span className="sl-staff-usage-pagination-note">No live records yet</span>
+              <Pagination compact page={wastePage} pageSize={wasteRows} total={0} itemLabel="waste records" onPageChange={setWastePage} />
             </div>
           </section>
+        </main>
 
-          <section className="sl-sa-waste-table-card" aria-label="Waste records">
-            <div className="sl-sa-waste-table-toolbar">
-              <span>Waste records</span>
-              <button type="button" className="sl-button" disabled title="Export backend is not connected">Export</button>
-            </div>
-
-            <div className="sl-sa-waste-state">
-              <DataState
-                kind="empty"
-                title="No live records yet"
-                description="Waste records"
-                action={<Status>Preview · data pending</Status>}
-              />
-            </div>
-
-            <footer className="sl-sa-waste-footer">
-              <label>
-                <span>Rows per page</span>
-                <select defaultValue="10" disabled><option>10</option></select>
-              </label>
-              <span>Pagination will activate when live waste records are available.</span>
-            </footer>
-          </section>
-        </div>
-
-        <aside className="sl-sa-waste-rail" aria-label="Waste analytics panels">
-          <Card id="sa-waste-reason" title="Waste by Reason">
-            <SuperAdminWastePending label="Waste distribution" compact />
-          </Card>
-          <Card id="sa-waste-trend" title="Waste Trend">
-            <SuperAdminWastePending label="Waste trend" compact />
-          </Card>
-          <Card id="sa-waste-top-ingredients" title="Top Wasted Ingredients">
-            <SuperAdminWastePending label="Wasted ingredients" compact />
-          </Card>
-          <Card id="sa-waste-recent-records" title="Recent Waste Records">
-            <SuperAdminWastePending label="Waste activity" compact />
-          </Card>
+        <aside className="sl-sa-waste-analytics-rail" aria-label="Waste analytics panels">
+          <Card id="sa-waste-reason" title="Waste by Reason"><SuperAdminWastePending label="Waste distribution" compact /></Card>
+          <Card id="sa-waste-trend" title="Waste Trend"><SuperAdminWastePending label="Waste trend" compact /></Card>
+          <Card id="sa-waste-top-ingredients" title="Top Wasted Ingredients"><SuperAdminWastePending label="Wasted ingredients" compact /></Card>
+          <Card id="sa-waste-recent-records" title="Recent Waste Records"><SuperAdminWastePending label="Waste activity" compact /></Card>
         </aside>
       </div>
     </div>
+
+    <Dialog open={wasteAction!==null} title={wasteAction==='delete'?'Confirm Delete':wasteAction==='edit'?'Edit Waste Record':'Waste Record Details'} onDismiss={() => setWasteAction(null)} className="sl-staff-waste-action-dialog">
+      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={wasteAction==='delete'?'A live waste record is required before deletion can be confirmed.':wasteAction==='edit'?'A live waste record is required before editing.':'Waste record details will appear here when live records are available.'} /></div>
+      {wasteAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={() => setWasteAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live waste record">Confirm Delete</button></div>}
+    </Dialog>
   </>;
 }
-
 
 
 function SuperAdminChangeRequestsPending({ label, compact = false }: { label: string; compact?: boolean }) {
@@ -1393,6 +1353,28 @@ function SuperAdminChangeRequestsPending({ label, compact = false }: { label: st
 }
 
 function SuperAdminChangeRequestsPage() {
+  const [requestSearch, setRequestSearch] = useState('');
+  const [requestType, setRequestType] = useState('All Types');
+  const [requestStatus, setRequestStatus] = useState('All Statuses');
+  const [requestRole, setRequestRole] = useState('All Roles');
+  const [requestDateRange, setRequestDateRange] = useState('any');
+  const [requestDateFrom, setRequestDateFrom] = useState('');
+  const [requestDateTo, setRequestDateTo] = useState('');
+  const [requestRows, setRequestRows] = useState(10);
+  const [requestPage, setRequestPage] = useState(1);
+  const [requestAction, setRequestAction] = useState<'view' | 'edit' | 'delete' | null>(null);
+
+  const resetRequestFilters = () => {
+    setRequestSearch('');
+    setRequestType('All Types');
+    setRequestStatus('All Statuses');
+    setRequestRole('All Roles');
+    setRequestDateRange('any');
+    setRequestDateFrom('');
+    setRequestDateTo('');
+    setRequestPage(1);
+  };
+
   return <>
     <PageHeader
       eyebrow="System Oversight"
@@ -1400,139 +1382,57 @@ function SuperAdminChangeRequestsPage() {
       description="Review and manage requests for changes to ingredients, inventory, and other master data."
     />
 
-    <div className="sl-admin-view sl-sa-change-page">
+    <div className="sl-admin-view sl-sa-change-page sl-sa-batches-page sl-sa-ingredients-page sl-staff-usage-v150">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-change-kpis" aria-label="Change request summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
-          <span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span>
-          <div>
-            <span>Total Requests</span>
-            <strong>—</strong>
-            <small>Awaiting request-summary API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
-          <span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span>
-          <div>
-            <span>Pending Review</span>
-            <strong>—</strong>
-            <small>Awaiting review queue API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
-          <span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
-          <div>
-            <span>Approved</span>
-            <strong>—</strong>
-            <small>Awaiting approvals API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
-          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
-          <div>
-            <span>Rejected</span>
-            <strong>—</strong>
-            <small>Awaiting decision API</small>
-          </div>
-        </article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span><div><span>Total Requests</span><strong>—</strong><small>Awaiting request-summary API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Pending Review</span><strong>—</strong><small>Awaiting review queue API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span><div><span>Approved</span><strong>—</strong><small>Awaiting approvals API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>Rejected</span><strong>—</strong><small>Awaiting decision API</small></div></article>
       </section>
 
-      <div className="sl-sa-change-layout">
-        <div className="sl-sa-change-main">
-          <section className="sl-sa-change-filter-card" aria-label="Change request filters">
-            <label className="sl-sa-change-search">
-              <span>Search requests</span>
-              <div>
-                <Search size={16} aria-hidden="true" />
-                <input
-                  type="search"
-                  placeholder="Search by request ID, ingredient, user, or details…"
-                  disabled
-                  aria-label="Change request search unavailable until request service is connected"
-                />
+      <div className="sl-sa-ingredients-layout sl-sa-batches-ingredients-layout">
+        <main className="sl-sa-ingredients-main sl-sa-batches-ingredients-main">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Change request records">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+              <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+              <h2>Change Request Records</h2>
+            </header>
+
+            <div className="sl-sa-ingredients-table-filters">
+              <div className="sl-sa-ingredients-filter-card" aria-label="Change request filters">
+                <label className="sl-sa-ingredients-search"><span>Search requests</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by request ID, ingredient, user, or details…" value={requestSearch} onChange={event => setRequestSearch(event.target.value)} /></div></label>
+                <label><span>Request Type</span><select value={requestType} onChange={event => { setRequestType(event.target.value); setRequestPage(1); }}><option>All Types</option><option disabled>Request types · data pending</option></select></label>
+                <label><span>Status</span><select value={requestStatus} onChange={event => { setRequestStatus(event.target.value); setRequestPage(1); }}><option>All Statuses</option><option>Pending</option><option>Approved</option><option>Rejected</option></select></label>
+                <label><span>Requested By Role</span><select value={requestRole} onChange={event => { setRequestRole(event.target.value); setRequestPage(1); }}><option>All Roles</option><option>Admin</option><option>Manager</option><option>Inventory Staff</option></select></label>
+                <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={requestDateRange} onChange={event => { setRequestDateRange(event.target.value); setRequestPage(1); }} aria-label="Change request date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
+                {requestDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom change request date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={requestDateFrom} max={requestDateTo || undefined} onChange={event => { setRequestDateFrom(event.target.value); setRequestPage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={requestDateTo} min={requestDateFrom || undefined} onChange={event => { setRequestDateTo(event.target.value); setRequestPage(1); }} /></label></div>}
+                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={resetRequestFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-change-requests-export-menu" /></div>
               </div>
-            </label>
+            </div>
 
-            <label>
-              <span>Request Type</span>
-              <select disabled aria-label="Request type filter unavailable">
-                <option>All Types</option>
-              </select>
-            </label>
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Change request records" tabIndex={0}>
+              <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
+                <thead><tr><th scope="col">Request ID</th><th scope="col">Request Type</th><th scope="col">Requested Change</th><th scope="col">Requested By</th><th scope="col">Date Requested</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+                <tbody><tr className="sl-sa-ingredients-empty-row sl-sa-ingredients-preview-row"><td colSpan={6}><DataState kind="empty" title="No live records yet" description="Change request records will appear here when the change-request backend is connected." /></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Change request actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View change request" title="View" onClick={() => setRequestAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit change request" title="Edit" onClick={() => setRequestAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete change request" title="Delete" onClick={() => setRequestAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+              </table>
+            </div>
 
-            <label>
-              <span>Status</span>
-              <select disabled aria-label="Status filter unavailable">
-                <option>All Statuses</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Requested By (Role)</span>
-              <select disabled aria-label="Role filter unavailable">
-                <option>All Roles</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Date Range</span>
-              <div className="sl-sa-change-date">
-                <CalendarDays size={16} aria-hidden="true" />
-                <input type="text" value="Data pending" readOnly disabled />
-              </div>
-            </label>
-
-            <div className="sl-sa-change-filter-actions">
-              <button type="button" className="sl-button sl-button-primary" disabled>
-                <Filter size={15} aria-hidden="true" />Filter
-              </button>
-              <button type="button" className="sl-button" disabled>Reset</button>
+            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+              <label><span>Rows per page</span><select value={requestRows} aria-label="Rows per page" onChange={event => { setRequestRows(Number(event.target.value)); setRequestPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
+              <span className="sl-staff-usage-pagination-note">No live records yet</span>
+              <Pagination compact page={requestPage} pageSize={requestRows} total={0} itemLabel="requests" onPageChange={setRequestPage} />
             </div>
           </section>
-
-          <section className="sl-sa-change-table-card" aria-label="Change requests">
-            <div className="sl-sa-change-table-toolbar">
-              <span>Change requests</span>
-              <button type="button" className="sl-button" disabled title="Export backend is not connected">Export</button>
-            </div>
-
-            <div className="sl-sa-change-state">
-              <DataState
-                kind="empty"
-                title="No live records yet"
-                description="Change requests"
-                action={<Status>Preview · data pending</Status>}
-              />
-            </div>
-
-            <footer className="sl-sa-change-footer">
-              <label>
-                <span>Rows per page</span>
-                <select defaultValue="10" disabled><option>10</option></select>
-              </label>
-              <span>Pagination will activate when live change-request records are available.</span>
-            </footer>
-          </section>
-        </div>
-
-        <aside className="sl-sa-change-rail" aria-label="Change request analytics panels">
-          <Card id="sa-change-type" title="Requests by Type">
-            <SuperAdminChangeRequestsPending label="Change request types" compact />
-          </Card>
-          <Card id="sa-change-status" title="Requests by Status">
-            <SuperAdminChangeRequestsPending label="Request statuses" compact />
-          </Card>
-          <Card id="sa-change-recent" title="Recent Activity">
-            <SuperAdminChangeRequestsPending label="Change request activity" compact />
-          </Card>
-        </aside>
+        </main>
       </div>
     </div>
+
+    <Dialog open={requestAction!==null} title={requestAction==='delete'?'Confirm Delete':requestAction==='edit'?'Edit Change Request':'Change Request Details'} onDismiss={() => setRequestAction(null)} className="sl-staff-waste-action-dialog">
+      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={requestAction==='delete'?'A live change request is required before deletion can be confirmed.':requestAction==='edit'?'A live change request is required before editing.':'Change request details will appear here when live records are available.'} /></div>
+      {requestAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={() => setRequestAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live change request">Confirm Delete</button></div>}
+    </Dialog>
   </>;
 }
-
 
 function SuperAdminExpirationPending({ label, compact = false }: { label: string; compact?: boolean }) {
   return <div className={`sl-sa-expiration-pending${compact ? ' compact' : ''}`}>
