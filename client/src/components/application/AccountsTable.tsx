@@ -7,7 +7,7 @@ import { Dialog } from './Dialog';
 import { DataState, Pagination, Status, SummaryCards } from './primitives';
 
 const blank = { firstName: '', lastName: '', email: '', password: '' };
-type ManagedRole = 'Admin' | 'Manager' | 'Inventory Staff';
+type ManagedRole = 'Admin' | 'Inventory Manager' | 'Inventory Staff';
 const NAME_LIMIT = 25;
 const EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/;
 const PASSWORD_MAX_UTF8_BYTES = 1024;
@@ -25,8 +25,8 @@ function utf8Length(value: string) {
 export function AccountsTable() {
   const { user } = useApplicationWorkspace();
   const superAdmin = user.role === 'Super Admin';
-  const assignableRoles: ManagedRole[] = superAdmin ? ['Admin', 'Manager', 'Inventory Staff'] : ['Manager', 'Inventory Staff'];
-  const [assignedRole, setAssignedRole] = useState<ManagedRole>(superAdmin ? 'Admin' : 'Manager');
+  const assignableRoles: ManagedRole[] = superAdmin ? ['Admin', 'Inventory Manager', 'Inventory Staff'] : ['Inventory Manager', 'Inventory Staff'];
+  const [assignedRole, setAssignedRole] = useState<ManagedRole>(superAdmin ? 'Admin' : 'Inventory Manager');
   const [page, setPage] = useState(1), [pageSize, setPageSize] = useState(10), [sort, setSort] = useState('createdAt'), [refresh, setRefresh] = useState(0);
   const [directorySearch, setDirectorySearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All Roles');
@@ -61,7 +61,7 @@ export function AccountsTable() {
     return () => abort.abort();
   }, [superAdmin, refresh]);
 
-  const mayManage = (account: Account) => account.id !== user.id && (superAdmin ? ['Admin', 'Manager', 'Inventory Staff'].includes(account.role) : user.role === 'Admin' && (account.role === 'Manager' || account.role === 'Inventory Staff'));
+  const mayManage = (account: Account) => account.id !== user.id && (superAdmin ? ['Admin', 'Inventory Manager', 'Inventory Staff'].includes(account.role) : user.role === 'Admin' && (account.role === 'Inventory Manager' || account.role === 'Inventory Staff'));
   const visibleAccounts = useMemo(() => {
     if (!data) return [];
     const query = directorySearch.trim().toLowerCase();
@@ -177,7 +177,7 @@ export function AccountsTable() {
   const inactiveUsers = summary?.inactiveUsers ?? 0;
   const activePercent = totalUsers ? Math.round((activeUsers / totalUsers) * 100) : 0;
   const inactivePercent = totalUsers ? Math.round((inactiveUsers / totalUsers) * 100) : 0;
-  const roleDistribution = (['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const).map(role => ({
+  const roleDistribution = (['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'] as const).map(role => ({
     role,
     count: roleCounts[role] ?? 0,
   }));
@@ -204,7 +204,7 @@ export function AccountsTable() {
       { label: 'Total Users', value: summary ? totalUsers : '—', detail: summary ? 'System-wide accounts' : 'Awaiting account summary', tone: 'brand' },
       { label: 'Active Accounts', value: summary ? activeUsers : '—', detail: summary ? `▲ ${activePercent}% active` : 'Awaiting account summary', tone: 'success' },
       { label: 'Inactive Accounts', value: summary ? inactiveUsers : '—', detail: summary ? `${inactivePercent}% inactive` : 'Awaiting account summary', tone: 'critical' },
-      { label: 'Roles', value: 4, detail: 'Super Admin, Admin, Manager, Inventory Staff', tone: 'attention' },
+      { label: 'Roles', value: 4, detail: 'Super Admin, Admin, Inventory Manager, Inventory Staff', tone: 'attention' },
     ]} />}
 
     <div className={superAdmin ? 'sl-v56-main-grid' : undefined}>
@@ -219,7 +219,7 @@ export function AccountsTable() {
           </label>
           <label className="sl-v56-filter">Role
             <select className="sl-admin-input" value={roleFilter} onChange={event => { setRoleFilter(event.target.value); setPage(1); }}>
-              <option>All Roles</option>{superAdmin && <option>Super Admin</option>}<option>Admin</option><option>Manager</option><option>Inventory Staff</option>
+              <option>All Roles</option>{superAdmin && <option>Super Admin</option>}<option>Admin</option><option>Inventory Manager</option><option>Inventory Staff</option>
             </select>
           </label>
           <label className="sl-v56-filter">Status
@@ -232,8 +232,8 @@ export function AccountsTable() {
             setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
           }}>Reset</button>
           {!superAdmin && <button className="sl-button sl-button-primary sl-admin-users-apply" type="button" onClick={() => setPage(1)}>Apply Filters</button>}
-          {superAdmin && <button className="sl-button sl-button-primary sl-v56-add-user" disabled={busy} onClick={() => {
-            setMode('create'); setAssignedRole('Admin'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage('');
+          {<button className="sl-button sl-button-primary sl-v56-add-user" disabled={busy} onClick={() => {
+            setMode('create'); setAssignedRole(superAdmin ? 'Admin' : 'Inventory Manager'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage('');
           }}><UserPlus size={16} aria-hidden="true" /> Add User</button>}
         </div>
 
@@ -372,7 +372,7 @@ export function AccountsTable() {
       </form>
     </Dialog>
 
-    <Dialog open={mode === 'view'} title="Account details" onDismiss={close}>
+    <Dialog open={mode === 'view'} title="Account details" onDismiss={close} busy={busy} actions={selected && mayManage(selected) ? <><button className="sl-button" disabled={busy} onClick={() => void open(selected, 'edit')}>Edit account</button><button className="sl-button" disabled={busy} onClick={() => void open(selected, 'lifecycle')}>{selected.isActive ? 'Deactivate account' : 'Reactivate account'}</button></> : undefined}>
       {selected && <dl className="sl-identity-details">{[['Name', selected.name], ['Email', selected.email], ['Role', selected.role], ['Status', selected.isActive ? 'Active' : 'Inactive'], ['Created', new Date(selected.createdAt).toLocaleString(undefined, { hour12: true })]].map(([label, value]) => <div key={label}><dt className="sl-supporting">{label}</dt><dd>{value}</dd></div>)}</dl>}
     </Dialog>
     <Dialog open={mode === 'lifecycle'} title={`${selected?.isActive ? 'Deactivate' : 'Reactivate'} account?`} onDismiss={close} busy={busy} actions={<><button className="sl-button" data-initial-focus disabled={busy} onClick={close}>Cancel</button><button className="sl-button sl-button-primary" disabled={busy} onClick={lifecycle}>{busy ? 'Saving…' : selected?.isActive ? 'Deactivate account' : 'Reactivate account'}</button></>}>

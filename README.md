@@ -1,6 +1,6 @@
 # ShelfLife AI
 
-Expo SDK 57 web client and an Express/Mongoose API, managed with npm workspaces.
+Vite + React + TypeScript PWA and an Express/Mongoose API, managed with npm workspaces.
 Run commands below from `C:\Final_Project\ShelfLife-AI` unless noted otherwise.
 
 ## Requirements
@@ -37,7 +37,7 @@ Generate a JWT secret and paste it into `server/.env`:
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Do not commit `.env` or put server secrets in Expo public variables.
+Do not commit `.env` or put server secrets in Vite public variables.
 The API always selects the `shelflifeai` database.
 
 To create the initial development account, fill in `DEV_ADMIN_EMAIL`,
@@ -60,7 +60,7 @@ Terminal 1 (API, automatically reloads source changes and reads `server/.env`):
 npm run server
 ```
 
-Terminal 2 (Expo web client):
+Terminal 2 (Vite web client):
 
 ```powershell
 npm run client
@@ -69,17 +69,18 @@ npm run client
 Open http://localhost:8081 and keep both terminals running. Ctrl+C stops each process.
 `npm run dev` is an alias for the web client only; it does not start both services.
 Inside `client`, `npm run dev` or `npm run web` starts the web client and `npm start`
-starts the general Expo development server. Inside `server`, use `npm run dev`.
+also starts Vite. Inside `server`, use `npm run dev`.
 
 The API readiness URL is http://127.0.0.1:5000/api/health/ready; a healthy response
 is `{"status":"ready"}`. Use `localhost` consistently in the browser for login and
-persistent cookies. If Expo uses another port, update `CORS_ORIGINS` and restart
-the API. `EXPO_PUBLIC_API_URL` can override the API origin when needed.
+persistent cookies. If Vite uses another port, update `CORS_ORIGINS` and restart
+the API. `VITE_API_URL` in ignored `client/.env.local` can override the API origin when needed.
 
 ## Verification and compiled backend
 
 ```powershell
 npm run typecheck
+npm test --workspace client
 npm test --workspace server
 npm run build:web
 npm run build --workspace server
@@ -91,7 +92,7 @@ first, and stop the development API before starting a second API on the same por
 
 ## Common startup failures
 
-- `'expo' is not recognized`: run `npm install` from the root; the client manifest must contain its Expo/React dependencies.
+- `'vite' is not recognized`: run `npm install` from the repository root.
 - `Cannot find module .../dist/server.js`: use `npm run server` for development, or build the server before its production-style `start` command.
 - `EADDRINUSE`: another process already occupies the configured port. Check the readiness URL before starting another API; stop the existing server in its terminal if a restart is needed.
 - `Invalid configuration`: check the named fields in `server/.env`.

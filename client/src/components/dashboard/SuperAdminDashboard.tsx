@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link } from '../../routing/navigation';
 import { AlertTriangle, ArrowRight, Box, FileText, LockKeyhole, ShieldCheck, UsersRound } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { dashboardSummary, listAccounts, listAuditRecords, type Account, type AuditRecord, type DashboardSummary } from '../../services/administration';
@@ -6,7 +6,7 @@ import type { SessionUser } from '../../services/auth';
 import { Card, DataState, Status, PageHeader} from '../application/primitives';
 
 const AUTO_REFRESH_MS = 15000;
-const roleOrder = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
+const roleOrder = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'] as const;
 
 function UnavailableMetric({ label }: { label: string }) {
   return <div className="sl-sa-unavailable"><strong>—</strong><span>{label}</span></div>;

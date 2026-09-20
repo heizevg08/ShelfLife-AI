@@ -76,14 +76,11 @@ The command also migrates legacy `Manager` accounts to `Inventory Manager` in a
 transaction, invalidates their existing access/refresh sessions and pending reset
 tokens, and records sanitized before/after snapshots as a System audit event.
 Canonical role strings are `Inventory Staff`, `Inventory Manager`, `Admin`, and
-`Super Admin`. New writes reject `Manager`. Existing role privileges are unchanged;
-ingredient CRUD remains Admin-only. Run maintenance before starting this revision
+`Super Admin`. New writes reject `Manager`. Ingredient privileges now follow the brief;
+ingredient reads permit all four roles, creation permits Inventory Manager and Inventory Staff, and update/removal permits Inventory Manager only. Removal is the existing permanent DELETE operation, not a soft archive. Run maintenance before starting this revision
 against any database containing the old role.
 
-**Client transition:** the unchanged Expo client still uses `Manager` in role
-pickers and navigation. Manager login/routing and role submission require the
-canonical mapping in the separate Vite/frontend pass. No frontend code or route
-test was changed in this backend pass.
+**Client transition:** the Vite frontend now uses canonical role names and the ingredient permissions above.
 
 Login allows five failed attempts per normalized email/socket-IP pair in a
 15-minute fixed window. The sixth returns HTTP 429 and `Retry-After`, including

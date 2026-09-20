@@ -3,11 +3,8 @@
 # dependencies
 node_modules/
 
-# Expo
-.expo/
+# Build output
 dist/
-web-build/
-expo-env.d.ts
 
 # Native
 .kotlin/
@@ -18,8 +15,6 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
-# Metro
-.metro-health-check*
 
 # debug
 npm-debug.*
@@ -45,3 +40,8 @@ example
 /android
 /client/ios
 /client/android
+
+# Vite browser configuration and test artifacts
+/client/.env
+/client/test-results/
+/client/playwright-report/

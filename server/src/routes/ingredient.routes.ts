@@ -10,12 +10,11 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
   const router = Router(), actions = ingredientControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
-  router.use(authorizeAdministration(['Admin']));
-  router.use(json({ limit: '100kb' }));
-  router.get('/', actions.list);
-  router.post('/', actions.create);
-  router.put('/:id', actions.update);
-  router.delete('/:id', actions.remove);
+
+  router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff']), actions.list);
+  router.post('/', authorizeAdministration(['Inventory Manager', 'Inventory Staff']), json({ limit: '100kb' }), actions.create);
+  router.put('/:id', authorizeAdministration(['Inventory Manager']), json({ limit: '100kb' }), actions.update);
+  router.delete('/:id', authorizeAdministration(['Inventory Manager']), actions.remove);
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });
   const error: ErrorRequestHandler = (value, _req, res, next) => {
     if (res.headersSent) { next(value); return; }

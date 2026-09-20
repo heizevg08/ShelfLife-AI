@@ -26,7 +26,7 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
   assert.deepEqual(ingredientPagination({ page: '2', pageSize: '10', search: 'milk', category: 'Dairy' }), { page: 2, pageSize: 10, sortBy: 'createdAt', sortOrder: 'desc', search: 'milk', category: 'Dairy' });
 });
 
-test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and returns real writes', async () => {
+test('ingredient HTTP API authenticates, enforces per-method roles, validates, pages, and returns real writes', async () => {
   const rows = [];
   const store = {
     async list(query) {
@@ -42,7 +42,9 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
     async update(actorId, id, input) { const index = rows.findIndex(row => row.id === id); if (index < 0) return null; rows[index] = { ...rows[index], ...input, updatedAt: new Date().toISOString() }; return rows[index]; },
     async remove(actorId, id) { const index = rows.findIndex(row => row.id === id); if (index < 0) return false; rows.splice(index, 1); return true; },
   };
-  const users = [admin, manager];
+  const staff = { ...admin, id: '4'.repeat(24), _id: '4'.repeat(24), role: 'Inventory Staff' };
+  const superAdmin = { ...admin, id: '5'.repeat(24), _id: '5'.repeat(24), role: 'Super Admin' };
+  const users = [admin, manager, staff, superAdmin];
   const auth = createAuth({ byId: async id => users.find(user => user.id === id) || null, byEmail: async () => null }, randomBytes(48).toString('hex'));
   const app = createApp([], () => true, auth, undefined, undefined, createIngredients(store));
   const http = createServer(app); http.listen(0, '127.0.0.1'); await once(http, 'listening');
@@ -52,16 +54,26 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
   const input = { name: 'Whole Milk', brand: 'Local', description: '', category: 'Dairy', unitOfMeasure: 'L', minimumStock: 4, standardUnitCost: 82.5, defaultShelfLifeDays: 7 };
   try {
     assert.equal((await request(undefined)).status, 401);
-    assert.equal((await request(manager)).status, 403);
-    assert.equal((await request(admin, 'POST', { ...input, expirationDate: '2030-01-01' })).status, 400);
-    const created = await request(admin, 'POST', input); assert.equal(created.status, 201);
-    const body = await created.json(); assert.equal(body.ingredient.name, 'Whole Milk'); assert.equal(body.ingredient.createdBy.id, admin.id);
-    const listed = await (await request(admin, 'GET', undefined, '?page=1&pageSize=10&search=milk&category=Dairy')).json();
+    for (const role of users) assert.equal((await request(role)).status, 200);
+    for (const role of [admin, superAdmin]) {
+      assert.equal((await request(role, 'POST', input)).status, 403);
+      assert.equal((await request(role, 'PUT', input, '/' + '3'.repeat(24))).status, 403);
+      assert.equal((await request(role, 'DELETE', undefined, '/' + '3'.repeat(24))).status, 403);
+    }
+    assert.equal((await request(staff, 'POST', { ...input, name: 'Staff creation' })).status, 201);
+    assert.equal((await request(staff, 'PUT', input, '/' + rows[0].id)).status, 403);
+    assert.equal((await request(staff, 'DELETE', undefined, '/' + rows[0].id)).status, 403);
+    assert.equal(rows[0].name, 'Staff creation');
+    rows.length = 0;
+    assert.equal((await request(manager, 'POST', { ...input, expirationDate: '2030-01-01' })).status, 400);
+    const created = await request(manager, 'POST', input); assert.equal(created.status, 201);
+    const body = await created.json(); assert.equal(body.ingredient.name, 'Whole Milk'); assert.equal(body.ingredient.createdBy.id, manager.id);
+    const listed = await (await request(manager, 'GET', undefined, '?page=1&pageSize=10&search=milk&category=Dairy')).json();
     assert.equal(listed.total, 1); assert.equal(listed.items[0].id, body.ingredient.id);
-    const duplicate = await request(admin, 'POST', input); assert.equal(duplicate.status, 409); assert.equal((await duplicate.json()).error.code, 'CONFLICT');
+    const duplicate = await request(manager, 'POST', input); assert.equal(duplicate.status, 409); assert.equal((await duplicate.json()).error.code, 'CONFLICT');
     const id = body.ingredient.id;
-    const updated = await request(admin, 'PUT', { ...input, brand: 'Updated Brand' }, `/${id}`); assert.equal(updated.status, 200); assert.equal((await updated.json()).ingredient.brand, 'Updated Brand');
-    assert.equal((await request(admin, 'DELETE', undefined, `/${id}`)).status, 204);
-    assert.equal((await request(admin, 'DELETE', undefined, `/${id}`)).status, 404);
+    const updated = await request(manager, 'PUT', { ...input, brand: 'Updated Brand' }, `/${id}`); assert.equal(updated.status, 200); assert.equal((await updated.json()).ingredient.brand, 'Updated Brand');
+    assert.equal((await request(manager, 'DELETE', undefined, `/${id}`)).status, 204);
+    assert.equal((await request(manager, 'DELETE', undefined, `/${id}`)).status, 404);
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });

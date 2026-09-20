@@ -1,5 +1,4 @@
-import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+import { apiBaseUrl } from './config';
 import { clearSession, getAccessToken, setAccessToken } from './session';
 
 // Preserve HTTP status so presentation can distinguish rejected credentials from outages.
@@ -14,7 +13,7 @@ export interface SessionUser {
   id: string;
   name: string;
   email: string;
-  role: 'Super Admin' | 'Admin' | 'Manager' | 'Inventory Staff';
+  role: 'Super Admin' | 'Admin' | 'Inventory Manager' | 'Inventory Staff';
   isActive: boolean;
 }
 
@@ -29,12 +28,7 @@ export function sessionDisplayName(user: Pick<SessionUser, 'name' | 'role'>): st
 export function sessionInitials(user: Pick<SessionUser, 'name' | 'role'>): string {
   return sessionDisplayName(user).split(/\s+/).filter(Boolean).map(part => part[0]).slice(0, 2).join('').toUpperCase();
 }
-function baseUrl() {
-  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, '');
-  if (Platform.OS === 'web') return `http://${typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'localhost' : '127.0.0.1'}:5000`;
-  const host = Constants.expoConfig?.hostUri?.split(':')[0] || '10.0.2.2';
-  return `http://${host}:5000`;
-}
+const baseUrl = () => apiBaseUrl;
 async function request(path: string, options: RequestInit = {}) {
   const response = await fetch(`${baseUrl()}/api/auth/${path}`, { ...options, credentials: 'include', cache: 'no-store' });
   if (response.status === 204) return;

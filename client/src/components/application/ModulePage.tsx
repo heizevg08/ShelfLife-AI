@@ -1,4 +1,5 @@
-import { Link, type Href } from 'expo-router';
+import { ingredientPermissions } from './workspace';
+import { Link, type Href } from '../../routing/navigation';
 import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccountsTable } from './AccountsTable';
@@ -146,7 +147,9 @@ function ManagerInventoryPage() {
   </>;
 }
 
-function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | null; setPreview: (value: PreviewId | null) => void }) {
+function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; setPreview: (value: PreviewId | null) => void }) {
+  const { user } = useApplicationWorkspace();
+  const permissions = ingredientPermissions(user.role);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [category, setCategory] = useState('All');
   const [search, setSearch] = useState('');
@@ -188,12 +191,12 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
   };
   const setFieldError = (key: IngredientField, value?: string) => setErrors(current => ({ ...current, [key]: value }));
   const dismiss = () => { if (!busy) setPreview(null); };
-  const open = () => { setEditIngredient(null); setForm(emptyIngredient); setErrors({}); setFormError(''); setPreview('Ingredients'); };
-  const openEdit = (item: Ingredient) => { setEditIngredient(item); setForm({ name:item.name, brand:item.brand || '', category:item.category, unit:item.unitOfMeasure, minStock:item.minimumStock === undefined ? '' : String(item.minimumStock), unitCost:item.standardUnitCost === undefined ? '' : String(item.standardUnitCost), shelfLife:item.defaultShelfLifeDays === undefined ? '' : String(item.defaultShelfLifeDays), description:item.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
-  const removeIngredient = async () => { if (!deleteTarget || actionBusy) return; setActionBusy(true); setDeleteError(''); try { await deleteIngredient(deleteTarget.id); setDeleteTarget(null); setRefresh(value => value + 1); } catch (error) { setDeleteError(error instanceof ApiError ? error.message : 'The ingredient could not be removed. Check your connection and try again.'); } finally { setActionBusy(false); } };
+  const open = () => { if (!permissions.create) return; setEditIngredient(null); setForm(emptyIngredient); setErrors({}); setFormError(''); setPreview('Ingredients'); };
+  const openEdit = (item: Ingredient) => { if (!permissions.update) return; setEditIngredient(item); setForm({ name:item.name, brand:item.brand || '', category:item.category, unit:item.unitOfMeasure, minStock:item.minimumStock === undefined ? '' : String(item.minimumStock), unitCost:item.standardUnitCost === undefined ? '' : String(item.standardUnitCost), shelfLife:item.defaultShelfLifeDays === undefined ? '' : String(item.defaultShelfLifeDays), description:item.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
+  const removeIngredient = async () => { if (!permissions.remove || !deleteTarget || actionBusy) return; setActionBusy(true); setDeleteError(''); try { await deleteIngredient(deleteTarget.id); setDeleteTarget(null); setRefresh(value => value + 1); } catch (error) { setDeleteError(error instanceof ApiError ? error.message : 'The ingredient could not be removed. Check your connection and try again.'); } finally { setActionBusy(false); } };
   const save = async (event: FormEvent) => {
     event.preventDefault();
-    if (busy) return;
+    if (busy || !(editIngredient ? permissions.update : permissions.create)) return;
     const next: Partial<Record<IngredientField, string>> = {};
     const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
     if (!clean.name) next.name = 'Enter an ingredient name.';
@@ -255,9 +258,9 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
       <section className="sl-admin-ingredient-table-card" aria-label="Ingredients">
         <div className="sl-admin-ingredient-table-toolbar">
           <strong>{data ? `Showing ${visibleStart.toLocaleString()}–${visibleEnd.toLocaleString()} of ${data.total.toLocaleString()} ingredients` : loadError ? 'Ingredient records unavailable' : 'Loading ingredient records'}</strong>
-          <div><button className="sl-button" type="button" disabled={!data?.items.length} onClick={exportVisible}><Download size={16}/>Export</button><button ref={addButtonRef} className="sl-button sl-button-primary" type="button" onClick={open}><Plus size={16}/>Add Ingredient</button></div>
+          <div><button className="sl-button" type="button" disabled={!data?.items.length} onClick={exportVisible}><Download size={16}/>Export</button>{permissions.create && <button ref={addButtonRef} className="sl-button sl-button-primary" type="button" onClick={open}><Plus size={16}/>Add Ingredient</button>}</div>
         </div>
-        {loadError ? <div className="sl-admin-ingredient-state"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></div> : !data ? <div className="sl-admin-ingredient-state"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></div> : data.items.length ? <div className="sl-admin-ingredient-table-scroll"><table><thead><tr><th aria-label="Select"><input type="checkbox" disabled /></th><th>Ingredient</th><th>Category</th><th>Default Unit</th><th>Typical Shelf Life</th><th>Status</th><th>Date Added</th><th>Actions</th></tr></thead><tbody>{data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><Status>Active</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Remove ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button></div></td></tr>)}</tbody></table></div> : <div className="sl-admin-ingredient-state"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} /><span className="sl-admin-data-pending">Preview · data pending</span></div>}
+        {loadError ? <div className="sl-admin-ingredient-state"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></div> : !data ? <div className="sl-admin-ingredient-state"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></div> : data.items.length ? <div className="sl-admin-ingredient-table-scroll"><table><thead><tr><th aria-label="Select"><input type="checkbox" disabled /></th><th>Ingredient</th><th>Category</th><th>Default Unit</th><th>Typical Shelf Life</th><th>Status</th><th>Date Added</th><th>Actions</th></tr></thead><tbody>{data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><Status>Active</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button>{permissions.update && <button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button>}{permissions.remove && <button type="button" className="sl-icon-button" aria-label={`Remove ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button>}</div></td></tr>)}</tbody></table></div> : <div className="sl-admin-ingredient-state"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} /><span className="sl-admin-data-pending">Preview · data pending</span></div>}
         {data && <div className="sl-admin-ingredient-pagination"><label>Rows per page <select value={data.pageSize} disabled><option>{data.pageSize}</option></select></label><Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} /></div>}
       </section>
     </div>
@@ -280,7 +283,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
       {viewIngredient && <div className="sl-ingredient-detail-reference">
         <div className="sl-ingredient-detail-hero sl-ingredient-detail-no-photo">
           <span className="sl-ingredient-detail-copy"><span className="sl-ingredient-name-row"><strong>{viewIngredient.name}</strong><Status>Active</Status></span><small>{viewIngredient.category} · {viewIngredient.brand || 'No brand specified'}</small>{viewIngredient.description && <small>{viewIngredient.description}</small>}</span>
-          <div className="sl-ingredient-detail-actions"><button type="button" className="sl-button" onClick={() => { const item=viewIngredient; setViewIngredient(null); openEdit(item); }}><Pencil size={15} aria-hidden="true" /> Edit</button><button type="button" className="sl-icon-button" aria-label="More ingredient actions"><MoreVertical size={18} aria-hidden="true" /></button></div>
+          {permissions.update && <div className="sl-ingredient-detail-actions"><button type="button" className="sl-button" onClick={() => { const item=viewIngredient; setViewIngredient(null); openEdit(item); }}><Pencil size={15} aria-hidden="true" /> Edit</button><button type="button" className="sl-icon-button" aria-label="More ingredient actions"><MoreVertical size={18} aria-hidden="true" /></button></div>}
         </div>
         <div className="sl-detail-grid"><span><small>Unit of Measure</small><strong>{viewIngredient.unitOfMeasure}</strong></span><span><small>Minimum Stock Level</small><strong>{viewIngredient.minimumStock ?? '—'} {viewIngredient.unitOfMeasure}</strong></span><span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `₱${viewIngredient.standardUnitCost.toFixed(2)} / ${viewIngredient.unitOfMeasure}`}</strong></span><span><small>Default Shelf Life</small><strong>{viewIngredient.defaultShelfLifeDays ? `${viewIngredient.defaultShelfLifeDays} days` : '—'}</strong></span></div>
         <section className="sl-ingredient-statistics"><h4>Statistics</h4><div className="sl-ingredient-stat-grid"><span><small>Total Batches</small><strong>—</strong></span><span><small>Current Stock</small><strong>—</strong></span><span><small>Total Used (This Month)</small><strong>—</strong></span><span><small>Total Waste (This Month)</small><strong>—</strong></span></div><p className="sl-sr-only">Statistics will populate when inventory usage and waste summary data is available.</p></section>
@@ -1552,7 +1555,7 @@ function ManagerChangeRequestsPage() {
           <div className="sl-mgr-cr-filters">
             <label className="search"><span className="sr-only">Search requests</span><div><Search size={17}/><input placeholder="Search requests..." disabled /></div></label>
             <label><span>Request Type</span><select disabled><option>All Types</option></select></label>
-            <label><span>Submitted By</span><select disabled><option>All Staff</option></select></label>
+            <label><span>Submitted By</span><select disabled><option>All Inventory Staff</option></select></label>
             <label><span>Date Range</span><div className="date"><CalendarDays size={16}/><select disabled><option>Last 30 Days</option></select></div></label>
             <button className="sl-button" disabled>Reset</button>
           </div>
@@ -1588,7 +1591,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
     const adminUsers = user.role === 'Admin';
     const liveValue = (value: number | undefined) => accountTotals ? (value ?? 0).toLocaleString() : (accountTotalsError ? 'Unavailable' : 'Loading…');
     const total = accountTotals?.totalUsers ?? 0;
-    const roleCount = (role: 'Admin' | 'Manager' | 'Inventory Staff') => accountTotals?.roleCounts?.[role] ?? 0;
+    const roleCount = (role: 'Admin' | 'Inventory Manager' | 'Inventory Staff') => accountTotals?.roleCounts?.[role] ?? 0;
     const pct = (value: number) => total ? `${Math.round((value / total) * 100)}%` : '0%';
     return <>
       <PageHeader eyebrow={adminUsers ? undefined : 'Administration'} title={adminUsers ? 'Users' : 'User Management'} description={adminUsers ? 'Manage establishment users, their roles, and access within ShelfLife AI.' : 'Control access, manage permissions, and monitor system participants.'} />
@@ -1597,7 +1600,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
           {[
             { label:'Total Users', value:liveValue(accountTotals?.totalUsers), detail:accountTotals ? `↑ ${accountTotals.totalUsers} live` : 'Awaiting account summary', tone:'total', Icon:Users },
             { label:'Admin', value:liveValue(roleCount('Admin')), detail:accountTotals ? pct(roleCount('Admin')) : 'Awaiting role summary', tone:'admin', Icon:User },
-            { label:'Managers', value:liveValue(roleCount('Manager')), detail:accountTotals ? pct(roleCount('Manager')) : 'Awaiting role summary', tone:'manager', Icon:Users },
+            { label:'Managers', value:liveValue(roleCount('Inventory Manager')), detail:accountTotals ? pct(roleCount('Inventory Manager')) : 'Awaiting role summary', tone:'manager', Icon:Users },
             { label:'Inventory Staff', value:liveValue(roleCount('Inventory Staff')), detail:accountTotals ? pct(roleCount('Inventory Staff')) : 'Awaiting role summary', tone:'staff', Icon:Users },
           ].map(({label,value,detail,tone,Icon}) => <section key={label} className="sl-admin-users-kpi" data-tone={tone}>
             <span className="sl-admin-users-kpi-icon" aria-hidden="true"><Icon size={24}/></span>
@@ -1615,17 +1618,17 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
       </div>
     </>;
   }
-  if (moduleId === 'Ingredients' && user.role === 'Super Admin') return <SuperAdminIngredientsPage />;
-  if (moduleId === 'Ingredients' && user.role === 'Admin') return <IngredientsAdminPage preview={preview} setPreview={setPreview} />;
 
-  if (moduleId === 'InventoryBatches' && user.role === 'Manager') return <ManagerInventoryPage />;
+  if (moduleId === 'Ingredients') return <IngredientsPage preview={preview} setPreview={setPreview} />;
+
+  if (moduleId === 'InventoryBatches' && user.role === 'Inventory Manager') return <ManagerInventoryPage />;
   if (moduleId === 'InventoryBatches' && user.role === 'Super Admin') return <SuperAdminInventoryBatchesPage />;
   if (moduleId === 'Usage' && user.role === 'Super Admin') return <SuperAdminUsagePage />;
   if (moduleId === 'Waste' && user.role === 'Super Admin') return <SuperAdminWastePage />;
-  if (moduleId === 'ChangeRequests' && user.role === 'Manager') return <ManagerChangeRequestsPage />;
+  if (moduleId === 'ChangeRequests' && user.role === 'Inventory Manager') return <ManagerChangeRequestsPage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Super Admin') return <SuperAdminChangeRequestsPage />;
   if (moduleId === 'ExpirationMonitoring' && user.role === 'Super Admin') return <SuperAdminExpirationMonitoringPage />;
-  if (moduleId === 'Forecasting' && user.role === 'Manager') return <ManagerForecastingPage />;
+  if (moduleId === 'Forecasting' && user.role === 'Inventory Manager') return <ManagerForecastingPage />;
   if (moduleId === 'Forecasting' && user.role === 'Super Admin') return <SuperAdminForecastingPage />;
 
   if (moduleId === 'InventoryBatches' && user.role === 'Admin') return <>
@@ -1656,7 +1659,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'Roles') return <>
     <PageHeader eyebrow="Administration" title="Role responsibilities" description="Four defined roles. Permissions are enforced by the application." />
     <div className="sl-admin-view"><Card id="role-responsibilities" title="Access boundaries"><dl className="sl-guidance-list">
-      {[['Super Admin', 'System-wide administration, Admin accounts and protected security oversight.'], ['Admin', 'Operational accounts, ingredient master data and administrative monitoring.'], ['Manager', 'Inventory oversight, request review and decision support.'], ['Inventory Staff', 'Stock-in, usage, waste and own change requests.']].map(([title, text]) => <div key={title}><dt>{title}</dt><dd>{text}</dd></div>)}
+      {[['Super Admin', 'System-wide administration, Admin accounts and protected security oversight.'], ['Admin', 'Operational accounts, ingredient master data and administrative monitoring.'], ['Inventory Manager', 'Inventory oversight, request review and decision support.'], ['Inventory Staff', 'Stock-in, usage, waste and own change requests.']].map(([title, text]) => <div key={title}><dt>{title}</dt><dd>{text}</dd></div>)}
     </dl></Card></div>
   </>;
   if (moduleId === 'StockIn') return <>
@@ -1665,7 +1668,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
       <dl className="sl-guidance-list"><div><dt>Choose an ingredient</dt><dd>Use the approved catalogue and its unit of measure.</dd></div><div><dt>Record the batch</dt><dd>Capture the received quantity, cost and actual expiration date.</dd></div></dl><div className="sl-related-actions"><WorkspaceLink to="/InventoryBatches">View inventory</WorkspaceLink></div>
     </Card></div></div>
   </>;
-  if (moduleId === 'UsageWaste' && user.role === 'Manager') return <ManagerUsageWastePage />;
+  if (moduleId === 'UsageWaste' && user.role === 'Inventory Manager') return <ManagerUsageWastePage />;
   if (moduleId === 'UsageWaste') return <>
     <PageHeader eyebrow="Inventory oversight" title="Usage & Waste" description="Review consumption and loss as separate inventory transactions." />
     <div className="sl-admin-view"><div className="sl-workflow-links">
@@ -1676,8 +1679,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   </>;
   const content = moduleContent[moduleId]!;
   const title = moduleId === 'ChangeRequests' && staff ? 'My Change Requests' : modules[moduleId].label;
-  const previewId: PreviewId | undefined = moduleId === 'Ingredients' && user.role === 'Admin' ? 'Ingredients'
-    : staff && ['Usage', 'Waste', 'ChangeRequests'].includes(moduleId) ? moduleId as PreviewId : undefined;
+  const previewId: PreviewId | undefined = staff && ['Usage', 'Waste', 'ChangeRequests'].includes(moduleId) ? moduleId as PreviewId : undefined;
   const previewTitle = preview === 'Ingredients' ? 'Ingredient form' : preview === 'ChangeRequests' ? 'Change request form' : preview === 'Usage' ? 'Record usage' : 'Record waste';
   return <>
     <div className="sl-page-heading-row"><PageHeader eyebrow={user.role === 'Admin' ? 'Administration' : 'Inventory & decision support'} title={title} description={content.description} />

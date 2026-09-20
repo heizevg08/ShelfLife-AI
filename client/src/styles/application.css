@@ -2089,7 +2089,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-inline-notice-error { color:var(--sl-critical); background:var(--sl-critical-subtle); }
 .sl-inline-notice-success { color:var(--sl-success); }
 .sl-page-number-active { background:var(--sl-brand) !important; border-color:var(--sl-brand) !important; color:var(--sl-on-brand) !important; }
-/* One pagination language across Super Admin, Admin, Manager, and Inventory Staff pages. */
+/* One pagination language across Super Admin, Admin, Inventory Manager, and Inventory Staff pages. */
 .sl-pagination .sl-row-actions { gap:.45rem; }
 .sl-pagination .sl-button { min-height:36px; border-radius:.55rem; }
 .sl-pagination .sl-button:disabled { opacity:.5; cursor:not-allowed; }
@@ -3291,7 +3291,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   color:var(--sl-brand);background:var(--sl-brand-subtle);border:1px solid color-mix(in srgb,var(--sl-brand) 20%,transparent)
 }
 .sl-superadmin-users-page-v55 .sl-sa-role-pill[data-role='Admin']{color:var(--sl-success);background:var(--sl-success-bg);border-color:color-mix(in srgb,var(--sl-success) 20%,transparent)}
-.sl-superadmin-users-page-v55 .sl-sa-role-pill[data-role='Manager']{color:var(--sl-attention);background:var(--sl-attention-bg);border-color:color-mix(in srgb,var(--sl-attention) 24%,transparent)}
+.sl-superadmin-users-page-v55 .sl-sa-role-pill[data-role='Inventory Manager']{color:var(--sl-attention);background:var(--sl-attention-bg);border-color:color-mix(in srgb,var(--sl-attention) 24%,transparent)}
 
 .sl-superadmin-users-page-v55 .sl-sa-accounts-insights{display:grid;gap:clamp(.6rem,.8vw,.8rem)}
 .sl-superadmin-users-page-v55 .sl-sa-insight-card{
@@ -3308,7 +3308,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-superadmin-users-page-v55 .sl-sa-role-legend>div{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.42rem;font-size:var(--v55-small)}
 .sl-superadmin-users-page-v55 .sl-sa-legend-dot{width:.62rem;height:.62rem;border-radius:50%;background:var(--sl-brand)}
 .sl-superadmin-users-page-v55 .sl-sa-legend-dot[data-role='Admin']{background:var(--sl-success)}
-.sl-superadmin-users-page-v55 .sl-sa-legend-dot[data-role='Manager']{background:var(--sl-attention)}
+.sl-superadmin-users-page-v55 .sl-sa-legend-dot[data-role='Inventory Manager']{background:var(--sl-attention)}
 .sl-superadmin-users-page-v55 .sl-sa-legend-dot[data-role='Inventory Staff']{background:#79b8f3}
 
 .sl-superadmin-users-page-v55 .sl-sa-status-row{display:grid;grid-template-columns:1fr auto;gap:.25rem .55rem;margin:.65rem 0;font-size:var(--v55-small)}
@@ -3429,7 +3429,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 }
 .sl-superadmin-users-page-v56 .sl-v56-role-pill[data-role='Super Admin']{color:#2d55bd;background:#e8edff}
 .sl-superadmin-users-page-v56 .sl-v56-role-pill[data-role='Admin']{color:var(--sl-success);background:var(--sl-success-bg)}
-.sl-superadmin-users-page-v56 .sl-v56-role-pill[data-role='Manager']{color:#9a6700;background:#fff4d6}
+.sl-superadmin-users-page-v56 .sl-v56-role-pill[data-role='Inventory Manager']{color:#9a6700;background:#fff4d6}
 .sl-superadmin-users-page-v56 .sl-v56-unavailable{color:var(--sl-muted)}
 .sl-superadmin-users-page-v56 .sl-v56-actions{justify-content:center}
 .sl-superadmin-users-page-v56 .sl-v56-more{
@@ -3457,7 +3457,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-superadmin-users-page-v56 .sl-v56-legend>div{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.38rem;align-items:center;font-size:var(--v56-fs-xs)}
 .sl-superadmin-users-page-v56 .sl-v56-dot{width:.58rem;height:.58rem;border-radius:50%;background:var(--sl-deep-green)}
 .sl-superadmin-users-page-v56 .sl-v56-dot[data-role='Admin']{background:var(--sl-success)}
-.sl-superadmin-users-page-v56 .sl-v56-dot[data-role='Manager']{background:var(--sl-attention)}
+.sl-superadmin-users-page-v56 .sl-v56-dot[data-role='Inventory Manager']{background:var(--sl-attention)}
 .sl-superadmin-users-page-v56 .sl-v56-dot[data-role='Inventory Staff']{background:#79b8f3}
 
 .sl-superadmin-users-page-v56 .sl-v56-status{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.22rem .5rem;margin:.55rem 0}
@@ -3789,7 +3789,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   background:#07543f;
 }
 .sl-superadmin-users-page-v59 .sl-v56-dot[data-role='Admin']{background:#63c978}
-.sl-superadmin-users-page-v59 .sl-v56-dot[data-role='Manager']{background:#f7b83f}
+.sl-superadmin-users-page-v59 .sl-v56-dot[data-role='Inventory Manager']{background:#f7b83f}
 .sl-superadmin-users-page-v59 .sl-v56-dot[data-role='Inventory Staff']{background:#72b8ef}
 
 /* Account Status — thin reference bars, count + percentage aligned at right. */
@@ -3976,7 +3976,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 }
 .sl-superadmin-users-page-v60 .sl-v56-dot{width:.66rem;height:.66rem;border-radius:50%;background:#07543f}
 .sl-superadmin-users-page-v60 .sl-v56-dot[data-role='Admin']{background:#63c978}
-.sl-superadmin-users-page-v60 .sl-v56-dot[data-role='Manager']{background:#f7b83f}
+.sl-superadmin-users-page-v60 .sl-v56-dot[data-role='Inventory Manager']{background:#f7b83f}
 .sl-superadmin-users-page-v60 .sl-v56-dot[data-role='Inventory Staff']{background:#72b8ef}
 
 /* Account Status — match reference card hierarchy. */
@@ -4407,7 +4407,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   color:var(--sl-success) !important;
   background:var(--sl-success-bg) !important;
 }
-.sl-superadmin-users-page-v63 .sl-v56-role[data-role='Manager']{
+.sl-superadmin-users-page-v63 .sl-v56-role[data-role='Inventory Manager']{
   color:var(--sl-attention) !important;
   background:var(--sl-attention-bg) !important;
 }
@@ -12207,7 +12207,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 @media(max-width:680px){.sl-admin-reports-filters,.sl-admin-reports-kpis,.sl-admin-reports-charts{grid-template-columns:1fr}.sl-admin-reports-charts>:last-child{grid-column:auto}.sl-admin-reports-filters>.sl-button{width:100%}.sl-admin-reports-export .sl-download-control,.sl-admin-reports-export .sl-download-trigger{width:100%}}
 @media(resolution >= 1.25dppx){.sl-admin-reports-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12.5rem),1fr))}.sl-admin-reports-filters{grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr))}}
 
-/* V115 — Manager Dashboard reference UI; live-data-safe and responsive */
+/* V115 — Inventory Manager Dashboard reference UI; live-data-safe and responsive */
 .sl-manager-dashboard-v115{display:grid;gap:clamp(.65rem,.5rem + .3vw,.95rem);min-width:0}
 .sl-manager-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
 .sl-manager-kpi{min-width:0;min-height:clamp(6.3rem,5.7rem + 1.2vw,7.4rem)}
@@ -12225,7 +12225,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 @media(max-width:1180px){.sl-manager-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-manager-analytics,.sl-manager-triple{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-manager-analytics>:last-child,.sl-manager-triple>:last-child{grid-column:1/-1}}
 @media(max-width:680px){.sl-manager-kpis,.sl-manager-analytics,.sl-manager-triple{grid-template-columns:1fr}.sl-manager-analytics>:last-child,.sl-manager-triple>:last-child{grid-column:auto}.sl-manager-reference-state{padding:.8rem}}
 @media(resolution >= 1.25dppx){.sl-manager-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12.5rem),1fr))}.sl-manager-analytics,.sl-manager-triple{grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))}.sl-manager-analytics>:last-child,.sl-manager-triple>:last-child{grid-column:auto}}
-\n\n/* V116 — Manager dashboard reference layout. Scoped to Manager only. */
+\n\n/* V116 — Inventory Manager dashboard reference layout. Scoped to Inventory Manager only. */
 .sl-manager-dashboard-v116{display:grid;gap:clamp(.65rem,.48rem + .35vw,.95rem);min-width:0}
 .sl-manager-reference-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.65rem,.48rem + .35vw,.95rem);min-width:0;align-items:stretch}
 .sl-manager-reference-grid>.sl-card{min-width:0;min-height:clamp(13.5rem,19vw,18.5rem);overflow:hidden}
@@ -12241,14 +12241,14 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 @media(max-width:720px){.sl-manager-reference-grid{grid-template-columns:1fr}.sl-manager-reference-grid>.sl-card,.sl-manager-reference-grid>.sl-card:nth-child(n+4){min-height:clamp(12rem,48vw,16rem)}}
 @media(resolution >= 1.25dppx){.sl-manager-reference-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr))}}
 
-/* V118 Manager dashboard period filters */
+/* V118 Inventory Manager dashboard period filters */
 .sl-manager-dashboard-v116 .sl-dashboard-filter{display:inline-flex;align-items:center;min-width:0}
 .sl-manager-dashboard-v116 .sl-dashboard-filter select{appearance:auto;min-height:2rem;max-width:100%;padding:.35rem 1.8rem .35rem .7rem;border:1px solid var(--sl-border);border-radius:.5rem;background:var(--sl-surface);color:var(--sl-text);font:inherit;font-size:.78rem;line-height:1.2;cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease}
 .sl-manager-dashboard-v116 .sl-dashboard-filter select:hover{border-color:var(--sl-brand);background:var(--sl-surface-soft)}
 .sl-manager-dashboard-v116 .sl-dashboard-filter select:focus-visible{outline:none;border-color:var(--sl-brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--sl-brand) 16%,transparent)}
 @media(max-width:520px){.sl-manager-dashboard-v116 .sl-dashboard-filter{width:100%}.sl-manager-dashboard-v116 .sl-dashboard-filter select{width:100%}}
 
-/* V119 — Manager Inventory reference UI */
+/* V119 — Inventory Manager Inventory reference UI */
 .sl-manager-inventory-v119{display:grid;gap:clamp(.75rem,1.1vw,1rem)}
 .sl-manager-inventory-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
 .sl-manager-inventory-directory,.sl-manager-inventory-panel{background:var(--sl-surface);border:1px solid var(--sl-border);border-radius:12px;overflow:hidden}
@@ -12264,7 +12264,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 @media(max-width:1100px){.sl-manager-inventory-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-manager-inventory-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.sl-manager-inventory-search{grid-column:1/-1}.sl-manager-inventory-filter-actions{justify-content:flex-end}}
 @media(max-width:760px){.sl-manager-inventory-kpis,.sl-manager-inventory-lower-grid,.sl-manager-inventory-filters{grid-template-columns:1fr}.sl-manager-inventory-search{grid-column:auto}.sl-manager-inventory-filter-actions{justify-content:stretch}.sl-manager-inventory-filter-actions>*{flex:1}.sl-manager-inventory-tabs-row{align-items:stretch;flex-direction:column;padding-bottom:.6rem}.sl-manager-inventory-table-shell{overflow-x:auto}.sl-manager-inventory-table{min-width:850px}.sl-manager-inventory-footer{align-items:flex-start;flex-direction:column}}
 
-/* V121 — Manager Usage & Waste reference UI */
+/* V121 — Inventory Manager Usage & Waste reference UI */
 .sl-manager-usage-waste-v121{display:grid;gap:clamp(.7rem,1vw,1rem);min-width:0}
 .sl-manager-usage-filters{display:grid;grid-template-columns:1.25fr repeat(3,minmax(135px,.82fr)) auto;gap:clamp(.55rem,.9vw,.8rem);padding:clamp(.7rem,1vw,.9rem);background:var(--sl-surface);border:1px solid var(--sl-border);border-radius:12px;align-items:end}
 .sl-manager-usage-filters label{display:grid;gap:.35rem;min-width:0;font-size:.78rem;color:var(--sl-muted)}
@@ -12285,7 +12285,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 @media(max-width:720px){.sl-manager-usage-kpis,.sl-manager-usage-filters,.sl-manager-usage-analytics{grid-template-columns:1fr}.sl-manager-usage-analytics>:last-child{grid-column:auto}.sl-manager-usage-filter-actions{justify-content:stretch}.sl-manager-usage-filter-actions>*{flex:1}.sl-manager-usage-table-shell{overflow-x:auto}.sl-manager-usage-table-shell table{min-width:760px}.sl-manager-usage-records>footer{align-items:flex-start;flex-direction:column}}
 @media(resolution >= 1.25dppx){.sl-manager-usage-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,12.5rem),1fr))}.sl-manager-usage-analytics{grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))}.sl-manager-usage-analytics>:last-child{grid-column:auto}}
 
-/* V124 — Manager Change Requests reference UI */
+/* V124 — Inventory Manager Change Requests reference UI */
 .sl-mgr-cr-page{display:grid;gap:clamp(12px,1.2vw,18px)}
 .sl-mgr-cr-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1vw,14px)}
 .sl-mgr-cr-kpi{min-width:0;min-height:108px;border:1px solid var(--sl-border,#e3e7e2);border-radius:12px;background:#fff;display:flex;align-items:center;gap:14px;padding:clamp(14px,1.25vw,20px);box-shadow:0 1px 2px rgba(16,48,31,.03)}
@@ -12300,7 +12300,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 
 /* V125 MANAGER CHANGE REQUESTS ROUTE FIX — 2026-09-19 */
 
-/* V126 — Manager Forecasting reference UI */
+/* V126 — Inventory Manager Forecasting reference UI */
 .sl-mgr-forecast-page{display:grid;gap:clamp(.65rem,.5rem + .35vw,1rem);min-width:0}
 .sl-mgr-forecast-kpis{margin:0}
 .sl-mgr-forecast-filters{display:grid;grid-template-columns:minmax(180px,1.15fr) minmax(160px,1fr) minmax(160px,.9fr) auto;gap:clamp(8px,1vw,14px);align-items:end;padding:clamp(10px,1vw,14px);border:1px solid var(--sl-border);border-radius:12px;background:var(--sl-surface,#fff)}
@@ -12314,7 +12314,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 @media(max-width:760px){.sl-mgr-forecast-charts,.sl-mgr-forecast-rail{grid-template-columns:1fr}.sl-mgr-forecast-sustainability{grid-column:auto}.sl-mgr-forecast-table-actions{width:100%}.sl-mgr-forecast-table-actions>*{flex:1 1 180px}}
 @media(max-width:560px){.sl-mgr-forecast-filters{grid-template-columns:1fr}.sl-mgr-forecast-kpis{grid-template-columns:1fr}.sl-mgr-forecast-page .sl-card-header{align-items:flex-start;flex-wrap:wrap}.sl-mgr-forecast-page .sl-dashboard-filter,.sl-mgr-forecast-page .sl-dashboard-filter select{width:100%}}
 
-/* V130 — Manager Forecasting layout refinement */
+/* V130 — Inventory Manager Forecasting layout refinement */
 .sl-mgr-forecast-analytics{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:clamp(10px,1vw,14px);align-items:stretch;min-width:0}
 .sl-mgr-forecast-analytics>.sl-card{height:100%;min-width:0;display:flex;flex-direction:column}
 .sl-mgr-forecast-analytics>.sl-card .sl-card-body{flex:1;display:flex;min-width:0}

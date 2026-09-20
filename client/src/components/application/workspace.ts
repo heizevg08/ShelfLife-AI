@@ -3,47 +3,48 @@ import type { SessionUser } from '../../services/auth';
 
 export type WorkspaceRole = SessionUser['role'];
 export const dashboardPaths: Record<WorkspaceRole, string> = {
-  'Super Admin': '/SuperAdminDashboard', Admin: '/AdminDashboard', Manager: '/ManagerDashboard', 'Inventory Staff': '/InventoryStaffDashboard',
+  'Super Admin': '/SuperAdminDashboard', Admin: '/AdminDashboard', 'Inventory Manager': '/ManagerDashboard', 'Inventory Staff': '/InventoryStaffDashboard',
 };
-const operational: WorkspaceRole[] = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'];
 export const modules = {
-  UserManagement: { label: 'User Management', Icon: Users, roles: ['Super Admin', 'Admin'] },
-  Ingredients: { label: 'Ingredients', Icon: Leaf, roles: operational },
-  InventoryBatches: { label: 'Inventory Batches', Icon: Boxes, roles: operational },
-  StockIn: { label: 'Stock-In', Icon: PackagePlus, roles: ['Inventory Staff'] },
-  UsageWaste: { label: 'Usage & Waste', Icon: Utensils, roles: ['Manager'] },
-  Usage: { label: 'Usage Records', Icon: Utensils, roles: ['Manager', 'Inventory Staff'] },
-  Waste: { label: 'Waste Records', Icon: ClipboardList, roles: ['Manager', 'Inventory Staff'] },
-  ExpirationMonitoring: { label: 'Expiration Monitoring', Icon: Clock, roles: ['Manager', 'Inventory Staff'] },
-  ChangeRequests: { label: 'Change Requests', Icon: ListChecks, roles: ['Super Admin', 'Manager', 'Inventory Staff'] },
-  Forecasting: { label: 'Forecasting & Expiration Risk', Icon: ChartNoAxesCombined, roles: ['Manager'] },
-  Alerts: { label: 'Alerts', Icon: Bell, roles: ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] },
-  Reports: { label: 'Reports & Analytics', Icon: ChartNoAxesCombined, roles: ['Super Admin', 'Admin', 'Manager'] },
-  AdministrativeAudit: { label: 'Audit Logs', Icon: ScrollText, roles: ['Super Admin', 'Admin'] },
-  Roles: { label: 'Role responsibilities', Icon: Users, roles: ['Super Admin', 'Admin'] },
-} satisfies Record<string, { label: string; Icon: typeof Users; roles: WorkspaceRole[] }>;
+  UserManagement: { label: 'User Management', Icon: Users },
+  Ingredients: { label: 'Ingredients', Icon: Leaf },
+  InventoryBatches: { label: 'Inventory Batches', Icon: Boxes },
+  StockIn: { label: 'Stock-In', Icon: PackagePlus },
+  UsageWaste: { label: 'Usage & Waste', Icon: Utensils },
+  Usage: { label: 'Usage Records', Icon: Utensils },
+  Waste: { label: 'Waste Records', Icon: ClipboardList },
+  ExpirationMonitoring: { label: 'Expiration Monitoring', Icon: Clock },
+  ChangeRequests: { label: 'Change Requests', Icon: ListChecks },
+  Forecasting: { label: 'Forecasting & Expiration Risk', Icon: ChartNoAxesCombined },
+  Alerts: { label: 'Alerts', Icon: Bell },
+  Reports: { label: 'Reports & Analytics', Icon: ChartNoAxesCombined },
+  AdministrativeAudit: { label: 'Audit Logs', Icon: ScrollText },
+  Roles: { label: 'Role responsibilities', Icon: Users },
+} satisfies Record<string, { label: string; Icon: typeof Users }>;
 export type ModuleId = keyof typeof modules;
+// API-backed pages follow server/src/routes guards. Other pages are previews,
+// not a promise of API access until their services and authorization exist.
 export const canonicalWorkspaceAccess = {
   '/SuperAdminDashboard': ['Super Admin'],
   '/AdminDashboard': ['Admin'],
-  '/ManagerDashboard': ['Manager'],
+  '/ManagerDashboard': ['Inventory Manager'],
   '/InventoryStaffDashboard': ['Inventory Staff'],
   '/AdminAccounts': ['Super Admin'],
   '/SystemSettings': ['Super Admin'],
   '/SecurityActivity': ['Super Admin'],
   '/UserManagement': ['Super Admin', 'Admin'],
-  '/Ingredients': ['Super Admin', 'Admin'],
+  '/Ingredients': ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'],
   '/InventoryBatches': ['Super Admin', 'Admin', 'Inventory Staff'],
-  '/Inventory': ['Manager'],
+  '/Inventory': ['Inventory Manager'],
   '/StockIn': ['Inventory Staff'],
-  '/UsageWaste': ['Manager'],
-  '/Usage': ['Super Admin', 'Manager', 'Inventory Staff'],
-  '/Waste': ['Super Admin', 'Manager', 'Inventory Staff'],
-  '/ExpirationMonitoring': ['Super Admin', 'Manager', 'Inventory Staff'],
-  '/ChangeRequests': ['Super Admin', 'Manager', 'Inventory Staff'],
-  '/Forecasting': ['Super Admin', 'Manager'],
-  '/Alerts': ['Super Admin', 'Admin', 'Manager'],
-  '/Reports': ['Super Admin', 'Admin', 'Manager'],
+  '/UsageWaste': ['Inventory Manager'],
+  '/Usage': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
+  '/Waste': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
+  '/ExpirationMonitoring': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
+  '/ChangeRequests': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
+  '/Forecasting': ['Super Admin', 'Inventory Manager'],
+  '/Alerts': ['Super Admin', 'Admin', 'Inventory Manager'],
+  '/Reports': ['Super Admin', 'Admin', 'Inventory Manager'],
   '/AdministrativeAudit': ['Super Admin', 'Admin'],
   '/Roles': ['Super Admin', 'Admin'],
 } as const satisfies Record<string, readonly WorkspaceRole[]>;
@@ -51,22 +52,25 @@ export type CanonicalWorkspacePath = keyof typeof canonicalWorkspaceAccess;
 const navigation: Record<WorkspaceRole, ModuleId[]> = {
   'Super Admin': ['UserManagement', 'Alerts', 'ChangeRequests', 'AdministrativeAudit', 'Reports'],
   Admin: ['UserManagement', 'Ingredients', 'InventoryBatches', 'AdministrativeAudit', 'Reports'],
-  Manager: ['InventoryBatches', 'UsageWaste', 'ChangeRequests', 'Forecasting', 'Alerts', 'Reports'],
-  'Inventory Staff': ['InventoryBatches', 'StockIn', 'Usage', 'Waste', 'ChangeRequests', 'Alerts'],
+  'Inventory Manager': ['Ingredients', 'InventoryBatches', 'UsageWaste', 'ChangeRequests', 'Forecasting', 'Alerts', 'Reports'],
+  'Inventory Staff': ['Ingredients', 'InventoryBatches', 'StockIn', 'Usage', 'Waste', 'ChangeRequests'],
 };
 export function workspaceNavigation(role: WorkspaceRole) {
   return navigation[role].map(id => ({
     ...modules[id],
-    path: role === 'Manager' && id === 'InventoryBatches' ? '/Inventory' : `/${id}`,
-    label: role === 'Admin' && id === 'UserManagement' ? 'Users' : (role === 'Admin' || role === 'Manager') && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
-  }));
+    path: role === 'Inventory Manager' && id === 'InventoryBatches' ? '/Inventory' : `/${id}`,
+    label: role === 'Admin' && id === 'UserManagement' ? 'Users' : (role === 'Admin' || role === 'Inventory Manager') && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
+  })).filter(item => canOpenWorkspacePath(role, item.path));
 }
 export function canOpenWorkspacePath(role: WorkspaceRole, pathname: string) {
   // Visibility and page guards share the same map; APIs still authorize every request independently.
   const canonicalRoles = canonicalWorkspaceAccess[pathname as CanonicalWorkspacePath];
   if (canonicalRoles) return (canonicalRoles as readonly WorkspaceRole[]).includes(role);
-  const module = modules[pathname.slice(1) as ModuleId];
-  if (module) return (module.roles as WorkspaceRole[]).includes(role);
-  // Old URLs only render compatibility redirects, never legacy data or controls.
-  return pathname.startsWith('/pages/') && !Object.values(dashboardPaths).includes(pathname);
+  return false;
 }
+
+export const ingredientPermissions = (role: WorkspaceRole) => ({
+  create: role === 'Inventory Manager' || role === 'Inventory Staff',
+  update: role === 'Inventory Manager',
+  remove: role === 'Inventory Manager',
+});

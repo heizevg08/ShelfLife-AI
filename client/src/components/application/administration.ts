@@ -34,7 +34,7 @@ export const administrationFilterCatalog = {
     period: ['Any date', 'Last 7 days', 'Last 30 days', 'Last 90 days'],
   },
   audit: {
-    actor: ['All users', 'Super Admin', 'Admin', 'Manager', 'Inventory Staff'],
+    actor: ['All users', 'Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'],
     action: ['All actions', 'Account created', 'Account updated', 'Account deactivated', 'Account reactivated'],
     period: ['Any date', 'Last week', 'Last month', 'Last year', 'Custom'],
     status: ['All statuses', 'Success', 'Failed', 'Warning'],

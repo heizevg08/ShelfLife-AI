@@ -1,5 +1,5 @@
 // Only the bearer token is retained. User identity is always fetched from /auth/me.
-// Web sessions last for this tab; native sessions are memory-only for this milestone.
+// Sessions last for this browser tab, with an in-memory fallback.
 let token: string | null = null;
 const key = 'shelflifeai.accessToken';
 export function getAccessToken(): string | null {

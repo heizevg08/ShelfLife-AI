@@ -2,8 +2,8 @@ import { apiClient } from './apiClient';
 import type { SessionUser } from './auth';
 
 export interface Account extends SessionUser { firstName: string; lastName: string; createdAt: string; updatedAt: string }
-export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: string; targetType: string; targetId: string; timestamp: string }
-export interface AuditFilters { actorRole?: SessionUser['role']; action?: 'CREATE' | 'UPDATE' | 'DEACTIVATE' | 'REACTIVATE'; from?: string; to?: string }
+export interface AuditRecord { id: string; userId: string | null; actorType?: 'User' | 'System'; oldValue: Record<string, unknown> | null; newValue: Record<string, unknown> | null; actor: { id: string; name: string; role: string }; action: string; targetType: string; targetId: string; timestamp: string }
+export interface AuditFilters { actorRole?: SessionUser['role']; action?: 'CREATE' | 'UPDATE' | 'DELETE' | 'DEACTIVATE' | 'REACTIVATE'; from?: string; to?: string }
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface DashboardSummary { totalUsers: number; activeUsers: number; inactiveUsers: number; roleCounts?: Partial<Record<SessionUser['role'], number>> }
 export type AccountFields = Pick<Account, 'firstName' | 'lastName' | 'email' | 'role'>;

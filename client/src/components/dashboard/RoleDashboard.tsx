@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowRight, Box, ChartNoAxesCombined, ClipboardList, ListChecks, PhilippinePeso, TrendingUp, TriangleAlert } from 'lucide-react';
-import { Link } from 'expo-router';
+import { Link } from '../../routing/navigation';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
 import { Card, DataState, PageHeader, PlaceholderSummaryCards, PlaceholderTable, Status } from '../application/primitives';
 import { ForecastFlow, WorkflowLink, WorkspaceLink } from '../application/ModulePage';
@@ -74,14 +74,14 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     <DashboardHeading userName={userName} />
     <p className="sl-dashboard-description">Here&apos;s an overview of your inventory value, expiration risks, stock status, and pending inventory actions.</p>
     <div className="sl-admin-view sl-manager-dashboard-v116">
-      <section className="sl-sa-kpis sl-manager-kpis" aria-label="Manager inventory overview">
+      <section className="sl-sa-kpis sl-manager-kpis" aria-label="Inventory Manager inventory overview">
         <article className="sl-sa-kpi sl-manager-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso /></span><div><span>Total Inventory Value</span><strong>—</strong><small>Inventory valuation pending</small></div></article>
         <article className="sl-sa-kpi sl-manager-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Items Near Expiry (≤ 7 days)</span><strong>—</strong><small>Expiration summary pending</small></div></article>
         <article className="sl-sa-kpi sl-manager-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Low Stock Items</span><strong>—</strong><small>Stock summary pending</small></div></article>
         <article className="sl-sa-kpi sl-manager-kpi" data-tone="violet"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast analytics pending</small></div></article>
       </section>
 
-      <section className="sl-manager-reference-grid" aria-label="Manager inventory analytics and actions">
+      <section className="sl-manager-reference-grid" aria-label="Inventory Manager inventory analytics and actions">
         <Card id="manager-inventory-value" title="Inventory Value Trend" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Inventory value period</span><select value={valueRange} onChange={(event) => setValueRange(event.target.value)} aria-label="Inventory value period"><option value="7">Last 7 Days</option><option value="30">Last 30 Days</option><option value="90">Last 90 Days</option></select></label>}>
           {pendingState('Inventory value trend')}
         </Card>
@@ -105,8 +105,8 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
   </>;
 }
 
-function UnavailableSummary({ role }: { role: 'Manager' | 'Inventory Staff' }) {
-  const items = role === 'Manager'
+function UnavailableSummary({ role }: { role: 'Inventory Manager' | 'Inventory Staff' }) {
+  const items = role === 'Inventory Manager'
     ? ['Use-first batches', 'Low-stock items', 'Expiring batches', 'Pending requests']
     : ['Use-first batches', 'Recent transactions', 'Active alerts', 'My open requests'];
   const tones = ['brand', 'success', 'attention', 'critical'] as const;
@@ -122,7 +122,7 @@ export default function RoleDashboard() {
   const admin = user.role === 'Admin';
   if (admin) return <AdminDashboardContent userName={sessionDisplayName(user)} />;
   const staff = user.role === 'Inventory Staff';
-  const manager = user.role === 'Manager';
+  const manager = user.role === 'Inventory Manager';
   if (manager) return <ManagerDashboardContent userName={sessionDisplayName(user)} />;
   const description = admin
     ? 'Manage operational accounts, ingredient master data and administrative oversight.'
@@ -134,7 +134,7 @@ export default function RoleDashboard() {
     <DashboardHeading userName={sessionDisplayName(user)} />
     <p className="sl-dashboard-description">{description}</p>
     <div className="sl-admin-view">
-      <UnavailableSummary role={staff ? 'Inventory Staff' : 'Manager'} />
+      <UnavailableSummary role={staff ? 'Inventory Staff' : 'Inventory Manager'} />
 
       {staff && <section className="sl-role-focus sl-role-focus-compact" aria-labelledby="staff-priority-title">
         <div><p className="sl-eyebrow">Use first · FEFO</p><h2 id="staff-priority-title" className="sl-section-title">Priority batch unavailable</h2>
@@ -147,11 +147,11 @@ export default function RoleDashboard() {
           {admin ? <AccountsTable /> : <PlaceholderTable
             label={admin ? 'Operational account preview' : 'Inventory overview'}
             columns={admin ? ['Name', 'Email', 'Role', 'Status'] : ['Ingredient', 'Batch', 'Quantity', 'Expiration', 'Status']}
-            description={admin ? 'Manager and Inventory Staff accounts' : 'Batch-level stock ordered for review'}
+            description={admin ? 'Inventory Manager and Inventory Staff accounts' : 'Batch-level stock ordered for review'}
           />}
         </Card>
         <Card id="role-secondary" title={admin ? 'Ingredient master data' : staff ? 'My requests' : 'Change requests'} action={<ListChecks size={18} aria-hidden="true" />}>
-          <RolePanel><div><Status>Preview · data pending</Status><p className="sl-supporting">{admin ? 'Ingredients remain separate from received inventory batches.' : staff ? 'Your submitted corrections will appear here.' : 'Requests awaiting Manager review will appear here.'}</p>
+          <RolePanel><div><Status>Preview · data pending</Status><p className="sl-supporting">{admin ? 'Ingredients remain separate from received inventory batches.' : staff ? 'Your submitted corrections will appear here.' : 'Requests awaiting Inventory Manager review will appear here.'}</p>
             <WorkspaceLink to={admin ? '/Ingredients' : '/ChangeRequests'}>{admin ? 'Open ingredients' : 'Open requests'}</WorkspaceLink></div></RolePanel>
         </Card>
       </div>

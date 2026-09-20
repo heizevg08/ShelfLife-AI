@@ -1,4 +1,4 @@
-import { usePathname, useRouter, type Href } from 'expo-router';
+import { usePathname, useRouter, type Href } from '../../routing/navigation';
 import {
   ArrowUp,
   ChevronDown,
@@ -35,7 +35,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const [topbarClock, setTopbarClock] = useState(() => new Date());
   const appRef = useRef<HTMLDivElement>(null);
   const dashboardPath = dashboardPaths[user?.role ?? 'Super Admin'];
-  const destinations = [{ label: 'Dashboard', Icon: LayoutDashboard, path: dashboardPath }, ...(user?.role === 'Super Admin' ? administrationAreas.filter(area => !('hidden' in area && area.hidden)) : user ? workspaceNavigation(user.role) : [])];
+  const destinations = [{ label: 'Dashboard', Icon: LayoutDashboard, path: dashboardPath }, ...(user?.role === 'Super Admin' ? administrationAreas.filter(area => !('hidden' in area && area.hidden) && canOpenWorkspacePath(user.role, area.path)) : user ? workspaceNavigation(user.role) : [])];
   const superAdminSearchEntries = user?.role === 'Super Admin' ? [
     { label: 'User Accounts', path: '/UserManagement', Icon: Search, keywords: 'users accounts admin manager inventory staff create add user roles active deactivated' },
     { label: 'Alert Queue', path: '/Alerts', Icon: Search, keywords: 'alerts critical low stock expiring expiration waste risk severity status' },
@@ -52,7 +52,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
     const group = !user || item.path === dashboardPath ? 'Overview'
       : user.role === 'Super Admin' ? (['/AdminAccounts', '/SystemSettings', '/SecurityActivity'].includes(item.path ?? '') ? 'Administration' : 'System Oversight')
       : user.role === 'Admin' ? (item.path === '/UserManagement' ? 'User management' : ['/Ingredients', '/InventoryBatches'].includes(item.path) ? 'Core data' : 'Oversight')
-      : user.role === 'Manager' ? (['/InventoryBatches', '/Inventory'].includes(item.path ?? '') ? 'Inventory' : ['/UsageWaste', '/ChangeRequests'].includes(item.path) ? 'Operations' : 'Intelligence')
+      : user.role === 'Inventory Manager' ? (['/InventoryBatches', '/Inventory'].includes(item.path ?? '') ? 'Inventory' : ['/UsageWaste', '/ChangeRequests'].includes(item.path) ? 'Operations' : 'Intelligence')
       : ['/InventoryBatches', '/StockIn'].includes(item.path) ? 'Inventory' : ['/Usage', '/Waste'].includes(item.path) ? 'Records' : 'Follow-up';
     const existing = groups.find(entry => entry.label === group);
     if (existing) existing.items.push(item);
@@ -191,7 +191,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const openArea = (id: AdministrationAreaId) => {
     drawer.current?.close();
     const area = administrationAreas.find(item => item.id === id);
-    if (area) router.push(area.path);
+    if (area && user && canOpenWorkspacePath(user.role, area.path)) router.push(area.path);
   };
 
   const logout = useCallback(async () => {

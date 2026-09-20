@@ -10,6 +10,8 @@ export function ApplicationWorkspace({ children }: { children: ReactNode }) {
   return <ApplicationShell>{(user, openArea) => <WorkspaceContext.Provider value={{ user, openArea }}>{children}</WorkspaceContext.Provider>}</ApplicationShell>;
 }
 
+export function useOptionalWorkspace() { return useContext(WorkspaceContext); }
+
 export function useApplicationWorkspace() {
   const workspace = useContext(WorkspaceContext);
   if (!workspace) throw new Error('Application workspace is required');

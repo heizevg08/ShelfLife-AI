@@ -57,7 +57,7 @@ export const moduleContent: Partial<Record<ModuleId, ModuleContent>> = {
       { label: 'Approved requests', tone: 'success' },
       { label: 'Rejected requests', tone: 'critical' },
     ],
-    guide: [{ title: 'Submit', text: 'Inventory Staff describe the requested correction and its reason.' }, { title: 'Review', text: 'Manager reviews the request before an approved correction changes inventory.' }, { title: 'Preserve history', text: 'The decision and resulting change remain traceable.' }],
+    guide: [{ title: 'Submit', text: 'Inventory Staff describe the requested correction and its reason.' }, { title: 'Review', text: 'Inventory Manager reviews the request before an approved correction changes inventory.' }, { title: 'Preserve history', text: 'The decision and resulting change remain traceable.' }],
   },
   Forecasting: {
     description: 'Connect historical usage with inventory context to support decisions.', title: 'Forecast history & output',
@@ -69,7 +69,7 @@ export const moduleContent: Partial<Record<ModuleId, ModuleContent>> = {
       { label: 'High expiration risk', tone: 'critical' },
       { label: 'Recommended actions', tone: 'attention' },
     ],
-    guide: [{ title: 'Recommended actions', text: 'Suggestions will accompany forecast output when supported by sufficient operational data.' }, { title: 'Human review', text: 'Forecasts support Manager decisions. They do not automatically deduct or rewrite stock.' }],
+    guide: [{ title: 'Recommended actions', text: 'Suggestions will accompany forecast output when supported by sufficient operational data.' }, { title: 'Human review', text: 'Forecasts support Inventory Manager decisions. They do not automatically deduct or rewrite stock.' }],
   },
   Reports: {
     description: 'Review inventory, usage and waste through traceable operational records.', title: 'Report workspace',
