@@ -14006,3 +14006,136 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   height:clamp(2.75rem,2.5rem + .6vw,3.25rem);
   flex:0 0 clamp(2.75rem,2.5rem + .6vw,3.25rem);
 }
+
+/* V172 — Super Admin dashboard: rendered 1:1 geometry parity with Inventory Staff /UsageRecording KPIs.
+   Scoped ONLY to /SuperAdminDashboard KPI row. This final override intentionally wins over V168–V171. */
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:clamp(.75rem,.6rem + .35vw,1rem)!important;
+  align-items:stretch!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi.sl-inventory-staff-kpi{
+  box-sizing:border-box!important;
+  min-width:0!important;
+  min-height:clamp(6.6rem,6rem + 2vw,8rem)!important;
+  padding:clamp(.8rem,.7rem + .35vw,1.15rem)!important;
+  gap:clamp(.7rem,.55rem + .45vw,1rem)!important;
+  display:flex!important;
+  align-items:center!important;
+  border:1px solid var(--sl-border)!important;
+  border-top-width:3px!important;
+  border-radius:var(--sl-radius-lg)!important;
+  box-shadow:var(--sl-shadow-sm)!important;
+  overflow:hidden!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi-icon{
+  width:clamp(40px,4vw,50px)!important;
+  height:clamp(40px,4vw,50px)!important;
+  flex:0 0 clamp(40px,4vw,50px)!important;
+  border-radius:var(--sl-radius-lg)!important;
+  display:grid!important;
+  place-items:center!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi-icon svg{
+  width:55%!important;
+  height:55%!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi>div{
+  min-width:0!important;
+  display:grid!important;
+  gap:.12rem!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi span:not(.sl-sa-kpi-icon){
+  font:var(--sl-font-label)!important;
+  color:var(--sl-muted)!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi strong{
+  font:var(--sl-font-numeric)!important;
+  color:var(--sl-text)!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi small{
+  font-size:clamp(.68rem,.75vw,.75rem)!important;
+  line-height:1.35!important;
+  color:var(--sl-muted)!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='brand']{
+  border-top-color:var(--sl-brand)!important;background:var(--sl-surface)!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='brand'] .sl-sa-kpi-icon{
+  background:var(--sl-brand-light)!important;color:var(--sl-success)!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='info']{
+  border-top-color:#0c5797!important;background:var(--sl-surface)!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='info'] .sl-sa-kpi-icon{
+  background:oklch(95% .035 245)!important;color:oklch(52% .15 245)!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='attention']{
+  border-top-color:var(--sl-attention)!important;background:var(--sl-surface)!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='attention'] .sl-sa-kpi-icon{
+  background:var(--sl-attention-bg)!important;color:var(--sl-attention)!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='critical']{
+  border-top-color:var(--sl-critical)!important;background:var(--sl-surface)!important;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168 .sl-sa-kpi[data-tone='critical'] .sl-sa-kpi-icon{
+  background:var(--sl-critical-bg)!important;color:var(--sl-critical)!important;
+}
+@media(max-width:1100px){
+  .sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:600px){
+  .sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v168{grid-template-columns:1fr!important}
+}
+
+
+/* V173 — Super Admin KPI row copies the Inventory Staff /InventoryStaffDashboard KPI source geometry exactly.
+   Only the Super Admin KPI content differs; component structure and rendered KPI rules are the same. */
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.6rem + .35vw,1rem);
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi.sl-inventory-staff-kpi{
+  min-width:0;
+  min-height:clamp(6.6rem,6rem + 2vw,8rem);
+  padding:clamp(.8rem,.7rem + .35vw,1.15rem);
+  gap:clamp(.7rem,.55rem + .45vw,1rem);
+  border:1px solid var(--sl-border);
+  border-top-width:3px;
+  border-radius:var(--sl-radius-lg);
+  background:var(--sl-surface);
+  box-shadow:0 8px 20px color-mix(in oklab,var(--sl-text) 5%,transparent);
+  display:flex;
+  align-items:center;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi-icon{
+  width:clamp(3.25rem,3vw,3.75rem);
+  height:clamp(3.25rem,3vw,3.75rem);
+  flex:0 0 clamp(3.25rem,3vw,3.75rem);
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi-icon svg{
+  width:clamp(1.5rem,1.35rem + .25vw,1.75rem);
+  height:clamp(1.5rem,1.35rem + .25vw,1.75rem);
+}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi>div{display:grid;gap:1px;min-width:0}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi span:not(.sl-sa-kpi-icon){font-size:clamp(.875rem,.82rem + .15vw,.975rem);line-height:1.35;color:var(--sl-muted)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi strong{font-size:clamp(1.75rem,1.55rem + .55vw,2.15rem);line-height:1.05;color:var(--sl-text)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi small{font-size:clamp(.8125rem,.77rem + .13vw,.9rem);line-height:1.4;color:var(--sl-muted)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi[data-tone='brand']{border-top-color:var(--sl-brand);background:linear-gradient(110deg,#f7fffb,#fff)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi[data-tone='brand'] .sl-sa-kpi-icon{background:#e3f7ee;color:#08764f}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi[data-tone='info']{border-top-color:#0c5797;background:linear-gradient(110deg,#f6fbff,#fff)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi[data-tone='info'] .sl-sa-kpi-icon{background:#e4f2ff;color:#0c5797}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi[data-tone='attention']{border-top-color:var(--sl-attention);background:linear-gradient(110deg,#fffaf0,#fff)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi[data-tone='attention'] .sl-sa-kpi-icon{background:#fff1cf;color:#b97900}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi[data-tone='critical']{border-top-color:var(--sl-critical);background:linear-gradient(110deg,#fff6f7,#fff)}
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173 .sl-sa-kpi[data-tone='critical'] .sl-sa-kpi-icon{background:#ffe4e8;color:#d92943}
+@media(max-width:1100px){.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v173{grid-template-columns:1fr}}
