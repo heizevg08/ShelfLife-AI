@@ -9,25 +9,21 @@ import {
   CheckCircle2,
   FileText,
   Filter,
-  LogIn,
   Monitor,
   Search,
   ShieldCheck,
   UserRoundCheck,
   UserRoundX,
   UsersRound,
-  LaptopMinimal,
   Globe2,
+  ArrowRight,
 } from 'lucide-react';
 import { DataState, PageHeader, Status } from '../../components/application/primitives';
 
 const tabs = [
   'Overview',
   'Audit Logs',
-  'Login Activity',
   'Active Sessions',
-  'Security Alerts',
-  'Access Control',
 ] as const;
 
 type SecurityTab = (typeof tabs)[number];
@@ -44,7 +40,7 @@ function SecurityPending({ label, compact = false }: { label: string; compact?: 
   );
 }
 
-function OverviewPanel() {
+function OverviewPanel({ onNavigate }: { onNavigate: (tab: SecurityTab) => void }) {
   return (
     <div className="sl-staff-usage-layout">
       <main className="sl-staff-usage-main">
@@ -52,7 +48,7 @@ function OverviewPanel() {
           <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
             <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
             <h2 id="recent-security-activity-title">Recent Security &amp; System Activity</h2>
-            <div className="sl-staff-usage-head-actions"><span className="sl-staff-usage-viewall">View All</span></div>
+            <div className="sl-staff-usage-head-actions"><button type="button" className="sl-staff-usage-viewall sl-v209-viewall-button" onClick={() => onNavigate('Audit Logs')}>View All <ArrowRight size={14} aria-hidden="true" /></button></div>
           </header>
           <div className="sl-staff-usage-table-shell">
             <table className="sl-data-table sl-staff-usage-table">
@@ -66,11 +62,11 @@ function OverviewPanel() {
           <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
             <span className="sl-staff-usage-head-icon"><Monitor aria-hidden="true" /></span>
             <h2 id="active-sessions-title">Active Sessions</h2>
-            <div className="sl-staff-usage-head-actions"><span className="sl-staff-usage-viewall">View All</span></div>
+            <div className="sl-staff-usage-head-actions"><button type="button" className="sl-staff-usage-viewall sl-v209-viewall-button" onClick={() => onNavigate('Active Sessions')}>View All <ArrowRight size={14} aria-hidden="true" /></button></div>
           </header>
           <div className="sl-staff-usage-table-shell">
             <table className="sl-data-table sl-staff-usage-table">
-              <thead><tr><th>User</th><th>Role</th><th>Device</th><th>IP Address</th><th>Last Activity</th></tr></thead>
+              <thead><tr><th>User</th><th>Role</th><th>Login Time</th><th>Last Activity</th><th>Actions</th></tr></thead>
               <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={5} className="sl-staff-usage-preview-state-cell"><SecurityPending label="Active sessions" /></td></tr></tbody>
             </table>
           </div>
@@ -80,11 +76,27 @@ function OverviewPanel() {
       <aside className="sl-staff-usage-rail">
         <section className="sl-staff-usage-card sl-staff-usage-sidecard">
           <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><ShieldCheck aria-hidden="true" /></span><h2>Security Status</h2></header>
-          <SecurityPending label="Security status" compact />
+          <div className="sl-v207-security-distribution" aria-label="Security status distribution with no live values yet">
+            <div className="sl-v207-security-donut" aria-hidden="true"><strong>—</strong></div>
+            <div className="sl-v207-security-legend">
+              <div><span className="sl-v207-security-dot is-secure" /><span>Secure</span><strong>—</strong></div>
+              <div><span className="sl-v207-security-dot is-attention" /><span>Attention</span><strong>—</strong></div>
+              <div><span className="sl-v207-security-dot is-risk" /><span>Risk</span><strong>—</strong></div>
+              <div><span className="sl-v207-security-dot is-critical" /><span>Critical</span><strong>—</strong></div>
+            </div>
+          </div>
         </section>
         <section className="sl-staff-usage-card sl-staff-usage-sidecard">
           <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><BarChart3 aria-hidden="true" /></span><h2>Top Security Events (7 Days)</h2></header>
-          <SecurityPending label="Security event analytics" compact />
+          <div className="sl-v206-events-chart" aria-label="Top security events chart preview with no live values yet">
+            {['Authentication','Access Control','Account Changes','System Settings','Audit Events'].map((label, index) => (
+              <div className="sl-v206-event-row" key={label}>
+                <div><span>{label}</span><strong>—</strong></div>
+                <span className={`sl-v206-event-track tone-${index + 1}`} aria-hidden="true"><i /></span>
+              </div>
+            ))}
+            <small>Live values will populate when security-event analytics are connected.</small>
+          </div>
         </section>
         <section className="sl-staff-usage-card sl-staff-usage-sidecard">
           <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon attention"><AlertTriangle aria-hidden="true" /></span><h2>Security Alerts</h2></header>
@@ -96,6 +108,10 @@ function OverviewPanel() {
 }
 
 function AuditLogsPanel() {
+  const [auditDateRange, setAuditDateRange] = useState('any');
+  const [auditFrom, setAuditFrom] = useState('');
+  const [auditTo, setAuditTo] = useState('');
+
   return (
     <div className="sl-v203-audit-layout">
       <main className="sl-v203-audit-main">
@@ -113,19 +129,19 @@ function AuditLogsPanel() {
                 <input type="search" placeholder="User, action, module, or details…" />
               </div>
             </label>
-            <label className="sl-v203-filter-field"><span>Date Range</span><input type="text" readOnly value="Data pending" /></label>
-            <label className="sl-v203-filter-field"><span>User</span><select defaultValue="all"><option value="all">All Users</option></select></label>
-            <label className="sl-v203-filter-field"><span>Action</span><select defaultValue="all"><option value="all">All Actions</option></select></label>
-            <label className="sl-v203-filter-field"><span>Module</span><select defaultValue="all"><option value="all">All Modules</option></select></label>
+            <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={auditDateRange} onChange={event => setAuditDateRange(event.target.value)} aria-label="Audit log date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
+            {auditDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom audit log date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={auditFrom} max={auditTo || undefined} onChange={event => setAuditFrom(event.target.value)} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={auditTo} min={auditFrom || undefined} onChange={event => setAuditTo(event.target.value)} /></label></div>}
+            <label className="sl-v203-filter-field"><span>Role</span><select defaultValue="all"><option value="all">All Roles</option><option value="super-admin">Super Admin</option><option value="admin">Admin</option><option value="manager">Manager</option><option value="inventory-staff">Inventory Staff</option></select></label>
+            <label className="sl-v203-filter-field"><span>Action</span><select defaultValue="all" aria-label="Audit log action"><option value="all">All Actions</option><option value="created">Created</option><option value="updated">Updated</option><option value="deleted">Deleted</option><option value="approved">Approved</option><option value="login">Login</option><option value="exported">Exported</option><option value="rejected">Rejected</option></select></label>
+            <label className="sl-v203-filter-field"><span>Module</span><select defaultValue="all" aria-label="Audit log module"><option value="all">All Modules</option><option value="dashboard">Dashboard</option><option value="users">Users</option><option value="security-activity">Security &amp; Activity</option><option value="system-settings">System Settings</option><option value="ingredients">Ingredients</option><option value="inventory-batches">Inventory Batches</option><option value="inventory">Inventory</option><option value="stock-in">Stock-In</option><option value="usage">Usage</option><option value="usage-waste">Usage &amp; Waste</option><option value="usage-recording">Usage Recording</option><option value="waste">Waste</option><option value="waste-recording">Waste Recording</option><option value="change-requests">Change Requests</option><option value="my-requests">My Requests</option><option value="expiration-fefo">Expiration / FEFO</option><option value="forecasting">Forecasting</option><option value="alerts">Alerts</option><option value="audit-logs">Audit Logs</option><option value="reports">Reports</option><option value="reports-analytics">Reports &amp; Analytics</option></select></label>
             <div className="sl-v203-filter-actions">
-              <button type="button" className="sl-button sl-button-primary"><Filter size={14} aria-hidden="true" /> Filter</button>
               <button type="button" className="sl-button">Reset</button>
             </div>
           </div>
 
           <div className="sl-v203-audit-table-wrap" role="region" aria-label="Audit records" tabIndex={0}>
             <table className="sl-data-table sl-v203-audit-table">
-              <thead><tr><th>Date &amp; Time</th><th>User</th><th>Action</th><th>Module</th><th>Details</th><th>Status</th></tr></thead>
+              <thead><tr><th>Date &amp; Time</th><th>User</th><th>Role</th><th>Action</th><th>Module</th><th>Details</th><th>Status</th></tr></thead>
             </table>
             <div className="sl-staff-usage-pending">
               <DataState kind="empty" title="No live records yet" description="Audit records" />
@@ -140,614 +156,55 @@ function AuditLogsPanel() {
         </section>
       </main>
 
-      <aside className="sl-v203-audit-rail">
-        <section className="sl-staff-usage-card sl-staff-usage-sidecard">
-          <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>Audit Log Overview</h2></header>
-          <SecurityPending label="Audit log overview" compact />
-        </section>
-        <section className="sl-staff-usage-card sl-staff-usage-sidecard">
-          <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><BarChart3 aria-hidden="true" /></span><h2>Activity by Module</h2></header>
-          <SecurityPending label="Activity by module" compact />
-        </section>
-        <section className="sl-staff-usage-card sl-staff-usage-sidecard">
-          <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><Activity aria-hidden="true" /></span><h2>Recent Security Activities</h2></header>
-          <SecurityPending label="Recent security activities" compact />
-        </section>
-      </aside>
-    </div>
-  );
-}
-
-function LoginActivityPanel() {
-  return (
-    <div className="sl-v79-login-layout">
-      <main className="sl-v79-login-main">
-        <section className="sl-v78-card sl-v79-login-workspace">
-          <div className="sl-v79-login-filters" aria-label="Login activity filters">
-            <label className="sl-v79-login-search">
-              <span>Search logs</span>
-              <div>
-                <Search size={15} aria-hidden="true" />
-                <input type="search" placeholder="Search by user email, IP address, or device…" />
-              </div>
-            </label>
-
-            <label>
-              <span>User Role</span>
-              <select defaultValue="all"><option value="all">All Roles</option></select>
-            </label>
-
-            <label>
-              <span>Branch</span>
-              <select defaultValue="all"><option value="all">All Branches</option></select>
-            </label>
-
-            <label>
-              <span>Login Result</span>
-              <select defaultValue="all"><option value="all">All Results</option></select>
-            </label>
-
-            <label>
-              <span>Date Range</span>
-              <div className="sl-v79-login-date">
-                <CalendarDays size={15} aria-hidden="true" />
-                <input type="text" readOnly value="Data pending" />
-              </div>
-            </label>
-
-            <div className="sl-v79-login-filter-actions">
-              <button type="button" className="sl-v78-filter-button"><Filter size={14} aria-hidden="true" /> Filter</button>
-              <button type="button" className="sl-v78-reset-button">Reset</button>
-            </div>
-          </div>
-
-          <div className="sl-v79-login-toolbar">
-            <span>Showing records</span>
-            <button type="button" disabled>Export</button>
-          </div>
-
-          <div className="sl-v79-login-table">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Login activity"
-            />
-            <PlaceholderBadge />
-          </div>
-
-          <footer className="sl-v79-login-footer">
-            <label>
-              <span>Rows per page</span>
-              <select defaultValue="10"><option>10</option></select>
-            </label>
-            <span>Pagination will activate when live login records are available.</span>
-          </footer>
-        </section>
-      </main>
-
-      <aside className="sl-v79-login-rail">
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><Activity size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Login Activity Overview</h2>
-                <p>Sign-in activity across all branches.</p>
-              </div>
-            </div>
-          </header>
-
-          <div className="sl-v79-periods">
-            <button type="button" className="is-active">7 Days</button>
-            <button type="button">30 Days</button>
-            <button type="button">This Month</button>
-          </div>
-
-          <div className="sl-v82-login-overview-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Login activity overview"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><BarChart3 size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Login Attempts Trend</h2>
-                <p>Successful versus failed logins.</p>
-              </div>
-            </div>
-          </header>
-          <div className="sl-v78-state-wrap compact">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Login activity trend"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><UserRoundCheck size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Login Attempts by Role</h2>
-                <p>Authentication activity by user role.</p>
-              </div>
-            </div>
-          </header>
-          <div className="sl-v78-state-wrap compact">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Login attempts by role"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><FileText size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Recent Login Activity</h2>
-                <p>Latest sign-in attempts in the system.</p>
-              </div>
-            </div>
-            <span className="sl-v78-linklike">View all →</span>
-          </header>
-          <div className="sl-v78-state-wrap compact">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Recent login activity"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-      </aside>
     </div>
   );
 }
 
 function ActiveSessionsPanel() {
   return (
-    <div className="sl-v81-sessions-layout">
-      <main className="sl-v81-sessions-main">
-        <section className="sl-v78-card sl-v80-sessions-workspace">
-        <div className="sl-v80-sessions-filters" aria-label="Active session filters">
-          <label className="sl-v80-sessions-search">
-            <span>Search sessions</span>
-            <div>
-              <Search size={15} aria-hidden="true" />
-              <input type="search" placeholder="Search by user, email, or session ID…" />
-            </div>
-          </label>
-
-          <label>
-            <span>User Role</span>
-            <select defaultValue="all"><option value="all">All Roles</option></select>
-          </label>
-
-          <label>
-            <span>Branch</span>
-            <select defaultValue="all"><option value="all">All Branches</option></select>
-          </label>
-
-          <label>
-            <span>Device</span>
-            <select defaultValue="all"><option value="all">All Devices</option></select>
-          </label>
-
-          <label>
-            <span>Status</span>
-            <select defaultValue="active"><option value="active">Active Only</option></select>
-          </label>
-
-          <div className="sl-v80-sessions-filter-actions">
-            <button type="button" className="sl-v78-filter-button"><Filter size={14} aria-hidden="true" /> Filter</button>
-            <button type="button" className="sl-v78-reset-button">Reset</button>
-          </div>
-        </div>
-
-        <div className="sl-v80-sessions-toolbar">
-          <span>Showing session records</span>
-          <button type="button" disabled>Export</button>
-        </div>
-
-        <div className="sl-v80-sessions-table">
-          <DataState
-            kind="empty"
-            title="No live records yet"
-            description="Active sessions"
-          />
-          <PlaceholderBadge />
-        </div>
-
-        <footer className="sl-v80-sessions-footer">
-          <label>
-            <span>Rows per page</span>
-            <select defaultValue="10"><option>10</option></select>
-          </label>
-          <span>Pagination will activate when live session records are available.</span>
-        </footer>
-        </section>
-      </main>
-
-      <aside className="sl-v81-sessions-rail">
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><Globe2 size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Session Distribution</h2>
-                <p>Active sessions by branch.</p>
-              </div>
-            </div>
+    <div className="sl-v203-audit-layout sl-v211-active-sessions-layout">
+      <main className="sl-v203-audit-main">
+        <section className="sl-staff-usage-card sl-v203-audit-records sl-v211-active-sessions-records">
+          <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+            <span className="sl-staff-usage-head-icon"><Monitor aria-hidden="true" /></span>
+            <h2>Active Sessions</h2>
           </header>
 
-          <div className="sl-v81-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Session distribution"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><LaptopMinimal size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Device Distribution</h2>
-                <p>Active sessions by device type.</p>
-              </div>
-            </div>
-          </header>
-
-          <div className="sl-v81-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Device distribution"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><Activity size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Recent Session Activity</h2>
-                <p>Latest session events across all branches.</p>
-              </div>
-            </div>
-            <span className="sl-v78-linklike">View all →</span>
-          </header>
-
-          <div className="sl-v81-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Recent session activity"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-      </aside>
-    </div>
-  );
-}
-
-
-function SecurityAlertsPanel() {
-  return (
-    <div className="sl-v84-alerts-layout">
-      <main className="sl-v84-alerts-main">
-        <section className="sl-v78-card sl-v84-alerts-workspace">
-          <div className="sl-v84-alerts-filters" aria-label="Security alerts filters">
-            <label className="sl-v84-alerts-search">
-              <span>Search security events</span>
-              <div>
+          <div className="sl-staff-usage-toolbar sl-v203-audit-filters sl-v211-session-filters" aria-label="Active session filters">
+            <label className="sl-v203-filter-field sl-v203-search-field">
+              <span>Search sessions</span>
+              <div className="sl-staff-usage-search">
                 <Search size={15} aria-hidden="true" />
-                <input type="search" placeholder="Search by event type, user, IP, or details…" />
+                <input type="search" placeholder="User or role…" />
               </div>
             </label>
-
-            <label>
-              <span>Severity</span>
-              <select defaultValue="all"><option value="all">All Severities</option></select>
-            </label>
-
-            <label>
-              <span>Event Type</span>
-              <select defaultValue="all"><option value="all">All Types</option></select>
-            </label>
-
-            <label>
-              <span>Status</span>
-              <select defaultValue="all"><option value="all">All Statuses</option></select>
-            </label>
-
-            <label>
-              <span>Date Range</span>
-              <div className="sl-v84-alerts-date">
-                <CalendarDays size={15} aria-hidden="true" />
-                <input type="text" readOnly value="Data pending" />
-              </div>
-            </label>
-
-            <div className="sl-v84-alerts-filter-actions">
-              <button type="button" className="sl-v78-filter-button">
-                <Filter size={14} aria-hidden="true" /> Filter
-              </button>
-              <button type="button" className="sl-v78-reset-button">Reset</button>
+            <label className="sl-v203-filter-field"><span>Role</span><select defaultValue="all"><option value="all">All Roles</option><option value="super-admin">Super Admin</option><option value="admin">Admin</option><option value="manager">Manager</option><option value="inventory-staff">Inventory Staff</option></select></label>
+            <label className="sl-v203-filter-field"><span>Status</span><select defaultValue="active"><option value="active">Active</option><option value="idle">Idle</option><option value="suspended">Suspended</option><option value="logged-out">Logged Out</option></select></label>
+            <div className="sl-v203-filter-actions">
+              <button type="button" className="sl-button">Reset</button>
             </div>
           </div>
 
-          <div className="sl-v84-alerts-toolbar">
-            <span>Security event records</span>
-            <button type="button" disabled>Export</button>
+          <div className="sl-v203-audit-table-wrap" role="region" aria-label="Active session records" tabIndex={0}>
+            <table className="sl-data-table sl-v203-audit-table sl-v211-session-table">
+              <colgroup><col /><col /><col /><col /><col /></colgroup>
+              <thead><tr><th>User</th><th>Role</th><th>Login Time</th><th>Last Activity</th><th>Actions</th></tr></thead>
+            </table>
+            <div className="sl-staff-usage-pending">
+              <DataState kind="empty" title="No live records yet" description="Active sessions" />
+              <PlaceholderBadge />
+            </div>
           </div>
 
-          <div className="sl-v84-alerts-table">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Security alerts"
-            />
-            <PlaceholderBadge />
-          </div>
-
-          <footer className="sl-v84-alerts-footer">
-            <label>
-              <span>Rows per page</span>
-              <select defaultValue="10"><option>10</option></select>
-            </label>
-            <span>Pagination will activate when live security-event records are available.</span>
+          <footer className="sl-staff-usage-footer sl-v203-audit-footer">
+            <label><span>Rows per page</span><select defaultValue="10"><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
+            <span className="sl-staff-usage-pagination-note">No live records yet</span>
           </footer>
         </section>
       </main>
-
-      <aside className="sl-v84-alerts-rail">
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><BarChart3 size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Security Events Trend</h2>
-                <p>Number of security events over time.</p>
-              </div>
-            </div>
-          </header>
-
-          <div className="sl-v84-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Security events trend"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><ShieldCheck size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Events by Type</h2>
-                <p>Distribution of security event categories.</p>
-              </div>
-            </div>
-          </header>
-
-          <div className="sl-v84-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Security events by type"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><UsersRound size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Top Affected Users</h2>
-                <p>Users involved in the most security events.</p>
-              </div>
-            </div>
-          </header>
-
-          <div className="sl-v84-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Affected users"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><AlertTriangle size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Recent Critical Events</h2>
-                <p>Latest high-impact security events.</p>
-              </div>
-            </div>
-            <span className="sl-v78-linklike">View all →</span>
-          </header>
-
-          <div className="sl-v84-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Critical security events"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-      </aside>
     </div>
   );
 }
-
-
-
-function AccessControlPanel() {
-  return (
-    <div className="sl-v86-access-layout">
-      <main className="sl-v86-access-main">
-        <section className="sl-v78-card sl-v86-access-workspace">
-          <div className="sl-v86-access-filters" aria-label="Access control filters">
-            <label className="sl-v86-access-search">
-              <span>Search roles or permissions</span>
-              <div>
-                <Search size={15} aria-hidden="true" />
-                <input type="search" placeholder="Search role, permission, or module…" />
-              </div>
-            </label>
-
-            <label>
-              <span>Role</span>
-              <select defaultValue="all"><option value="all">All Roles</option></select>
-            </label>
-
-            <label>
-              <span>Module</span>
-              <select defaultValue="all"><option value="all">All Modules</option></select>
-            </label>
-
-            <label>
-              <span>Permission Type</span>
-              <select defaultValue="all"><option value="all">All Types</option></select>
-            </label>
-
-            <label>
-              <span>Status</span>
-              <select defaultValue="all"><option value="all">All Statuses</option></select>
-            </label>
-
-            <div className="sl-v86-access-filter-actions">
-              <button type="button" className="sl-v78-filter-button">
-                <Filter size={14} aria-hidden="true" /> Filter
-              </button>
-              <button type="button" className="sl-v78-reset-button">Reset</button>
-            </div>
-          </div>
-
-          <div className="sl-v86-access-toolbar">
-            <span>Access-control records</span>
-            <button type="button" disabled>Export</button>
-          </div>
-
-          <div className="sl-v86-access-table">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Access control permissions"
-            />
-            <PlaceholderBadge />
-          </div>
-
-          <footer className="sl-v86-access-footer">
-            <label>
-              <span>Rows per page</span>
-              <select defaultValue="10"><option>10</option></select>
-            </label>
-            <span>Pagination will activate when live permission records are available.</span>
-          </footer>
-        </section>
-      </main>
-
-      <aside className="sl-v86-access-rail">
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><UsersRound size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Role Distribution</h2>
-                <p>Number of users per role.</p>
-              </div>
-            </div>
-          </header>
-
-          <div className="sl-v86-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Role distribution"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><ShieldCheck size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Module Permissions</h2>
-                <p>Number of permissions per module.</p>
-              </div>
-            </div>
-          </header>
-
-          <div className="sl-v86-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Module permissions"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><Activity size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Recent Access Changes</h2>
-                <p>Latest changes to roles and permissions.</p>
-              </div>
-            </div>
-            <span className="sl-v78-linklike">View all →</span>
-          </header>
-
-          <div className="sl-v86-rail-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Access-control changes"
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-      </aside>
-    </div>
-  );
-}
-
 
 function GenericPlaceholder({ title }: { title: string }) {
   return (
@@ -767,6 +224,14 @@ function GenericPlaceholder({ title }: { title: string }) {
 
 export default function SecurityActivity() {
   const [activeTab, setActiveTab] = useState<SecurityTab>('Overview');
+  const navigateTab = (tab: SecurityTab) => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const hash = `#${tab.toLowerCase().replace(/\s+/g, '-')}`;
+      window.history.replaceState(null, '', `/SecurityActivity${hash}`);
+      window.requestAnimationFrame(() => document.getElementById('sl-security-tab-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
+  };
 
   return (
     <div className="sl-security-activity-v78 sl-staff-usage-v150" data-ui-version="v199-superadmin-dashboard-kpi-parity">
@@ -802,19 +267,18 @@ export default function SecurityActivity() {
             type="button"
             className={activeTab === tab ? 'is-active' : ''}
             aria-current={activeTab === tab ? 'page' : undefined}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => navigateTab(tab)}
           >
             {tab}
           </button>
         ))}
       </nav>
 
-      {activeTab === 'Overview' && <OverviewPanel />}
-      {activeTab === 'Audit Logs' && <AuditLogsPanel />}
-      {activeTab === 'Login Activity' && <LoginActivityPanel />}
-      {activeTab === 'Active Sessions' && <ActiveSessionsPanel />}
-      {activeTab === 'Security Alerts' && <SecurityAlertsPanel />}
-      {activeTab === 'Access Control' && <AccessControlPanel />}
+      <div id="sl-security-tab-content">
+        {activeTab === 'Overview' && <OverviewPanel onNavigate={navigateTab} />}
+        {activeTab === 'Audit Logs' && <AuditLogsPanel />}
+        {activeTab === 'Active Sessions' && <ActiveSessionsPanel />}
+      </div>
     </div>
   );
 }

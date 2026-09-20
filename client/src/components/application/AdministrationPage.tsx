@@ -115,7 +115,7 @@ export function AdministrationPage({ areaId }: { areaId: AdministrationAreaId })
           </section>
 
           <section className="sl-v65-side-card">
-            <div className="sl-v65-side-title"><h2>Recent Configuration Changes</h2><span>View all →</span></div>
+            <div className="sl-v65-side-title"><h2>Recent Configuration Changes</h2><span>View all <span aria-hidden="true">→</span></span></div>
             <DataState kind="empty" title="No live records yet" description="Configuration activity will appear here when its audit source is connected." />
           </section>
         </aside>

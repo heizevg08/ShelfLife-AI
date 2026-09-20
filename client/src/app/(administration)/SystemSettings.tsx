@@ -324,7 +324,7 @@ function MaintenancePanel() {
               <span className="sl-v73-section-icon"><CalendarDays size={16} aria-hidden="true" /></span>
               <div><h2>Maintenance Schedule</h2><p>View upcoming maintenance activities.</p></div>
             </div>
-            <span className="sl-v73-linklike">View all →</span>
+            <span className="sl-v73-linklike">View all <span aria-hidden="true">→</span></span>
           </header>
           <DataState
             kind="empty"
@@ -339,7 +339,7 @@ function MaintenancePanel() {
               <span className="sl-v73-section-icon"><ClipboardList size={16} aria-hidden="true" /></span>
               <div><h2>Recent Maintenance Activity</h2></div>
             </div>
-            <span className="sl-v73-linklike">View all →</span>
+            <span className="sl-v73-linklike">View all <span aria-hidden="true">→</span></span>
           </header>
           <DataState
             kind="empty"

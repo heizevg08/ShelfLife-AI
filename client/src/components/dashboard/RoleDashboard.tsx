@@ -204,7 +204,7 @@ export default function RoleDashboard() {
       </section>}
 
       <div className="sl-module-columns">
-        <Card id="role-primary" title={admin ? 'Operational account directory' : 'Batch inventory'} action={<WorkspaceLink to={admin ? '/UserManagement' : '/InventoryBatches'}>View all</WorkspaceLink>}>
+        <Card id="role-primary" title={admin ? 'Operational account directory' : 'Batch inventory'} action={<WorkspaceLink to={admin ? '/UserManagement' : '/InventoryBatches'}>View all <ArrowRight size={14} aria-hidden="true" /></WorkspaceLink>}>
           {admin ? <AccountsTable /> : <PlaceholderTable
             label={admin ? 'Operational account preview' : 'Inventory overview'}
             columns={admin ? ['Name', 'Email', 'Role', 'Status'] : ['Ingredient', 'Batch', 'Quantity', 'Expiration', 'Status']}

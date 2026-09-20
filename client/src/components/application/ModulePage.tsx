@@ -471,7 +471,7 @@ function InventoryStaffInventoryBatchesPage() {
         <aside className="sl-staff-inventory-rail" aria-label="Inventory analytics">
           <Card id="staff-inventory-storage" title="Storage Distribution"><Pending description="Storage distribution" compact /></Card>
           <Card id="staff-inventory-status" title="Status Breakdown"><Pending description="Inventory status breakdown" compact /></Card>
-          <Card id="staff-inventory-upcoming" title="Upcoming Expirations" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View All</Link>}><Pending description="Upcoming expiration batches" compact /></Card>
+          <Card id="staff-inventory-upcoming" title="Upcoming Expirations" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View All <ArrowRight size={14} aria-hidden="true" /></Link>}><Pending description="Upcoming expiration batches" compact /></Card>
         </aside>
       </div>
     </div>
