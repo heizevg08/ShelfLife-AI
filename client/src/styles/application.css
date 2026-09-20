@@ -15502,3 +15502,187 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   background:var(--sl-success-bg);
   color:var(--sl-success);
 }
+
+/* V230 — Super Admin /Ingredients only: SecurityActivity activity-table parity + KPI/rail alignment. */
+.sl-sa-ingredients-page .sl-sa-ingredients-layout{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.7rem + .25vw,1rem);
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-main{grid-column:1 / span 3;}
+.sl-sa-ingredients-page .sl-sa-ingredients-rail{grid-column:4;}
+/* Exact table/header language inherited from SecurityActivity > Recent Security & System Activity. */
+.sl-sa-ingredients-page .sl-sa-ingredients-table.sl-staff-usage-table thead th{
+  background:var(--sl-surface-subtle);
+  color:var(--sl-text);
+  font:var(--sl-font-label);
+  text-align:left;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+@media(max-width:1120px){
+  .sl-sa-ingredients-page .sl-sa-ingredients-layout{grid-template-columns:1fr;}
+  .sl-sa-ingredients-page .sl-sa-ingredients-main,
+  .sl-sa-ingredients-page .sl-sa-ingredients-rail{grid-column:1;}
+}
+
+/* V231 — Explicitly scoped to Super Admin /Ingredients and /InventoryBatches only.
+   Their records tables use the exact shared Recent Security & System Activity table chain. */
+.sl-sa-ingredients-page .sl-sa-ingredients-table-card.sl-staff-usage-card,
+.sl-sa-batches-page .sl-sa-batches-table-card.sl-staff-usage-card{
+  overflow:hidden;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-table-scroll.sl-staff-usage-table-shell,
+.sl-sa-batches-page .sl-sa-batches-table-shell.sl-staff-usage-table-shell{
+  width:100%;
+  min-width:0;
+}
+/* Keep the Ingredients analytics rail on the same 4-column track as the Low-Stock KPI. */
+.sl-sa-ingredients-page .sl-sa-ingredients-layout{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  column-gap:clamp(.75rem,.7rem + .25vw,1rem);
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-main{grid-column:1 / span 3;min-width:0;}
+.sl-sa-ingredients-page .sl-sa-ingredients-rail{grid-column:4;min-width:0;}
+@media(max-width:1120px){
+  .sl-sa-ingredients-page .sl-sa-ingredients-layout{grid-template-columns:1fr;}
+  .sl-sa-ingredients-page .sl-sa-ingredients-main,
+  .sl-sa-ingredients-page .sl-sa-ingredients-rail{grid-column:1;}
+}
+
+/* V232 — ONLY Super Admin /Ingredients + /InventoryBatches.
+   Literal Recent Security & System Activity table treatment copied from
+   SecurityActivity Overview; no approximation selectors. */
+.sl-sa-ingredients-page .sl-security-activity-reference-table,
+.sl-sa-batches-page .sl-security-activity-reference-table{
+  width:100%;
+  min-width:clamp(720px,72vw,920px);
+  table-layout:fixed;
+}
+.sl-sa-ingredients-page .sl-security-activity-reference-table th,
+.sl-sa-ingredients-page .sl-security-activity-reference-table td,
+.sl-sa-batches-page .sl-security-activity-reference-table th,
+.sl-sa-batches-page .sl-security-activity-reference-table td{
+  box-sizing:border-box;
+  padding-inline:clamp(.68rem,.55rem + .24vw,.92rem)!important;
+}
+.sl-sa-ingredients-page .sl-security-activity-reference-table th,
+.sl-sa-batches-page .sl-security-activity-reference-table th{
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+/* Preserve the target table's equal-track behavior for each page's actual column count. */
+.sl-sa-ingredients-page .sl-security-activity-reference-table th,
+.sl-sa-ingredients-page .sl-security-activity-reference-table td{width:14.285714%;}
+.sl-sa-batches-page .sl-security-activity-reference-table th,
+.sl-sa-batches-page .sl-security-activity-reference-table td{width:16.666667%;}
+
+/* V234 — Super Admin /Ingredients only: filters belong to the same records card
+   and use the established UsageRecording control language; the records card/table
+   keeps the literal Recent Security & System Activity treatment. */
+.sl-sa-ingredients-page .sl-sa-ingredients-table-card{
+  display:flex;
+  flex-direction:column;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-table-filters{
+  border-bottom:1px solid var(--sl-border-subtle);
+  background:var(--sl-surface);
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-filter-card{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) repeat(3,minmax(130px,.32fr)) auto;
+  gap:.65rem;
+  align-items:end;
+  padding:.65rem .8rem;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  background:transparent;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-filter-card label{
+  min-width:0;
+  display:grid;
+  gap:.35rem;
+  font:var(--sl-font-label);
+  color:var(--sl-text);
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-filter-card input,
+.sl-sa-ingredients-page .sl-sa-ingredients-filter-card select{
+  width:100%;
+  min-width:0;
+  height:40px;
+  min-height:40px;
+  padding:0 .75rem;
+  border:1px solid var(--sl-border);
+  border-radius:var(--sl-radius);
+  background:var(--sl-surface);
+  color:var(--sl-text);
+  font:var(--sl-font-supporting);
+  box-sizing:border-box;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-filter-card :is(input,select):focus{
+  outline:2px solid var(--sl-focus);
+  outline-offset:1px;
+  border-color:var(--sl-focus);
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-search > div{
+  position:relative;
+  display:block;
+  min-height:40px;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-search > div input{
+  height:40px;
+  min-height:40px;
+  padding:0 .75rem 0 2.35rem;
+  border:1px solid var(--sl-border);
+  background:var(--sl-surface);
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-search svg{
+  position:absolute;
+  left:.8rem;
+  top:50%;
+  transform:translateY(-50%);
+  width:15px;
+  height:15px;
+  z-index:1;
+  pointer-events:none;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-filter-actions{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-filter-actions .sl-button{
+  height:40px;
+  min-height:40px;
+  padding:0 .75rem;
+  white-space:nowrap;
+  font:var(--sl-font-supporting);
+}
+@media(max-width:1200px){
+  .sl-sa-ingredients-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sl-sa-ingredients-page .sl-sa-ingredients-search{grid-column:1/-1;}
+  .sl-sa-ingredients-page .sl-sa-ingredients-filter-actions{justify-content:flex-end;}
+}
+@media(max-width:620px){
+  .sl-sa-ingredients-page .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}
+  .sl-sa-ingredients-page .sl-sa-ingredients-search{grid-column:auto;}
+  .sl-sa-ingredients-page .sl-sa-ingredients-filter-actions{justify-content:stretch;}
+  .sl-sa-ingredients-page .sl-sa-ingredients-filter-actions .sl-button{width:100%;}
+}
+
+/* V236 — Super Admin /Ingredients only: keep the table structure/header visible
+   when the ingredient backend has no live rows yet. */
+.sl-sa-ingredients-page .sl-sa-ingredients-empty-row > td{
+  width:auto!important;
+  padding:0!important;
+  border-bottom:0;
+  text-align:center;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-empty-row .sl-sa-ingredients-pending{
+  min-height:clamp(14rem,30vh,24rem);
+  display:grid;
+  place-items:center;
+}

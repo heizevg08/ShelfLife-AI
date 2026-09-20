@@ -164,14 +164,14 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
       </div>
     </div>}
 
-    {error ? <DataState kind="error" title="Activity could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(x => x + 1)}>Retry</button>} />
-      : !data ? <DataState kind="loading" title="Loading activity" description="" />
-      : <div className="sl-table-scroll" role="region" aria-label="Administrative audit records" tabIndex={0}>
+    <div className="sl-table-scroll" role="region" aria-label="Administrative audit records" tabIndex={0}>
         <table className="sl-data-table">
           <thead><tr><th scope="col">Date &amp; Time</th><th scope="col">User</th><th scope="col">Action</th>{adminOverview && <th scope="col">Module</th>}<th scope="col">Details</th><th scope="col">Status</th></tr></thead>
           <tbody>
-            {!visibleRows.length && <tr><td colSpan={adminOverview ? 6 : 5} className="sl-empty-cell"><DataState kind="empty" title={filtersApplied ? 'No records match these filters' : 'No administrative activity yet'} description={filtersApplied ? 'Change or clear the current filters.' : "You're all caught up — successful account changes will show up here automatically."} /></td></tr>}
-            {visibleRows.map(row => <tr key={row.id}>
+            {error ? <tr><td colSpan={adminOverview ? 6 : 5} className="sl-empty-cell"><DataState kind="error" title="Activity could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(x => x + 1)}>Retry</button>} /></td></tr>
+            : !data ? <tr><td colSpan={adminOverview ? 6 : 5} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="" /></td></tr>
+            : !visibleRows.length ? <tr><td colSpan={adminOverview ? 6 : 5} className="sl-empty-cell"><DataState kind="empty" title={filtersApplied ? 'No records match these filters' : 'No administrative activity yet'} description={filtersApplied ? 'Change or clear the current filters.' : "You're all caught up — successful account changes will show up here automatically."} /></td></tr>
+            : visibleRows.map(row => <tr key={row.id}>
               <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
               <td className="sl-record-id">{row.actor.name} · {row.actor.role}</td>
               <td>{row.action}</td>
@@ -181,7 +181,7 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
             </tr>)}
           </tbody>
         </table>
-      </div>}
+      </div>
 
     {!recent && data && <>
       {adminOverview ? <div className="sl-audit-table-footer"><label className="sl-audit-page-size sl-audit-page-size-footer">Rows per page<select className="sl-admin-input" value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{[10, 25, 50].map(size => <option key={size} value={size}>{size}</option>)}</select></label></div> : <div className="sl-audit-export-row"><div className="sl-download-control"><button type="button" className="sl-button sl-download-trigger" aria-expanded={downloadOpen} aria-controls="sl-audit-download-menu" onClick={() => setDownloadOpen(value => !value)}><Download size={17} aria-hidden="true" />Export<ChevronDown size={16} aria-hidden="true" /></button>{downloadOpen && <div id="sl-audit-download-menu" className="sl-download-menu" role="menu" aria-label="Audit export formats">{reportExportFormats.map(format => <button key={format.id} type="button" role="menuitem" disabled className="sl-download-option"><span>{format.label}</span></button>)}<p className="sl-supporting">Exports activate when the audit export service and permissions are available.</p></div>}</div></div>}

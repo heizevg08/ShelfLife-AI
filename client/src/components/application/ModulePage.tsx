@@ -1,5 +1,5 @@
 import { Link, type Href } from 'expo-router';
-import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical, Truck, ClipboardCheck, PackageCheck } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, FileText, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical, Truck, ClipboardCheck, PackageCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
@@ -631,7 +631,12 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
           <strong>{data ? `Showing ${visibleStart.toLocaleString()}–${visibleEnd.toLocaleString()} of ${data.total.toLocaleString()} ingredients` : loadError ? 'Ingredient records unavailable' : 'Loading ingredient records'}</strong>
           <div><button className="sl-button" type="button" disabled={!data?.items.length} onClick={exportVisible}><Download size={16}/>Export</button><button ref={addButtonRef} className="sl-button sl-button-primary" type="button" onClick={open}><Plus size={16}/>Add Ingredient</button></div>
         </div>
-        {loadError ? <div className="sl-admin-ingredient-state"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></div> : !data ? <div className="sl-admin-ingredient-state"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></div> : data.items.length ? <div className="sl-admin-ingredient-table-scroll"><table><thead><tr><th aria-label="Select"><input type="checkbox" disabled /></th><th>Ingredient</th><th>Category</th><th>Default Unit</th><th>Typical Shelf Life</th><th>Status</th><th>Date Added</th><th>Actions</th></tr></thead><tbody>{data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><Status>Active</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Remove ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button></div></td></tr>)}</tbody></table></div> : <div className="sl-admin-ingredient-state"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} /><span className="sl-admin-data-pending">Preview · data pending</span></div>}
+        <div className="sl-admin-ingredient-table-scroll"><table><thead><tr><th aria-label="Select"><input type="checkbox" disabled /></th><th>Ingredient</th><th>Category</th><th>Default Unit</th><th>Typical Shelf Life</th><th>Status</th><th>Date Added</th><th>Actions</th></tr></thead><tbody>
+          {loadError ? <tr><td colSpan={8} className="sl-empty-cell"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
+          : !data ? <tr><td colSpan={8} className="sl-empty-cell"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></td></tr>
+          : !data.items.length ? <tr><td colSpan={8} className="sl-empty-cell"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} action={<Status>Preview · data pending</Status>} /></td></tr>
+          : data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><Status>Active</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Remove ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button></div></td></tr>)}
+        </tbody></table></div>
         {data && <div className="sl-admin-ingredient-pagination"><label>Rows per page <select value={data.pageSize} disabled><option>{data.pageSize}</option></select></label><Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} /></div>}
       </section>
     </div>
@@ -778,7 +783,15 @@ function SuperAdminIngredientsPage() {
 
       <div className="sl-sa-ingredients-layout">
         <main className="sl-sa-ingredients-main">
-          <section className="sl-sa-ingredients-filter-card" aria-label="Ingredient filters">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Ingredient catalogue">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+              <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+              <h2>Ingredient Records</h2>
+
+            </header>
+
+            <div className="sl-sa-ingredients-table-filters">
+              <div className="sl-sa-ingredients-filter-card" aria-label="Ingredient filters">
             <label className="sl-sa-ingredients-search">
               <span>Search ingredients</span>
               <div>
@@ -827,79 +840,49 @@ function SuperAdminIngredientsPage() {
             </label>
 
             <div className="sl-sa-ingredients-filter-actions">
-              <button type="button" className="sl-button sl-button-primary" onClick={applyFilters}>
-                <Filter size={15} aria-hidden="true" />Filter
-              </button>
               <button type="button" className="sl-button" onClick={resetFilters}>Reset</button>
+              <button type="button" className="sl-button" disabled title="Export backend is not connected"><Download size={16} aria-hidden="true" />Export</button>
             </div>
-          </section>
+              </div>
 
-          <section className="sl-sa-ingredients-table-card" aria-label="Ingredient catalogue">
-            <div className="sl-sa-ingredients-table-toolbar">
-              <span>
-                {data
-                  ? `Showing ${visibleStart.toLocaleString()}–${visibleEnd.toLocaleString()} of ${data.total.toLocaleString()} ingredients`
-                  : loadError
-                  ? 'Ingredient catalogue unavailable'
-                  : 'Loading ingredient catalogue'}
-              </span>
-              <button type="button" className="sl-button" disabled title="Export backend is not connected">
-                Export
-              </button>
             </div>
 
-            {loadError ? (
-              <div className="sl-sa-ingredients-state">
-                <DataState
-                  kind="error"
-                  title="Ingredients could not be loaded"
-                  description="The ingredient service is temporarily unavailable."
-                  action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>}
-                />
-              </div>
-            ) : !data ? (
-              <div className="sl-sa-ingredients-state">
-                <DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." />
-              </div>
-            ) : data.items.length === 0 ? (
-              <SuperAdminIngredientPending label="Ingredient catalogue" />
-            ) : (
-              <div className="sl-sa-ingredients-table-scroll" role="region" aria-label="Live ingredient records" tabIndex={0}>
-                <table className="sl-sa-ingredients-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Ingredient Name</th>
-                      <th scope="col">Category</th>
-                      <th scope="col">Unit</th>
-                      <th scope="col">Default Shelf Life</th>
-                      <th scope="col">Brand</th>
-                      <th scope="col">Last Updated</th>
-                      <th scope="col">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.items.map(item => <tr key={item.id}>
-                      <td>
-                        <span className="sl-sa-ingredient-name">
-                          <span className="sl-sa-ingredient-avatar" aria-hidden="true"><Leaf size={15} /></span>
-                          <strong>{item.name}</strong>
-                        </span>
-                      </td>
-                      <td><Status>{item.category}</Status></td>
-                      <td>{item.unitOfMeasure}</td>
-                      <td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td>
-                      <td>{item.brand || '—'}</td>
-                      <td>{formatUpdated(item.updatedAt)}</td>
-                      <td>
-                        <button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}>
-                          <Eye size={16} aria-hidden="true" />
-                        </button>
-                      </td>
-                    </tr>)}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Live ingredient records" tabIndex={0}>
+              <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Ingredient Name</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Unit</th>
+                    <th scope="col">Default Shelf Life</th>
+                    <th scope="col">Brand</th>
+                    <th scope="col">Last Updated</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadError ? (
+                    <tr className="sl-sa-ingredients-empty-row"><td colSpan={7}>
+                      <DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} />
+                    </td></tr>
+                  ) : !data ? (
+                    <tr className="sl-sa-ingredients-empty-row"><td colSpan={7}>
+                      <DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." />
+                    </td></tr>
+                  ) : data.items.length === 0 ? (
+                    <tr className="sl-sa-ingredients-empty-row"><td colSpan={7}><SuperAdminIngredientPending label="Ingredient catalogue" /></td></tr>
+                  ) : data.items.map(item => <tr key={item.id}>
+                    <td><span className="sl-sa-ingredient-name"><span className="sl-sa-ingredient-avatar" aria-hidden="true"><Leaf size={15} /></span><strong>{item.name}</strong></span></td>
+                    <td><Status>{item.category}</Status></td>
+                    <td>{item.unitOfMeasure}</td>
+                    <td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td>
+                    <td>{item.brand || '—'}</td>
+                    <td>{formatUpdated(item.updatedAt)}</td>
+                    <td><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16} aria-hidden="true" /></button></td>
+                  </tr>)}
+                </tbody>
+              </table>
+            </div>
 
             {data && data.total > 0 && (
               <div className="sl-sa-ingredients-pagination">
@@ -1050,28 +1033,23 @@ function SuperAdminInventoryBatchesPage() {
         </label>
 
         <div className="sl-sa-batches-filter-actions">
-          <button type="button" className="sl-button sl-button-primary" disabled>
-            <Filter size={15} aria-hidden="true" />Filter
-          </button>
           <button type="button" className="sl-button" disabled>Reset</button>
+          <button type="button" className="sl-button" disabled title="Export backend is not connected"><Download size={16} aria-hidden="true" />Export</button>
         </div>
       </section>
 
-      <section className="sl-sa-batches-table-card" aria-label="Inventory batch records">
-        <div className="sl-sa-batches-table-toolbar">
-          <span>Inventory batch records</span>
-          <button type="button" className="sl-button" disabled title="Export backend is not connected">
-            Export
-          </button>
-        </div>
+      <section className="sl-sa-batches-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Inventory batch records">
+        <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+          <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+          <h2>Inventory Batch Records</h2>
 
-        <div className="sl-sa-batches-table-placeholder">
-          <DataState
-            kind="empty"
-            title="No live records yet"
-            description="Inventory batches"
-            action={<Status>Preview · data pending</Status>}
-          />
+        </header>
+
+        <div className="sl-staff-usage-table-shell sl-sa-batches-table-shell" role="region" aria-label="Inventory batch records" tabIndex={0}>
+          <table className="sl-data-table sl-staff-usage-table sl-sa-batches-table sl-security-activity-reference-table">
+            <thead><tr><th>Batch ID</th><th>Ingredient</th><th>Quantity</th><th>Expiration Date</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={6} className="sl-staff-usage-preview-state-cell"><div className="sl-sa-batches-table-placeholder"><DataState kind="empty" title="No live records yet" description="Inventory batches" action={<Status>Preview · data pending</Status>} /></div></td></tr></tbody>
+          </table>
         </div>
 
         <footer className="sl-sa-batches-footer">
