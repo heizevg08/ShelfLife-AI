@@ -3,8 +3,8 @@ import { Bell, Boxes, ChartNoAxesCombined, ClipboardList, Clock, Leaf, ListCheck
 // Product responsibilities only; these definitions do not grant API permissions.
 export const administrationAreas = [
   { id: 'accounts', path: '/UserManagement', label: 'Users', Icon: UsersRound, summary: 'Manage authorized user accounts' },
-  { id: 'settings', path: '/SystemSettings', label: 'System Settings', Icon: Settings2, summary: 'Application configuration' },
   { id: 'security', path: '/SecurityActivity', label: 'Security & Activity', Icon: ShieldCheck, summary: 'Protected security and audit activity' },
+  { id: 'settings', path: '/SystemSettings', label: 'System Settings', Icon: Settings2, summary: 'Application configuration' },
 
   { id: 'ingredients', path: '/Ingredients', label: 'Ingredients', Icon: Leaf, summary: 'Ingredient master-data oversight' },
   { id: 'batches', path: '/InventoryBatches', label: 'Inventory Batches', Icon: Boxes, summary: 'Inventory batch oversight' },

@@ -14827,3 +14827,97 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   min-width:0!important;
   box-sizing:border-box!important;
 }
+
+/* V194 — Super Admin /SecurityActivity exact Inventory Staff /UsageRecording visual parity. */
+.sl-security-activity-v78 .sl-v194-security-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.75rem,.6rem + .35vw,1rem)}
+.sl-security-activity-v78 .sl-v194-security-kpis .sl-inventory-staff-kpi{min-width:0;min-height:clamp(6.6rem,6rem + 2vw,8rem);padding:clamp(.8rem,.7rem + .35vw,1.15rem);gap:clamp(.7rem,.55rem + .45vw,1rem);border-top-width:3px}
+.sl-security-activity-v78 .sl-v194-security-kpis .sl-inventory-staff-kpi[data-tone='brand']{border-top-color:var(--sl-brand)}
+.sl-security-activity-v78 .sl-v194-security-kpis .sl-inventory-staff-kpi[data-tone='success']{border-top-color:var(--sl-success)}
+.sl-security-activity-v78 .sl-v194-security-kpis .sl-inventory-staff-kpi[data-tone='critical']{border-top-color:var(--sl-critical)}
+.sl-security-activity-v78 .sl-v194-security-kpis .sl-inventory-staff-kpi[data-tone='info']{border-top-color:#0c5797}
+.sl-security-activity-v78 .sl-v194-overview-main{min-width:0}
+.sl-security-activity-v78 .sl-v194-usage-records-card{display:flex;flex-direction:column;min-height:clamp(300px,34vh,430px)}
+.sl-security-activity-v78 .sl-v194-usage-heading{min-width:0;margin-right:auto}
+.sl-security-activity-v78 .sl-v194-usage-heading h2{margin:0}
+.sl-security-activity-v78 .sl-v194-usage-heading p{margin:.12rem 0 0;color:var(--sl-muted);font:var(--sl-font-supporting)}
+.sl-security-activity-v78 .sl-v194-security-table-shell{flex:1;min-height:clamp(220px,25vh,310px);overflow:auto}
+.sl-security-activity-v78 .sl-v194-security-table{min-width:700px;height:100%}
+.sl-security-activity-v78 .sl-v194-security-table tbody,.sl-security-activity-v78 .sl-v194-security-table .sl-staff-usage-preview-row{height:100%}
+.sl-security-activity-v78 .sl-v194-security-table .sl-staff-usage-preview-state-cell{height:100%;padding:0!important;vertical-align:middle;border-bottom:0}
+.sl-security-activity-v78 .sl-v194-security-pending{min-height:clamp(190px,23vh,280px);height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.65rem;padding:clamp(1rem,3vw,2rem)}
+.sl-security-activity-v78 .sl-v194-security-pending .sl-data-state{margin:auto auto 0}
+.sl-security-activity-v78 .sl-v194-security-pending .sl-v78-preview-badge{margin:0 auto auto}
+@media(max-width:1100px){.sl-security-activity-v78 .sl-v194-security-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.sl-security-activity-v78 .sl-v194-security-kpis{grid-template-columns:1fr}.sl-security-activity-v78 .sl-staff-usage-card-head{align-items:flex-start;flex-wrap:wrap}.sl-security-activity-v78 .sl-staff-usage-viewall{margin-left:2.65rem}}
+
+/* V195 — Super Admin /SecurityActivity: exact Inventory Staff UsageRecording parity. */
+.sl-security-activity-v78 .sl-v195-security-rail{
+  min-width:0;
+  align-self:stretch;
+}
+.sl-security-activity-v78 .sl-v195-security-rail .sl-staff-usage-sidecard{
+  min-width:0;
+}
+.sl-security-activity-v78 .sl-v195-security-rail .sl-data-state{
+  flex:1;
+  min-height:clamp(8.5rem,12vw,11.5rem);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+/* Active Sessions = Active Batches success treatment; Security Alerts = Low Stock critical treatment. */
+.sl-security-activity-v78 .sl-v194-security-kpis .sl-inventory-staff-kpi[data-tone='success']{border-top-color:var(--sl-success)}
+.sl-security-activity-v78 .sl-v194-security-kpis .sl-inventory-staff-kpi[data-tone='critical']{border-top-color:var(--sl-critical)}
+
+/* V196 — SecurityActivity uses the Inventory Staff /UsageRecording structures directly.
+   Only add the success tone needed by Active Sessions (same established green treatment as Active Batches). */
+.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success']{border-top-color:var(--sl-success)}
+.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success'] .sl-sa-kpi-icon{background:var(--sl-success-bg);color:var(--sl-success)}
+
+
+/* V197 — Super Admin /SecurityActivity refinements, scoped only to this page. */
+/* Active Sessions mirrors the established Active Batches success treatment. */
+.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success']{
+  border-top-color:var(--sl-success);
+}
+.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success'] .sl-sa-kpi-icon{
+  background:var(--sl-success-bg);color:var(--sl-success);
+}
+/* Audit Logs mirrors Inventory Staff Expiring Soon's attention treatment. */
+.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='attention']{
+  border-top-color:var(--sl-attention);
+}
+.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='attention'] .sl-sa-kpi-icon{
+  background:#fff1cf;color:#b97900;
+}
+/* View All stays text-only on hover — no hover fill/background. */
+.sl-security-activity-v78 .sl-staff-usage-viewall,
+.sl-security-activity-v78 .sl-staff-usage-viewall:hover,
+.sl-security-activity-v78 .sl-staff-usage-viewall:focus,
+.sl-security-activity-v78 .sl-staff-usage-viewall:active{
+  background:transparent!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+/* Security Status chart palette follows Super Admin /UserManagement User Distribution. */
+.sl-security-activity-v78 .sl-v74-donut{
+  background:radial-gradient(circle at center,#fff 0 47%,transparent 48%),conic-gradient(#0b8755 0 25%,#79c9a3 25% 50%,#ffd166 50% 75%,#67a98f 75% 100%);
+}
+.sl-security-activity-v78 .sl-v74-legend .is-secure{background:#0b8755}
+.sl-security-activity-v78 .sl-v74-legend .is-risk{background:#ffd166}
+.sl-security-activity-v78 .sl-v74-legend .is-critical{background:#67a98f}
+
+/* V198 — Super Admin /SecurityActivity: Active Sessions must use the complete
+   established success-card treatment, not only a green top border/icon. */
+.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success']{
+  border-color:color-mix(in oklab,var(--sl-success) 24%,var(--sl-border));
+  border-top-color:var(--sl-success);
+  background:linear-gradient(180deg,color-mix(in oklab,var(--sl-success-bg) 82%,white),white 42%);
+}
+.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success'] .sl-sa-kpi-icon{
+  color:var(--sl-success);
+  background:var(--sl-success-bg);
+}
+\n\n/* V199 — Super Admin /SecurityActivity KPI color parity with the CURRENT Super Admin dashboard (V173).\n   Active Sessions = Active Accounts (info); Audit Logs (30 Days) = Ingredients Tracked (attention).\n   Scoped only to /SecurityActivity. */\n.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='info']{\n  border-top-color:#0c5797;\n  background:linear-gradient(110deg,#f6fbff,#fff);\n}\n.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='info'] .sl-sa-kpi-icon{\n  background:#e4f2ff;\n  color:#0c5797;\n}\n.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='attention']{\n  border-top-color:var(--sl-attention);\n  background:linear-gradient(110deg,#fffaf0,#fff);\n}\n.sl-security-activity-v78.sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='attention'] .sl-sa-kpi-icon{\n  background:#fff1cf;\n  color:#b97900;\n}\n

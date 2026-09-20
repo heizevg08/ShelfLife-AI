@@ -19,7 +19,7 @@ import {
   LaptopMinimal,
   Globe2,
 } from 'lucide-react';
-import { DataState, PageHeader } from '../../components/application/primitives';
+import { DataState, PageHeader, Status } from '../../components/application/primitives';
 
 const tabs = [
   'Overview',
@@ -33,107 +33,62 @@ const tabs = [
 type SecurityTab = (typeof tabs)[number];
 
 function PlaceholderBadge() {
-  return <span className="sl-v78-preview-badge">Preview · data pending</span>;
+  return null;
+}
+
+function SecurityPending({ label, compact = false }: { label: string; compact?: boolean }) {
+  return (
+    <div className={`sl-staff-usage-pending${compact ? ' compact' : ''}`}>
+      <DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} />
+    </div>
+  );
 }
 
 function OverviewPanel() {
   return (
-    <div className="sl-v78-layout">
-      <main className="sl-v78-main">
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><FileText size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Recent Security &amp; System Activity</h2>
-                <p>Latest critical and notable activities across the system.</p>
-              </div>
-            </div>
-            <span className="sl-v78-linklike">View all logs →</span>
+    <div className="sl-staff-usage-layout">
+      <main className="sl-staff-usage-main">
+        <section className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="recent-security-activity-title">
+          <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+            <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+            <h2 id="recent-security-activity-title">Recent Security &amp; System Activity</h2>
+            <div className="sl-staff-usage-head-actions"><span className="sl-staff-usage-viewall">View All</span></div>
           </header>
-          <div className="sl-v78-state-wrap">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Security and system activity will appear here when the audit-event backend is connected."
-            />
-            <PlaceholderBadge />
+          <div className="sl-staff-usage-table-shell">
+            <table className="sl-data-table sl-staff-usage-table">
+              <thead><tr><th>Date &amp; Time</th><th>User</th><th>Activity</th><th>Module</th><th>Status</th></tr></thead>
+              <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={5} className="sl-staff-usage-preview-state-cell"><SecurityPending label="Security and system activity" /></td></tr></tbody>
+            </table>
           </div>
         </section>
 
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><Monitor size={16} aria-hidden="true" /></span>
-              <div>
-                <h2>Active Sessions</h2>
-                <p>Currently active user sessions.</p>
-              </div>
-            </div>
-            <span className="sl-v78-linklike">View all sessions →</span>
+        <section className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="active-sessions-title">
+          <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+            <span className="sl-staff-usage-head-icon"><Monitor aria-hidden="true" /></span>
+            <h2 id="active-sessions-title">Active Sessions</h2>
+            <div className="sl-staff-usage-head-actions"><span className="sl-staff-usage-viewall">View All</span></div>
           </header>
-          <div className="sl-v78-state-wrap">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Active sessions will appear here when the session-monitoring backend is connected."
-            />
-            <PlaceholderBadge />
+          <div className="sl-staff-usage-table-shell">
+            <table className="sl-data-table sl-staff-usage-table">
+              <thead><tr><th>User</th><th>Role</th><th>Device</th><th>IP Address</th><th>Last Activity</th></tr></thead>
+              <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={5} className="sl-staff-usage-preview-state-cell"><SecurityPending label="Active sessions" /></td></tr></tbody>
+            </table>
           </div>
         </section>
       </main>
 
-      <aside className="sl-v78-rail">
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><ShieldCheck size={16} aria-hidden="true" /></span>
-              <div><h2>Security Status</h2><p>Overall system security health and risk level.</p></div>
-            </div>
-          </header>
-          <div className="sl-v78-state-wrap compact">
-            <DataState
-              kind="empty"
-              title="Security status unavailable"
-              description="Live risk and health metrics will appear here when the security-status backend is connected."
-            />
-            <PlaceholderBadge />
-          </div>
+      <aside className="sl-staff-usage-rail">
+        <section className="sl-staff-usage-card sl-staff-usage-sidecard">
+          <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><ShieldCheck aria-hidden="true" /></span><h2>Security Status</h2></header>
+          <SecurityPending label="Security status" compact />
         </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><BarChart3 size={16} aria-hidden="true" /></span>
-              <div><h2>Top Security Events (7 days)</h2></div>
-            </div>
-          </header>
-          <div className="sl-v78-state-wrap compact">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Security event analytics will appear here when the analytics backend is connected."
-            />
-            <PlaceholderBadge />
-          </div>
+        <section className="sl-staff-usage-card sl-staff-usage-sidecard">
+          <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><BarChart3 aria-hidden="true" /></span><h2>Top Security Events (7 Days)</h2></header>
+          <SecurityPending label="Security event analytics" compact />
         </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><AlertTriangle size={16} aria-hidden="true" /></span>
-              <div><h2>Security Alerts</h2></div>
-            </div>
-            <span className="sl-v78-linklike">View all →</span>
-          </header>
-          <div className="sl-v78-state-wrap compact">
-            <DataState
-              kind="empty"
-              title="No live alerts yet"
-              description="Security alerts will appear here when the alert backend is connected."
-            />
-            <PlaceholderBadge />
-          </div>
+        <section className="sl-staff-usage-card sl-staff-usage-sidecard">
+          <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon attention"><AlertTriangle aria-hidden="true" /></span><h2>Security Alerts</h2></header>
+          <SecurityPending label="Security alerts" compact />
         </section>
       </aside>
     </div>
@@ -870,29 +825,29 @@ export default function SecurityActivity() {
   const [activeTab, setActiveTab] = useState<SecurityTab>('Overview');
 
   return (
-    <div className="sl-security-activity-v78" data-ui-version="v86-security-activity-access-control">
+    <div className="sl-security-activity-v78 sl-staff-usage-v150" data-ui-version="v199-superadmin-dashboard-kpi-parity">
       <PageHeader
         eyebrow="Security & Activity"
         title="Security & Activity"
         description="Monitor system security, user activity, and audit records across ShelfLife AI."
       />
 
-      <section className="sl-v78-kpis" aria-label="Security overview">
-        <article>
-          <span className="sl-v78-kpi-icon is-brand"><ShieldCheck aria-hidden="true" /></span>
-          <div><span>Total Users</span><strong>—</strong><small>Awaiting user summary API</small></div>
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Security overview">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><ShieldCheck aria-hidden="true" /></span>
+          <div><span>Total Users</span><strong>—</strong><small>Preview · data pending</small></div>
         </article>
-        <article>
-          <span className="sl-v78-kpi-icon is-success"><UsersRound aria-hidden="true" /></span>
-          <div><span>Active Sessions</span><strong>—</strong><small>Awaiting session service</small></div>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info">
+          <span className="sl-sa-kpi-icon"><UsersRound aria-hidden="true" /></span>
+          <div><span>Active Sessions</span><strong>—</strong><small>Preview · data pending</small></div>
         </article>
-        <article>
-          <span className="sl-v78-kpi-icon is-critical"><AlertTriangle aria-hidden="true" /></span>
-          <div><span>Security Alerts</span><strong>—</strong><small>Awaiting security alerts API</small></div>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><FileText aria-hidden="true" /></span>
+          <div><span>Audit Logs (30 Days)</span><strong>—</strong><small>Preview · data pending</small></div>
         </article>
-        <article>
-          <span className="sl-v78-kpi-icon is-info"><FileText aria-hidden="true" /></span>
-          <div><span>Audit Logs (30 days)</span><strong>—</strong><small>Awaiting audit summary API</small></div>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+          <div><span>Security Alerts</span><strong>—</strong><small>Preview · data pending</small></div>
         </article>
       </section>
 
