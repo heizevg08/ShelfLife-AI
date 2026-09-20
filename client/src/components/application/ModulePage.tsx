@@ -1037,20 +1037,25 @@ function SuperAdminIngredientsPage() {
 function SuperAdminInventoryBatchesPage() {
   const [batchSearch, setBatchSearch] = useState('');
   const [batchIngredient, setBatchIngredient] = useState('All Ingredients');
-  const [batchBranch, setBatchBranch] = useState('All Branches');
   const [batchStatus, setBatchStatus] = useState('All Statuses');
-  const [batchRange, setBatchRange] = useState('Any date');
-  const [batchRows, setBatchRows] = useState('10');
+  const [batchDaysLeft, setBatchDaysLeft] = useState('All Days Left');
+  const [batchDateRange, setBatchDateRange] = useState('any');
+  const [batchDateFrom, setBatchDateFrom] = useState('');
+  const [batchDateTo, setBatchDateTo] = useState('');
+  const [batchRows, setBatchRows] = useState(10);
+  const [batchPage, setBatchPage] = useState(1);
+  const [batchAction, setBatchAction] = useState<'view' | 'edit' | 'delete' | null>(null);
 
   const resetBatchFilters = () => {
     setBatchSearch('');
     setBatchIngredient('All Ingredients');
-    setBatchBranch('All Branches');
     setBatchStatus('All Statuses');
-    setBatchRange('Any date');
+    setBatchDaysLeft('All Days Left');
+    setBatchDateRange('any');
+    setBatchDateFrom('');
+    setBatchDateTo('');
+    setBatchPage(1);
   };
-
-
 
   return <>
     <PageHeader
@@ -1059,34 +1064,63 @@ function SuperAdminInventoryBatchesPage() {
       description="Monitor inventory batches, expiry status, and stock movement across the establishment."
     />
 
-    <div className="sl-admin-view sl-sa-batches-page sl-staff-usage-v150">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-batches-kpis" aria-label="Inventory batch summary">
+    <div className="sl-admin-view sl-sa-batches-page sl-sa-ingredients-page sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Inventory batch summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>—</strong><small>Awaiting inventory batch API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span><div><span>Active Batches</span><strong>—</strong><small>Awaiting batch status API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>—</strong><small>Awaiting expiration summary API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span><div><span>Expired Batches</span><strong>—</strong><small>Awaiting expiration summary API</small></div></article>
       </section>
 
-      <section className="sl-sa-batches-filter-card" aria-label="Inventory batch filters">
-        <label className="sl-sa-batches-search"><span>Search batches</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by batch ID, ingredient, or supplier…" value={batchSearch} onChange={event => setBatchSearch(event.target.value)} /></div></label>
-        <label><span>Ingredient</span><select value={batchIngredient} onChange={event => setBatchIngredient(event.target.value)}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
-        <label><span>Branch</span><select value={batchBranch} onChange={event => setBatchBranch(event.target.value)}><option>All Branches</option><option disabled>Branch values · data pending</option></select></label>
-        <label><span>Status</span><select value={batchStatus} onChange={event => setBatchStatus(event.target.value)}><option>All Statuses</option><option disabled>Status values · data pending</option></select></label>
-        <label><span>Date Range</span><div className="sl-sa-batches-date"><CalendarDays size={16} aria-hidden="true" /><select value={batchRange} onChange={event => setBatchRange(event.target.value)} aria-label="Date range"><option>Any date</option><option>Last 7 days</option><option>Last 30 days</option><option>Last 90 days</option><option>This year</option></select></div></label>
-        <div className="sl-sa-batches-filter-actions"><button type="button" className="sl-button" onClick={resetBatchFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-batches-export-menu" /></div>
-      </section>
+      <div className="sl-sa-ingredients-layout sl-sa-batches-ingredients-layout">
+        <main className="sl-sa-ingredients-main sl-sa-batches-ingredients-main">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Inventory batch records">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+              <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+              <h2>Inventory Batch Records</h2>
+            </header>
 
-      <section className="sl-sa-batches-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Inventory batch records">
-        <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>Inventory Batch Records</h2></header>
-        <div className="sl-staff-usage-table-shell sl-sa-batches-table-shell" role="region" aria-label="Inventory batch records" tabIndex={0}>
-          <table className="sl-data-table sl-staff-usage-table sl-sa-batches-table sl-security-activity-reference-table">
-            <thead><tr><th>Batch ID</th><th>Ingredient</th><th>Quantity</th><th>Expiration Date</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={6} className="sl-staff-usage-preview-state-cell"><div className="sl-sa-batches-table-placeholder"><DataState kind="empty" title="No live records yet" description="Inventory batches" action={<Status>Preview · data pending</Status>} /></div></td></tr></tbody>
-          </table>
-        </div>
-        <footer className="sl-sa-batches-footer"><label><span>Rows per page</span><select value={batchRows} onChange={event => setBatchRows(event.target.value)}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label><span>No live records yet</span></footer>
-      </section>
+            <div className="sl-sa-ingredients-table-filters">
+              <div className="sl-sa-ingredients-filter-card" aria-label="Inventory batch filters">
+                <label className="sl-sa-ingredients-search">
+                  <span>Search batches</span>
+                  <div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by batch ID or ingredient…" value={batchSearch} onChange={event => setBatchSearch(event.target.value)} /></div>
+                </label>
+                <label><span>Ingredient</span><select value={batchIngredient} onChange={event => { setBatchIngredient(event.target.value); setBatchPage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+                <label><span>Status</span><select value={batchStatus} onChange={event => { setBatchStatus(event.target.value); setBatchPage(1); }}><option>All Statuses</option><option>Active</option><option>Expiring Soon</option><option>Expired</option></select></label>
+                <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={batchDateRange} onChange={event => { setBatchDateRange(event.target.value); setBatchPage(1); }} aria-label="Inventory batch date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
+                {batchDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom inventory batch date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={batchDateFrom} max={batchDateTo || undefined} onChange={event => { setBatchDateFrom(event.target.value); setBatchPage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={batchDateTo} min={batchDateFrom || undefined} onChange={event => { setBatchDateTo(event.target.value); setBatchPage(1); }} /></label></div>}
+                <label><span>Days Left</span><select value={batchDaysLeft} onChange={event => { setBatchDaysLeft(event.target.value); setBatchPage(1); }}><option>All Days Left</option><option>0 days</option><option>1–3 days</option><option>4–7 days</option><option>8–14 days</option><option>15+ days</option></select></label>
+                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={resetBatchFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-batches-export-menu" /></div>
+              </div>
+            </div>
+
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Inventory batch records" tabIndex={0}>
+              <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
+                <thead><tr><th scope="col">Batch ID</th><th scope="col">Ingredient</th><th scope="col">Quantity</th><th scope="col">Expiration Date</th><th scope="col">Status</th><th scope="col">Days Left</th><th scope="col">Actions</th></tr></thead>
+                <tbody>
+                  <tr className="sl-sa-ingredients-empty-row sl-sa-ingredients-preview-row">
+                    <td colSpan={6}><DataState kind="empty" title="No live records yet" description="Inventory batch records will appear here when the inventory batch backend is connected." /></td>
+                    <td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Inventory batch actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View inventory batch" title="View" onClick={() => setBatchAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit inventory batch" title="Edit" onClick={() => setBatchAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete inventory batch" title="Delete" onClick={() => setBatchAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+              <label><span>Rows per page</span><select value={batchRows} aria-label="Rows per page" onChange={event => { setBatchRows(Number(event.target.value)); setBatchPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
+              <span className="sl-staff-usage-pagination-note">No live records yet</span>
+              <Pagination compact page={batchPage} pageSize={batchRows} total={0} itemLabel="batches" onPageChange={setBatchPage} />
+            </div>
+          </section>
+        </main>
+      </div>
     </div>
+
+    <Dialog open={batchAction!==null} title={batchAction==='delete'?'Confirm Delete':batchAction==='edit'?'Edit Inventory Batch':'Inventory Batch Details'} onDismiss={() => setBatchAction(null)} className="sl-staff-waste-action-dialog">
+      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={batchAction==='delete'?'A live inventory batch is required before deletion can be confirmed.':batchAction==='edit'?'A live inventory batch is required before editing.':'Inventory batch details will appear here when live records are available.'} /></div>
+      {batchAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={() => setBatchAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live inventory batch">Confirm Delete</button></div>}
+    </Dialog>
   </>;
 }
 

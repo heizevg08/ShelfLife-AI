@@ -15775,3 +15775,39 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   overflow-y:hidden;
   -webkit-overflow-scrolling:touch;
 }
+
+
+/* V250 — ONLY Super Admin /InventoryBatches.
+   The records UI intentionally uses the exact Super Admin /Ingredients class chain in JSX.
+   This rule only lets the Ingredients main column occupy the available width because InventoryBatches has no Ingredients analytics rail. */
+.sl-sa-batches-page .sl-sa-batches-ingredients-layout{grid-template-columns:minmax(0,1fr)!important;}
+.sl-sa-batches-page .sl-sa-batches-ingredients-main{grid-column:1/-1!important;min-width:0;}
+/* Six batch columns, preserving the exact SecurityActivity/Ingredients table treatment. */
+.sl-sa-batches-page .sl-security-activity-reference-table th,
+.sl-sa-batches-page .sl-security-activity-reference-table td{width:16.666667%;}
+
+/* V251 — Super Admin /InventoryBatches only: preserve the exact Ingredients
+   records/filter language while accommodating the requested batch filters. */
+.sl-sa-batches-page .sl-sa-ingredients-filter-card{
+  grid-template-columns:minmax(220px,1fr) repeat(5,minmax(120px,.32fr)) auto;
+}
+.sl-sa-batches-page .sl-security-activity-reference-table th,
+.sl-sa-batches-page .sl-security-activity-reference-table td{width:14.285714%;}
+@media(max-width:1450px){
+  .sl-sa-batches-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .sl-sa-batches-page .sl-sa-ingredients-search{grid-column:1/-1;}
+  .sl-sa-batches-page .sl-sa-ingredients-filter-actions{justify-content:flex-end;}
+}
+@media(max-width:900px){
+  .sl-sa-batches-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:620px){
+  .sl-sa-batches-page .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}
+  .sl-sa-batches-page .sl-sa-ingredients-search{grid-column:auto;}
+  .sl-sa-batches-page .sl-sa-ingredients-filter-actions{justify-content:stretch;}
+}
+
+/* V253 — ONLY Super Admin /InventoryBatches: remove the obsolete grid track left behind by the removed Branch filter. */
+.sl-sa-batches-page .sl-sa-ingredients-filter-card{
+  grid-template-columns:minmax(220px,1fr) repeat(4,minmax(120px,.32fr)) auto;
+}
