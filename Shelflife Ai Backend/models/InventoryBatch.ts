@@ -1,8 +1,12 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const inventoryBatchSchema = new mongoose.Schema(
   {
-    ingredientId: { type: mongoose.Schema.Types.ObjectId, ref: "Ingredient", required: true },
+    ingredientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ingredient",
+      required: true,
+    },
     batchCode: { type: String, required: true },
     initialQuantity: { type: Number, required: true, min: 0 },
     quantity: { type: Number, required: true, min: 0 },
@@ -12,8 +16,7 @@ const inventoryBatchSchema = new mongoose.Schema(
       type: Date,
       required: true,
       validate: {
-        validator: function (value) {
-          // expirationDate must be after dateReceived
+        validator: function (this: any, value: Date) {
           return value > this.dateReceived;
         },
         message: "expirationDate must be after dateReceived",
@@ -26,9 +29,13 @@ const inventoryBatchSchema = new mongoose.Schema(
       enum: ["Normal", "Approaching Expiry", "Critical", "Expired"],
       default: "Normal",
     },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-module.exports = mongoose.model("InventoryBatch", inventoryBatchSchema);
+export default mongoose.model("InventoryBatch", inventoryBatchSchema);

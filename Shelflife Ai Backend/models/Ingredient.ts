@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const ingredientSchema = new mongoose.Schema(
   {
@@ -10,9 +10,13 @@ const ingredientSchema = new mongoose.Schema(
     minimumStock: { type: Number, required: true, min: 0 },
     standardUnitCost: { type: Number, required: true, min: 0 },
     defaultShelfLifeDays: { type: Number, required: true, min: 1 },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-module.exports = mongoose.model("Ingredient", ingredientSchema);
+export default mongoose.model("Ingredient", ingredientSchema);
