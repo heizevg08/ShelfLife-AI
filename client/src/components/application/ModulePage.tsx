@@ -1138,129 +1138,80 @@ function SuperAdminUsagePending({ label, compact = false }: { label: string; com
 }
 
 function SuperAdminUsagePage() {
+  const [usageSearch, setUsageSearch] = useState('');
+  const [usageIngredient, setUsageIngredient] = useState('All Ingredients');
+  const [usageDateRange, setUsageDateRange] = useState('any');
+  const [usageDateFrom, setUsageDateFrom] = useState('');
+  const [usageDateTo, setUsageDateTo] = useState('');
+  const [usageRows, setUsageRows] = useState(10);
+  const [usagePage, setUsagePage] = useState(1);
+  const [usageAction, setUsageAction] = useState<'view' | 'edit' | 'delete' | null>(null);
+
+  const resetUsageFilters = () => {
+    setUsageSearch('');
+    setUsageIngredient('All Ingredients');
+    setUsageDateRange('any');
+    setUsageDateFrom('');
+    setUsageDateTo('');
+    setUsagePage(1);
+  };
+
   return <>
-    <PageHeader
-      eyebrow="System Oversight"
-      title="Usage"
-      description="View and monitor ingredient usage across all branches. Track consumption, support forecasting, and identify usage trends."
-    />
+    <div className="sl-sa-usage-heading">
+      <PageHeader
+        eyebrow="System Oversight"
+        title="Usage"
+        description="View and monitor ingredient usage across all branches. Track consumption, support forecasting, and identify usage trends."
+      />
+    </div>
 
-    <div className="sl-admin-view sl-sa-usage-page sl-staff-usage-v150">
+    <div className="sl-admin-view sl-sa-usage-page sl-sa-ingredients-page sl-sa-usage-inventory-pattern sl-staff-usage-v150">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-usage-kpis" aria-label="Usage summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
-          <span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
-          <div>
-            <span>Total Usage Records</span>
-            <strong>—</strong>
-            <small>Awaiting usage records API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
-          <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
-          <div>
-            <span>Total Quantity Used</span>
-            <strong>—</strong>
-            <small>Awaiting consumption summary API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
-          <span className="sl-sa-kpi-icon"><Building2 aria-hidden="true" /></span>
-          <div>
-            <span>Active Branches</span>
-            <strong>—</strong>
-            <small>Awaiting branch activity API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
-          <span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span>
-          <div>
-            <span>Users Recorded Usage</span>
-            <strong>—</strong>
-            <small>Awaiting recorder summary API</small>
-          </div>
-        </article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span><div><span>Total Usage Records</span><strong>—</strong><small>Awaiting usage records API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span><div><span>Total Quantity Used</span><strong>—</strong><small>Awaiting consumption summary API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Building2 aria-hidden="true" /></span><div><span>Active Branches</span><strong>—</strong><small>Awaiting branch activity API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Users Recorded Usage</span><strong>—</strong><small>Awaiting recorder summary API</small></div></article>
       </section>
 
-      <div className="sl-sa-usage-layout">
-        <div className="sl-sa-usage-main">
-          <section className="sl-sa-usage-filter-card" aria-label="Usage filters">
-            <label className="sl-sa-usage-search">
-              <span>Search usage records</span>
-              <div>
-                <Search size={16} aria-hidden="true" />
-                <input
-                  type="search"
-                  placeholder="Search by ingredient, batch ID, dish, or user…"
-                  disabled
-                  aria-label="Usage search unavailable until usage service is connected"
-                />
+      <div className="sl-sa-ingredients-layout sl-sa-usage-ingredients-layout">
+        <main className="sl-sa-ingredients-main sl-sa-usage-ingredients-main">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Usage records">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+              <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+              <h2>Usage Records</h2>
+            </header>
+
+            <div className="sl-sa-ingredients-table-filters">
+              <div className="sl-sa-ingredients-filter-card" aria-label="Usage filters">
+                <label className="sl-sa-ingredients-search"><span>Search usage records</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by ingredient, batch ID, dish, or user…" value={usageSearch} onChange={event => { setUsageSearch(event.target.value); setUsagePage(1); }} /></div></label>
+                <label><span>Ingredient</span><select value={usageIngredient} onChange={event => { setUsageIngredient(event.target.value); setUsagePage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+                <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={usageDateRange} onChange={event => { setUsageDateRange(event.target.value); setUsagePage(1); }} aria-label="Usage date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
+                {usageDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => { setUsageDateFrom(event.target.value); setUsagePage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => { setUsageDateTo(event.target.value); setUsagePage(1); }} /></label></div>}
+                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={resetUsageFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-usage-export-menu" /></div>
               </div>
-            </label>
+            </div>
 
-            <label>
-              <span>Branch</span>
-              <select disabled aria-label="Branch filter unavailable">
-                <option>All Branches</option>
-              </select>
-            </label>
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Usage records" tabIndex={0}>
+              <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
+                <thead><tr><th scope="col">Date Used</th><th scope="col">Ingredient</th><th scope="col">Batch ID</th><th scope="col">Quantity Used</th><th scope="col">Recorded By</th><th scope="col">Actions</th></tr></thead>
+                <tbody><tr className="sl-sa-ingredients-empty-row sl-sa-ingredients-preview-row"><td colSpan={5}><DataState kind="empty" title="No live records yet" description="Usage records will appear here when the usage backend is connected." /></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Usage actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View usage record" title="View" onClick={() => setUsageAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit usage record" title="Edit" onClick={() => setUsageAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete usage record" title="Delete" onClick={() => setUsageAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+              </table>
+            </div>
 
-            <label>
-              <span>Ingredient</span>
-              <select disabled aria-label="Ingredient filter unavailable">
-                <option>All Ingredients</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Date Range</span>
-              <div className="sl-sa-usage-date">
-                <CalendarDays size={16} aria-hidden="true" />
-                <input type="text" value="Data pending" readOnly disabled />
-              </div>
-            </label>
-
-            <div className="sl-sa-usage-filter-actions">
-              <button type="button" className="sl-button sl-button-primary" disabled>
-                <Filter size={15} aria-hidden="true" />Filter
-              </button>
-              <button type="button" className="sl-button" disabled>Reset</button>
+            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+              <label><span>Rows per page</span><select value={usageRows} aria-label="Rows per page" onChange={event => { setUsageRows(Number(event.target.value)); setUsagePage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
+              <span className="sl-staff-usage-pagination-note">No live records yet</span>
+              <Pagination compact page={usagePage} pageSize={usageRows} total={0} itemLabel="usage records" onPageChange={setUsagePage} />
             </div>
           </section>
+        </main>
 
-          <section className="sl-sa-usage-table-card" aria-label="Usage records">
-            <div className="sl-sa-usage-table-toolbar">
-              <span>Usage records</span>
-              <button type="button" className="sl-button" disabled title="Export backend is not connected">Export</button>
-            </div>
-
-            <div className="sl-sa-usage-state">
-              <DataState
-                kind="empty"
-                title="No live records yet"
-                description="Usage records"
-                action={<Status>Preview · data pending</Status>}
-              />
-            </div>
-
-            <footer className="sl-sa-usage-footer">
-              <label>
-                <span>Rows per page</span>
-                <select defaultValue="10" disabled><option>10</option></select>
-              </label>
-              <span>Pagination will activate when live usage records are available.</span>
-            </footer>
-          </section>
-        </div>
-
-        <aside className="sl-sa-usage-rail" aria-label="Usage analytics panels">
-          <Card id="sa-usage-category" title="Ingredient Usage by Category">
+        <aside className="sl-sa-usage-analytics-rail" aria-label="Usage analytics panels">
+          <Card id="sa-usage-category" title="Ingredients by Category">
             <SuperAdminUsagePending label="Usage category analytics" compact />
           </Card>
-          <Card id="sa-usage-top-ingredients" title="Top Ingredients by Usage">
-            <SuperAdminUsagePending label="Top ingredients by usage" compact />
+          <Card id="sa-usage-top-ingredients" title="Top Ingredients Usage">
+            <SuperAdminUsagePending label="Top ingredients usage" compact />
           </Card>
           <Card id="sa-usage-trends" title="Usage Trends">
             <SuperAdminUsagePending label="Usage trends" compact />
@@ -1271,9 +1222,13 @@ function SuperAdminUsagePage() {
         </aside>
       </div>
     </div>
+
+    <Dialog open={usageAction!==null} title={usageAction==='delete'?'Confirm Delete':usageAction==='edit'?'Edit Usage Record':'Usage Record Details'} onDismiss={() => setUsageAction(null)} className="sl-staff-waste-action-dialog">
+      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={usageAction==='delete'?'A live usage record is required before deletion can be confirmed.':usageAction==='edit'?'A live usage record is required before editing.':'Usage record details will appear here when live records are available.'} /></div>
+      {usageAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={() => setUsageAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live usage record">Confirm Delete</button></div>}
+    </Dialog>
   </>;
 }
-
 
 
 function SuperAdminWastePending({ label, compact = false }: { label: string; compact?: boolean }) {
