@@ -318,7 +318,7 @@ export function AccountsTable() {
         </section>
 
         <section className="sl-v56-side-card sl-v56-activity">
-          <div className="sl-v60-activity-head"><h2>Recent Account Activity</h2><a href="/SecurityActivity">View All <ArrowRight size={14} aria-hidden="true" /></a></div>
+          <div className="sl-v60-activity-head"><h2>Recent Account Activity</h2><a href="/SecurityActivity" className="sl-text-link sl-v204-dashboard-viewall">View All <ArrowRight size={14} aria-hidden="true" /></a></div>
           {!recentActivity ? <p className="sl-supporting">Loading activity…</p>
           : !recentActivity.items.length ? <div className="sl-v58-activity-empty"><span className="sl-v56-activity-icon"><Activity size={15} aria-hidden="true" /></span><div><strong>No account activity yet</strong><span>Recorded account changes will appear here.</span></div></div>
           : <ul>{recentActivity.items.map(record => <li key={record.id}>
