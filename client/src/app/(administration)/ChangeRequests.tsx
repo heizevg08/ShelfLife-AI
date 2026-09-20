@@ -48,7 +48,22 @@ function InventoryStaffChangeRequests(){
   </>;
 }
 
+function SuperAdminChangeRequests(){
+  return <>
+    <PageHeader title="Change Requests" description="Review and decide on inventory-related requests submitted by your team." />
+    <div className="sl-admin-view sl-mgr-cr-page sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-change-kpis" aria-label="Change request summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput/></span><div><span>Total Requests</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3/></span><div><span>Pending Review</span><strong>—</strong><small>Requires your action</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><CheckCircle2/></span><div><span>Approved (This Month)</span><strong>—</strong><small>Preview · data pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><XCircle/></span><div><span>Rejected (This Month)</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      </section>
+      <Empty label="Change requests"/>
+    </div>
+  </>;
+}
+
 function BaseChangeRequests() {
   return <><PageHeader title="Change Requests" description="Review and decide on inventory-related requests submitted by your team." /><div className="sl-admin-view sl-mgr-cr-page"><section className="sl-mgr-cr-kpis" aria-label="Change request summary"><article className="sl-mgr-cr-kpi tone-blue"><span className="sl-mgr-cr-icon"><FileInput/></span><div><small>Total Requests</small><strong>—</strong><span>Preview · data pending</span></div></article><article className="sl-mgr-cr-kpi tone-amber"><span className="sl-mgr-cr-icon"><Clock3/></span><div><small>Pending Review</small><strong>—</strong><span>Requires your action</span></div></article><article className="sl-mgr-cr-kpi tone-green"><span className="sl-mgr-cr-icon"><CheckCircle2/></span><div><small>Approved (This Month)</small><strong>—</strong><span>Preview · data pending</span></div></article><article className="sl-mgr-cr-kpi tone-red"><span className="sl-mgr-cr-icon"><XCircle/></span><div><small>Rejected (This Month)</small><strong>—</strong><span>Preview · data pending</span></div></article></section><Empty label="Change requests"/></div></>;
 }
-export default function ChangeRequests(){const {user}=useApplicationWorkspace(); return user.role==='Inventory Staff'?<InventoryStaffChangeRequests/>:<BaseChangeRequests/>}
+export default function ChangeRequests(){const {user}=useApplicationWorkspace(); return user.role==='Inventory Staff'?<InventoryStaffChangeRequests/>:user.role==='Super Admin'?<SuperAdminChangeRequests/>:<BaseChangeRequests/>}

@@ -232,7 +232,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
               key={label}
               href={path}
               className="sl-nav-item"
-              aria-current={pathname === path || (path === '/UsageWaste' && ['/Usage', '/Waste'].includes(pathname)) || (path === '/InventoryBatches' && pathname === '/ExpirationMonitoring') ? 'page' : undefined}
+              aria-current={pathname === path || (path === '/UsageWaste' && ['/Usage', '/Waste'].includes(pathname)) ? 'page' : undefined}
               aria-label={label}
               title={!mobile && railCollapsed ? label : undefined}
               onFocus={event => !mobile && railCollapsed && setFocusedNavigation({ label, top: event.currentTarget.getBoundingClientRect().top })}

@@ -128,10 +128,10 @@ function BaseAlerts() {
       description="Monitor and manage system alerts for expiration risks, low stock, overstock, and unusual inventory activities."
     />
 
-    <div className="sl-admin-view sl-sa-alerts-page">
-      <section className="sl-sa-alerts-kpis" aria-label="Alert summary">
-        <article className="sl-sa-alerts-kpi" data-tone="critical">
-          <span className="sl-sa-alerts-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+    <div className="sl-admin-view sl-sa-alerts-page sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Alert summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
           <div>
             <span>Expiry Alerts</span>
             <strong>—</strong>
@@ -139,8 +139,8 @@ function BaseAlerts() {
           </div>
         </article>
 
-        <article className="sl-sa-alerts-kpi" data-tone="attention">
-          <span className="sl-sa-alerts-kpi-icon"><Boxes aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
           <div>
             <span>Low Stock Alerts</span>
             <strong>—</strong>
@@ -148,8 +148,8 @@ function BaseAlerts() {
           </div>
         </article>
 
-        <article className="sl-sa-alerts-kpi" data-tone="brand">
-          <span className="sl-sa-alerts-kpi-icon"><Bell aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><Bell aria-hidden="true" /></span>
           <div>
             <span>Overstock Alerts</span>
             <strong>—</strong>
@@ -157,8 +157,8 @@ function BaseAlerts() {
           </div>
         </article>
 
-        <article className="sl-sa-alerts-kpi" data-tone="success">
-          <span className="sl-sa-alerts-kpi-icon"><TrendingUp aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
+          <span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
           <div>
             <span>Forecast Deviation Alerts</span>
             <strong>—</strong>

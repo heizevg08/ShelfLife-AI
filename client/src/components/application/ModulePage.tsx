@@ -738,9 +738,9 @@ function SuperAdminIngredientsPage() {
     />
 
     <div className="sl-admin-view sl-sa-ingredients-page">
-      <section className="sl-sa-ingredients-kpis" aria-label="Ingredient summary">
-        <article className="sl-sa-ingredients-kpi" data-tone="success">
-          <span className="sl-sa-ingredients-kpi-icon"><Leaf aria-hidden="true" /></span>
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Ingredient summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
           <div>
             <span>Total Ingredients</span>
             <strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong>
@@ -748,8 +748,8 @@ function SuperAdminIngredientsPage() {
           </div>
         </article>
 
-        <article className="sl-sa-ingredients-kpi sl-sa-ingredients-kpi-reference" data-tone="brand">
-          <span className="sl-sa-ingredients-kpi-icon"><Grid2X2 aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info">
+          <span className="sl-sa-kpi-icon"><Grid2X2 aria-hidden="true" /></span>
           <div>
             <span>Categories</span>
             <strong>—</strong>
@@ -757,8 +757,8 @@ function SuperAdminIngredientsPage() {
           </div>
         </article>
 
-        <article className="sl-sa-ingredients-kpi sl-sa-ingredients-kpi-reference" data-tone="success">
-          <span className="sl-sa-ingredients-kpi-icon"><Tag aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><Tag aria-hidden="true" /></span>
           <div>
             <span>Suppliers</span>
             <strong>—</strong>
@@ -766,8 +766,8 @@ function SuperAdminIngredientsPage() {
           </div>
         </article>
 
-        <article className="sl-sa-ingredients-kpi sl-sa-ingredients-kpi-reference" data-tone="critical">
-          <span className="sl-sa-ingredients-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
           <div>
             <span>Low-Stock Ingredients</span>
             <strong>—</strong>
@@ -967,10 +967,10 @@ function SuperAdminInventoryBatchesPage() {
       description="Monitor inventory batches, expiry status, and stock movement across the establishment."
     />
 
-    <div className="sl-admin-view sl-sa-batches-page">
-      <section className="sl-sa-batches-kpis" aria-label="Inventory batch summary">
-        <article className="sl-sa-batches-kpi" data-tone="brand">
-          <span className="sl-sa-batches-kpi-icon"><Boxes aria-hidden="true" /></span>
+    <div className="sl-admin-view sl-sa-batches-page sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-batches-kpis" aria-label="Inventory batch summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
           <div>
             <span>Total Batches</span>
             <strong>—</strong>
@@ -978,8 +978,8 @@ function SuperAdminInventoryBatchesPage() {
           </div>
         </article>
 
-        <article className="sl-sa-batches-kpi" data-tone="success">
-          <span className="sl-sa-batches-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
+          <span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
           <div>
             <span>Active Batches</span>
             <strong>—</strong>
@@ -987,8 +987,8 @@ function SuperAdminInventoryBatchesPage() {
           </div>
         </article>
 
-        <article className="sl-sa-batches-kpi" data-tone="attention">
-          <span className="sl-sa-batches-kpi-icon"><Clock3 aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span>
           <div>
             <span>Expiring Soon</span>
             <strong>—</strong>
@@ -996,8 +996,8 @@ function SuperAdminInventoryBatchesPage() {
           </div>
         </article>
 
-        <article className="sl-sa-batches-kpi" data-tone="critical">
-          <span className="sl-sa-batches-kpi-icon"><PackageX aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span>
           <div>
             <span>Expired Batches</span>
             <strong>—</strong>
@@ -1108,10 +1108,10 @@ function SuperAdminUsagePage() {
       description="View and monitor ingredient usage across all branches. Track consumption, support forecasting, and identify usage trends."
     />
 
-    <div className="sl-admin-view sl-sa-usage-page">
-      <section className="sl-sa-usage-kpis" aria-label="Usage summary">
-        <article className="sl-sa-usage-kpi" data-tone="brand">
-          <span className="sl-sa-usage-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
+    <div className="sl-admin-view sl-sa-usage-page sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-usage-kpis" aria-label="Usage summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
           <div>
             <span>Total Usage Records</span>
             <strong>—</strong>
@@ -1119,8 +1119,8 @@ function SuperAdminUsagePage() {
           </div>
         </article>
 
-        <article className="sl-sa-usage-kpi" data-tone="success">
-          <span className="sl-sa-usage-kpi-icon"><Leaf aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
+          <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
           <div>
             <span>Total Quantity Used</span>
             <strong>—</strong>
@@ -1128,8 +1128,8 @@ function SuperAdminUsagePage() {
           </div>
         </article>
 
-        <article className="sl-sa-usage-kpi" data-tone="attention">
-          <span className="sl-sa-usage-kpi-icon"><Building2 aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><Building2 aria-hidden="true" /></span>
           <div>
             <span>Active Branches</span>
             <strong>—</strong>
@@ -1137,8 +1137,8 @@ function SuperAdminUsagePage() {
           </div>
         </article>
 
-        <article className="sl-sa-usage-kpi" data-tone="success">
-          <span className="sl-sa-usage-kpi-icon"><Users aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
+          <span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span>
           <div>
             <span>Users Recorded Usage</span>
             <strong>—</strong>
@@ -1258,10 +1258,10 @@ function SuperAdminWastePage() {
       description="Track and analyze wasted ingredients across all branches. Identify key causes and support waste reduction initiatives."
     />
 
-    <div className="sl-admin-view sl-sa-waste-page">
-      <section className="sl-sa-waste-kpis" aria-label="Waste summary">
-        <article className="sl-sa-waste-kpi" data-tone="brand">
-          <span className="sl-sa-waste-kpi-icon"><Trash2 aria-hidden="true" /></span>
+    <div className="sl-admin-view sl-sa-waste-page sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-waste-kpis" aria-label="Waste summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><Trash2 aria-hidden="true" /></span>
           <div>
             <span>Total Waste</span>
             <strong>—</strong>
@@ -1269,8 +1269,8 @@ function SuperAdminWastePage() {
           </div>
         </article>
 
-        <article className="sl-sa-waste-kpi" data-tone="success">
-          <span className="sl-sa-waste-kpi-icon"><Leaf aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
+          <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
           <div>
             <span>Estimated Cost Loss</span>
             <strong>—</strong>
@@ -1278,8 +1278,8 @@ function SuperAdminWastePage() {
           </div>
         </article>
 
-        <article className="sl-sa-waste-kpi" data-tone="critical">
-          <span className="sl-sa-waste-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
           <div>
             <span>Waste Records</span>
             <strong>—</strong>
@@ -1287,8 +1287,8 @@ function SuperAdminWastePage() {
           </div>
         </article>
 
-        <article className="sl-sa-waste-kpi" data-tone="attention">
-          <span className="sl-sa-waste-kpi-icon"><PackageX aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span>
           <div>
             <span>Waste Rate</span>
             <strong>—</strong>
@@ -1409,9 +1409,9 @@ function SuperAdminChangeRequestsPage() {
     />
 
     <div className="sl-admin-view sl-sa-change-page">
-      <section className="sl-sa-change-kpis" aria-label="Change request summary">
-        <article className="sl-sa-change-kpi" data-tone="brand">
-          <span className="sl-sa-change-kpi-icon"><FileInput aria-hidden="true" /></span>
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-change-kpis" aria-label="Change request summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span>
           <div>
             <span>Total Requests</span>
             <strong>—</strong>
@@ -1419,8 +1419,8 @@ function SuperAdminChangeRequestsPage() {
           </div>
         </article>
 
-        <article className="sl-sa-change-kpi" data-tone="attention">
-          <span className="sl-sa-change-kpi-icon"><Clock3 aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span>
           <div>
             <span>Pending Review</span>
             <strong>—</strong>
@@ -1428,8 +1428,8 @@ function SuperAdminChangeRequestsPage() {
           </div>
         </article>
 
-        <article className="sl-sa-change-kpi" data-tone="success">
-          <span className="sl-sa-change-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
+          <span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
           <div>
             <span>Approved</span>
             <strong>—</strong>
@@ -1437,8 +1437,8 @@ function SuperAdminChangeRequestsPage() {
           </div>
         </article>
 
-        <article className="sl-sa-change-kpi" data-tone="critical">
-          <span className="sl-sa-change-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
           <div>
             <span>Rejected</span>
             <strong>—</strong>
@@ -1561,10 +1561,10 @@ function SuperAdminExpirationMonitoringPage() {
       description="Monitor ingredient expiration dates and manage inventory using the FEFO (First-Expired, First-Out) approach."
     />
 
-    <div className="sl-admin-view sl-sa-expiration-page">
-      <section className="sl-sa-expiration-kpis" aria-label="Expiration monitoring summary">
-        <article className="sl-sa-expiration-kpi" data-tone="critical">
-          <span className="sl-sa-expiration-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+    <div className="sl-admin-view sl-sa-expiration-page sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Expiration monitoring summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
           <div>
             <span>Expiring Soon</span>
             <strong>—</strong>
@@ -1572,8 +1572,8 @@ function SuperAdminExpirationMonitoringPage() {
           </div>
         </article>
 
-        <article className="sl-sa-expiration-kpi" data-tone="attention">
-          <span className="sl-sa-expiration-kpi-icon"><Clock3 aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span>
           <div>
             <span>Expiring (8–14 days)</span>
             <strong>—</strong>
@@ -1581,8 +1581,8 @@ function SuperAdminExpirationMonitoringPage() {
           </div>
         </article>
 
-        <article className="sl-sa-expiration-kpi" data-tone="success">
-          <span className="sl-sa-expiration-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
+          <span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
           <div>
             <span>Good Shelf Life</span>
             <strong>—</strong>
@@ -1590,8 +1590,8 @@ function SuperAdminExpirationMonitoringPage() {
           </div>
         </article>
 
-        <article className="sl-sa-expiration-kpi" data-tone="brand">
-          <span className="sl-sa-expiration-kpi-icon"><Boxes aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
           <div>
             <span>Total Batches</span>
             <strong>—</strong>
@@ -1720,10 +1720,10 @@ function SuperAdminForecastingPage() {
       description="View AI-generated demand forecasts, compare with actual usage, and monitor forecast accuracy across all branches."
     />
 
-    <div className="sl-admin-view sl-sa-forecast-page">
-      <section className="sl-sa-forecast-kpis" aria-label="Forecasting summary">
-        <article className="sl-sa-forecast-kpi" data-tone="brand">
-          <span className="sl-sa-forecast-kpi-icon"><BarChart3 aria-hidden="true" /></span>
+    <div className="sl-admin-view sl-sa-forecast-page sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Forecasting summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><BarChart3 aria-hidden="true" /></span>
           <div>
             <span>Forecasted Items</span>
             <strong>—</strong>
@@ -1731,8 +1731,8 @@ function SuperAdminForecastingPage() {
           </div>
         </article>
 
-        <article className="sl-sa-forecast-kpi" data-tone="success">
-          <span className="sl-sa-forecast-kpi-icon"><Target aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
+          <span className="sl-sa-kpi-icon"><Target aria-hidden="true" /></span>
           <div>
             <span>Average Forecast Accuracy</span>
             <strong>—</strong>
@@ -1740,8 +1740,8 @@ function SuperAdminForecastingPage() {
           </div>
         </article>
 
-        <article className="sl-sa-forecast-kpi" data-tone="attention">
-          <span className="sl-sa-forecast-kpi-icon"><TrendingUp aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
           <div>
             <span>High Demand Increase</span>
             <strong>—</strong>
@@ -1749,8 +1749,8 @@ function SuperAdminForecastingPage() {
           </div>
         </article>
 
-        <article className="sl-sa-forecast-kpi" data-tone="critical">
-          <span className="sl-sa-forecast-kpi-icon"><TrendingDown aria-hidden="true" /></span>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><TrendingDown aria-hidden="true" /></span>
           <div>
             <span>Predicted Decrease</span>
             <strong>—</strong>

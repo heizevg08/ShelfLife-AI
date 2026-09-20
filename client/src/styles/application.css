@@ -15477,3 +15477,28 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-security-activity-v78 .sl-v219-custom-date-range{display:grid;grid-template-columns:repeat(2,minmax(130px,1fr));gap:clamp(.45rem,.35rem + .25vw,.7rem);grid-column:1/-1;min-width:0;padding:clamp(.65rem,.55rem + .25vw,.85rem);border:1px solid var(--sl-border);border-radius:var(--sl-radius);background:var(--sl-surface-subtle)}
 .sl-security-activity-v78 .sl-v219-custom-date-range input[type=date]{min-width:0;width:100%;max-width:100%}
 @media(max-width:600px){.sl-security-activity-v78 .sl-v219-custom-date-range{grid-template-columns:1fr}}
+
+/* V227 — Exact KPI parity for Super Admin InventoryBatches / Usage / Waste / ChangeRequests.
+   The named Super Admin pages now use the SAME sl-staff-usage-v150 + sl-staff-usage-kpis +
+   sl-inventory-staff-kpi rule chain used by /SecurityActivity, rather than a visual imitation.
+   No selectors target Admin, Manager, or Inventory Staff pages. */
+:is(.sl-sa-batches-page,.sl-sa-usage-page,.sl-sa-waste-page,.sl-mgr-cr-page).sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success']{
+  border-color:color-mix(in oklab,var(--sl-success) 24%,var(--sl-border));
+  border-top-color:var(--sl-success);
+  background:linear-gradient(180deg,color-mix(in oklab,var(--sl-success-bg) 82%,white),white 42%);
+}
+:is(.sl-sa-batches-page,.sl-sa-usage-page,.sl-sa-waste-page,.sl-mgr-cr-page).sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success'] .sl-sa-kpi-icon{
+  color:var(--sl-success);
+  background:var(--sl-success-bg);
+}
+
+/* V228 — Exact Super Admin /SecurityActivity KPI rule chain on the four requested oversight pages only. */
+:is(.sl-sa-expiration-page,.sl-sa-forecast-page,.sl-sa-alerts-page,.sl-sa-reports-page).sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success']{
+  border-color:color-mix(in oklab,var(--sl-success) 24%,var(--sl-border));
+  border-top-color:var(--sl-success);
+  background:linear-gradient(180deg,color-mix(in oklab,var(--sl-success-bg) 82%,white),white 42%);
+}
+:is(.sl-sa-expiration-page,.sl-sa-forecast-page,.sl-sa-alerts-page,.sl-sa-reports-page).sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone='success'] .sl-sa-kpi-icon{
+  background:var(--sl-success-bg);
+  color:var(--sl-success);
+}
