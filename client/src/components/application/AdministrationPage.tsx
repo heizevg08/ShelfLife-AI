@@ -89,7 +89,7 @@ export function AdministrationPage({ areaId }: { areaId: AdministrationAreaId })
 
           <div className="sl-v65-save-row">
             <span>Settings are read-only until the configuration API is connected.</span>
-            <button type="button" disabled>Save Changes</button>
+            <button type="button" className="sl-save-changes-ui" disabled>Save Changes</button>
           </div>
         </section>
 

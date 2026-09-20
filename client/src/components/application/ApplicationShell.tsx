@@ -346,15 +346,6 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
           {renderNavigation(false)}
         </div>
 
-        <div className="sl-sidebar-bottom">
-          <button
-            className="sl-collapse"
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {collapsed ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}
-          </button>
-        </div>
       </aside>
 
       {/* Native hover titles plus a visible keyboard label avoid clipped sidebar tooltips. */}

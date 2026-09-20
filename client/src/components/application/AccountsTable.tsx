@@ -370,7 +370,7 @@ export function AccountsTable() {
           </label>)}{touched.role && errors.role && <p id="admin-role-error" className="sl-admin-error">{errors.role}</p>}</fieldset>
         </div>
         {errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
-        <div className="sl-dialog-form-actions"><button className="sl-button" type="button" disabled={busy} onClick={close}>Cancel</button><button className="sl-button sl-button-primary" disabled={busy}>{busy ? 'Saving…' : mode === 'create' ? 'Create account' : 'Save changes'}</button></div>
+        <div className="sl-dialog-form-actions"><button className="sl-button" type="button" disabled={busy} onClick={close}>Cancel</button><button className={`sl-button sl-button-primary ${mode === 'edit' ? 'sl-save-changes-ui' : ''}`} disabled={busy}>{busy ? 'Saving…' : mode === 'create' ? 'Create account' : 'Save changes'}</button></div>
       </form>
     </Dialog>
 

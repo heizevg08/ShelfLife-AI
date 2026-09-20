@@ -14248,3 +14248,582 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   .sl-superadmin-users-page-v64 .sl-v56-side{height:auto}
   .sl-superadmin-users-page-v64 .sl-v56-side .sl-v56-activity{flex:initial}
 }
+
+/* V178 — Super Admin /SystemSettings exact UsageRecording control + FEFO parity */
+.sl-system-settings-v70 :is(input,select){
+  width:100%;min-width:0;height:40px;padding:0 .75rem;
+  border:1px solid var(--sl-border);border-radius:var(--sl-radius);
+  background:var(--sl-surface);color:var(--sl-text);font:var(--sl-font-supporting);
+  box-sizing:border-box;
+}
+.sl-system-settings-v70 textarea{
+  width:100%;min-width:0;min-height:80px;padding:.65rem .75rem;
+  border:1px solid var(--sl-border);border-radius:var(--sl-radius);
+  background:var(--sl-surface);color:var(--sl-text);font:var(--sl-font-supporting);
+  box-sizing:border-box;resize:vertical;
+}
+.sl-system-settings-v70 :is(input,select,textarea):focus{
+  outline:2px solid var(--sl-focus);outline-offset:1px;border-color:var(--sl-focus);
+}
+/* A setting can be prepared locally; persistence remains backend-gated. */
+.sl-system-settings-v70 :is(input,select,textarea,button){cursor:pointer}
+.sl-system-settings-v70 textarea{cursor:text}
+
+/* General rail uses the exact card geometry established by UsageRecording / FEFO Reminder. */
+.sl-system-settings-v70 .sl-v178-settings-rail-card{
+  min-width:0;min-height:0;padding:0;background:var(--sl-surface);
+  border:1px solid var(--sl-border);border-radius:var(--sl-radius-lg);
+  box-shadow:var(--sl-shadow-sm);overflow:hidden;
+}
+.sl-system-settings-v70 .sl-v178-settings-rail-card>.sl-v66-rail-heading{
+  min-height:52px;padding:.75rem clamp(.8rem,1.2vw,1rem);
+  display:flex;align-items:center;gap:.65rem;border-bottom:0;
+}
+.sl-system-settings-v70 .sl-v178-settings-rail-card>.sl-v66-rail-heading h2{
+  margin:0;font:var(--sl-font-section-title);
+}
+.sl-system-settings-v70 .sl-v178-settings-rail-card :is(.sl-v66-info-list,.sl-v66-service-list){
+  padding:0 clamp(.8rem,1.2vw,1rem) clamp(.8rem,1.2vw,1rem);
+}
+.sl-system-settings-v70 .sl-v178-settings-rail-card .sl-data-state{
+  margin:auto;
+}
+.sl-system-settings-v70 .sl-v178-settings-rail-card.sl-v66-changes-card{
+  display:flex;flex-direction:column;min-height:clamp(180px,22vh,250px);
+}
+.sl-system-settings-v70 .sl-v178-settings-rail-card.sl-v66-changes-card>.sl-data-state{
+  flex:1;display:flex;align-items:center;justify-content:center;text-align:center;
+}
+
+/* Active tab main/rail bottoms remain dynamically aligned on wide layouts. */
+@media (min-width:1101px){
+  .sl-system-settings-v70 :is(.sl-v66-settings-grid,.sl-v70-security-grid,.sl-v72-notification-grid,.sl-v73-maintenance-grid){align-items:stretch}
+  .sl-system-settings-v70 :is(.sl-v66-settings-panel,.sl-v70-security-main,.sl-v72-notification-main,.sl-v73-maintenance-main){height:100%}
+  .sl-system-settings-v70 :is(.sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail){height:100%;align-self:stretch;display:flex;flex-direction:column}
+  .sl-system-settings-v70 :is(.sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail)>:last-child{flex:1;display:flex;flex-direction:column}
+  .sl-system-settings-v70 :is(.sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail)>:last-child>.sl-data-state{flex:1;display:flex;align-items:center;justify-content:center;text-align:center}
+}
+@media (max-width:1100px){
+  .sl-system-settings-v70 :is(.sl-v66-settings-panel,.sl-v70-security-main,.sl-v72-notification-main,.sl-v73-maintenance-main,
+  .sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail){height:auto}
+}
+
+
+/* V179 — Super Admin /SystemSettings exact UsageRecording control parity + dynamic rail alignment */
+.sl-system-settings-v70 :is(.sl-v66-form-grid,.sl-v70-field-grid,.sl-v72-card,.sl-v73-card) :is(input,select),
+.sl-system-settings-v70 .sl-v72-channel-column select,
+.sl-system-settings-v70 .sl-v73-field select{
+  width:100%!important;min-width:0!important;height:40px!important;min-height:40px!important;
+  padding:0 .75rem!important;border:1px solid var(--sl-border)!important;
+  border-radius:var(--sl-radius)!important;background:var(--sl-surface)!important;
+  color:var(--sl-text)!important;font:var(--sl-font-supporting)!important;box-shadow:none!important;
+}
+.sl-system-settings-v70 :is(.sl-v66-form-grid,.sl-v70-field-grid,.sl-v72-card,.sl-v73-card) textarea{
+  width:100%!important;min-width:0!important;min-height:80px!important;padding:.65rem .75rem!important;
+  border:1px solid var(--sl-border)!important;border-radius:var(--sl-radius)!important;
+  background:var(--sl-surface)!important;color:var(--sl-text)!important;font:var(--sl-font-supporting)!important;
+}
+.sl-system-settings-v70 :is(input,select,textarea):focus{outline:2px solid var(--sl-focus)!important;outline-offset:1px!important;border-color:var(--sl-focus)!important}
+/* Standard action controls use the same 40px control rhythm; switches, tabs and icon controls retain their purpose-built geometry. */
+.sl-system-settings-v70 :is(.sl-v66-save-row,.sl-v70-actions,.sl-v72-actions,.sl-v73-actions) button{min-height:40px;padding-inline:clamp(.75rem,1.2vw,1rem);border-radius:var(--sl-radius);font:var(--sl-font-supporting)}
+/* General tab: remove obsolete logo block entirely and keep the form grid clean. */
+.sl-system-settings-v70 .sl-v66-logo-setting{display:none!important}
+/* Every active two-column settings tab shares one grid row, so the main panel bottom and the final recent/activity card bottom are always identical on desktop. */
+@media (min-width:1101px){
+  .sl-system-settings-v70 :is(.sl-v66-settings-grid,.sl-v70-security-grid,.sl-v72-notification-grid,.sl-v73-maintenance-grid){display:grid!important;align-items:stretch!important}
+  .sl-system-settings-v70 :is(.sl-v66-settings-panel,.sl-v70-security-main,.sl-v72-notification-main,.sl-v73-maintenance-main){align-self:stretch!important;height:100%!important}
+  .sl-system-settings-v70 :is(.sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail){align-self:stretch!important;height:100%!important;display:flex!important;flex-direction:column!important}
+  .sl-system-settings-v70 :is(.sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail)>:last-child{flex:1 1 auto!important;min-height:0}
+}
+/* Recent Configuration Changes follows the standard unwired-backend placeholder content exactly. */
+.sl-system-settings-v70 .sl-v66-changes-card .sl-state{width:100%;height:100%;min-height:clamp(150px,18vh,220px);display:flex;align-items:center;justify-content:center;text-align:center}
+
+
+/* V180 — Super Admin /SystemSettings: definitive exact UsageRecording control geometry.
+   These declarations intentionally mirror the live .sl-staff-usage-form controls verbatim. */
+.sl-system-settings-v70 .sl-v66-form-grid label,
+.sl-system-settings-v70 .sl-v70-field-grid label,
+.sl-system-settings-v70 .sl-v72-card label,
+.sl-system-settings-v70 .sl-v73-card label {
+  min-width:0;
+  display:grid;
+  gap:.35rem;
+  font:var(--sl-font-label);
+}
+.sl-system-settings-v70 .sl-v66-form-grid :is(input,select),
+.sl-system-settings-v70 .sl-v70-field-grid :is(input,select),
+.sl-system-settings-v70 .sl-v72-card :is(input,select),
+.sl-system-settings-v70 .sl-v73-card :is(input,select),
+.sl-system-settings-v70 .sl-v72-channel-column select,
+.sl-system-settings-v70 .sl-v73-field select {
+  width:100%!important;
+  min-width:0!important;
+  height:40px!important;
+  min-height:40px!important;
+  padding:0 .75rem!important;
+  border:1px solid var(--sl-border)!important;
+  border-radius:var(--sl-radius)!important;
+  background:var(--sl-surface)!important;
+  color:var(--sl-text)!important;
+  font:var(--sl-font-supporting)!important;
+  line-height:normal!important;
+  box-shadow:none!important;
+  box-sizing:border-box!important;
+}
+.sl-system-settings-v70 :is(.sl-v66-form-grid,.sl-v70-field-grid,.sl-v72-card,.sl-v73-card) textarea {
+  width:100%!important;
+  min-width:0!important;
+  min-height:80px!important;
+  padding:.65rem .75rem!important;
+  border:1px solid var(--sl-border)!important;
+  border-radius:var(--sl-radius)!important;
+  background:var(--sl-surface)!important;
+  color:var(--sl-text)!important;
+  font:var(--sl-font-supporting)!important;
+  box-shadow:none!important;
+  box-sizing:border-box!important;
+}
+.sl-system-settings-v70 :is(input,select,textarea):focus {
+  outline:2px solid var(--sl-focus)!important;
+  outline-offset:1px!important;
+  border-color:var(--sl-focus)!important;
+  box-shadow:none!important;
+}
+/* Recent Configuration Changes: standard system-wide centered unwired-backend state. */
+.sl-system-settings-v70 .sl-v66-changes-card {
+  display:flex!important;
+  flex-direction:column!important;
+}
+.sl-system-settings-v70 .sl-v66-changes-card > .sl-state {
+  flex:1 1 auto!important;
+  width:100%!important;
+  min-height:clamp(150px,18vh,220px)!important;
+  margin:auto!important;
+  padding:clamp(.8rem,1.5vw,1.15rem)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:clamp(.35rem,.7vw,.55rem)!important;
+  text-align:center!important;
+}
+.sl-system-settings-v70 .sl-v66-changes-card > .sl-state .sl-state-icon { margin:0!important; }
+.sl-system-settings-v70 .sl-v66-changes-card > .sl-state > div { display:grid;justify-items:center;text-align:center; }
+/* Desktop: both columns share the same grid-row height, so either side can determine the bottom edge. */
+@media (min-width:1101px) {
+  .sl-system-settings-v70 :is(.sl-v66-settings-grid,.sl-v70-security-grid,.sl-v72-notification-grid,.sl-v73-maintenance-grid) {
+    align-items:stretch!important;
+  }
+  .sl-system-settings-v70 :is(.sl-v66-settings-panel,.sl-v70-security-main,.sl-v72-notification-main,.sl-v73-maintenance-main),
+  .sl-system-settings-v70 :is(.sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail) {
+    height:100%!important;
+    align-self:stretch!important;
+  }
+}
+
+/* V181 — Super Admin /SystemSettings responsive controls + UsageRecording/FEFO parity */
+.sl-system-settings-v70 .sl-v66-form-grid select{
+  padding-right:clamp(2.25rem,3vw,2.75rem)!important;
+  background-position:right .8rem center!important;
+}
+.sl-system-settings-v70 .sl-v66-rail-card.sl-v178-settings-rail-card{
+  border:1px solid var(--sl-border)!important;
+  border-radius:var(--sl-radius-lg)!important;
+  background:var(--sl-surface)!important;
+  box-shadow:var(--sl-shadow-sm)!important;
+  overflow:hidden!important;
+}
+.sl-system-settings-v70 .sl-v66-rail-card.sl-v178-settings-rail-card>.sl-v66-rail-heading{
+  min-height:auto!important;
+  padding:clamp(.75rem,1.2vw,.9rem) clamp(.8rem,1.2vw,1rem)!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.65rem!important;
+  border-bottom:0!important;
+}
+.sl-system-settings-v70 .sl-v66-rail-card.sl-v178-settings-rail-card>.sl-v66-rail-heading h2{font:var(--sl-font-section-title)!important}
+.sl-system-settings-v70 .sl-v66-linklike{display:inline-flex;align-items:center;gap:.3rem;text-decoration:none;color:var(--sl-brand);white-space:nowrap}
+/* Wide screens share a natural grid row; whichever column is taller determines the aligned bottom edge. */
+@media (min-width:1101px){
+  .sl-system-settings-v70 :is(.sl-v66-settings-grid,.sl-v70-security-grid,.sl-v72-notification-grid,.sl-v73-maintenance-grid){align-items:stretch!important;height:auto!important;min-height:0!important}
+  .sl-system-settings-v70 :is(.sl-v66-settings-panel,.sl-v70-security-main,.sl-v72-notification-main,.sl-v73-maintenance-main){height:auto!important;min-height:0!important;align-self:stretch!important}
+  .sl-system-settings-v70 :is(.sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail){height:auto!important;min-height:0!important;align-self:stretch!important;display:flex!important;flex-direction:column!important}
+  .sl-system-settings-v70 :is(.sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail)>:last-child{flex:1 1 auto!important;min-height:clamp(170px,18vh,230px)!important}
+}
+@media (max-width:1100px){
+  .sl-system-settings-v70 :is(.sl-v66-settings-grid,.sl-v70-security-grid,.sl-v72-notification-grid,.sl-v73-maintenance-grid){height:auto!important;min-height:0!important}
+  .sl-system-settings-v70 :is(.sl-v66-settings-panel,.sl-v70-security-main,.sl-v72-notification-main,.sl-v73-maintenance-main,.sl-v66-settings-rail,.sl-v70-security-rail,.sl-v72-notification-rail,.sl-v73-maintenance-rail){height:auto!important;min-height:0!important}
+}
+
+/* V182 — System Settings exact FEFO geometry, select affordance spacing, compact General tab */
+.sl-system-settings-v70 .sl-v66-settings-panel{
+  height:auto!important;
+  min-height:0!important;
+  padding:clamp(.9rem,1.25vw,1.05rem)!important;
+  align-self:start!important;
+}
+.sl-system-settings-v70 .sl-v66-form-grid{
+  gap:clamp(.65rem,1vw,.85rem) clamp(.75rem,1.2vw,1rem)!important;
+}
+.sl-system-settings-v70 .sl-v66-form-grid textarea{min-height:72px!important;}
+.sl-system-settings-v70 .sl-v66-save-row{margin-top:clamp(.75rem,1vw,1rem)!important;padding-top:clamp(.7rem,1vw,.9rem)!important;}
+/* Keep native select arrows away from the edge. Native arrows cannot be repositioned consistently,
+   so reserve a wider right-side affordance area exactly across settings controls. */
+.sl-system-settings-v70 :is(.sl-v66-form-grid,.sl-v70-field-grid,.sl-v72-card,.sl-v73-card) select{
+  padding-right:3rem!important;
+  background-clip:padding-box!important;
+}
+/* These rail cards intentionally use the exact UsageRecording/FEFO shell and header geometry. */
+.sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card.sl-staff-usage-card.sl-staff-usage-sidecard{
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  background:var(--sl-surface)!important;
+  border:1px solid var(--sl-border)!important;
+  border-radius:var(--sl-radius-lg)!important;
+  box-shadow:var(--sl-shadow-sm)!important;
+  overflow:hidden!important;
+}
+.sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card.sl-staff-usage-card.sl-staff-usage-sidecard>.sl-staff-usage-card-head{
+  min-height:52px!important;
+  padding:.75rem clamp(.8rem,1.2vw,1rem) .45rem!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:.65rem!important;
+  border-bottom:0!important;
+}
+.sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card .sl-staff-usage-head-icon{
+  width:32px!important;height:32px!important;flex:0 0 32px!important;border-radius:var(--sl-radius)!important;
+  display:grid!important;place-items:center!important;background:var(--sl-brand-light)!important;color:var(--sl-success)!important;
+}
+.sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card .sl-staff-usage-head-icon svg{width:18px!important;height:18px!important;}
+.sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card>.sl-v66-rail-heading h2{font:var(--sl-font-section-title)!important;margin:0!important;}
+.sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card :is(.sl-v66-info-list,.sl-v66-service-list){padding:0 clamp(.8rem,1.2vw,1rem) .8rem!important;}
+.sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-changes-card>.sl-data-state{min-height:clamp(145px,18vh,190px)!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;}
+@media (min-width:1101px){
+  .sl-system-settings-v70 .sl-v66-settings-grid{align-items:start!important;}
+  .sl-system-settings-v70 .sl-v66-settings-panel{height:auto!important;align-self:start!important;}
+  .sl-system-settings-v70 .sl-v66-settings-rail{height:auto!important;align-self:start!important;}
+}
+
+/* V183 — Super Admin /SystemSettings cleanup + system-wide FEFO background-icon parity. */
+/* System-wide background-icon treatment: reuse Inventory Staff /UsageRecording FEFO Reminder geometry. */
+:is(.sl-v70-section-icon,.sl-v72-section-icon,.sl-v73-section-icon,.sl-v66-service-icon,.sl-sa-kpi-icon,.sl-state-icon){
+  border-radius:var(--sl-radius)!important;
+}
+:is(.sl-v70-section-icon,.sl-v72-section-icon,.sl-v73-section-icon){
+  width:32px!important;height:32px!important;min-width:32px!important;flex:0 0 32px!important;
+  display:grid!important;place-items:center!important;background:var(--sl-brand-light)!important;color:var(--sl-success)!important;
+}
+:is(.sl-v70-section-icon,.sl-v72-section-icon,.sl-v73-section-icon) svg{width:18px!important;height:18px!important;}
+
+/* General: with Recent Configuration Changes removed, the FEFO-style rail contains only live-purpose cards. */
+.sl-system-settings-v70 .sl-v66-settings-rail{align-content:start!important;align-self:start!important;height:auto!important;}
+.sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card.sl-staff-usage-card.sl-staff-usage-sidecard{
+  min-height:0!important;height:auto!important;
+}
+
+/* Security: removed status/policies/events rail, Password Policy, and Data Protection; remaining content is full-width and aligned. */
+.sl-system-settings-v70 .sl-v70-security-grid{display:block!important;min-width:0!important;}
+.sl-system-settings-v70 .sl-v70-security-main{width:100%!important;max-width:none!important;min-width:0!important;padding:clamp(.9rem,1.25vw,1.05rem)!important;}
+.sl-system-settings-v70 .sl-v70-security-section{min-width:0!important;}
+.sl-system-settings-v70 .sl-v70-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:start!important;}
+.sl-system-settings-v70 .sl-v70-field-grid>label:only-child{grid-column:1/-1;max-width:min(100%,32rem);}
+.sl-system-settings-v70 .sl-v70-switch-grid{align-items:start!important;}
+.sl-system-settings-v70 .sl-v70-switch-item{min-width:0!important;align-items:flex-start!important;}
+.sl-system-settings-v70 .sl-v70-actions{justify-content:flex-end!important;align-items:center!important;}
+/* General and Security use one identical primary save-action treatment. */
+.sl-system-settings-v70 :is(.sl-v66-save-row button,.sl-v70-actions .sl-v70-primary){
+  min-width:7.2rem!important;min-height:40px!important;padding:.62rem .88rem!important;
+  border:1px solid var(--sl-success)!important;border-radius:var(--sl-radius-md)!important;
+  background:var(--sl-success)!important;color:#fff!important;font:inherit!important;
+  font-size:clamp(.71rem,.67rem + .09vw,.79rem)!important;font-weight:650!important;
+}
+@media(max-width:760px){
+  .sl-system-settings-v70 .sl-v70-field-grid,.sl-system-settings-v70 .sl-v70-switch-grid{grid-template-columns:1fr!important;}
+  .sl-system-settings-v70 .sl-v70-field-grid>label:only-child{grid-column:auto;max-width:none;}
+  .sl-system-settings-v70 :is(.sl-v66-save-row,.sl-v70-actions){align-items:stretch!important;flex-direction:column!important;}
+  .sl-system-settings-v70 :is(.sl-v66-save-row button,.sl-v70-actions .sl-v70-primary){width:100%!important;}
+}
+
+/* V184 — Super Admin /SystemSettings Security cleanup + exact toggle alignment. */
+/* Every remaining Security switch uses one shared two-column row, keeping controls on one vertical axis. */
+.sl-system-settings-v70 .sl-v70-security-main .sl-v70-switch-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:clamp(.65rem,.55rem + .25vw,.85rem)!important;
+  align-items:stretch!important;
+}
+.sl-system-settings-v70 .sl-v70-security-main .sl-v70-switch-item{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  column-gap:clamp(.75rem,1.2vw,1.1rem)!important;
+  min-width:0!important;
+  height:100%!important;
+}
+.sl-system-settings-v70 .sl-v70-security-main .sl-v70-switch-item>.sl-v70-toggle{
+  justify-self:end!important;
+  align-self:center!important;
+  margin:0!important;
+}
+/* Restore General Save Changes to the original Security "Save Settings" primary-button treatment. */
+.sl-system-settings-v70 .sl-v66-save-row button{
+  min-width:auto!important;
+  min-height:auto!important;
+  padding:.64rem .95rem!important;
+  border:1px solid var(--sl-success)!important;
+  border-radius:var(--sl-radius-md)!important;
+  background:var(--sl-success)!important;
+  color:#fff!important;
+  font:inherit!important;
+  font-size:clamp(.72rem,.68rem + .09vw,.8rem)!important;
+  font-weight:650!important;
+}
+.sl-system-settings-v70 .sl-v70-actions .sl-v70-primary{
+  min-width:auto!important;
+  min-height:auto!important;
+  padding:.64rem .95rem!important;
+}
+@media(max-width:760px){
+  .sl-system-settings-v70 .sl-v70-security-main .sl-v70-switch-grid{grid-template-columns:1fr!important;}
+  .sl-system-settings-v70 .sl-v70-security-main .sl-v70-switch-item{grid-template-columns:minmax(0,1fr) auto!important;}
+  .sl-system-settings-v70 .sl-v66-save-row button{width:100%!important;}
+}
+
+/* V185 — Super Admin /SystemSettings targeted refinements. */
+/* General: the two FEFO-style rail cards dynamically share the exact height of General Settings. */
+@media (min-width:1101px){
+  .sl-system-settings-v70 .sl-v66-settings-grid{align-items:stretch!important;}
+  .sl-system-settings-v70 .sl-v66-settings-panel{height:100%!important;align-self:stretch!important;}
+  .sl-system-settings-v70 .sl-v66-settings-rail{
+    height:100%!important;align-self:stretch!important;
+    display:grid!important;grid-template-rows:repeat(2,minmax(0,1fr))!important;
+  }
+  .sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card.sl-staff-usage-card.sl-staff-usage-sidecard{
+    height:100%!important;min-height:0!important;
+  }
+}
+/* General Save Changes: exact original Security Save Settings button treatment. */
+.sl-system-settings-v70 .sl-v66-save-row button{
+  min-width:auto!important;min-height:auto!important;
+  padding:.64rem .95rem!important;
+  border:1px solid var(--sl-success)!important;
+  border-radius:var(--sl-radius-md)!important;
+  background:var(--sl-success)!important;color:#fff!important;
+  font:inherit!important;font-size:clamp(.72rem,.68rem + .09vw,.8rem)!important;font-weight:650!important;
+}
+@media(max-width:1100px){
+  .sl-system-settings-v70 .sl-v66-settings-rail{height:auto!important;grid-template-rows:none!important;}
+  .sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card.sl-staff-usage-card.sl-staff-usage-sidecard{height:auto!important;}
+}
+@media(max-width:760px){.sl-system-settings-v70 .sl-v66-save-row button{width:100%!important;}}
+
+/* V186 — Super Admin /SystemSettings: unified Save Changes + maintenance flow. */
+/* Exact Save Changes treatment requested for every SystemSettings save action. */
+.sl-system-settings-v70 .sl-settings-save-changes{
+  width:auto!important;
+  min-width:clamp(7.35rem,8.5vw,8.5rem)!important;
+  min-height:2.45rem!important;
+  padding:.62rem clamp(1rem,1.35vw,1.25rem)!important;
+  border:1px solid var(--sl-success)!important;
+  border-radius:var(--sl-radius-md)!important;
+  background:var(--sl-success)!important;
+  color:#fff!important;
+  font:inherit!important;
+  font-size:clamp(.72rem,.68rem + .09vw,.8rem)!important;
+  font-weight:650!important;
+  line-height:1.2!important;
+  box-shadow:var(--sl-shadow-sm)!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  white-space:nowrap!important;
+}
+/* Maintenance Mode returns to the full available tab width; the three retained cards follow it in order. */
+.sl-system-settings-v70 .sl-v73-maintenance-grid{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.sl-system-settings-v70 .sl-v73-maintenance-main{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  width:100%!important;
+  max-width:none!important;
+  height:auto!important;
+  min-width:0!important;
+  gap:clamp(.68rem,.56rem + .25vw,.88rem)!important;
+}
+.sl-system-settings-v70 .sl-v73-maintenance-main>.sl-v73-card{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  height:auto!important;
+}
+@media(max-width:760px){
+  .sl-system-settings-v70 .sl-settings-save-changes{width:100%!important;min-width:0!important;}
+}
+
+/* V187 — Super Admin /SystemSettings: Maintenance Mode flow + KPI-row cards. */
+.sl-system-settings-v70 .sl-v73-maintenance-flow{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:clamp(.72rem,.58rem + .3vw,1rem)!important;
+  min-width:0!important;
+}
+.sl-system-settings-v70 .sl-v73-maintenance-flow .sl-v73-field{
+  width:100%!important;
+  min-width:0!important;
+}
+.sl-system-settings-v70 .sl-v73-maintenance-flow textarea{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  resize:vertical!important;
+}
+.sl-system-settings-v70 .sl-v73-maintenance-save-row{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.sl-system-settings-v70 .sl-v73-maintenance-kpis{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:clamp(.68rem,.56rem + .25vw,.88rem)!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.sl-system-settings-v70 .sl-v73-maintenance-kpis>.sl-v73-card{
+  width:100%!important;
+  min-width:0!important;
+  height:100%!important;
+}
+.sl-system-settings-v70 .sl-v73-maintenance-kpis .sl-state{
+  min-height:clamp(10rem,14vw,13rem)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+@media(max-width:1050px){
+  .sl-system-settings-v70 .sl-v73-maintenance-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .sl-system-settings-v70 .sl-v73-maintenance-kpis>.sl-v73-card:last-child{grid-column:1/-1!important;}
+}
+@media(max-width:700px){
+  .sl-system-settings-v70 .sl-v73-maintenance-kpis{grid-template-columns:1fr!important;}
+  .sl-system-settings-v70 .sl-v73-maintenance-kpis>.sl-v73-card:last-child{grid-column:auto!important;}
+  .sl-system-settings-v70 .sl-v73-maintenance-save-row{justify-content:stretch!important;}
+  .sl-system-settings-v70 .sl-v73-maintenance-save-row .sl-settings-save-changes{width:100%!important;}
+}
+
+/* V188 — canonical ShelfLifeAI Save Changes control, system-wide.
+   This intentionally wins over page-local/utility button rules so the approved
+   Save Changes reference renders identically wherever that action appears. */
+.sl-app .sl-save-changes-ui,
+.sl-app button.sl-save-changes-ui,
+.sl-app .sl-button.sl-save-changes-ui,
+.sl-system-settings-v70 .sl-settings-save-changes.sl-save-changes-ui{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  box-sizing:border-box!important;
+  width:auto!important;
+  min-width:clamp(7.35rem,8vw,8.75rem)!important;
+  min-height:2.125rem!important;
+  height:2.125rem!important;
+  padding:0 clamp(1rem,1.25vw,1.2rem)!important;
+  border:1px solid #087435!important;
+  border-radius:.4rem!important;
+  background:linear-gradient(180deg,#087a38 0%,#01612c 100%)!important;
+  color:#fff!important;
+  box-shadow:0 1px 2px rgba(0,74,31,.22),inset 0 1px 0 rgba(255,255,255,.08)!important;
+  font-family:'Inter',sans-serif!important;
+  font-size:clamp(.68rem,.65rem + .08vw,.75rem)!important;
+  font-weight:650!important;
+  line-height:1!important;
+  letter-spacing:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+  opacity:1!important;
+  transition:filter var(--sl-motion),transform var(--sl-motion),box-shadow var(--sl-motion)!important;
+}
+.sl-app .sl-save-changes-ui:hover:not(:disabled),
+.sl-system-settings-v70 .sl-settings-save-changes.sl-save-changes-ui:hover:not(:disabled){
+  filter:brightness(1.045)!important;
+  box-shadow:0 2px 5px rgba(0,74,31,.24),inset 0 1px 0 rgba(255,255,255,.1)!important;
+}
+.sl-app .sl-save-changes-ui:active:not(:disabled){transform:translateY(1px)!important;filter:brightness(.96)!important;}
+.sl-app .sl-save-changes-ui:focus-visible{outline:2px solid var(--sl-focus)!important;outline-offset:2px!important;}
+.sl-app .sl-save-changes-ui:disabled{cursor:not-allowed!important;opacity:.58!important;}
+@media(max-width:480px){
+  .sl-app .sl-save-changes-ui,
+  .sl-system-settings-v70 .sl-settings-save-changes.sl-save-changes-ui{width:100%!important;min-width:0!important;}
+}
+
+/* V189 — Super Admin /SystemSettings consolidation and exact UsageRecording table parity. */
+.sl-system-settings-v70 .sl-settings-general-stack{display:grid;gap:clamp(.75rem,.6rem + .35vw,1rem);min-width:0}
+/* System Information / Services headings follow the same left-aligned UsageRecording card heading. */
+.sl-system-settings-v70 .sl-v66-rail-heading.sl-staff-usage-card-head{justify-content:flex-start!important;text-align:left!important}
+.sl-system-settings-v70 .sl-v66-rail-heading.sl-staff-usage-card-head h2{margin:0!important;margin-right:auto!important;text-align:left!important}
+/* Remove forced equal-height whitespace from the former two-card rail. Cards now size to their actual content. */
+@media (min-width:1101px){
+ .sl-system-settings-v70 .sl-v66-settings-grid{align-items:start!important}
+ .sl-system-settings-v70 .sl-v66-settings-panel{height:auto!important;align-self:start!important}
+ .sl-system-settings-v70 .sl-v66-settings-rail{height:auto!important;align-self:start!important;display:grid!important;grid-template-rows:auto auto!important;align-content:start!important}
+ .sl-system-settings-v70 .sl-v66-settings-rail>.sl-v66-rail-card.sl-staff-usage-card.sl-staff-usage-sidecard{height:auto!important;min-height:0!important}
+}
+/* General Settings ends with its action row — no artificial trailing height after Save Changes. */
+.sl-system-settings-v70 .sl-v66-settings-panel{min-height:0!important;padding-bottom:0!important}
+.sl-system-settings-v70 .sl-v66-save-row{margin-bottom:0!important}
+/* Notification Preferences deliberately reuses the exact Recent Usage Records shell/header/table/footer classes. */
+.sl-system-settings-v70 .sl-settings-notification-preferences{width:100%;min-width:0}
+.sl-system-settings-v70 .sl-settings-notification-table-shell{min-height:0!important}
+.sl-system-settings-v70 .sl-settings-notification-table{min-width:680px!important}
+.sl-system-settings-v70 .sl-settings-notification-table th:not(:first-child),.sl-system-settings-v70 .sl-settings-notification-table td:not(:first-child){text-align:center}
+.sl-system-settings-v70 .sl-settings-notification-table .sl-v72-pref-type{display:flex;align-items:center;gap:.65rem;min-width:0}
+.sl-system-settings-v70 .sl-settings-notification-table .sl-v72-pref-type>div{display:grid;gap:.15rem;min-width:0}
+.sl-system-settings-v70 .sl-settings-notification-table .sl-v72-pref-type small{color:var(--sl-muted);font-weight:400}
+.sl-system-settings-v70 .sl-settings-notification-footer{justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+@media(max-width:700px){.sl-system-settings-v70 .sl-settings-notification-footer .sl-save-changes-ui{width:100%!important}}
+
+/* V190 — Super Admin /SystemSettings: one General Settings surface, no tabs. */
+.sl-system-settings-v70[data-ui-version="v190-general-only"] .sl-v66-settings-panel{display:flex;flex-direction:column;min-width:0}
+.sl-system-settings-v70 .sl-settings-general-embedded{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(.8rem,.65rem + .35vw,1.1rem);margin-top:clamp(.9rem,.7rem + .45vw,1.25rem);min-width:0}
+.sl-system-settings-v70 .sl-settings-general-embedded .sl-v70-security-grid,
+.sl-system-settings-v70 .sl-settings-general-embedded .sl-v72-notification-grid{display:block!important;width:100%!important;min-width:0!important}
+.sl-system-settings-v70 .sl-settings-general-embedded .sl-v70-security-main,
+.sl-system-settings-v70 .sl-settings-general-embedded .sl-v72-notification-main{width:100%!important;min-width:0!important}
+.sl-system-settings-v70 .sl-settings-general-embedded .sl-v70-security-section,
+.sl-system-settings-v70 .sl-settings-general-embedded .sl-v72-card{margin:0!important;width:100%!important;max-width:none!important;box-sizing:border-box!important}
+.sl-system-settings-v70 .sl-settings-general-embedded .sl-v72-preference-table-wrap{max-width:100%;overflow-x:auto}
+.sl-system-settings-v70 .sl-settings-general-embedded .sl-v72-preference-table{min-width:680px;width:100%}
+.sl-system-settings-v70 .sl-settings-single-save-row{margin-top:clamp(.8rem,.65rem + .35vw,1.1rem)!important}
+@media(max-width:760px){
+ .sl-system-settings-v70 .sl-settings-general-embedded .sl-v72-preference-head{align-items:flex-start;flex-wrap:wrap;gap:.65rem}
+ .sl-system-settings-v70 .sl-settings-general-embedded .sl-v72-reset-button{width:100%}
+}
+
+/* V191 — Super Admin /SystemSettings only: remove System Information + System Services rail. */
+.sl-system-settings-v70[data-ui-version="v191-general-only-no-system-rail"] .sl-v66-settings-grid{display:block!important;width:100%!important;min-width:0!important}
+.sl-system-settings-v70[data-ui-version="v191-general-only-no-system-rail"] .sl-v66-settings-panel{width:100%!important;max-width:none!important;min-width:0!important}
+
+
+/* V193 — Super Admin /SystemSettings only: General Settings consumes the complete available content width.
+   Keep this independent of the data-ui-version suffix so later maintenance versions do not regress it. */
+.sl-system-settings-v70 .sl-v66-settings-grid{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  grid-template-columns:minmax(0,1fr)!important;
+}
+.sl-system-settings-v70 .sl-v66-settings-panel{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
