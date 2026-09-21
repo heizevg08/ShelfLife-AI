@@ -17192,16 +17192,16 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   font-weight:600;
 }
 
-/* Audit Records intentionally shares the User Accounts table type scale so both administrative record surfaces retain one visual hierarchy. */
+/* Audit Records is isolated from User Accounts while preserving the same administrative record-surface scale. */
 .sl-security-activity-v78 .sl-v203-audit-records .sl-security-audit-records-table th{
   font:var(--sl-font-label);
 }
 .sl-security-activity-v78 .sl-v203-audit-records .sl-security-audit-records-table tbody td{
   font:var(--sl-font-body);
-  font-size:1rem;
+  font-size:var(--v56-fs-sm);
   line-height:1.45;
 }
-.sl-security-activity-v78 .sl-v203-audit-records .sl-security-audit-records-table tbody td :is(span,button){
+.sl-security-activity-v78 .sl-v203-audit-records .sl-security-audit-records-table tbody td :is(span,button,time){
   font-size:inherit;
   line-height:inherit;
 }
@@ -17227,4 +17227,321 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
     margin-left:0;
     justify-content:flex-end;
   }
+}
+
+
+/* Audit Records follows the protected User Accounts geometry through Audit-only selectors so the source surface remains read-only. */
+.sl-security-activity-v78 .sl-v203-audit-records{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-audit-filters{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) repeat(4,minmax(130px,.32fr)) auto;
+  gap:.65rem;
+  align-items:end;
+  padding:.65rem .8rem;
+  border-bottom:1px solid var(--sl-border-subtle);
+  background:var(--sl-surface);
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-filter-field{
+  min-width:0;
+  display:grid;
+  gap:.35rem;
+  font:var(--sl-font-label);
+  color:var(--sl-text);
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-filter-field :is(input,select){
+  width:100%;
+  min-width:0;
+  height:40px;
+  min-height:40px;
+  padding:0 .75rem;
+  border:1px solid var(--sl-border);
+  border-radius:var(--sl-radius);
+  background:var(--sl-surface);
+  color:var(--sl-text);
+  font:var(--sl-font-supporting);
+  box-sizing:border-box;
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-search-field .sl-staff-usage-search{
+  position:relative;
+  display:block;
+  min-height:40px;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-search-field .sl-staff-usage-search input{
+  height:40px;
+  min-height:40px;
+  padding:0 .75rem 0 2.35rem;
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-search-field .sl-staff-usage-search svg{
+  position:absolute;
+  left:.8rem;
+  top:50%;
+  transform:translateY(-50%);
+  width:15px;
+  height:15px;
+  z-index:1;
+  pointer-events:none;
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-filter-actions{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-filter-actions .sl-button,
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-filter-actions .sl-download-trigger{
+  height:40px;
+  min-height:40px;
+  padding:0 .75rem;
+  white-space:nowrap;
+  font:var(--sl-font-supporting);
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-v203-audit-table-wrap{
+  width:100%;
+  min-width:0;
+  overflow-x:hidden;
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-security-audit-records-table{
+  width:100%;
+  min-width:0;
+  table-layout:fixed;
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-security-audit-records-table th,
+.sl-security-activity-v78 .sl-v203-audit-records .sl-security-audit-records-table td{
+  min-width:0;
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-records-footer{
+  min-height:54px;
+  font:var(--sl-font-supporting);
+}
+.sl-security-activity-v78 .sl-v203-audit-records .sl-records-footer label,
+.sl-security-activity-v78 .sl-v203-audit-records .sl-records-footer select,
+.sl-security-activity-v78 .sl-v203-audit-records .sl-records-footer .sl-pagination{
+  font:var(--sl-font-supporting);
+}
+@media(max-width:1200px){
+  .sl-security-activity-v78 .sl-v203-audit-records .sl-v203-audit-filters{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sl-security-activity-v78 .sl-v203-audit-records .sl-v203-search-field{grid-column:1/-1;}
+  .sl-security-activity-v78 .sl-v203-audit-records .sl-v203-filter-actions{justify-content:flex-end;}
+}
+@media(max-width:620px){
+  .sl-security-activity-v78 .sl-v203-audit-records .sl-v203-audit-filters{grid-template-columns:1fr;}
+  .sl-security-activity-v78 .sl-v203-audit-records .sl-v203-search-field{grid-column:auto;}
+  .sl-security-activity-v78 .sl-v203-audit-records .sl-v203-filter-actions{justify-content:stretch;flex-wrap:wrap;}
+  .sl-security-activity-v78 .sl-v203-audit-records .sl-v203-filter-actions>*{flex:1 1 100%;min-width:0;}
+}
+
+/* Active Sessions mirrors the protected User Accounts surface through tab-scoped rules so User Accounts remains read-only. */
+.sl-security-activity-v78 .sl-v211-active-sessions-records{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-filters{
+  display:grid;
+  grid-template-columns:minmax(320px,1fr) repeat(2,minmax(130px,.32fr)) auto;
+  gap:.65rem;
+  align-items:end;
+  padding:.65rem .8rem;
+  border-bottom:1px solid var(--sl-border-subtle);
+  background:var(--sl-surface);
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-filter-field{
+  min-width:0;
+  display:grid;
+  gap:.35rem;
+  font:var(--sl-font-label);
+  color:var(--sl-text);
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-filter-field :is(input,select){
+  width:100%;
+  min-width:0;
+  height:40px;
+  min-height:40px;
+  padding:0 .75rem;
+  border:1px solid var(--sl-border);
+  border-radius:var(--sl-radius);
+  background:var(--sl-surface);
+  color:var(--sl-text);
+  font:var(--sl-font-supporting);
+  box-sizing:border-box;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-search-field .sl-staff-usage-search{
+  position:relative;
+  display:block;
+  min-height:40px;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-search-field .sl-staff-usage-search input{
+  height:40px;
+  min-height:40px;
+  padding:0 .75rem 0 2.35rem!important;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-filter-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:.5rem;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-filter-actions :is(button){
+  min-height:40px;
+  border-radius:var(--sl-radius);
+  font:var(--sl-font-supporting);
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-audit-table-wrap{
+  width:100%;
+  min-width:0;
+  overflow-x:hidden;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table{
+  display:table;
+  width:100%;
+  min-width:0;
+  table-layout:fixed;
+  border-collapse:collapse;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table col:nth-child(1){width:25%}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table col:nth-child(2){width:18%}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table col:nth-child(3){width:21%}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table col:nth-child(4){width:18%}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table col:nth-child(5){width:18%}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table thead{
+  display:table-header-group;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table thead tr{
+  display:table-row;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table thead th{
+  display:table-cell;
+  width:auto!important;
+  min-width:0;
+  padding:clamp(.62rem,.52rem + .18vw,.8rem) clamp(.7rem,.6rem + .2vw,.88rem)!important;
+  background:var(--sl-surface-subtle);
+  color:var(--sl-text);
+  font:var(--sl-font-label);
+  text-align:left;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table tbody td{
+  font-size:var(--v56-fs-sm);
+  line-height:1.45;
+  color:var(--sl-text);
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-empty-row td{
+  height:clamp(3rem,2.7rem + .8vw,3.6rem);
+  vertical-align:middle;
+  color:var(--sl-muted);
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-empty-row .sl-staff-waste-row-actions{
+  justify-content:flex-start;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-empty-row .sl-icon-button{
+  font-size:inherit;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-audit-footer{
+  min-height:54px;
+  padding:.6rem .8rem;
+  display:flex;
+  align-items:center;
+  gap:.8rem;
+  flex-wrap:wrap;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-audit-footer label{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:.5rem;
+  white-space:nowrap;
+  color:var(--sl-muted);
+  font:var(--sl-font-supporting);
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-audit-footer select{
+  width:clamp(72px,6vw,88px);
+  flex:0 0 auto;
+  height:36px;
+  padding:0 .5rem;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-audit-footer .sl-pagination{
+  margin-left:auto;
+  border:0;
+  box-shadow:none;
+  padding:0;
+  background:transparent;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-audit-footer .sl-pagination::before,
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-audit-footer .sl-pagination::after{
+  content:none;
+}
+@media(max-width:1080px){
+  .sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-search-field{grid-column:1/-1}
+  .sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-filter-actions{grid-column:1/-1}
+}
+@media(max-width:760px){
+  .sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-filters{grid-template-columns:1fr}
+  .sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-search-field,
+  .sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-filter-actions{grid-column:auto}
+  .sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-filter-actions{justify-content:stretch;flex-wrap:wrap}
+  .sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-filter-actions button{flex:1 1 9rem}
+  .sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v203-audit-footer .sl-pagination{width:100%;margin-left:0;justify-content:flex-end}
+}
+
+/* Empty session values retain normal table-cell geometry so each unavailable value stays directly under its column heading. */
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-table thead th,
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-empty-row td{
+  padding:clamp(.62rem,.52rem + .18vw,.8rem) clamp(.7rem,.6rem + .2vw,.88rem)!important;
+  text-align:left!important;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-empty-value{
+  display:inline-block;
+  margin:0;
+  padding:0;
+  font-size:inherit;
+  line-height:inherit;
+  color:inherit;
+  text-align:left;
+}
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-empty-row .sl-staff-waste-row-actions{
+  margin:0;
+  justify-content:flex-start;
+}
+
+/* Unavailable audit/session values keep ordinary cell geometry so they remain directly beneath their respective headers. */
+.sl-security-activity-v78 .sl-v203-audit-records:not(.sl-v211-active-sessions-records) .sl-security-audit-records-table thead th,
+.sl-security-activity-v78 .sl-v203-audit-records:not(.sl-v211-active-sessions-records) .sl-security-audit-empty-row td{
+  padding:clamp(.62rem,.52rem + .18vw,.8rem) clamp(.7rem,.6rem + .2vw,.88rem)!important;
+  text-align:left!important;
+  vertical-align:middle;
+}
+.sl-security-activity-v78 .sl-v203-audit-records:not(.sl-v211-active-sessions-records) .sl-security-audit-empty-value,
+.sl-security-activity-v78 .sl-v211-active-sessions-records .sl-v211-session-empty-value{
+  display:inline-block;
+  margin:0;
+  padding:0;
+  font-size:inherit;
+  line-height:inherit;
+  color:inherit;
+  text-align:left;
+}
+
+/* Empty record rows share the same column content origin as their headers; the row remains a real table row so responsive column geometry stays intact. */
+.sl-sa-ingredients-page .sl-sa-ingredients-table thead th,
+.sl-sa-ingredients-page .sl-sa-ingredients-table .sl-sa-records-dash-row > td:not(.sl-sa-ingredients-actions-cell){
+  padding:clamp(.48rem,.39rem + .18vw,.62rem)!important;
+  text-align:left!important;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-table .sl-sa-records-dash-row > td{
+  border-bottom:0;
+  vertical-align:middle;
+}
+.sl-sa-ingredients-page .sl-sa-ingredients-table .sl-sa-records-dash-row > td > span{
+  display:inline;
+  margin:0;
+  padding:0;
 }

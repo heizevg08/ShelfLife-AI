@@ -17,6 +17,9 @@ import {
   UsersRound,
   Globe2,
   ArrowRight,
+  Eye,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { DataState, ExportControl, PageHeader, Pagination, Status } from '../../components/application/primitives';
 import { listAuditRecords, type AuditRecord, type Page } from '../../services/administration';
@@ -166,10 +169,8 @@ function AuditLogsPanel() {
             <table className="sl-records-table sl-data-table sl-v203-audit-table sl-security-audit-records-table">
               <thead><tr><th>Date &amp; Time</th><th>User</th><th>Role</th><th>Action</th><th>Module</th><th>Details</th><th>Status</th></tr></thead>
               <tbody>
-                {auditError ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="error" title="Audit records could not be loaded" description="Check your connection and try again." /></td></tr>
-                : !auditData ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="loading" title="Loading audit records" description="" /></td></tr>
-                : !auditRows.length ? <tr className="sl-security-audit-empty-row" aria-label="No audit records available">
-                  <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+                {!auditData || auditError || !auditRows.length ? <tr className="sl-security-audit-empty-row" aria-label={auditError ? "Audit records unavailable" : !auditData ? "Audit records loading" : "No audit records available"}>
+                  <td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td>
                 </tr>
                 : auditRows.map(record => <tr key={record.id}>
                   <td><time dateTime={record.timestamp}>{new Date(record.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
@@ -196,6 +197,9 @@ function AuditLogsPanel() {
 }
 
 function ActiveSessionsPanel() {
+  const [sessionPage, setSessionPage] = useState(1);
+  const [sessionPageSize, setSessionPageSize] = useState(10);
+
   return (
     <div className="sl-v203-audit-layout sl-v211-active-sessions-layout">
       <main className="sl-v203-audit-main">
@@ -222,19 +226,27 @@ function ActiveSessionsPanel() {
           </div>
 
           <div className="sl-v203-audit-table-wrap" role="region" aria-label="Active session records" tabIndex={0}>
-            <table className="sl-data-table sl-v203-audit-table sl-v211-session-table">
+            <table className="sl-records-table sl-data-table sl-v203-audit-table sl-v211-session-table">
               <colgroup><col /><col /><col /><col /><col /></colgroup>
-              <thead><tr><th>User</th><th>Role</th><th>Login Time</th><th>Last Activity</th><th>Actions</th></tr></thead>
+              <thead><tr><th>User</th><th>Role</th><th>Login Time</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr className="sl-v211-session-empty-row" aria-label="No active session records available">
+                  <td><span className="sl-v211-session-empty-value">—</span></td><td><span className="sl-v211-session-empty-value">—</span></td><td><span className="sl-v211-session-empty-value">—</span></td><td><span className="sl-v211-session-empty-value">—</span></td>
+                  <td>
+                    <div className="sl-staff-waste-row-actions" aria-label="Session actions unavailable">
+                      <button type="button" className="sl-icon-button" disabled aria-label="View session unavailable" title="View"><Eye size={16} aria-hidden="true" /></button>
+                      <button type="button" className="sl-icon-button" disabled aria-label="Edit session unavailable" title="Edit"><Pencil size={16} aria-hidden="true" /></button>
+                      <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled aria-label="End session unavailable" title="End session"><Trash2 size={16} aria-hidden="true" /></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
             </table>
-            <div className="sl-staff-usage-pending">
-              <DataState kind="empty" title="No live records yet" description="Active sessions" />
-              <PlaceholderBadge />
-            </div>
           </div>
 
-          <footer className="sl-staff-usage-footer sl-v203-audit-footer">
-            <label><span>Rows per page</span><select defaultValue="10"><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
-            <span className="sl-staff-usage-pagination-note">No live records yet</span>
+          <footer className="sl-records-footer sl-staff-usage-footer sl-v203-audit-footer">
+            <label><span>Rows per page</span><select value={sessionPageSize} aria-label="Rows per page" onChange={event => { setSessionPageSize(Number(event.target.value)); setSessionPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
+            <Pagination compact page={sessionPage} pageSize={sessionPageSize} total={0} itemLabel="sessions" onPageChange={setSessionPage} />
           </footer>
         </section>
       </main>
