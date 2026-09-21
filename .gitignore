@@ -45,3 +45,6 @@ example
 /android
 /client/ios
 /client/android
+
+# Local development guidance
+/CODE_COMMENTING_GUIDELINE.md

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -18,7 +18,8 @@ import {
   Globe2,
   ArrowRight,
 } from 'lucide-react';
-import { DataState, ExportControl, PageHeader, Status } from '../../components/application/primitives';
+import { DataState, ExportControl, PageHeader, Pagination, Status } from '../../components/application/primitives';
+import { listAuditRecords, type AuditRecord, type Page } from '../../services/administration';
 
 const tabs = [
   'Overview',
@@ -51,7 +52,7 @@ function OverviewPanel({ onNavigate }: { onNavigate: (tab: SecurityTab) => void 
             <div className="sl-staff-usage-head-actions"><button type="button" className="sl-staff-usage-viewall sl-v209-viewall-button" onClick={() => onNavigate('Audit Logs')}>View All <ArrowRight size={14} aria-hidden="true" /></button></div>
           </header>
           <div className="sl-staff-usage-table-shell">
-            <table className="sl-data-table sl-staff-usage-table">
+            <table className="sl-data-table sl-staff-usage-table sl-security-overview-table sl-security-overview-activity-table">
               <thead><tr><th>Date &amp; Time</th><th>User</th><th>Activity</th><th>Module</th><th>Status</th></tr></thead>
               <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={5} className="sl-staff-usage-preview-state-cell"><SecurityPending label="Security and system activity" /></td></tr></tbody>
             </table>
@@ -65,7 +66,7 @@ function OverviewPanel({ onNavigate }: { onNavigate: (tab: SecurityTab) => void 
             <div className="sl-staff-usage-head-actions"><button type="button" className="sl-staff-usage-viewall sl-v209-viewall-button" onClick={() => onNavigate('Active Sessions')}>View All <ArrowRight size={14} aria-hidden="true" /></button></div>
           </header>
           <div className="sl-staff-usage-table-shell">
-            <table className="sl-data-table sl-staff-usage-table">
+            <table className="sl-data-table sl-staff-usage-table sl-security-overview-table sl-security-overview-sessions-table">
               <thead><tr><th>User</th><th>Role</th><th>Login Time</th><th>Last Activity</th><th>Actions</th></tr></thead>
               <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={5} className="sl-staff-usage-preview-state-cell"><SecurityPending label="Active sessions" /></td></tr></tbody>
             </table>
@@ -111,6 +112,27 @@ function AuditLogsPanel() {
   const [auditDateRange, setAuditDateRange] = useState('any');
   const [auditFrom, setAuditFrom] = useState('');
   const [auditTo, setAuditTo] = useState('');
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditPageSize, setAuditPageSize] = useState(10);
+  const [auditData, setAuditData] = useState<Page<AuditRecord> | null>(null);
+  const [auditError, setAuditError] = useState(false);
+
+  useEffect(() => {
+    const abort = new AbortController();
+    const cutoffDays = auditDateRange === 'week' ? 7 : auditDateRange === 'month' ? 30 : auditDateRange === 'year' ? 365 : 0;
+    const from = auditDateRange === 'custom' && auditFrom
+      ? new Date(`${auditFrom}T00:00:00`).toISOString()
+      : cutoffDays ? new Date(Date.now() - cutoffDays * 86400000).toISOString() : undefined;
+    const to = auditDateRange === 'custom' && auditTo ? new Date(`${auditTo}T23:59:59.999`).toISOString() : undefined;
+
+    setAuditError(false);
+    listAuditRecords(auditPage, auditPageSize, 'desc', { from, to }, abort.signal)
+      .then(value => { if (!abort.signal.aborted) setAuditData(value); })
+      .catch(() => { if (!abort.signal.aborted) setAuditError(true); });
+    return () => abort.abort();
+  }, [auditDateRange, auditFrom, auditPage, auditPageSize, auditTo]);
+
+  const auditRows = auditData?.items ?? [];
 
   return (
     <div className="sl-v203-audit-layout">
@@ -126,7 +148,7 @@ function AuditLogsPanel() {
               <span>Search logs</span>
               <div className="sl-staff-usage-search">
                 <Search size={15} aria-hidden="true" />
-                <input type="search" placeholder="User, action, module, or details…" />
+                <input type="search" placeholder="Search user, action, module, or details..." />
               </div>
             </label>
             <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={auditDateRange} onChange={event => setAuditDateRange(event.target.value)} aria-label="Audit log date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
@@ -141,18 +163,30 @@ function AuditLogsPanel() {
           </div>
 
           <div className="sl-v203-audit-table-wrap" role="region" aria-label="Audit records" tabIndex={0}>
-            <table className="sl-data-table sl-v203-audit-table">
+            <table className="sl-records-table sl-data-table sl-v203-audit-table sl-security-audit-records-table">
               <thead><tr><th>Date &amp; Time</th><th>User</th><th>Role</th><th>Action</th><th>Module</th><th>Details</th><th>Status</th></tr></thead>
+              <tbody>
+                {auditError ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="error" title="Audit records could not be loaded" description="Check your connection and try again." /></td></tr>
+                : !auditData ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="loading" title="Loading audit records" description="" /></td></tr>
+                : !auditRows.length ? <tr className="sl-security-audit-empty-row" aria-label="No audit records available">
+                  <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+                </tr>
+                : auditRows.map(record => <tr key={record.id}>
+                  <td><time dateTime={record.timestamp}>{new Date(record.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
+                  <td>{record.actor.name}</td>
+                  <td>{record.actor.role}</td>
+                  <td>{record.action}</td>
+                  <td>{record.targetType}</td>
+                  <td>{record.targetId}</td>
+                  <td>—</td>
+                </tr>)}
+              </tbody>
             </table>
-            <div className="sl-staff-usage-pending">
-              <DataState kind="empty" title="No live records yet" description="Audit records" />
-              <PlaceholderBadge />
-            </div>
           </div>
 
-          <footer className="sl-staff-usage-footer sl-v203-audit-footer">
-            <label><span>Rows per page</span><select defaultValue="10"><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
-            <span className="sl-staff-usage-pagination-note">No live records yet</span>
+          <footer className="sl-records-footer sl-staff-usage-footer sl-v203-audit-footer">
+            <label><span>Rows per page</span><select value={auditPageSize} aria-label="Rows per page" onChange={event => { setAuditPageSize(Number(event.target.value)); setAuditPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
+            <Pagination compact page={auditData?.page ?? auditPage} pageSize={auditData?.pageSize ?? auditPageSize} total={auditData?.total ?? 0} itemLabel="audit records" onPageChange={setAuditPage} />
           </footer>
         </section>
       </main>

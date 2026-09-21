@@ -904,7 +904,7 @@ function SuperAdminIngredientsPage() {
             </div>
 
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Live ingredient records" tabIndex={0}>
-              <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
+              <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
                 <thead>
                   <tr>
                     <th scope="col">Ingredient Name</th>
@@ -940,7 +940,7 @@ function SuperAdminIngredientsPage() {
               </table>
             </div>
 
-            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+            <div className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
               <label>
                 <span>Rows per page</span>
                 <select
