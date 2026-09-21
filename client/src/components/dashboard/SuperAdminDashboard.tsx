@@ -1,9 +1,9 @@
 import { Link } from 'expo-router';
-import { AlertTriangle, ArrowRight, Box, UsersRound } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, ArrowRight, Box, FileText, UsersRound } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { dashboardSummary, listAccounts, listAuditRecords, type Account, type AuditRecord, type DashboardSummary } from '../../services/administration';
 import type { SessionUser } from '../../services/auth';
-import { Card, DataState, Status, PageHeader} from '../application/primitives';
+import { Card, Status, PageHeader} from '../application/primitives';
 
 const AUTO_REFRESH_MS = 15000;
 const roleOrder = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
@@ -55,23 +55,23 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     return () => window.clearInterval(interval);
   }, []);
 
-  const completeRoleDistribution = useMemo(() => {
-    if (accountsTotal === null || accounts.length !== accountsTotal) return null;
-    return roleOrder.map(role => ({ role, count: accounts.filter(account => account.role === role).length }));
-  }, [accounts, accountsTotal]);
+  const backendRoleDistribution = summary?.roleCounts
+    ? roleOrder.map(role => ({ role, count: summary.roleCounts?.[role] ?? null }))
+    : null;
   const dashboardRoleDistribution = roleOrder.map(role => ({
     role,
-    count: completeRoleDistribution?.find(item => item.role === role)?.count ?? null,
+    count: backendRoleDistribution?.find(item => item.role === role)?.count ?? null,
   }));
-  const distributionTotal = completeRoleDistribution?.reduce((sum, item) => sum + item.count, 0) ?? 0;
+  const distributionTotal = backendRoleDistribution?.reduce((sum, item) => sum + item.count, 0) ?? 0;
   const distributionStops = dashboardRoleDistribution.reduce<{ cursor: number; stops: string[] }>((state, item, index) => {
     const palette = ['#0b8755', '#79c9a3', '#ffd166', '#67a98f'];
-    const next = state.cursor + (distributionTotal && item.count !== null ? (item.count / distributionTotal) * 100 : 25);
+    if (!distributionTotal || item.count === null) return state;
+    const next = state.cursor + (item.count / distributionTotal) * 100;
     state.stops.push(`${palette[index]} ${state.cursor}% ${next}%`);
     state.cursor = next;
     return state;
   }, { cursor: 0, stops: [] });
-  const distributionBackground = distributionTotal
+  const distributionBackground = distributionTotal && distributionStops.stops.length
     ? `radial-gradient(circle at center,#ffffff 0 48%,transparent 49%),conic-gradient(${distributionStops.stops.join(',')})`
     : 'radial-gradient(circle at center,#ffffff 0 48%,transparent 49%),conic-gradient(#e9eef3 0 100%)';
 
@@ -93,8 +93,8 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
         <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface">
           <div className="sl-sa-expiration-donut" aria-hidden="true"><strong>—</strong><span>Batches</span></div>
           <div className="sl-sa-chart-legend" aria-label="Expiration status legend">
-            <div><i className="is-good"/><span>Good Shelf Life</span><strong>—</strong></div>
-            <div><i className="is-expiring"/><span>Expiring</span><strong>—</strong></div>
+            <div><i className="is-good"/><span>Active</span><strong>—</strong></div>
+            <div><i className="is-expiring"/><span>Expiring Soon</span><strong>—</strong></div>
             <div><i className="is-expired"/><span>Expired</span><strong>—</strong></div>
           </div>
           <span className="sl-sa-chart-empty-note">No live records yet</span>
@@ -116,29 +116,42 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
           <span className="sl-sa-chart-empty-note">No live records yet</span>
         </div>
       </Card>
-      <section id="sl-sa-distribution" className="sl-v56-side-card sl-sa-dashboard-distribution-card">
-        <h2>User Distribution</h2>
-        <div className="sl-v56-distribution">
-          <div className="sl-v56-donut" style={{ background: distributionBackground }}>
-            <strong>{completeRoleDistribution ? accountsTotal : '—'}</strong><span>Users</span>
+      <Card id="sl-sa-distribution" title="User Distribution">
+        <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface sl-sa-user-distribution-surface">
+          <div className="sl-sa-expiration-donut sl-sa-user-distribution-donut" style={{ background: distributionBackground }}>
+            <strong>{backendRoleDistribution ? distributionTotal.toLocaleString() : '—'}</strong><span>Users</span>
           </div>
-          <div className="sl-v56-legend">
+          <div className="sl-sa-chart-legend sl-sa-user-distribution-legend" aria-label="User distribution legend">
             {dashboardRoleDistribution.map(item => <div key={item.role}>
-              <span className="sl-v56-dot" data-role={item.role} />
+              <i data-role={item.role} />
               <span>{item.role}</span><strong>{item.count ?? '—'}</strong>
             </div>)}
           </div>
         </div>
-      </section>
+      </Card>
     </section>
 
-    <section className="sl-sa-middle-row">
-      <Card id="sl-sa-expiring-items" title="Critical / Expiring Items" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View all <ArrowRight size={14}/></Link>}>
-        <div className="sl-table-scroll"><table className="sl-data-table sl-sa-expiring-table"><thead><tr><th>Ingredient</th><th>Batch</th><th>Expiry Date</th><th>Status</th></tr></thead><tbody><tr><td colSpan={4} className="sl-empty-cell"><DataState kind="empty" title="No live records yet" description="Expiration / FEFO records" /></td></tr></tbody></table></div>
-      </Card>
-      <Card id="sl-sa-recent-activity" title="Recent System Activity" action={<Link href="/SecurityActivity" className="sl-text-link">View all <ArrowRight size={14}/></Link>}>
-        <div className="sl-table-scroll"><table className="sl-data-table sl-sa-activity-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>{auditError ? <tr><td colSpan={4} className="sl-empty-cell"><DataState kind="error" title="Activity could not be loaded" description="Check connectivity and try again." /></td></tr> : !audit ? <tr><td colSpan={4} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="" /></td></tr> : audit.items.length === 0 ? <tr><td colSpan={4} className="sl-empty-cell"><DataState kind="empty" title="No system activity recorded yet" description="Recorded system activity will appear here." /></td></tr> : audit.items.map(row => <tr key={row.id}><td>{new Date(row.timestamp).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',hour12:true})}</td><td>{row.actor.name}<small>{row.actor.role}</small></td><td>{row.action.replaceAll('_',' ')}</td><td>{row.targetType}<small>{row.targetId}</small></td></tr>)}</tbody></table></div>
-      </Card>
+    <section className="sl-sa-middle-row sl-sa-dashboard-activity-row-v319">
+      <section id="sl-sa-expiring-items" className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="sl-sa-expiring-items-title">
+        <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+          <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+          <h2 id="sl-sa-expiring-items-title">Critical / Expiring Ingredients</h2>
+          <div className="sl-staff-usage-head-actions"><Link href="/ExpirationMonitoring" className="sl-staff-usage-viewall sl-v209-viewall-button">View All <ArrowRight size={14} aria-hidden="true" /></Link></div>
+        </header>
+        <div className="sl-staff-usage-table-shell">
+          <table className="sl-data-table sl-staff-usage-table sl-sa-expiring-table"><thead><tr><th>Ingredient</th><th>Batch</th><th>Expiry Date</th><th>Status</th></tr></thead><tbody><tr className="sl-sa-dashboard-empty-data-row" aria-label="No expiration records available"><td>—</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+        </div>
+      </section>
+      <section id="sl-sa-recent-activity" className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="sl-sa-recent-activity-title">
+        <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+          <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+          <h2 id="sl-sa-recent-activity-title">Recent System Activity</h2>
+          <div className="sl-staff-usage-head-actions"><Link href="/SecurityActivity" className="sl-staff-usage-viewall sl-v209-viewall-button">View All <ArrowRight size={14} aria-hidden="true" /></Link></div>
+        </header>
+        <div className="sl-staff-usage-table-shell">
+          <table className="sl-data-table sl-staff-usage-table sl-sa-expiring-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>{audit?.items.length ? audit.items.map(row => <tr key={row.id}><td>{new Date(row.timestamp).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',hour12:true})}</td><td>{row.actor.name}<small>{row.actor.role}</small></td><td>{row.action.replaceAll('_',' ')}</td><td>{row.targetType}<small>{row.targetId}</small></td></tr>) : <tr className="sl-sa-dashboard-empty-data-row" aria-label={auditError ? 'System activity unavailable' : !audit ? 'System activity loading' : 'No system activity recorded'}><td>—</td><td>—</td><td>—</td><td>—</td></tr>}</tbody></table>
+        </div>
+      </section>
     </section>
   </div>;
 }

@@ -17207,3 +17207,235 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-dashboard-distribution-card .sl-v56-legend,
   .sl-superadmin-dashboard-v49 .sl-sa-chart-legend{width:min(100%,18rem);margin-inline:auto}
 }
+
+/* V319 — Super Admin /SuperAdminDashboard only: align all analytics data-bearing
+   surfaces and inherit the literal SecurityActivity records-card/table language. */
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-card,
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-sa-dashboard-distribution-card{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-card > .sl-card-body{
+  flex:1;
+  display:flex;
+  min-height:0;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-chart-surface{
+  flex:1;
+  width:100%;
+  min-height:clamp(12.25rem,14vw,14.75rem);
+  margin:0;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-expiration-donut-surface{
+  grid-template-rows:minmax(0,1fr) auto;
+  padding:clamp(.8rem,.65rem + .3vw,1rem) 0 clamp(1.85rem,1.6rem + .45vw,2.15rem);
+}
+.sl-superadmin-dashboard-v49 :is(.sl-sa-line-chart-surface,.sl-sa-bar-chart-surface){
+  padding:clamp(.8rem,.65rem + .3vw,1rem) 0 clamp(1.85rem,1.6rem + .45vw,2.15rem);
+}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-empty-note{
+  bottom:.55rem;
+  width:100%;
+  text-align:center;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-distribution{
+  flex:1;
+  align-content:center;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > .sl-staff-usage-card{
+  min-width:0;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 .sl-staff-usage-card-head h2{
+  margin-right:auto;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 .sl-staff-usage-table-shell{
+  width:100%;
+  min-width:0;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 .sl-staff-usage-table{
+  width:100%;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 .sl-staff-usage-preview-state-cell{
+  height:clamp(12rem,22vh,16rem);
+}
+
+/* V320 — Super Admin /SuperAdminDashboard only: one shared alignment system for
+   every analytics data-bearing surface. Values remain backend-derived. */
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317{
+  --sl-sa-analytics-body-min:clamp(12.75rem,14vw,15rem);
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-card,
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-sa-dashboard-distribution-card{
+  height:100%;
+  min-height:calc(var(--sl-sa-analytics-body-min) + 3.55rem);
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-card > .sl-card-body{
+  min-height:var(--sl-sa-analytics-body-min);
+  align-items:stretch;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-chart-surface{
+  min-height:var(--sl-sa-analytics-body-min);
+  height:var(--sl-sa-analytics-body-min);
+}
+.sl-superadmin-dashboard-v49 .sl-sa-expiration-donut-surface{
+  grid-template-columns:minmax(7.4rem,.95fr) minmax(9rem,1.15fr);
+  grid-template-rows:1fr;
+  align-items:center;
+  padding:clamp(.85rem,.72rem + .28vw,1.05rem) 0 2.15rem;
+}
+.sl-superadmin-dashboard-v49 :is(.sl-sa-line-chart-surface,.sl-sa-bar-chart-surface){
+  grid-template-rows:minmax(0,1fr) 1.35rem;
+  align-content:stretch;
+  padding:clamp(.85rem,.72rem + .28vw,1.05rem) 0 2.15rem;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-empty-note{
+  left:0;
+  right:0;
+  bottom:.62rem;
+  width:auto;
+  transform:none;
+  text-align:center;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card{
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr);
+  align-content:stretch;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card > h2{
+  min-height:2.55rem;
+  display:flex;
+  align-items:center;
+  margin:0!important;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-distribution{
+  min-height:var(--sl-sa-analytics-body-min)!important;
+  height:var(--sl-sa-analytics-body-min);
+  box-sizing:border-box;
+  align-self:stretch;
+  align-content:center;
+  align-items:center;
+  padding-top:0!important;
+  padding-bottom:0;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-donut{
+  align-self:center;
+  justify-self:center;
+  text-align:center;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-donut strong,
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-donut span{
+  display:block;
+  text-align:center;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-legend{
+  align-self:center;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-legend > div{
+  min-height:1.25rem;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-legend > div > strong{
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:700px){
+  .sl-superadmin-dashboard-v49 .sl-sa-expiration-donut-surface{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto;
+  }
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-distribution{
+    height:auto;
+    min-height:var(--sl-sa-analytics-body-min)!important;
+  }
+}
+
+/* V321 — Super Admin /SuperAdminDashboard only.
+   User Distribution now inherits the exact Expiration Status chart/card geometry,
+   while retaining its established role palette. The two activity tables align to
+   analytics columns 2–3: Critical starts under Waste; Recent ends under Forecast. */
+.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-donut{
+  /* Geometry and typography come from .sl-sa-expiration-donut. */
+  box-shadow:inset 0 0 0 1px rgba(13,84,63,.03);
+}
+.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role='Super Admin']{background:#0b8755}
+.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role='Admin']{background:#79c9a3}
+.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role='Manager']{background:#ffd166}
+.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role='Inventory Staff']{background:#67a98f}
+
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  align-items:stretch;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-expiring-items{grid-column:2}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-recent-activity{grid-column:3}
+@media(max-width:1400px){
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-expiring-items,
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-recent-activity{grid-column:auto}
+}
+@media(max-width:700px){
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319{grid-template-columns:1fr}
+}
+\n\n/* V322 — Super Admin /SuperAdminDashboard only.\n   Activity cards follow the requested 2+2 analytics-column spans. To satisfy the\n   requested edge relationships, User Distribution occupies analytics column 3 and\n   Forecast Accuracy column 4; DOM/data wiring is unchanged. Recent System Activity\n   reuses the same table class as Critical / Expiring Ingredients. */\n.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-expiration{grid-column:1}\n.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-waste{grid-column:2}\n.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-distribution{grid-column:3}\n.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-forecast{grid-column:4}\n\n.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319{\n  grid-template-columns:repeat(4,minmax(0,1fr));\n  align-items:stretch;\n}\n.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-expiring-items{grid-column:1 / 3}\n.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-recent-activity{grid-column:3 / 5}\n\n/* Keep every returned role value on the same vertical value axis. */\n.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend > div{\n  grid-template-columns:.66rem minmax(0,1fr) minmax(2.25rem,auto);\n  width:100%;\n}\n.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend > div > strong{\n  justify-self:end;\n  width:100%;\n  min-width:2.25rem;\n  text-align:right;\n  font-variant-numeric:tabular-nums;\n}\n@media(max-width:1400px){\n  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-expiration,\n  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-waste,\n  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-distribution,\n  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-forecast{grid-column:auto}\n  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319{grid-template-columns:repeat(2,minmax(0,1fr))}\n  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-expiring-items,\n  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-recent-activity{grid-column:auto}\n}\n@media(max-width:700px){\n  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319{grid-template-columns:1fr}\n}\n
+
+/* V323 — Super Admin /SuperAdminDashboard only.
+   Preserve the visible analytics order from the dashboard: Expiration, Waste, Forecast, User Distribution.
+   The two lower records cards each span the exact corresponding two-column analytics width. */
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-expiration{grid-column:1}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-waste{grid-column:2}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-forecast{grid-column:3}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-distribution{grid-column:4}
+
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(.75rem,.7rem + .25vw,1rem);
+  align-items:stretch;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-expiring-items{grid-column:1 / 3}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-recent-activity{grid-column:3 / 5}
+
+/* One explicit legend grid for every role — including Manager — so returned values share one vertical axis. */
+.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend{
+  width:100%;
+  min-width:0;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend > div{
+  display:grid;
+  grid-template-columns:.66rem minmax(0,1fr) 2.5rem;
+  align-items:center;
+  column-gap:.5rem;
+  width:100%;
+  min-width:0;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend > div > strong{
+  display:block;
+  justify-self:stretch;
+  width:2.5rem;
+  min-width:2.5rem;
+  margin:0;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:1400px){
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-expiration,
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-waste,
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-forecast,
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > #sl-sa-distribution{grid-column:auto}
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-expiring-items,
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-recent-activity{grid-column:auto}
+}
+@media(max-width:700px){
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319{grid-template-columns:1fr}
+}
+
+/* V324 — Super Admin /SuperAdminDashboard only.
+   Keep the complete activity-table structures visible when their backend data is
+   unavailable. Missing data is represented by truthful em dashes inside each
+   column rather than replacing the data-bearing area with a placeholder state. */
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 .sl-sa-dashboard-empty-data-row td{
+  height:clamp(3rem,2.7rem + .8vw,3.6rem);
+  vertical-align:middle;
+  color:var(--sl-muted);
+}
