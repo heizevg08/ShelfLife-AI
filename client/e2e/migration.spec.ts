@@ -50,7 +50,7 @@ for (const role of roles) {
     await expect(page.getByRole('button', { name: 'View Permission Milk', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Add Ingredient', exact: true })).toHaveCount(['Inventory Manager', 'Inventory Staff'].includes(role) ? 1 : 0);
     await expect(page.getByRole('button', { name: 'Edit Permission Milk', exact: true })).toHaveCount(role === 'Inventory Manager' ? 1 : 0);
-    await expect(page.getByRole('button', { name: 'Remove Permission Milk', exact: true })).toHaveCount(role === 'Inventory Manager' ? 1 : 0);
+    await expect(page.getByRole('button', { name: 'Archive Permission Milk', exact: true })).toHaveCount(role === 'Inventory Manager' ? 1 : 0);
     await page.getByRole('button', { name: 'View Permission Milk', exact: true }).click();
     await expect(page.locator('dialog[open]').getByRole('button', { name: 'Edit', exact: true })).toHaveCount(role === 'Inventory Manager' ? 1 : 0);
   });

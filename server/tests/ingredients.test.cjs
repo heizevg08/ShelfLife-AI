@@ -22,25 +22,29 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
     { ...valid, defaultShelfLifeDays: 0 },
     { ...valid, defaultShelfLifeDays: 1.5 },
     { ...valid, category: 'Unknown' },
+    { ...valid, isActive: false },
   ]) assert.throws(() => ingredientInput(body));
-  assert.deepEqual(ingredientPagination({ page: '2', pageSize: '10', search: 'milk', category: 'Dairy' }), { page: 2, pageSize: 10, sortBy: 'createdAt', sortOrder: 'desc', search: 'milk', category: 'Dairy' });
+  assert.deepEqual(ingredientPagination({ page: '2', pageSize: '10', search: 'milk', category: 'Dairy' }), { page: 2, pageSize: 10, sortBy: 'createdAt', sortOrder: 'desc', search: 'milk', category: 'Dairy', includeArchived: false });
+  assert.equal(ingredientPagination({ includeArchived: 'true' }).includeArchived, true);
+  assert.equal(ingredientPagination({ includeArchived: 'false' }).includeArchived, false);
+  for (const includeArchived of ['yes', ['true'], { $ne: false }]) assert.throws(() => ingredientPagination({ includeArchived }));
 });
 
 test('ingredient HTTP API authenticates, enforces per-method roles, validates, pages, and returns real writes', async () => {
   const rows = [];
   const store = {
     async list(query) {
-      const found = rows.filter(row => (!query.category || row.category === query.category) && (!query.search || `${row.name} ${row.brand}`.toLowerCase().includes(query.search.toLowerCase())));
+      const found = rows.filter(row => (query.includeArchived || row.isActive !== false) && (!query.category || row.category === query.category) && (!query.search || `${row.name} ${row.brand}`.toLowerCase().includes(query.search.toLowerCase())));
       return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), page: query.page, pageSize: query.pageSize, total: found.length };
     },
     async create(actorId, input) {
       if (rows.some(row => row.name.toLowerCase() === input.name.toLowerCase())) throw Object.assign(new Error('duplicate'), { code: 11000 });
       const now = new Date().toISOString();
-      const row = { id: String(rows.length + 3).repeat(24).slice(0, 24), ...input, createdBy: { id: actorId, name: admin.name }, createdAt: now, updatedAt: now };
+      const row = { id: String(rows.length + 3).repeat(24).slice(0, 24), ...input, isActive: true, createdBy: { id: actorId, name: admin.name }, createdAt: now, updatedAt: now };
       rows.push(row); return row;
     },
-    async update(actorId, id, input) { const index = rows.findIndex(row => row.id === id); if (index < 0) return null; rows[index] = { ...rows[index], ...input, updatedAt: new Date().toISOString() }; return rows[index]; },
-    async remove(actorId, id) { const index = rows.findIndex(row => row.id === id); if (index < 0) return false; rows.splice(index, 1); return true; },
+    async update(actorId, id, input) { const index = rows.findIndex(row => row.id === id && row.isActive); if (index < 0) return null; rows[index] = { ...rows[index], ...input, updatedAt: new Date().toISOString() }; return rows[index]; },
+    async remove(actorId, id) { const row = rows.find(row => row.id === id && row.isActive); if (!row) return false; row.isActive = false; return true; },
   };
   const staff = { ...admin, id: '4'.repeat(24), _id: '4'.repeat(24), role: 'Inventory Staff' };
   const superAdmin = { ...admin, id: '5'.repeat(24), _id: '5'.repeat(24), role: 'Super Admin' };
@@ -75,5 +79,10 @@ test('ingredient HTTP API authenticates, enforces per-method roles, validates, p
     const updated = await request(manager, 'PUT', { ...input, brand: 'Updated Brand' }, `/${id}`); assert.equal(updated.status, 200); assert.equal((await updated.json()).ingredient.brand, 'Updated Brand');
     assert.equal((await request(manager, 'DELETE', undefined, `/${id}`)).status, 204);
     assert.equal((await request(manager, 'DELETE', undefined, `/${id}`)).status, 404);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].isActive, false);
+    assert.equal((await (await request(manager)).json()).total, 0);
+    assert.equal((await (await request(manager, 'GET', undefined, '?includeArchived=true')).json()).items[0].isActive, false);
+    assert.equal((await request(manager, 'PUT', input, `/${id}`)).status, 404);
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });

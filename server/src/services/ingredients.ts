@@ -10,6 +10,7 @@ export interface Ingredient {
   minimumStock?: number;
   standardUnitCost?: number;
   defaultShelfLifeDays?: number;
+  isActive: boolean;
   createdBy: { id: string; name: string };
   createdAt: string;
   updatedAt: string;

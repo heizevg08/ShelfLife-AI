@@ -77,7 +77,7 @@ transaction, invalidates their existing access/refresh sessions and pending rese
 tokens, and records sanitized before/after snapshots as a System audit event.
 Canonical role strings are `Inventory Staff`, `Inventory Manager`, `Admin`, and
 `Super Admin`. New writes reject `Manager`. Ingredient privileges now follow the brief;
-ingredient reads permit all four roles, creation permits Inventory Manager and Inventory Staff, and update/removal permits Inventory Manager only. Removal is the existing permanent DELETE operation, not a soft archive. Run maintenance before starting this revision
+ingredient reads permit all four roles, creation permits Inventory Manager and Inventory Staff, and update/archive permits Inventory Manager only. `DELETE /api/ingredients/:id` now soft-archives the document with `isActive: false` and returns 204. Run maintenance before starting this revision
 against any database containing the old role.
 
 **Client transition:** the Vite frontend now uses canonical role names and the ingredient permissions above.
@@ -95,8 +95,9 @@ use the proxy socket IP and need an explicit trusted-proxy configuration before
 relying on end-user IP separation.
 
 Audit records now expose `oldValue` and `newValue` for account lifecycle changes
-and ingredient CREATE/UPDATE/DELETE. Creation has a null old value; deletion has a
-null new value. Historical records without snapshots return null, not reconstructed
+and ingredient CREATE/UPDATE/DEACTIVATE. Creation has a null old value; archiving
+preserves both snapshots, including `isActive: true` before and `false` after.
+Historical DELETE records retain their null new value. Historical records without snapshots return null, not reconstructed
 history. Mutation and audit insertion share a MongoDB transaction (replica set or
 Atlas required). Snapshot allowlists omit credentials, hashes and reset tokens.
 `targetType` accepts User, Ingredient, InventoryBatch, UsageRecord, WasteRecord,
@@ -108,6 +109,13 @@ Ingredient schema and request validators share these exact controlled lists:
 - Categories: Dairy, Produce, Bakery, Pantry, Meat, Seafood, Frozen, Beverages, Other.
 - Units: kg, g, L, mL, pcs, pack, box, bottle, can, tray.
 
+Ingredient lists exclude archived records by default. All four authenticated roles
+can use `GET /api/ingredients?includeArchived=true` for historical lookup; results
+include `isActive`. Existing documents without the flag count as active. Updates
+and repeated archive attempts on archived documents return 404. Clients cannot
+set `isActive` through create/update. Names remain unique across active and
+archived documents so historical identities are not silently reused.
+
 The optional MongoDB integration test creates and removes only randomly named
 `hardening_test_*` collections. Run from the repository root in PowerShell:
 
@@ -117,3 +125,8 @@ $env:RUN_MONGO_HARDENING_TESTS = 'true'
 node --env-file=server/.env --test server/tests/hardening-mongo.test.cjs
 Remove-Item Env:RUN_MONGO_HARDENING_TESTS
 ```
+
+The test directly reads the archived document through the MongoDB driver,
+checks `isActive: false`, active/history listing, before/after audit snapshots,
+concurrent archives, and rollback when audit insertion fails. It prints a
+credential-free verification record before dropping its isolated test collections.

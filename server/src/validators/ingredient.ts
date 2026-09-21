@@ -52,11 +52,12 @@ export function ingredientInput(body: unknown): IngredientInput {
 }
 
 export function ingredientPagination(query: Record<string, unknown>) {
-  for (const key of Object.keys(query)) if (!['page', 'pageSize', 'search', 'category'].includes(key)) invalid(key);
+  for (const key of Object.keys(query)) if (!['page', 'pageSize', 'search', 'category', 'includeArchived'].includes(key)) invalid(key);
+  if (query.includeArchived !== undefined && query.includeArchived !== 'true' && query.includeArchived !== 'false') invalid('includeArchived', 'Use true or false');
   const page = pagination(Object.fromEntries(['page', 'pageSize'].filter(key => query[key] !== undefined).map(key => [key, query[key]])), ['createdAt'], 'createdAt');
   const search = query.search === undefined ? '' : cleanText('search', query.search, false, 100);
   const category = query.category === undefined ? '' : query.category;
   if (typeof category !== 'string' || (category && !INGREDIENT_CATEGORIES.includes(category as typeof INGREDIENT_CATEGORIES[number]))) invalid('category', 'Select a valid category');
-  return { ...page, search, category: category as '' | typeof INGREDIENT_CATEGORIES[number] };
+  return { ...page, search, category: category as '' | typeof INGREDIENT_CATEGORIES[number], includeArchived: query.includeArchived === 'true' };
 }
 export type IngredientPageQuery = ReturnType<typeof ingredientPagination>;

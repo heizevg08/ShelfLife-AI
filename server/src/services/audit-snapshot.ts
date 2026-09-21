@@ -1,7 +1,7 @@
 // Explicit allowlists prevent credentials and arbitrary future fields entering the audit API.
 const fields: Record<string, readonly string[]> = {
   User: ['id', 'firstName', 'lastName', 'name', 'email', 'role', 'isActive', 'createdAt', 'updatedAt'],
-  Ingredient: ['id', 'name', 'brand', 'description', 'category', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'createdBy', 'createdAt', 'updatedAt'],
+  Ingredient: ['id', 'name', 'brand', 'description', 'category', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'isActive', 'createdBy', 'createdAt', 'updatedAt'],
 };
 export type AuditSnapshot = Record<string, unknown> | null;
 export function auditSnapshot(targetType: string, value: unknown): AuditSnapshot {

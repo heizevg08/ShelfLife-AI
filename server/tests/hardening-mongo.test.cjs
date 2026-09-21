@@ -10,9 +10,10 @@ const { mongoLoginAttemptStore, LOGIN_WINDOW_MS } = require('../dist/services/lo
 const { createIngredientStore } = require('../dist/services/ingredient-store');
 const { createAdministrationStore } = require('../dist/services/administration-store');
 const { migrateManagerRole, provisionHardeningIndexes } = require('../dist/services/backend-maintenance');
+const { ingredientPagination } = require('../dist/validators/ingredient');
 
 // Opt-in: all writes use randomly named test collections, never application collections.
-test('MongoDB enforces indexes, durable atomic login counters, audit transactions and role migration', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' }, async () => {
+test('MongoDB enforces indexes, durable atomic login counters, soft archives, audit transactions and role migration', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' }, async () => {
   const driver = new Mongoose();
   const prefix = `hardening_test_${randomUUID().replaceAll('-', '')}_`;
   const models = [];
@@ -50,6 +51,7 @@ test('MongoDB enforces indexes, durable atomic login counters, audit transaction
     const input = { name: 'Milk', brand: '', description: '', category: 'Dairy', unitOfMeasure: 'L' };
     const service = createIngredientStore(driver, ingredients, users, audits);
     const created = await service.create(actorId, input);
+    assert.equal(created.isActive, true);
     await assert.rejects(service.create(actorId, { ...input, name: 'MILK' }), e => e.code === 11000);
     await assert.rejects(ingredients.findByIdAndUpdate(created.id, { category: 'Unknown' }, { runValidators: true }).exec());
     await assert.rejects(ingredients.findByIdAndUpdate(created.id, { unitOfMeasure: 'liter' }, { runValidators: true }).exec());
@@ -57,25 +59,50 @@ test('MongoDB enforces indexes, durable atomic login counters, audit transaction
     assert.equal(await service.remove(actorId, created.id), true);
     assert.equal(await service.remove(actorId, created.id), false);
     assert.equal(await service.update(actorId, created.id, input), null);
+    // Raw-driver read: verifies persistence independently of Mongoose defaults/serialization.
+    const archived = await ingredients.collection.findOne({ _id: new driver.Types.ObjectId(created.id) });
+    assert.ok(archived, 'archived ingredient must still exist in MongoDB');
+    assert.equal(archived.isActive, false);
+    assert.equal(archived.name, input.name);
+    assert.equal((await service.list(ingredientPagination({}))).total, 0);
+    const history = await service.list(ingredientPagination({ includeArchived: 'true' }));
+    assert.equal(history.total, 1);
+    assert.equal(history.items[0].isActive, false);
+    await assert.rejects(service.create(actorId, input), e => e.code === 11000);
     const events = await audits.find().sort({ timestamp: 1, _id: 1 }).lean();
-    assert.deepEqual(events.map(row => row.action), ['CREATE', 'UPDATE', 'DELETE']);
+    assert.deepEqual(events.map(row => row.action), ['CREATE', 'UPDATE', 'DEACTIVATE']);
     assert.equal(events[0].oldValue, null);
     assert.equal(events[0].newValue.name, 'Milk');
     assert.equal(events[1].oldValue.brand, '');
     assert.equal(events[1].newValue.brand, 'New');
     assert.equal(events[2].oldValue.brand, 'New');
-    assert.equal(events[2].newValue, null);
+    assert.equal(events[2].oldValue.isActive, true);
+    assert.equal(events[2].newValue.isActive, false);
+    assert.equal(events[2].newValue.id, created.id);
     assert.ok(events.every(row => row.userId.toString() === actorId && row.targetType === 'Ingredient'));
+    console.log(JSON.stringify({ check: 'ingredient-soft-archive', host: new URL(process.env.MONGO_URI).hostname, database: driver.connection.name, collection: ingredients.collection.name, id: created.id, documentExists: true, isActive: archived.isActive, activeListTotal: 0, includeArchivedTotal: history.total, auditAction: events[2].action }));
 
     const failAudits = { create: async () => { throw new Error('Simulated audit failure'); } };
     const failing = createIngredientStore(driver, ingredients, users, failAudits);
-    await assert.rejects(failing.create(actorId, input));
-    assert.equal(await ingredients.countDocuments(), 0);
-    const retained = await service.create(actorId, input);
-    await assert.rejects(failing.update(actorId, retained.id, { ...input, brand: 'Must roll back' }));
+    const secondInput = { ...input, name: 'Rollback fixture' };
+    await assert.rejects(failing.create(actorId, secondInput), /Simulated audit failure/);
+    assert.equal(await ingredients.countDocuments(), 1);
+    const retained = await service.create(actorId, secondInput);
+    await assert.rejects(failing.update(actorId, retained.id, { ...secondInput, brand: 'Must roll back' }));
     assert.equal((await ingredients.findById(retained.id).lean()).brand, '');
     await assert.rejects(failing.remove(actorId, retained.id));
-    assert.equal(await ingredients.countDocuments(), 1);
+    assert.equal(await ingredients.countDocuments(), 2);
+    assert.equal((await ingredients.collection.findOne({ _id: new driver.Types.ObjectId(retained.id) })).isActive, true);
+
+    // Pre-migration documents without a flag remain visible and can be archived.
+    await ingredients.collection.updateOne({ _id: new driver.Types.ObjectId(retained.id) }, { $unset: { isActive: '' } });
+    const legacyPage = await service.list(ingredientPagination({}));
+    assert.equal(legacyPage.total, 1);
+    assert.equal(legacyPage.items[0].isActive, true);
+    const concurrent = await Promise.all([service.remove(actorId, retained.id), service.remove(actorId, retained.id)]);
+    assert.deepEqual(concurrent.sort(), [false, true]);
+    assert.equal(await audits.countDocuments({ targetId: retained.id, action: 'DEACTIVATE' }), 1);
+    assert.equal((await ingredients.collection.findOne({ _id: new driver.Types.ObjectId(retained.id) })).isActive, false);
 
     const legacyId = new driver.Types.ObjectId();
     await users.collection.insertOne({ _id: legacyId, firstName: 'Test', lastName: 'Manager', email: 'isolated@shelflife.com', role: 'Manager', isActive: true, authVersion: 2, resetTokenHash: 'private-reset', createdAt: now, updatedAt: now });
