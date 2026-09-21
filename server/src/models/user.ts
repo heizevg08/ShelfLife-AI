@@ -2,6 +2,27 @@ import { Schema, type Mongoose, type InferSchemaType } from 'mongoose';
 import { normalizeEmail } from '../validators/auth';
 
 export const ROLES = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
+export type UserRole = typeof ROLES[number];
+
+const LEGACY_ROLE_ALIASES: Readonly<Record<string, UserRole>> = {
+  SuperAdmin: 'Super Admin',
+  'Inventory Manager': 'Manager',
+  InventoryStaff: 'Inventory Staff',
+};
+
+export function normalizeUserRole(role: unknown): UserRole | null {
+  if (typeof role !== 'string') return null;
+  if ((ROLES as readonly string[]).includes(role)) return role as UserRole;
+  return LEGACY_ROLE_ALIASES[role] ?? null;
+}
+
+export function storedUserRoles(roles: readonly string[]): string[] {
+  const requested = new Set(roles.map(normalizeUserRole).filter((role): role is UserRole => role !== null));
+  return [
+    ...ROLES.filter(role => requested.has(role)),
+    ...Object.entries(LEGACY_ROLE_ALIASES).filter(([, role]) => requested.has(role)).map(([alias]) => alias),
+  ];
+}
 const schema = new Schema({
   email: { type: String, required: true, unique: true, set: (value: string) => value.trim().toLowerCase(), validate: (value: string) => normalizeEmail(value) === value },
   // Legacy/current database records may carry the canonical display name in `name`.
@@ -22,13 +43,14 @@ export function userModel(driver: Mongoose) {
   return driver.model('User', schema);
 }
 export function safeUser(user: UserRecord) {
+  const role = normalizeUserRole(user.role) ?? user.role;
   const storedName = typeof user.name === 'string' ? user.name.trim() : '';
   const composedName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
-  let displayName = storedName || composedName || user.role;
+  let displayName = storedName || composedName || role;
   // Older seeded records used role labels as first/last names. Do not let a stale
   // "Super Admin" label leak into an account whose authoritative role is Admin.
-  if (user.role === 'Admin' && displayName === 'Super Admin') displayName = 'Admin';
-  if (user.role === 'Super Admin' && displayName === 'Admin') displayName = 'Super Admin';
+  if (role === 'Admin' && displayName === 'Super Admin') displayName = 'Admin';
+  if (role === 'Super Admin' && displayName === 'Admin') displayName = 'Super Admin';
   return { id: user._id.toString(), name: displayName, email: user.email,
-    role: user.role, isActive: user.isActive };
+    role, isActive: user.isActive };
 }

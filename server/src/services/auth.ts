@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import type { UserRecord } from '../models/user';
-import { ROLES, safeUser } from '../models/user';
+import { normalizeUserRole, safeUser } from '../models/user';
 import { hashPassword, verifyPassword } from './password';
 import { HttpError } from '../middleware/error.middleware';
 import { normalizeEmail, validPassword } from '../validators/auth';
@@ -12,7 +12,7 @@ export interface UserStore {
 const options = { algorithm: 'HS256' as const, issuer: 'shelflifeai', audience: 'shelflifeai-client', expiresIn: 900 };
 const denied = () => new HttpError(401, 'Invalid email or password');
 export function eligible(user: UserRecord | null): user is UserRecord {
-  return !!user && user.isActive === true && normalizeEmail(user.email) === user.email && ROLES.includes(user.role);
+  return !!user && user.isActive === true && normalizeEmail(user.email) === user.email && normalizeUserRole(user.role) !== null;
 }
 export function createAuth(store: UserStore, secret: string) {
   let dummyHash: Promise<string> | undefined;

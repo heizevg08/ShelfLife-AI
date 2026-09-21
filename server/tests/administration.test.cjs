@@ -7,6 +7,7 @@ const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createAdministration } = require('../dist/services/administration');
 const { verifyPassword } = require('../dist/services/password');
+const { normalizeUserRole, storedUserRoles } = require('../dist/models/user');
 const { pagination, auditPagination, accountInput } = require('../dist/validators/administration');
 
 function fixture() {
@@ -50,6 +51,14 @@ test('administration validation rejects injection, unknown fields, role strings 
   for (const query of [{ actorRole: 'Staff' }, { action: 'DELETE' }, { from: 'yesterday' }, { targetId: 'x' }]) assert.throws(() => auditPagination(query));
   for (const body of [{ isActive: false }, { password: 'new-password' }, { authVersion: 0 }, { role: 'Staff' }, { email: { $ne: null } }, { firstName: '' }]) assert.throws(() => accountInput(body, false));
   assert.equal(accountInput({ email: ' VALID@SHELFLIFE.COM ' }, false).email, 'valid@shelflife.com');
+});
+
+test('legacy stored roles normalize to the canonical administration role contract', () => {
+  assert.equal(normalizeUserRole('Inventory Manager'), 'Manager');
+  assert.equal(normalizeUserRole('SuperAdmin'), 'Super Admin');
+  assert.equal(normalizeUserRole('InventoryStaff'), 'Inventory Staff');
+  assert.equal(normalizeUserRole('Staff'), null);
+  assert.deepEqual(storedUserRoles(['Manager']), ['Manager', 'Inventory Manager']);
 });
 
 test('administrative writes enforce all actor/target role combinations and self protection', async () => {

@@ -1,6 +1,6 @@
 import type { ClientSession, Mongoose } from 'mongoose';
 import type { userModel } from '../models/user';
-import { ROLES } from '../models/user';
+import { normalizeUserRole, storedUserRoles } from '../models/user';
 import type { auditRecordModel } from '../models/audit-record';
 import type { Account, AdministrationStore } from './administration';
 import type { AuditPageQuery, PageQuery } from '../validators/administration';
@@ -9,7 +9,7 @@ const publicFields = '_id firstName lastName email role isActive createdAt updat
 type PublicDocument = { _id: { toString(): string }; firstName: string; lastName: string; email: string; role: string; isActive: boolean; createdAt: Date; updatedAt: Date };
 function account(user: PublicDocument): Account {
   return { id: user._id.toString(), firstName: user.firstName, lastName: user.lastName,
-    name: `${user.firstName} ${user.lastName}`, email: user.email, role: user.role, isActive: user.isActive,
+    name: `${user.firstName} ${user.lastName}`, email: user.email, role: normalizeUserRole(user.role) ?? user.role, isActive: user.isActive,
     createdAt: user.createdAt.toISOString(), updatedAt: user.updatedAt.toISOString() };
 }
 const sorting = (query: PageQuery): Record<string, 1 | -1> => ({ [query.sortBy]: query.sortOrder === 'asc' ? 1 : -1, _id: query.sortOrder === 'asc' ? 1 : -1 });
@@ -21,20 +21,30 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
   return {
     get,
     async list(roles, query) {
-      const filter = roles ? { role: { $in: ROLES.filter(role => roles.includes(role)) } } : {};
+      const rowsQuery = users.find();
+      const countQuery = users.countDocuments();
+      if (roles) {
+        const storedRoles = storedUserRoles(roles);
+        rowsQuery.where('role').in(storedRoles);
+        countQuery.where('role').in(storedRoles);
+      }
       const [rows, total] = await Promise.all([
-        users.find(filter).select(publicFields).sort(sorting(query)).skip((query.page - 1) * query.pageSize).limit(query.pageSize).lean().exec(),
-        users.countDocuments(filter).exec(),
+        rowsQuery.select(publicFields).sort(sorting(query)).skip((query.page - 1) * query.pageSize).limit(query.pageSize).lean().exec(),
+        countQuery.exec(),
       ]);
       return { items: rows.map(account), page: query.page, pageSize: query.pageSize, total };
     },
     async summary(roles = null) {
-      const roleFilter = roles ? { role: { $in: ROLES.filter(role => roles.includes(role)) } } : {};
+      const roleFilter = roles ? { role: { $in: storedUserRoles(roles) } } : {};
       const [counts, roleRows] = await Promise.all([
         users.aggregate([{ $match: roleFilter }, { $group: { _id: null, totalUsers: { $sum: 1 }, activeUsers: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } }, inactiveUsers: { $sum: { $cond: [{ $eq: ['$isActive', false] }, 1, 0] } } } }]).exec(),
         users.aggregate([{ $match: roleFilter }, { $group: { _id: '$role', count: { $sum: 1 } } }]).exec(),
       ]);
-      const roleCounts = Object.fromEntries(roleRows.map(row => [row._id, row.count]));
+      const roleCounts = roleRows.reduce<Record<string, number>>((result, row) => {
+        const role = normalizeUserRole(row._id) ?? row._id;
+        result[role] = (result[role] ?? 0) + row.count;
+        return result;
+      }, {});
       const totals = counts[0];
       return { totalUsers: totals?.totalUsers ?? 0, activeUsers: totals?.activeUsers ?? 0, inactiveUsers: totals?.inactiveUsers ?? 0, roleCounts };
     },
@@ -43,7 +53,7 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
       if (query.action) filter.action = query.action;
       if (query.from || query.to) filter.timestamp = { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lte: query.to } : {}) };
       if (query.actorRole) {
-        const actors = await users.find({ role: query.actorRole }).select('_id').lean().exec();
+        const actors = await users.find().where('role').in(storedUserRoles([query.actorRole])).select('_id').lean().exec();
         filter.userId = { $in: actors.map(actor => actor._id) };
       }
       const [rows, total] = await Promise.all([
@@ -52,7 +62,7 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
       ]);
       const actorIds = [...new Set(rows.map(row => row.userId.toString()))];
       const actorRows = await users.find({ _id: { $in: actorIds } }).select('_id firstName lastName role').lean().exec();
-      const actorById = new Map(actorRows.map(actor => [actor._id.toString(), { id: actor._id.toString(), name: `${actor.firstName} ${actor.lastName}`, role: actor.role }]));
+      const actorById = new Map(actorRows.map(actor => [actor._id.toString(), { id: actor._id.toString(), name: `${actor.firstName} ${actor.lastName}`, role: normalizeUserRole(actor.role) ?? actor.role }]));
       return { items: rows.map(row => {
         const userId = row.userId.toString();
         return { id: row._id.toString(), userId, actor: actorById.get(userId) ?? { id: userId, name: 'Unknown account', role: 'Unavailable' }, action: row.action, targetType: row.targetType, targetId: row.targetId.toString(), timestamp: row.timestamp.toISOString() };
