@@ -55,7 +55,11 @@ test('MongoDB enforces indexes, durable atomic login counters, soft archives, au
     await assert.rejects(service.create(actorId, { ...input, name: 'MILK' }), e => e.code === 11000);
     await assert.rejects(ingredients.findByIdAndUpdate(created.id, { category: 'Unknown' }, { runValidators: true }).exec());
     await assert.rejects(ingredients.findByIdAndUpdate(created.id, { unitOfMeasure: 'liter' }, { runValidators: true }).exec());
-    await service.update(actorId, created.id, { ...input, brand: 'New' }, 0);
+    const updated = await service.update(actorId, created.id, { brand: 'New' }, 0);
+    assert.equal(updated.name, input.name);
+    assert.equal(updated.version, 1);
+    await assert.rejects(service.update(actorId, created.id, { brand: 'Stale' }, 0), e => e.status === 409);
+    await assert.rejects(service.remove(actorId, created.id, 0), e => e.status === 409);
     assert.equal(await service.remove(actorId, created.id, 1), true);
     assert.equal(await service.remove(actorId, created.id, 2), false);
     assert.equal(await service.update(actorId, created.id, input, 2), null);

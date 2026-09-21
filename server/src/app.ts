@@ -1,3 +1,5 @@
+import type { InventoryBatchService } from './services/inventory-batches';
+import { inventoryBatchRoutes } from './routes/inventory-batch.routes';
 import type { SystemConfigService } from './services/system-config';
 import { systemConfigRoutes } from './routes/system-config.routes';
 import express from 'express';
@@ -12,7 +14,7 @@ import type { AdministrationService } from './services/administration';
 import { ingredientRoutes } from './routes/ingredient.routes';
 import type { IngredientService } from './services/ingredients';
 
-export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, systemConfig?: SystemConfigService) {
+export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, systemConfig?: SystemConfigService, batches?: InventoryBatchService) {
   const app = express();
   app.disable('x-powered-by');
   app.use(cors(corsOptions(origins)));
@@ -33,6 +35,7 @@ export function createApp(origins: readonly string[], isReady: () => boolean, au
   }
   if (auth && ingredients) app.use('/api/ingredients', ingredientRoutes(auth, ingredients));
   if (auth && systemConfig) app.use('/api/system-config', systemConfigRoutes(auth, systemConfig));
+  if (auth && batches) app.use('/api/inventory-batches', inventoryBatchRoutes(auth, batches));
   app.use(notFound);
   app.use(errorHandler);
   return app;

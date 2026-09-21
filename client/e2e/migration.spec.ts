@@ -36,6 +36,7 @@ async function mockApi(page: Page, role: WorkspaceRole, loggedIn = true) {
       if (path.endsWith('/reactivate')) accounts[0].isActive = true;
       return json({ user: accounts[0] });
     }
+    if (path === '/api/ingredients') return json({ items: [], total: 0, page: 1, limit: 10 });
     return json({ items: path === '/api/users' ? accounts : [], total: path === '/api/users' ? accounts.length : 0, page: 1, pageSize: 10 });
   });
   return { writes, forbiddenCalls };
