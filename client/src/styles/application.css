@@ -16161,3 +16161,893 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   .sl-sa-change-page .sl-sa-ingredients-filter-actions .sl-button{width:100%;}
   .sl-sa-change-page .sl-staff-usage-footer{align-items:stretch;flex-direction:column;}
 }
+
+/* V271 — ONLY Super Admin /ExpirationMonitoring: inherit the finalized Super Admin /Usage responsive records pattern while retaining every Expiration/FEFO-specific control and panel. */
+.sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{
+  grid-template-columns:minmax(220px,1fr) repeat(4,minmax(120px,.32fr)) auto;
+}
+.sl-sa-expiration-page.sl-sa-usage-page .sl-v219-custom-date-range{
+  grid-column:1 / -1;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+@media(max-width:1450px){
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-search{grid-column:1 / -1;}
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{justify-content:flex-end;}
+}
+@media(max-width:900px){
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-search,
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{grid-column:1 / -1;}
+}
+@media(max-width:620px){
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-search,
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions,
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-v219-custom-date-range{grid-column:auto;}
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-v219-custom-date-range{grid-template-columns:1fr;}
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{justify-content:stretch;flex-wrap:wrap;}
+  .sl-sa-expiration-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions > *{flex:1 1 100%;min-width:0;}
+}
+
+/* V272 — ONLY Super Admin /Forecasting: inherit the finalized Super Admin /ExpirationMonitoring (Usage-based) responsive/adaptive pattern. */
+.sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{
+  grid-template-columns:minmax(260px,1fr) repeat(3,minmax(130px,.34fr)) auto;
+}
+.sl-sa-forecast-page.sl-sa-usage-page .sl-v219-custom-date-range{
+  grid-column:1 / -1;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-table-scroll{
+  width:100%;max-width:100%;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+.sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-table{min-width:980px;}
+@media(max-width:1450px){
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-search{grid-column:1 / -1;}
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{justify-content:flex-end;}
+}
+@media(max-width:900px){
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-search,
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{grid-column:1 / -1;}
+}
+@media(max-width:620px){
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-search,
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions,
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-v219-custom-date-range{grid-column:auto;}
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-v219-custom-date-range{grid-template-columns:1fr;}
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{justify-content:stretch;flex-wrap:wrap;}
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions > *{flex:1 1 100%;min-width:0;}
+  .sl-sa-forecast-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions .sl-button{width:100%;}
+}
+
+/* V274 — ONLY Super Admin /Forecasting: complete chart UI + balanced forecast table. */
+.sl-sa-forecast-page.sl-sa-usage-page .sl-security-activity-reference-table{table-layout:fixed;width:100%;}
+.sl-sa-forecast-page.sl-sa-usage-page .sl-security-activity-reference-table th,
+.sl-sa-forecast-page.sl-sa-usage-page .sl-security-activity-reference-table td{width:14.285714%;padding-left:1rem;padding-right:1rem;box-sizing:border-box;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-period select{min-width:132px;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-shell{display:grid;gap:.7rem;min-height:240px;width:100%;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-legend{display:flex;flex-wrap:wrap;gap:.6rem 1rem;font-size:.75rem;color:var(--muted-foreground);}
+.sl-sa-forecast-page .sl-sa-forecast-chart-legend span{display:inline-flex;align-items:center;gap:.4rem;}
+.sl-sa-forecast-page .sl-sa-forecast-legend-line{display:inline-block;width:1.35rem;height:3px;border-radius:999px;background:var(--primary);}
+.sl-sa-forecast-page .sl-sa-forecast-legend-actual{background:var(--secondary-foreground);opacity:.7;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-frame{position:relative;display:grid;grid-template-columns:2rem 1fr;min-height:170px;border-left:1px solid var(--border);border-bottom:1px solid var(--border);}
+.sl-sa-forecast-page .sl-sa-forecast-chart-y{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;padding:.1rem .45rem .1rem 0;font-size:.68rem;color:var(--muted-foreground);}
+.sl-sa-forecast-page .sl-sa-forecast-chart-grid{position:absolute;left:2rem;right:0;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-grid i{display:block;border-top:1px dashed var(--border);opacity:.75;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-empty{display:grid;place-items:center;min-width:0;color:var(--muted-foreground);font-size:.78rem;z-index:1;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-x{margin-left:2rem;display:grid;grid-template-columns:repeat(5,1fr);text-align:center;font-size:.68rem;color:var(--muted-foreground);}
+.sl-sa-forecast-page .sl-sa-forecast-ranking-shell{display:grid;gap:.75rem;min-height:150px;}
+.sl-sa-forecast-page .sl-sa-forecast-ranking-axis{display:flex;justify-content:space-between;gap:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);font-size:.72rem;font-weight:600;color:var(--muted-foreground);}
+.sl-sa-forecast-page .sl-sa-forecast-ranking-empty{display:grid;place-items:center;min-height:96px;border-bottom:1px dashed var(--border);color:var(--muted-foreground);font-size:.78rem;}
+.sl-sa-forecast-page .sl-sa-forecast-insights-shell{display:grid;gap:.15rem;}
+.sl-sa-forecast-page .sl-sa-forecast-insight-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.8rem 0;border-bottom:1px solid var(--border);font-size:.78rem;}
+.sl-sa-forecast-page .sl-sa-forecast-insight-row:last-child{border-bottom:0;}
+.sl-sa-forecast-page .sl-sa-forecast-insight-row strong{font-size:.9rem;}
+@media(max-width:620px){
+ .sl-sa-forecast-page .sl-sa-forecast-chart-legend{flex-direction:column;}
+ .sl-sa-forecast-page .sl-sa-forecast-chart-period select{min-width:0;width:100%;}
+}
+
+/* V275 — ONLY Super Admin /Forecasting: visible chart structure with truthful labels. */
+.sl-sa-forecast-page .sl-sa-forecast-chart-frame{grid-template-columns:2.7rem 1fr;overflow:hidden;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-y{position:relative;justify-content:center;align-items:center;padding:0;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-y .sl-sa-forecast-axis-title{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:.66rem;font-weight:600;letter-spacing:.01em;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-grid{left:2.7rem;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-plot{position:absolute;left:2.7rem;right:.35rem;top:.55rem;bottom:.35rem;overflow:hidden;pointer-events:none;}
+.sl-sa-forecast-page .sl-sa-forecast-preview-line{position:absolute;left:4%;right:4%;top:50%;height:2px;border-radius:999px;opacity:.28;transform-origin:left center;}
+.sl-sa-forecast-page .sl-sa-forecast-preview-forecast{background:var(--primary);transform:rotate(-5deg);}
+.sl-sa-forecast-page .sl-sa-forecast-preview-actual{background:var(--secondary-foreground);transform:rotate(4deg);opacity:.2;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-empty{position:absolute;left:2.7rem;right:0;top:0;bottom:0;display:grid;place-items:center;padding:1rem;text-align:center;background:color-mix(in oklch,var(--background) 72%,transparent);font-size:.74rem;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-x{margin-left:2.7rem;display:flex;justify-content:center;text-align:center;}
+.sl-sa-forecast-page .sl-sa-forecast-chart-x .sl-sa-forecast-axis-title{font-weight:600;}
+.sl-sa-forecast-page .sl-sa-forecast-ranking-shell{position:relative;}
+.sl-sa-forecast-page .sl-sa-forecast-ranking-preview{display:grid;gap:.55rem;min-height:96px;padding:.35rem 0;}
+.sl-sa-forecast-page .sl-sa-forecast-ranking-preview i{display:block;height:.65rem;width:100%;border-radius:999px;background:var(--muted);opacity:.42;}
+.sl-sa-forecast-page .sl-sa-forecast-ranking-empty{position:absolute;left:0;right:0;top:2.35rem;bottom:0;border-bottom:0;background:color-mix(in oklch,var(--background) 76%,transparent);text-align:center;padding:.75rem;}
+
+/* V276 — Super Admin /Alerts only: inherit finalized Forecasting complete-UI pattern */
+.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{grid-template-columns:minmax(220px,1.45fr) repeat(4,minmax(130px,1fr)) auto;align-items:end;}
+.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{display:flex;gap:.5rem;align-items:end;justify-content:flex-end;}
+.sl-sa-alerts-page .sl-sa-alerts-record-table{table-layout:fixed;width:100%;min-width:920px;}
+.sl-sa-alerts-page .sl-sa-alerts-record-table th,.sl-sa-alerts-page .sl-sa-alerts-record-table td{width:12.5%;padding-left:.8rem;padding-right:.8rem;box-sizing:border-box;}
+.sl-sa-alerts-page .sl-sa-alerts-empty-row td{width:auto!important;padding:0!important;}
+.sl-sa-alerts-page .sl-sa-alerts-inline-empty{min-height:150px;display:flex;align-items:center;justify-content:center;gap:.5rem;color:var(--muted-foreground);font-size:.8rem;}
+.sl-sa-alerts-page .sl-sa-alert-chart-shell,.sl-sa-alerts-page .sl-sa-alert-bars-shell,.sl-sa-alerts-page .sl-sa-alert-trend-shell,.sl-sa-alerts-page .sl-sa-alert-settings-shell{display:grid;gap:.7rem;min-height:150px;width:100%;}
+.sl-sa-alerts-page .sl-sa-alert-chart-legend{display:flex;flex-wrap:wrap;gap:.45rem .8rem;font-size:.7rem;color:var(--muted-foreground);}
+.sl-sa-alerts-page .sl-sa-alert-chart-legend span{display:inline-flex;align-items:center;gap:.35rem;}
+.sl-sa-alerts-page .sl-sa-alert-chart-legend i{width:.55rem;height:.55rem;border-radius:999px;background:var(--primary);opacity:.75;}
+.sl-sa-alerts-page .sl-sa-alert-chart-legend .tone-stock{background:var(--secondary-foreground);opacity:.45}.sl-sa-alerts-page .sl-sa-alert-chart-legend .tone-overstock{background:var(--muted-foreground);opacity:.55}.sl-sa-alerts-page .sl-sa-alert-chart-legend .tone-forecast{background:var(--accent-foreground);opacity:.45}
+.sl-sa-alerts-page .sl-sa-alert-donut{justify-self:center;width:112px;height:112px;border-radius:50%;background:conic-gradient(var(--primary) 0 25%,var(--muted) 25% 50%,var(--border) 50% 75%,var(--secondary) 75% 100%);display:grid;place-items:center;opacity:.45;}
+.sl-sa-alerts-page .sl-sa-alert-donut-hole{width:68px;height:68px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700;color:var(--muted-foreground);}
+.sl-sa-alerts-page .sl-sa-alert-chart-shell p,.sl-sa-alerts-page .sl-sa-alert-bars-shell p,.sl-sa-alerts-page .sl-sa-alert-settings-shell p{margin:0;text-align:center;font-size:.72rem;color:var(--muted-foreground);}
+.sl-sa-alerts-page .sl-sa-alert-bars-axis{display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:.45rem;font-size:.7rem;font-weight:600;color:var(--muted-foreground);}
+.sl-sa-alerts-page .sl-sa-alert-bar-row{display:grid;grid-template-columns:88px 1fr 22px;align-items:center;gap:.5rem;font-size:.72rem;}.sl-sa-alerts-page .sl-sa-alert-bar-row i{height:.6rem;border-radius:999px;background:var(--muted);opacity:.45}.sl-sa-alerts-page .sl-sa-alert-bar-row strong{text-align:right;}
+.sl-sa-alerts-page .sl-sa-alerts-chart-period select{min-width:128px;}
+.sl-sa-alerts-page .sl-sa-alert-trend-frame{position:relative;display:grid;grid-template-columns:2.7rem 1fr;min-height:150px;border-left:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;}
+.sl-sa-alerts-page .sl-sa-alert-trend-y{display:flex;justify-content:center;align-items:center}.sl-sa-alerts-page .sl-sa-alert-axis-title{font-size:.66rem;font-weight:600;color:var(--muted-foreground)}.sl-sa-alerts-page .sl-sa-alert-trend-y .sl-sa-alert-axis-title{writing-mode:vertical-rl;transform:rotate(180deg)}
+.sl-sa-alerts-page .sl-sa-alert-trend-grid{position:absolute;left:2.7rem;right:0;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between}.sl-sa-alerts-page .sl-sa-alert-trend-grid i{border-top:1px dashed var(--border);opacity:.75}
+.sl-sa-alerts-page .sl-sa-alert-trend-preview{position:absolute;left:2.7rem;right:.35rem;top:.5rem;bottom:.35rem}.sl-sa-alerts-page .sl-sa-alert-trend-preview i{position:absolute;left:4%;right:4%;top:48%;height:2px;background:var(--primary);border-radius:999px;opacity:.2;transform:rotate(-4deg)}.sl-sa-alerts-page .sl-sa-alert-trend-preview i+ i{top:58%;transform:rotate(5deg);opacity:.12}
+.sl-sa-alerts-page .sl-sa-alert-trend-empty{position:absolute;left:2.7rem;right:0;top:0;bottom:0;display:grid;place-items:center;padding:1rem;text-align:center;background:color-mix(in oklch,var(--background) 74%,transparent);font-size:.72rem;color:var(--muted-foreground)}
+.sl-sa-alerts-page .sl-sa-alert-trend-x{margin-left:2.7rem;display:flex;justify-content:center}.sl-sa-alerts-page .sl-sa-alert-settings-shell>div{display:flex;justify-content:space-between;gap:1rem;padding:.65rem 0;border-bottom:1px solid var(--border);font-size:.75rem}.sl-sa-alerts-page .sl-sa-alert-settings-shell>div:last-of-type{border-bottom:0}
+@media(max-width:1200px){.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-search,.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{grid-column:1/-1;}}
+@media(max-width:700px){.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-filter-card{grid-template-columns:1fr}.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-search,.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{grid-column:auto}.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions{flex-wrap:wrap}.sl-sa-alerts-page.sl-sa-usage-page .sl-sa-ingredients-filter-actions>*{flex:1 1 100%}.sl-sa-alerts-page .sl-sa-alerts-chart-period select{min-width:0;width:100%}}
+
+/* V277 — ONLY Super Admin /Alerts: InventoryBatches records pattern; analytics rail intentionally removed. */
+.sl-sa-alerts-page.sl-sa-batches-page .sl-sa-ingredients-filter-card{
+  grid-template-columns:minmax(220px,1fr) repeat(3,minmax(130px,.34fr)) auto;
+  align-items:end;
+}
+.sl-sa-alerts-page.sl-sa-batches-page .sl-v219-custom-date-range{grid-column:1 / -1;width:100%;max-width:100%;box-sizing:border-box;}
+@media(max-width:1200px){
+  .sl-sa-alerts-page.sl-sa-batches-page .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sl-sa-alerts-page.sl-sa-batches-page .sl-sa-ingredients-search,.sl-sa-alerts-page.sl-sa-batches-page .sl-sa-ingredients-filter-actions{grid-column:1 / -1;}
+}
+@media(max-width:620px){
+  .sl-sa-alerts-page.sl-sa-batches-page .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}
+  .sl-sa-alerts-page.sl-sa-batches-page .sl-sa-ingredients-search,.sl-sa-alerts-page.sl-sa-batches-page .sl-sa-ingredients-filter-actions,.sl-sa-alerts-page.sl-sa-batches-page .sl-v219-custom-date-range{grid-column:auto;}
+  .sl-sa-alerts-page.sl-sa-batches-page .sl-v219-custom-date-range{grid-template-columns:1fr;}
+  .sl-sa-alerts-page.sl-sa-batches-page .sl-sa-ingredients-filter-actions{justify-content:stretch;flex-wrap:wrap;}
+  .sl-sa-alerts-page.sl-sa-batches-page .sl-sa-ingredients-filter-actions>*{flex:1 1 100%;min-width:0;}
+}
+
+/* V285 — ONLY Super Admin /Reports.
+   Use the established InventoryBatches filter shell directly. Reports-specific legacy
+   filter selectors are avoided in JSX so they cannot override the shared treatment. */
+.sl-sa-reports-superadmin-v285.sl-sa-batches-page .sl-sa-reports-inventory-filters{
+  width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+}
+.sl-sa-reports-superadmin-v285.sl-sa-batches-page .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-card{
+  grid-template-columns:minmax(220px,1fr) repeat(2,minmax(120px,.32fr)) auto;
+  width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+}
+/* Date Range keeps its existing content/icon, but its control geometry is the same
+   40px InventoryBatches input/select language. */
+.sl-sa-reports-superadmin-v285 .sl-sa-reports-date-control{
+  position:relative;display:block;width:100%;min-width:0;height:40px;min-height:40px;
+}
+.sl-sa-reports-superadmin-v285 .sl-sa-reports-date-control input{
+  width:100%;min-width:0;height:40px;min-height:40px;padding:0 .75rem 0 2.15rem;
+  border:1px solid var(--sl-border);border-radius:var(--sl-radius);background:var(--sl-surface);
+  color:var(--sl-text);font:var(--sl-font-supporting);box-sizing:border-box;
+}
+.sl-sa-reports-superadmin-v285 .sl-sa-reports-date-control svg{
+  position:absolute;left:.75rem;top:50%;transform:translateY(-50%);width:15px;height:15px;
+  z-index:1;pointer-events:none;color:var(--sl-muted);
+}
+@media(max-width:1450px){
+  .sl-sa-reports-superadmin-v285.sl-sa-batches-page .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sl-sa-reports-superadmin-v285 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions{grid-column:1/-1;justify-content:flex-end;}
+}
+@media(max-width:620px){
+  .sl-sa-reports-superadmin-v285.sl-sa-batches-page .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}
+  .sl-sa-reports-superadmin-v285 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions{grid-column:auto;justify-content:stretch;}
+  .sl-sa-reports-superadmin-v285 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions>*{flex:1 1 100%;min-width:0;}
+}
+\n\n/* V286 — ONLY Super Admin /Reports.
+   Preserve the existing Reports filter fields; use the established InventoryBatches
+   control/action schema, while restoring the standalone filter card shell (rounded,
+   bordered surface) because Reports does not embed this filter inside a records card. */
+.sl-sa-reports-superadmin-v286.sl-sa-batches-page .sl-sa-reports-inventory-filters{
+  width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+  border:0;background:transparent;
+}
+.sl-sa-reports-superadmin-v286.sl-sa-batches-page .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-card{
+  grid-template-columns:minmax(220px,1fr) repeat(2,minmax(120px,.32fr)) auto;
+  width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+  gap:.65rem;align-items:end;padding:.65rem .8rem;
+  border:1px solid var(--sl-border);
+  border-radius:var(--sl-radius-lg);
+  background:var(--sl-surface);
+  box-shadow:var(--sl-shadow-sm);
+  overflow:visible;
+}
+.sl-sa-reports-superadmin-v286 .sl-sa-reports-date-control{
+  position:relative;display:block;width:100%;min-width:0;height:40px;min-height:40px;
+}
+.sl-sa-reports-superadmin-v286 .sl-sa-reports-date-control input{
+  width:100%;min-width:0;height:40px;min-height:40px;padding:0 .75rem 0 2.15rem;
+  border:1px solid var(--sl-border);border-radius:var(--sl-radius);background:var(--sl-surface);
+  color:var(--sl-text);font:var(--sl-font-supporting);box-sizing:border-box;
+}
+.sl-sa-reports-superadmin-v286 .sl-sa-reports-date-control svg{
+  position:absolute;left:.75rem;top:50%;transform:translateY(-50%);width:15px;height:15px;
+  z-index:1;pointer-events:none;color:var(--sl-muted);
+}
+.sl-sa-reports-superadmin-v286 .sl-sa-ingredients-filter-actions{justify-content:flex-end;}
+@media(max-width:1450px){
+  .sl-sa-reports-superadmin-v286.sl-sa-batches-page .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sl-sa-reports-superadmin-v286 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions{grid-column:1/-1;justify-content:flex-end;}
+}
+@media(max-width:620px){
+  .sl-sa-reports-superadmin-v286.sl-sa-batches-page .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}
+  .sl-sa-reports-superadmin-v286 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions{grid-column:auto;justify-content:stretch;flex-wrap:wrap;}
+  .sl-sa-reports-superadmin-v286 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions>*{flex:1 1 100%;min-width:0;}
+}
+
+
+/* V288 — ONLY Super Admin /Reports: Alerts date-range interaction schema + InventoryBatches filter shell. */
+.sl-sa-reports-superadmin-v288.sl-sa-batches-page .sl-sa-reports-inventory-filters{width:100%;max-width:100%;min-width:0;box-sizing:border-box;border:0;background:transparent;}
+.sl-sa-reports-superadmin-v288.sl-sa-batches-page .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-card{grid-template-columns:minmax(220px,1fr) repeat(2,minmax(120px,.32fr)) auto;width:100%;max-width:100%;min-width:0;box-sizing:border-box;gap:.65rem;align-items:end;padding:.65rem .8rem;border:1px solid var(--sl-border);border-radius:var(--sl-radius-lg);background:var(--sl-surface);box-shadow:var(--sl-shadow-sm);overflow:visible;}
+.sl-sa-reports-superadmin-v288 .sl-v219-custom-date-range{grid-column:1 / -1;width:100%;max-width:100%;box-sizing:border-box;}
+.sl-sa-reports-superadmin-v288 .sl-sa-ingredients-filter-actions{justify-content:flex-end;}
+@media(max-width:1450px){.sl-sa-reports-superadmin-v288.sl-sa-batches-page .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-card{grid-template-columns:repeat(2,minmax(0,1fr));}.sl-sa-reports-superadmin-v288 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions{grid-column:1/-1;justify-content:flex-end;}.sl-sa-reports-superadmin-v288 .sl-v219-custom-date-range{grid-column:1/-1;}}
+@media(max-width:620px){.sl-sa-reports-superadmin-v288.sl-sa-batches-page .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-card{grid-template-columns:1fr;}.sl-sa-reports-superadmin-v288 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions,.sl-sa-reports-superadmin-v288 .sl-v219-custom-date-range{grid-column:auto;}.sl-sa-reports-superadmin-v288 .sl-v219-custom-date-range{grid-template-columns:1fr;}.sl-sa-reports-superadmin-v288 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions{justify-content:stretch;flex-wrap:wrap;}.sl-sa-reports-superadmin-v288 .sl-sa-reports-inventory-filters .sl-sa-ingredients-filter-actions>*{flex:1 1 100%;min-width:0;}}
+
+/* V290 — ONLY Super Admin /Reports: keep Custom date controls concise instead of spanning the full filter card. */
+@media(min-width:1451px){
+  .sl-sa-reports-superadmin-v288 .sl-sa-reports-inventory-filters .sl-v219-custom-date-range{
+    grid-column:1 / span 2;
+    width:100%;
+    max-width:760px;
+    justify-self:start;
+  }
+}
+@media(min-width:621px) and (max-width:1450px){
+  .sl-sa-reports-superadmin-v288 .sl-sa-reports-inventory-filters .sl-v219-custom-date-range{
+    grid-column:1 / -1;
+    width:min(100%,760px);
+    justify-self:start;
+  }
+}
+
+/* V293 — ONLY Super Admin /SecurityActivity > Audit Logs + Active Sessions.
+   Keep the InventoryBatches Export schema, but anchor its menu inward/downward so
+   the complete menu remains visible and clickable inside these records cards. */
+.sl-security-activity-v78 .sl-v203-audit-filters{
+  position:relative;
+  z-index:20;
+}
+.sl-security-activity-v78 .sl-v203-filter-actions{
+  position:relative;
+  z-index:21;
+}
+.sl-security-activity-v78 .sl-v203-filter-actions .sl-download-control{
+  position:relative;
+  align-self:center;
+}
+.sl-security-activity-v78 .sl-v203-filter-actions .sl-download-menu{
+  left:auto;
+  right:0;
+  top:calc(100% + .5rem);
+  bottom:auto;
+  z-index:80;
+  max-width:min(20rem,calc(100vw - 2rem));
+}
+@media(max-width:600px){
+  .sl-security-activity-v78 .sl-v203-filter-actions .sl-download-control{
+    flex:1 1 110px;
+    min-width:0;
+  }
+  .sl-security-activity-v78 .sl-v203-filter-actions .sl-download-trigger{
+    width:100%;
+  }
+  .sl-security-activity-v78 .sl-v203-filter-actions .sl-download-menu{
+    right:0;
+    left:auto;
+    width:min(20rem,calc(100vw - 3rem));
+  }
+}
+
+/* V299 — ONLY Super Admin /Alerts: exact SuperAdminDashboard KPI treatment. */
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi {
+  border:1px solid var(--sl-border);
+  border-top-width:4px;
+  background:var(--sl-surface);
+  box-shadow:0 8px 20px color-mix(in oklab,var(--sl-text) 5%,transparent);
+}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='brand']{border-top-color:var(--sl-brand);background:linear-gradient(180deg,color-mix(in oklab,var(--sl-brand-subtle) 72%,white),white 42%)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='success']{border-top-color:var(--sl-success);background:linear-gradient(180deg,color-mix(in oklab,var(--sl-success-bg) 82%,white),white 42%)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='attention']{border-top-color:var(--sl-attention);background:linear-gradient(180deg,color-mix(in oklab,var(--sl-attention-bg) 82%,white),white 42%)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='critical']{border-top-color:var(--sl-critical);background:linear-gradient(180deg,color-mix(in oklab,var(--sl-critical-bg) 82%,white),white 42%)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='brand'] .sl-sa-kpi-icon{color:var(--sl-brand);background:var(--sl-brand-subtle)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='success'] .sl-sa-kpi-icon{color:var(--sl-success);background:var(--sl-success-bg)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='attention'] .sl-sa-kpi-icon{color:var(--sl-attention);background:var(--sl-attention-bg)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='critical'] .sl-sa-kpi-icon{color:var(--sl-critical);background:var(--sl-critical-bg)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='brand'] strong{color:var(--sl-brand)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='success'] strong{color:var(--sl-success)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='attention'] strong{color:var(--sl-attention)}
+.sl-sa-alerts-page .sl-sa-alerts-dashboard-kpis .sl-sa-kpi[data-tone='critical'] strong{color:var(--sl-critical)}
+
+
+/* V302 — ONLY Super Admin /SuperAdminDashboard: keep the greeting and its
+   description as one header unit so the dashboard grid gap cannot create
+   unnecessary whitespace between them. */
+.sl-superadmin-dashboard-v49 > .sl-superadmin-dashboard-heading{
+  display:block;
+  margin-bottom:0;
+}
+.sl-superadmin-dashboard-v49 > .sl-superadmin-dashboard-heading > .sl-page-header{
+  margin:0;
+  padding-bottom:0;
+}
+.sl-superadmin-dashboard-v49 > .sl-superadmin-dashboard-heading > .sl-dashboard-description{
+  margin:clamp(.18rem,.12rem + .12vw,.28rem) 0 0;
+  color:var(--sl-muted);
+  font:var(--sl-font-supporting);
+  font-size:clamp(.95rem,.82rem + .22vw,1.08rem);
+  line-height:1.5;
+}
+
+/* V303 — Super Admin /SystemSettings only: supplied reference UI. */
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"]{
+  gap:clamp(.7rem,.55rem + .35vw,1rem);
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-settings-panel{
+  padding:0!important;
+  overflow:hidden;
+  border:1px solid var(--sl-border)!important;
+  border-radius:var(--sl-radius-lg)!important;
+  background:var(--sl-surface)!important;
+  box-shadow:var(--sl-shadow-sm)!important;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-panel-heading{
+  margin:0!important;
+  padding:clamp(1.05rem,1.4vw,1.45rem) clamp(1rem,1.8vw,1.7rem) .9rem;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v303-section-title{
+  display:flex;align-items:flex-start;gap:.75rem;min-width:0;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v303-section-icon,
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] :is(.sl-v70-section-icon,.sl-v72-section-icon){
+  width:2.35rem;height:2.35rem;display:grid;place-items:center;flex:none;
+  border-radius:.7rem;background:var(--sl-brand-subtle);color:var(--sl-brand);
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-panel-heading h2,
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] :is(.sl-v70-section-head,.sl-v72-section-head) h2{
+  font-size:clamp(.96rem,.9rem + .16vw,1.08rem);font-weight:700;line-height:1.2;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-panel-heading p,
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] :is(.sl-v70-section-head,.sl-v72-section-head) p{
+  margin:.16rem 0 0;font-size:clamp(.76rem,.72rem + .1vw,.84rem);line-height:1.35;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-form-grid{
+  padding:0 clamp(1rem,1.8vw,1.7rem) clamp(1.25rem,1.7vw,1.65rem);
+  gap:clamp(.9rem,1.2vw,1.15rem) clamp(1rem,2vw,1.45rem);
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-form-grid label{gap:.42rem}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-form-grid label>span{
+  font-size:clamp(.76rem,.72rem + .1vw,.84rem);font-weight:700;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-form-grid :is(input,select,textarea){
+  min-height:2.75rem!important;border-radius:.8rem!important;padding:.68rem .85rem!important;
+  font-size:clamp(.9rem,.84rem + .14vw,1rem)!important;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-form-grid :is(input,textarea)[readonly]{
+  background:var(--sl-surface-subtle)!important;color:var(--sl-muted);font-style:italic;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-form-grid textarea{min-height:5rem!important}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-form-grid label small{
+  justify-self:start;color:#b36a00;font-size:clamp(.66rem,.62rem + .08vw,.74rem);font-weight:600;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-general-embedded{
+  margin:0!important;gap:0!important;border-top:1px solid var(--sl-border-subtle);
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-general-embedded .sl-v70-security-main,
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-general-embedded .sl-v72-card{
+  padding:clamp(1.15rem,1.7vw,1.55rem) clamp(1rem,1.8vw,1.7rem)!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-general-embedded .sl-v72-notification-grid{
+  border-top:1px solid var(--sl-border-subtle);
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v70-section-head{margin-bottom:1.25rem}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v70-switch-grid{gap:0 clamp(2rem,4vw,3rem)!important}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v70-switch-item{
+  min-height:4.65rem;align-items:center;padding:.7rem 0;border-bottom:1px solid var(--sl-border-subtle);
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v70-switch-title{font-weight:700;font-size:clamp(.78rem,.74rem + .1vw,.86rem)}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v70-toggle{border:0;cursor:pointer}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v72-preference-head{align-items:center;margin-bottom:1rem}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v72-reset-button{
+  color:var(--sl-text);background:var(--sl-surface);border-radius:.8rem;padding:.65rem 1rem;cursor:pointer;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v72-preference-table th{
+  background:var(--sl-surface-subtle);padding:.65rem .7rem;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v72-preference-table td{padding:.65rem .7rem}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v72-pref-icon{width:2.1rem;height:2.1rem}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-single-save-row{
+  margin:0!important;padding:1rem clamp(1rem,1.8vw,1.7rem)!important;
+  background:var(--sl-surface-subtle);border-top:1px solid var(--sl-border-subtle)!important;
+}
+.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-single-save-row .sl-save-changes-ui{
+  min-width:9.5rem!important;min-height:2.75rem!important;border-radius:.8rem!important;
+  background:#0b3d24!important;border-color:#0b3d24!important;font-weight:700!important;cursor:pointer;
+}
+@media(max-width:760px){
+ .sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-form-grid{grid-template-columns:1fr!important}
+ .sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v66-wide{grid-column:auto!important}
+ .sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v70-switch-grid{grid-template-columns:1fr!important}
+ .sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-v72-preference-head{align-items:flex-start}
+}
+\n\n/* V304 — Super Admin /SystemSettings only: reference notification note + Save Changes footer. */\n.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-single-save-row{\n  display:grid!important;\n  grid-template-columns:minmax(0,1fr) auto!important;\n  align-items:center!important;\n  gap:clamp(.55rem,.45rem + .35vw,.9rem)!important;\n  padding:clamp(.55rem,.48rem + .2vw,.7rem) clamp(.7rem,1.25vw,1.05rem)!important;\n  background:var(--sl-surface)!important;\n}\n.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-notification-note{\n  min-width:0;\n  min-height:2.65rem;\n  display:flex;\n  align-items:center;\n  gap:.7rem;\n  padding:.65rem .9rem;\n  border-radius:.35rem;\n  background:#f2f7ff;\n  color:#52698f;\n  font-size:clamp(.72rem,.68rem + .08vw,.8rem);\n  line-height:1.35;\n}\n.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-notification-note svg{\n  flex:0 0 auto;\n  color:#2563eb;\n}\n.sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-single-save-row .sl-save-changes-ui{\n  min-width:clamp(7.4rem,9vw,8.6rem)!important;\n  min-height:2.65rem!important;\n  padding:.65rem 1.15rem!important;\n  border-radius:.35rem!important;\n  background:var(--sl-brand)!important;\n  border-color:var(--sl-brand)!important;\n  color:#fff!important;\n  box-shadow:var(--sl-shadow-sm)!important;\n}\n@media(max-width:640px){\n  .sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-single-save-row{grid-template-columns:1fr!important;}\n  .sl-system-settings-v70[data-ui-version="v304-reference-footer"] .sl-settings-single-save-row .sl-save-changes-ui{width:100%;}\n}\n
+
+/* V305 — Super Admin /SystemSettings only: preserve the supplied reference layout while
+   normalizing equivalent controls to the established ShelfLifeAI visual system. */
+/* V303 — Super Admin /SystemSettings only: supplied reference UI. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"]{
+  gap:clamp(.7rem,.55rem + .35vw,1rem);
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-settings-panel{
+  padding:0!important;
+  overflow:hidden;
+  border:1px solid var(--sl-border)!important;
+  border-radius:var(--sl-radius-lg)!important;
+  background:var(--sl-surface)!important;
+  box-shadow:var(--sl-shadow-sm)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-panel-heading{
+  margin:0!important;
+  padding:clamp(1.05rem,1.4vw,1.45rem) clamp(1rem,1.8vw,1.7rem) .9rem;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v303-section-title{
+  display:flex;align-items:flex-start;gap:.75rem;min-width:0;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v303-section-icon,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] :is(.sl-v70-section-icon,.sl-v72-section-icon){
+  width:2.35rem;height:2.35rem;display:grid;place-items:center;flex:none;
+  border-radius:.7rem;background:var(--sl-brand-subtle);color:var(--sl-brand);
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-panel-heading h2,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] :is(.sl-v70-section-head,.sl-v72-section-head) h2{
+  font-size:clamp(.96rem,.9rem + .16vw,1.08rem);font-weight:700;line-height:1.2;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-panel-heading p,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] :is(.sl-v70-section-head,.sl-v72-section-head) p{
+  margin:.16rem 0 0;font-size:clamp(.76rem,.72rem + .1vw,.84rem);line-height:1.35;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-form-grid{
+  padding:0 clamp(1rem,1.8vw,1.7rem) clamp(1.25rem,1.7vw,1.65rem);
+  gap:clamp(.9rem,1.2vw,1.15rem) clamp(1rem,2vw,1.45rem);
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-form-grid label{gap:.42rem}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-form-grid label>span{
+  font-size:clamp(.76rem,.72rem + .1vw,.84rem);font-weight:700;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-form-grid :is(input,select,textarea){
+  min-height:2.75rem!important;border-radius:.8rem!important;padding:.68rem .85rem!important;
+  font-size:clamp(.9rem,.84rem + .14vw,1rem)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-form-grid :is(input,textarea)[readonly]{
+  background:var(--sl-surface-subtle)!important;color:var(--sl-muted);font-style:italic;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-form-grid textarea{min-height:5rem!important}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-form-grid label small{
+  justify-self:start;color:var(--sl-attention);font-size:clamp(.66rem,.62rem + .08vw,.74rem);font-weight:600;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-general-embedded{
+  margin:0!important;gap:0!important;border-top:1px solid var(--sl-border-subtle);
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-general-embedded .sl-v70-security-main,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-general-embedded .sl-v72-card{
+  padding:clamp(1.15rem,1.7vw,1.55rem) clamp(1rem,1.8vw,1.7rem)!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-general-embedded .sl-v72-notification-grid{
+  border-top:1px solid var(--sl-border-subtle);
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v70-section-head{margin-bottom:1.25rem}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v70-switch-grid{gap:0 clamp(2rem,4vw,3rem)!important}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v70-switch-item{
+  min-height:4.65rem;align-items:center;padding:.7rem 0;border-bottom:1px solid var(--sl-border-subtle);
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v70-switch-title{font-weight:700;font-size:clamp(.78rem,.74rem + .1vw,.86rem)}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v70-toggle{border:0;cursor:pointer}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-head{align-items:center;margin-bottom:1rem}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button{
+  color:var(--sl-text);background:var(--sl-surface);border-radius:.8rem;padding:.65rem 1rem;cursor:pointer;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-table th{
+  background:var(--sl-surface-subtle);padding:.65rem .7rem;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-table td{padding:.65rem .7rem}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-pref-icon{width:2.1rem;height:2.1rem}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+  margin:0!important;padding:1rem clamp(1rem,1.8vw,1.7rem)!important;
+  background:var(--sl-surface-subtle);border-top:1px solid var(--sl-border-subtle)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-save-changes-ui{
+  min-width:9.5rem!important;min-height:2.75rem!important;border-radius:.8rem!important;
+  background:var(--sl-brand)!important;border-color:var(--sl-brand)!important;font-weight:700!important;cursor:pointer;
+}
+@media(max-width:760px){
+ .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-form-grid{grid-template-columns:1fr!important}
+ .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v66-wide{grid-column:auto!important}
+ .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v70-switch-grid{grid-template-columns:1fr!important}
+ .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-head{align-items:flex-start}
+}
+\n\n/* V304 — Super Admin /SystemSettings only: reference notification note + Save Changes footer. */\n.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{\n  display:grid!important;\n  grid-template-columns:minmax(0,1fr) auto!important;\n  align-items:center!important;\n  gap:clamp(.55rem,.45rem + .35vw,.9rem)!important;\n  padding:clamp(.55rem,.48rem + .2vw,.7rem) clamp(.7rem,1.25vw,1.05rem)!important;\n  background:var(--sl-surface)!important;\n}\n.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-notification-note{\n  min-width:0;\n  min-height:2.65rem;\n  display:flex;\n  align-items:center;\n  gap:.7rem;\n  padding:.65rem .9rem;\n  border-radius:.35rem;\n  background:#f2f7ff;\n  color:#52698f;\n  font-size:clamp(.72rem,.68rem + .08vw,.8rem);\n  line-height:1.35;\n}\n.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-notification-note svg{\n  flex:0 0 auto;\n  color:#2563eb;\n}\n.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-save-changes-ui{\n  min-width:clamp(7.4rem,9vw,8.6rem)!important;\n  min-height:2.65rem!important;\n  padding:.65rem 1.15rem!important;\n  border-radius:.35rem!important;\n  background:var(--sl-brand)!important;\n  border-color:var(--sl-brand)!important;\n  color:#fff!important;\n  box-shadow:var(--sl-shadow-sm)!important;\n}\n@media(max-width:640px){\n  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{grid-template-columns:1fr!important;}\n  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-save-changes-ui{width:100%;}\n}\n
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] :is(.sl-v72-reset-button,.sl-settings-save-changes,.sl-v70-toggle):focus-visible{
+  outline:2px solid var(--sl-brand);
+  outline-offset:2px;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-save-changes-ui:hover{
+  background:var(--sl-brand-hover)!important;
+  border-color:var(--sl-brand-hover)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button:hover{
+  background:var(--sl-brand-subtle);
+  border-color:var(--sl-brand);
+}
+
+
+/* V306 — Super Admin /SystemSettings only; clean V305-baseline refinement. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v70-switch-title,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-pref-type strong{
+  font-size:clamp(.76rem,.72rem + .1vw,.84rem)!important;
+  font-weight:700!important;
+  line-height:1.35!important;
+  color:var(--sl-text)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v70-switch-item p,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-pref-type small{
+  margin:.16rem 0 0!important;
+  font-size:clamp(.76rem,.72rem + .1vw,.84rem)!important;
+  font-weight:400!important;
+  line-height:1.35!important;
+  color:var(--sl-muted)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-table th:not(:first-child),
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-table td:not(:first-child){
+  width:clamp(8.5rem,14vw,12rem);
+  text-align:center;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-notification-note{
+  justify-self:start!important;
+  width:auto!important;
+  max-width:100%!important;
+  text-align:left!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-save-changes-ui{
+  justify-self:end!important;
+}
+@media(max-width:640px){
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-notification-note{width:100%!important;}
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-save-changes-ui{justify-self:stretch!important;}
+}
+
+/* V307 — Super Admin /SystemSettings only: definitive footer alignment + fixed-control clearance. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+  gap:clamp(.75rem,1.2vw,1.25rem)!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  padding:clamp(.75rem,.65rem + .25vw,1rem) clamp(5.25rem,5vw,6rem) clamp(.75rem,.65rem + .25vw,1rem) clamp(1rem,1.8vw,1.7rem)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-notification-note{
+  flex:1 1 auto!important;
+  margin:0!important;
+  padding:0!important;
+  width:auto!important;
+  max-width:none!important;
+  min-width:0!important;
+  min-height:0!important;
+  justify-self:auto!important;
+  justify-content:flex-start!important;
+  background:transparent!important;
+  border-radius:0!important;
+  color:var(--sl-text)!important;
+  text-align:left!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-notification-note svg{
+  color:var(--sl-text)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-save-changes-ui{
+  flex:0 0 auto!important;
+  margin:0!important;
+  justify-self:auto!important;
+  width:auto!important;
+}
+@media(max-width:700px){
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    padding-right:clamp(1rem,1.8vw,1.7rem)!important;
+    padding-bottom:4.75rem!important;
+  }
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-save-changes-ui{
+    width:100%!important;
+  }
+}
+
+
+/* V308 — Super Admin /SystemSettings only: polished information footer + Add User button parity. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:clamp(.75rem,1.15vw,1.25rem)!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  margin-top:0!important;
+  padding:clamp(.7rem,.62rem + .22vw,.9rem) clamp(5.25rem,5vw,6rem) clamp(.7rem,.62rem + .22vw,.9rem) clamp(1rem,1.4vw,1.35rem)!important;
+  background:var(--sl-surface)!important;
+  border-top:1px solid var(--sl-border-subtle)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-notification-note{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:.6rem!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:2.55rem!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:.62rem .8rem!important;
+  border:1px solid #dbe8fb!important;
+  border-radius:var(--sl-radius-md)!important;
+  background:#f2f7ff!important;
+  color:#52698f!important;
+  font-size:clamp(.76rem,.72rem + .1vw,.84rem)!important;
+  line-height:1.35!important;
+  text-align:left!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-notification-note svg{
+  flex:0 0 auto!important;
+  color:#2563eb!important;
+}
+/* Same control language as Super Admin /UserManagement Add User. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-settings-save-changes{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:none!important;
+  width:auto!important;
+  min-width:clamp(7.4rem,9vw,8.6rem)!important;
+  min-height:2.55rem!important;
+  padding:.55rem clamp(.7rem,.6rem + .3vw,1rem)!important;
+  border:1px solid var(--sl-brand)!important;
+  border-radius:var(--sl-radius-md)!important;
+  background:var(--sl-brand)!important;
+  color:var(--sl-on-brand)!important;
+  font:inherit!important;
+  font-size:clamp(.76rem,.72rem + .1vw,.84rem)!important;
+  font-weight:650!important;
+  line-height:1.2!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-settings-save-changes:hover{
+  background:var(--sl-brand-hover)!important;
+  border-color:var(--sl-brand-hover)!important;
+}
+@media(max-width:700px){
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+    grid-template-columns:1fr!important;
+    padding-right:clamp(1rem,1.4vw,1.35rem)!important;
+    padding-bottom:4.75rem!important;
+  }
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-settings-save-changes{
+    width:100%!important;
+  }
+}
+
+/* V309 — Super Admin /SystemSettings only: action-button radius parity.
+   Keep action buttons consistently rounded like Reset to default; do not alter switch/toggle geometry. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] :is(
+  .sl-v72-reset-button,
+  .sl-settings-save-changes.sl-save-changes-ui
+){
+  border-radius:.8rem!important;
+}
+
+/* V310 — Super Admin /SystemSettings only: Add User radius parity + vertical action alignment. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-settings-save-changes.sl-save-changes-ui,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-notification-note{
+  border-radius:var(--sl-radius)!important;
+}
+
+/* Keep Reset to default and Save Changes on the same right-side action axis.
+   Bottom clearance keeps the global fixed back-to-top control out of the footer action. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:start!important;
+  padding-left:clamp(1rem,1.8vw,1.7rem)!important;
+  padding-right:clamp(1rem,1.8vw,1.7rem)!important;
+  padding-top:clamp(.7rem,.62rem + .22vw,.9rem)!important;
+  padding-bottom:clamp(3.9rem,3.55rem + .8vw,4.5rem)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-settings-save-changes.sl-save-changes-ui{
+  justify-self:end!important;
+  margin:0!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-head{
+  padding-right:0!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button{
+  margin-right:0!important;
+}
+@media(max-width:700px){
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+    grid-template-columns:1fr!important;
+    padding-right:clamp(1rem,1.8vw,1.7rem)!important;
+    padding-bottom:4.75rem!important;
+  }
+}
+
+/* V311 — Super Admin /SystemSettings only: action typography parity + compact footer. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button{
+  border-radius:var(--sl-radius)!important;
+  font-size:clamp(.76rem,.72rem + .1vw,.84rem)!important;
+  font-weight:650!important;
+  line-height:1.2!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+  align-items:center!important;
+  padding-top:clamp(.7rem,.62rem + .22vw,.9rem)!important;
+  padding-bottom:clamp(.7rem,.62rem + .22vw,.9rem)!important;
+}
+@media(max-width:700px){
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+    padding-bottom:clamp(.7rem,.62rem + .22vw,.9rem)!important;
+  }
+}
+\n\n/* V312 — Super Admin /SystemSettings only: Reset action parity + collision-safe shared action axis. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:.4rem!important;
+  border-radius:var(--sl-radius)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button svg{
+  width:15px!important;
+  height:15px!important;
+  flex:0 0 15px!important;
+}
+/* Both actions use one right-side axis. The reserved lane is wider than the global
+   fixed back-to-top control, so the floating control cannot cover Save Changes. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-head,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+  padding-right:clamp(4.75rem,4.45rem + .8vw,5.5rem)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-settings-save-changes.sl-save-changes-ui{
+  justify-self:end!important;
+  margin-right:0!important;
+  border-radius:var(--sl-radius)!important;
+}
+@media(max-width:700px){
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-head{
+    padding-right:clamp(1rem,1.8vw,1.7rem)!important;
+  }
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+    padding-right:clamp(1rem,1.8vw,1.7rem)!important;
+    padding-bottom:4.5rem!important;
+  }
+}
+\n\n/* V313 — Super Admin /SystemSettings only: reset control repair, toast-only save feedback, flush action edge. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-head,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+  padding-right:clamp(1rem,1.8vw,1.7rem)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button{
+  display:inline-flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:.42rem!important;
+  width:auto!important;
+  min-width:max-content!important;
+  min-height:2.55rem!important;
+  padding:.55rem clamp(.7rem,.6rem + .3vw,1rem)!important;
+  white-space:nowrap!important;
+  line-height:1.2!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button svg,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button span{
+  display:block!important;
+  flex:none!important;
+  margin:0!important;
+}
+/* Save feedback is a toast only — suppress press/transition animation on this page. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-save-changes.sl-save-changes-ui{
+  transition:none!important;
+  transform:none!important;
+  animation:none!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-save-changes.sl-save-changes-ui:active{
+  transform:none!important;
+  filter:none!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-system-settings-save-toast{
+  position:fixed;
+  right:clamp(1rem,1.6vw,1.5rem);
+  top:clamp(5rem,7vh,6rem);
+  z-index:80;
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  max-width:min(26rem,calc(100vw - 2rem));
+  padding:.72rem .9rem;
+  border:1px solid color-mix(in srgb,var(--sl-brand) 24%,var(--sl-border));
+  border-radius:var(--sl-radius);
+  background:var(--sl-surface);
+  color:var(--sl-text);
+  box-shadow:var(--sl-shadow-lg);
+  font-size:clamp(.76rem,.72rem + .1vw,.84rem);
+  line-height:1.35;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-system-settings-save-toast svg{color:var(--sl-brand);flex:0 0 auto;}
+/* Keep the global Back to Top clear of the flush-right Save Changes button without creating a blank right lane. */
+.sl-app:has(.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"]) .sl-back-to-top{
+  bottom:clamp(4.75rem,4.4rem + .8vw,5.35rem)!important;
+}
+@media(max-width:700px){
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-head,
+  .sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+    padding-right:clamp(1rem,1.8vw,1.7rem)!important;
+  }
+  .sl-app:has(.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"]) .sl-back-to-top{
+    bottom:1rem!important;
+  }
+}
+
+/* V314 — Super Admin /SystemSettings only: one shared right action axis; allow Back to Top overlap. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-head,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row{
+  padding-right:clamp(1rem,1.8vw,1.7rem)!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-settings-save-changes.sl-save-changes-ui{
+  justify-self:end!important;
+  margin-right:0!important;
+}
+/* User explicitly allows the global floating Back to Top control to overlap the Save Changes area. */
+.sl-app:has(.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"]) .sl-back-to-top{
+  bottom:1.5rem!important;
+}
+@media(max-width:700px){
+  .sl-app:has(.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"]) .sl-back-to-top{
+    bottom:1rem!important;
+  }
+}
+
+/* V315 — Super Admin /SystemSettings only: exact shared right action axis.
+   Notification card already owns the same horizontal inset as the footer, so do not double-inset its header. */
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-preference-head{
+  padding-right:0!important;
+}
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-v72-reset-button,
+.sl-system-settings-v70[data-ui-version="v305-consistent-system-settings"] .sl-settings-single-save-row .sl-settings-save-changes.sl-save-changes-ui{
+  justify-self:end!important;
+  margin-right:0!important;
+}

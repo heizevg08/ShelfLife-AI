@@ -1064,10 +1064,10 @@ function SuperAdminInventoryBatchesPage() {
       description="Monitor inventory batches, expiry status, and stock movement across the establishment."
     />
 
-    <div className="sl-admin-view sl-sa-batches-page sl-sa-ingredients-page sl-staff-usage-v150">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Inventory batch summary">
+    <div className="sl-admin-view sl-sa-batches-page sl-sa-ingredients-page sl-superadmin-dashboard-v49 sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Inventory batch summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>—</strong><small>Awaiting inventory batch API</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span><div><span>Active Batches</span><strong>—</strong><small>Awaiting batch status API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span><div><span>Active Batches</span><strong>—</strong><small>Awaiting batch status API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>—</strong><small>Awaiting expiration summary API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span><div><span>Expired Batches</span><strong>—</strong><small>Awaiting expiration summary API</small></div></article>
       </section>
@@ -1170,12 +1170,12 @@ function SuperAdminUsagePage() {
       </header>
     </div>
 
-    <div className="sl-admin-view sl-sa-usage-page sl-sa-ingredients-page sl-sa-usage-inventory-pattern sl-staff-usage-v150">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-usage-kpis" aria-label="Usage summary">
+    <div className="sl-admin-view sl-sa-usage-page sl-sa-ingredients-page sl-sa-usage-inventory-pattern sl-superadmin-dashboard-v49 sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Usage summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span><div><span>Total Usage Records</span><strong>—</strong><small>Awaiting usage records API</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span><div><span>Total Quantity Used</span><strong>—</strong><small>Awaiting consumption summary API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span><div><span>Total Quantity Used</span><strong>—</strong><small>Awaiting consumption summary API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Building2 aria-hidden="true" /></span><div><span>Active Branches</span><strong>—</strong><small>Awaiting branch activity API</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Users Recorded Usage</span><strong>—</strong><small>Awaiting recorder summary API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Users Recorded Usage</span><strong>—</strong><small>Awaiting recorder summary API</small></div></article>
       </section>
 
       <div className="sl-sa-ingredients-layout sl-sa-usage-ingredients-layout">
@@ -1282,12 +1282,12 @@ function SuperAdminWastePage() {
       </header>
     </div>
 
-    <div className="sl-admin-view sl-sa-waste-page sl-sa-ingredients-page sl-sa-waste-inventory-pattern sl-staff-usage-v150">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-waste-kpis" aria-label="Waste summary">
+    <div className="sl-admin-view sl-sa-waste-page sl-sa-ingredients-page sl-sa-waste-inventory-pattern sl-superadmin-dashboard-v49 sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Waste summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2 aria-hidden="true" /></span><div><span>Total Waste</span><strong>—</strong><small>Awaiting waste volume API</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span><div><span>Estimated Cost Loss</span><strong>—</strong><small>Awaiting waste valuation API</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>Waste Records</span><strong>—</strong><small>Awaiting waste records API</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span><div><span>Waste Rate</span><strong>—</strong><small>Awaiting waste-rate API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span><div><span>Estimated Cost Loss</span><strong>—</strong><small>Awaiting waste valuation API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>Waste Records</span><strong>—</strong><small>Awaiting waste records API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><PackageX aria-hidden="true" /></span><div><span>Waste Rate</span><strong>—</strong><small>Awaiting waste-rate API</small></div></article>
       </section>
 
       <div className="sl-sa-ingredients-layout sl-sa-waste-ingredients-layout">
@@ -1382,11 +1382,11 @@ function SuperAdminChangeRequestsPage() {
       description="Review and manage requests for changes to ingredients, inventory, and other master data."
     />
 
-    <div className="sl-admin-view sl-sa-change-page sl-sa-batches-page sl-sa-ingredients-page sl-staff-usage-v150">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-change-kpis" aria-label="Change request summary">
+    <div className="sl-admin-view sl-sa-change-page sl-sa-batches-page sl-sa-ingredients-page sl-staff-usage-v150 sl-superadmin-dashboard-v49">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-change-kpis sl-superadmin-dashboard-kpis-v200" aria-label="Change request summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span><div><span>Total Requests</span><strong>—</strong><small>Awaiting request-summary API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span><div><span>Approved</span><strong>—</strong><small>Awaiting approvals API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Pending Review</span><strong>—</strong><small>Awaiting review queue API</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span><div><span>Approved</span><strong>—</strong><small>Awaiting approvals API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>Rejected</span><strong>—</strong><small>Awaiting decision API</small></div></article>
       </section>
 
@@ -1445,132 +1445,87 @@ function SuperAdminExpirationPending({ label, compact = false }: { label: string
   </div>;
 }
 
-function SuperAdminExpirationMonitoringPage() {
+export function SuperAdminExpirationMonitoringPage() {
+  const [expirationSearch, setExpirationSearch] = useState('');
+  const [expirationIngredient, setExpirationIngredient] = useState('All Ingredients');
+  const [expirationStatus, setExpirationStatus] = useState('All Statuses');
+  const [expirationDaysLeft, setExpirationDaysLeft] = useState('All Days Left');
+  const [expirationDateRange, setExpirationDateRange] = useState('any');
+  const [expirationDateFrom, setExpirationDateFrom] = useState('');
+  const [expirationDateTo, setExpirationDateTo] = useState('');
+  const [expirationRows, setExpirationRows] = useState(10);
+  const [expirationPage, setExpirationPage] = useState(1);
+  const [expirationAction, setExpirationAction] = useState<'view' | 'edit' | 'delete' | null>(null);
+
+  const resetExpirationFilters = () => {
+    setExpirationSearch('');
+    setExpirationIngredient('All Ingredients');
+    setExpirationStatus('All Statuses');
+    setExpirationDaysLeft('All Days Left');
+    setExpirationDateRange('any');
+    setExpirationDateFrom('');
+    setExpirationDateTo('');
+    setExpirationPage(1);
+  };
+
   return <>
-    <PageHeader
-      eyebrow="System Oversight"
-      title="Expiration / FEFO"
-      description="Monitor ingredient expiration dates and manage inventory using the FEFO (First-Expired, First-Out) approach."
-    />
+    <div className="sl-sa-usage-heading">
+      <header className="sl-page-header sl-sa-usage-page-header">
+        <p className="sl-eyebrow">System Oversight</p>
+        <h1 className="sl-page-title">Expiration / FEFO</h1>
+        <p
+          className="sl-description sl-sa-usage-description"
+          style={{ whiteSpace: 'nowrap', maxWidth: 'none', width: 'max-content' }}
+        >
+          Monitor ingredient expiration dates and manage inventory using the FEFO (First-Expired, First-Out) approach.
+        </p>
+      </header>
+    </div>
 
-    <div className="sl-admin-view sl-sa-expiration-page sl-staff-usage-v150">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Expiration monitoring summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
-          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
-          <div>
-            <span>Expiring Soon</span>
-            <strong>—</strong>
-            <small>Awaiting ≤ 7-day expiry API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
-          <span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span>
-          <div>
-            <span>Expiring (8–14 days)</span>
-            <strong>—</strong>
-            <small>Awaiting expiry summary API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
-          <span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span>
-          <div>
-            <span>Good Shelf Life</span>
-            <strong>—</strong>
-            <small>Awaiting shelf-life summary API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
-          <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
-          <div>
-            <span>Total Batches</span>
-            <strong>—</strong>
-            <small>Awaiting inventory batch API</small>
-          </div>
-        </article>
+    <div className="sl-admin-view sl-sa-expiration-page sl-sa-usage-page sl-sa-ingredients-page sl-sa-usage-inventory-pattern sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Expiration monitoring summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>—</strong><small>Awaiting inventory batch API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span><div><span>Good Shelf Life</span><strong>—</strong><small>Awaiting shelf-life summary API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Expiring (8–14 Days)</span><strong>—</strong><small>Awaiting expiry summary API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>Expired</span><strong>—</strong><small>Awaiting expired batch API</small></div></article>
       </section>
 
-      <div className="sl-sa-expiration-layout">
-        <main className="sl-sa-expiration-main">
-          <section className="sl-sa-expiration-filter-card" aria-label="Expiration monitoring filters">
-            <label className="sl-sa-expiration-search">
-              <span>Search by ingredient, batch ID, or supplier</span>
-              <div>
-                <Search size={16} aria-hidden="true" />
-                <input
-                  type="search"
-                  placeholder="Search by ingredient, batch ID, or supplier…"
-                  disabled
-                  aria-label="Expiration search unavailable until inventory batch service is connected"
-                />
+      <div className="sl-sa-expiration-layout sl-sa-ingredients-layout sl-sa-usage-ingredients-layout">
+        <main className="sl-sa-expiration-main sl-sa-ingredients-main sl-sa-usage-ingredients-main">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Expiration and FEFO records">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+              <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+              <h2>Expiration &amp; FEFO Records</h2>
+            </header>
+
+            <div className="sl-sa-ingredients-table-filters">
+              <div className="sl-sa-ingredients-filter-card" aria-label="Expiration monitoring filters">
+                <label className="sl-sa-ingredients-search"><span>Search batches</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by batch ID or ingredient…" value={expirationSearch} onChange={event => setExpirationSearch(event.target.value)} /></div></label>
+                <label><span>Ingredient</span><select value={expirationIngredient} onChange={event => { setExpirationIngredient(event.target.value); setExpirationPage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+                <label><span>Status</span><select value={expirationStatus} onChange={event => { setExpirationStatus(event.target.value); setExpirationPage(1); }}><option>All Statuses</option><option>Active</option><option>Expiring Soon</option><option>Expired</option></select></label>
+                <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={expirationDateRange} onChange={event => { setExpirationDateRange(event.target.value); setExpirationPage(1); }} aria-label="Expiration date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
+                {expirationDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom expiration date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={expirationDateFrom} max={expirationDateTo || undefined} onChange={event => { setExpirationDateFrom(event.target.value); setExpirationPage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={expirationDateTo} min={expirationDateFrom || undefined} onChange={event => { setExpirationDateTo(event.target.value); setExpirationPage(1); }} /></label></div>}
+                <label><span>Days Left</span><select value={expirationDaysLeft} onChange={event => { setExpirationDaysLeft(event.target.value); setExpirationPage(1); }}><option>All Days Left</option><option>0 days</option><option>1–3 days</option><option>4–7 days</option><option>8–14 days</option><option>15+ days</option></select></label>
+                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={resetExpirationFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-expiration-export-menu" /></div>
               </div>
-            </label>
-
-            <label>
-              <span>Branch</span>
-              <select disabled aria-label="Branch filter unavailable">
-                <option>All Branches</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Category</span>
-              <select disabled aria-label="Category filter unavailable">
-                <option>All Categories</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Expiration Status</span>
-              <select disabled aria-label="Expiration status filter unavailable">
-                <option>All Statuses</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Date Range</span>
-              <div className="sl-sa-expiration-date">
-                <CalendarDays size={16} aria-hidden="true" />
-                <input type="text" value="Data pending" readOnly disabled />
-              </div>
-            </label>
-
-            <div className="sl-sa-expiration-filter-actions">
-              <button type="button" className="sl-button sl-button-primary" disabled>
-                <Filter size={15} aria-hidden="true" />Filter
-              </button>
-              <button type="button" className="sl-button" disabled>Reset</button>
-            </div>
-          </section>
-
-          <section className="sl-sa-expiration-table-card" aria-label="Expiration monitoring records">
-            <div className="sl-sa-expiration-table-toolbar">
-              <span>Expiration and FEFO records</span>
-              <button type="button" className="sl-button" disabled title="Export backend is not connected">Export</button>
             </div>
 
-            <div className="sl-sa-expiration-state">
-              <DataState
-                kind="empty"
-                title="No live records yet"
-                description="Expiration and FEFO records"
-                action={<Status>Preview · data pending</Status>}
-              />
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Expiration and FEFO records" tabIndex={0}>
+              <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
+                <thead><tr><th scope="col">Batch ID</th><th scope="col">Ingredient</th><th scope="col">Quantity</th><th scope="col">Expiration Date</th><th scope="col">Status</th><th scope="col">Days Left</th><th scope="col">Actions</th></tr></thead>
+                <tbody><tr className="sl-sa-ingredients-empty-row sl-sa-ingredients-preview-row"><td colSpan={6}><DataState kind="empty" title="No live records yet" description="Expiration and FEFO records will appear here when the inventory batch backend is connected." /></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Expiration record actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View expiration record" title="View" onClick={() => setExpirationAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit expiration record" title="Edit" onClick={() => setExpirationAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete expiration record" title="Delete" onClick={() => setExpirationAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+              </table>
             </div>
 
-            <footer className="sl-sa-expiration-footer">
-              <label>
-                <span>Rows per page</span>
-                <select defaultValue="10" disabled><option>10</option></select>
-              </label>
-              <span>Pagination will activate when live expiration records are available.</span>
-            </footer>
+            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+              <label><span>Rows per page</span><select value={expirationRows} aria-label="Rows per page" onChange={event => { setExpirationRows(Number(event.target.value)); setExpirationPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
+              <span className="sl-staff-usage-pagination-note">No live records yet</span>
+              <Pagination compact page={expirationPage} pageSize={expirationRows} total={0} itemLabel="records" onPageChange={setExpirationPage} />
+            </div>
           </section>
         </main>
 
-        <aside className="sl-sa-expiration-rail" aria-label="Expiration analytics panels">
+        <aside className="sl-sa-expiration-rail sl-sa-usage-analytics-rail" aria-label="Expiration analytics panels">
           <Card id="sa-expiration-status" title="Expiration Status Distribution">
             <SuperAdminExpirationPending label="Expiration status distribution" compact />
           </Card>
@@ -1589,9 +1544,13 @@ function SuperAdminExpirationMonitoringPage() {
         </aside>
       </div>
     </div>
+
+    <Dialog open={expirationAction!==null} title={expirationAction==='delete'?'Confirm Delete':expirationAction==='edit'?'Edit Expiration Record':'Expiration Record Details'} onDismiss={() => setExpirationAction(null)} className="sl-staff-waste-action-dialog">
+      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={expirationAction==='delete'?'A live expiration record is required before deletion can be confirmed.':expirationAction==='edit'?'A live expiration record is required before editing.':'Expiration record details will appear here when live records are available.'} /></div>
+      {expirationAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={() => setExpirationAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live expiration record">Confirm Delete</button></div>}
+    </Dialog>
   </>;
 }
-
 
 function SuperAdminForecastingPending({ label, compact = false }: { label: string; compact?: boolean }) {
   return <div className={`sl-sa-forecast-pending${compact ? ' compact' : ''}`}>
@@ -1604,163 +1563,99 @@ function SuperAdminForecastingPending({ label, compact = false }: { label: strin
   </div>;
 }
 
-function SuperAdminForecastingPage() {
+export function SuperAdminForecastingPage() {
+  const [forecastSearch, setForecastSearch] = useState('');
+  const [forecastIngredient, setForecastIngredient] = useState('All Ingredients');
+  const [forecastStatus, setForecastStatus] = useState('All Statuses');
+  const [forecastPeriod, setForecastPeriod] = useState('any');
+  const [forecastDateFrom, setForecastDateFrom] = useState('');
+  const [forecastDateTo, setForecastDateTo] = useState('');
+  const [forecastRows, setForecastRows] = useState(10);
+  const [forecastPage, setForecastPage] = useState(1);
+  const [forecastAction, setForecastAction] = useState<'view' | 'edit' | 'delete' | null>(null);
+  const [forecastTrendDays, setForecastTrendDays] = useState('14');
+
+  const resetForecastFilters = () => {
+    setForecastSearch('');
+    setForecastIngredient('All Ingredients');
+    setForecastStatus('All Statuses');
+    setForecastPeriod('any');
+    setForecastDateFrom('');
+    setForecastDateTo('');
+    setForecastPage(1);
+  };
+
   return <>
-    <PageHeader
-      eyebrow="System Oversight"
-      title="Forecasting"
-      description="View AI-generated demand forecasts, compare with actual usage, and monitor forecast accuracy across all branches."
-    />
+    <div className="sl-sa-usage-heading">
+      <header className="sl-page-header sl-sa-usage-page-header">
+        <p className="sl-eyebrow">System Oversight</p>
+        <h1 className="sl-page-title">Forecasting</h1>
+        <p className="sl-description sl-sa-usage-description" style={{ whiteSpace: 'nowrap', maxWidth: 'none', width: 'max-content' }}>
+          View AI-generated demand forecasts, compare with actual usage, and monitor forecast accuracy across all branches.
+        </p>
+      </header>
+    </div>
 
-    <div className="sl-admin-view sl-sa-forecast-page sl-staff-usage-v150">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Forecasting summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
-          <span className="sl-sa-kpi-icon"><BarChart3 aria-hidden="true" /></span>
-          <div>
-            <span>Forecasted Items</span>
-            <strong>—</strong>
-            <small>Awaiting forecast summary API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success">
-          <span className="sl-sa-kpi-icon"><Target aria-hidden="true" /></span>
-          <div>
-            <span>Average Forecast Accuracy</span>
-            <strong>—</strong>
-            <small>Awaiting forecast accuracy API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
-          <span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
-          <div>
-            <span>High Demand Increase</span>
-            <strong>—</strong>
-            <small>Awaiting demand-change API</small>
-          </div>
-        </article>
-
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
-          <span className="sl-sa-kpi-icon"><TrendingDown aria-hidden="true" /></span>
-          <div>
-            <span>Predicted Decrease</span>
-            <strong>—</strong>
-            <small>Awaiting demand-change API</small>
-          </div>
-        </article>
+    <div className="sl-admin-view sl-sa-forecast-page sl-sa-usage-page sl-sa-ingredients-page sl-sa-usage-inventory-pattern sl-superadmin-dashboard-v49 sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Forecasting summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><BarChart3 aria-hidden="true" /></span><div><span>Forecasted Items</span><strong>—</strong><small>Awaiting forecast summary API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Target aria-hidden="true" /></span><div><span>Average Forecast Accuracy</span><strong>—</strong><small>Awaiting forecast accuracy API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span><div><span>High Demand Increase</span><strong>—</strong><small>Awaiting demand-change API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown aria-hidden="true" /></span><div><span>Predicted Decrease</span><strong>—</strong><small>Awaiting demand-change API</small></div></article>
       </section>
 
-      <div className="sl-sa-forecast-layout">
-        <main className="sl-sa-forecast-main">
-          <section className="sl-sa-forecast-filter-card" aria-label="Forecast filters">
-            <label>
-              <span>Branch</span>
-              <select disabled aria-label="Branch filter unavailable">
-                <option>All Branches</option>
-              </select>
-            </label>
+      <div className="sl-sa-forecast-layout sl-sa-ingredients-layout sl-sa-usage-ingredients-layout">
+        <main className="sl-sa-forecast-main sl-sa-ingredients-main sl-sa-usage-ingredients-main">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Forecast records">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>Forecast Records</h2></header>
 
-            <label>
-              <span>Category</span>
-              <select disabled aria-label="Category filter unavailable">
-                <option>All Categories</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Ingredient</span>
-              <select disabled aria-label="Ingredient filter unavailable">
-                <option>All Ingredients</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Forecast Period</span>
-              <div className="sl-sa-forecast-date">
-                <CalendarDays size={16} aria-hidden="true" />
-                <input type="text" value="Data pending" readOnly disabled />
+            <div className="sl-sa-ingredients-table-filters">
+              <div className="sl-sa-ingredients-filter-card" aria-label="Forecast filters">
+                <label className="sl-sa-ingredients-search"><span>Search forecasts</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by ingredient or forecast…" value={forecastSearch} onChange={event => setForecastSearch(event.target.value)} /></div></label>
+                <label><span>Ingredient</span><select value={forecastIngredient} onChange={event => { setForecastIngredient(event.target.value); setForecastPage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+                <label><span>Status</span><select value={forecastStatus} onChange={event => { setForecastStatus(event.target.value); setForecastPage(1); }}><option>All Statuses</option><option>Increase</option><option>Stable</option><option>Decrease</option></select></label>
+                <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Forecast Period</span><select value={forecastPeriod} onChange={event => { setForecastPeriod(event.target.value); setForecastPage(1); }} aria-label="Forecast period"><option value="any">Any period</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
+                {forecastPeriod === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom forecast period"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={forecastDateFrom} max={forecastDateTo || undefined} onChange={event => { setForecastDateFrom(event.target.value); setForecastPage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={forecastDateTo} min={forecastDateFrom || undefined} onChange={event => { setForecastDateTo(event.target.value); setForecastPage(1); }} /></label></div>}
+                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={resetForecastFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-forecast-export-menu" /></div>
               </div>
-            </label>
-
-            <label>
-              <span>Model View</span>
-              <select disabled aria-label="Forecast model filter unavailable">
-                <option>Demand Forecast</option>
-              </select>
-            </label>
-
-            <div className="sl-sa-forecast-filter-actions">
-              <button type="button" className="sl-button sl-button-primary" disabled>
-                Apply
-              </button>
-              <button type="button" className="sl-button" disabled>Reset</button>
-            </div>
-          </section>
-
-          <section className="sl-sa-forecast-chart-card">
-            <div className="sl-sa-forecast-section-head">
-              <div>
-                <h2>Forecast vs. Actual Usage</h2>
-                <p>Demand forecast compared with actual usage.</p>
-              </div>
-              <button type="button" className="sl-button" disabled>Last 14 days</button>
             </div>
 
-            <div className="sl-sa-forecast-chart-state">
-              <SuperAdminForecastingPending label="Forecast vs. actual usage" />
-            </div>
-          </section>
-
-          <section className="sl-sa-forecast-table-card" aria-label="Forecast records">
-            <div className="sl-sa-forecast-table-toolbar">
-              <span>Forecast records</span>
-              <button type="button" className="sl-button" disabled title="Export backend is not connected">
-                Export
-              </button>
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Forecast records" tabIndex={0}>
+              <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
+                <thead><tr><th scope="col">Ingredient</th><th scope="col">Current Stock</th><th scope="col">Avg. Daily Usage</th><th scope="col">Forecasted Demand</th><th scope="col">Forecast Accuracy</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+                <tbody><tr className="sl-sa-ingredients-empty-row sl-sa-ingredients-preview-row"><td colSpan={6}><DataState kind="empty" title="No live records yet" description="Forecast records will appear here when the forecasting backend is connected." /></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Forecast record actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View forecast record" title="View" onClick={() => setForecastAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit forecast record" title="Edit" onClick={() => setForecastAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete forecast record" title="Delete" onClick={() => setForecastAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+              </table>
             </div>
 
-            <div className="sl-sa-forecast-table-state">
-              <DataState
-                kind="empty"
-                title="No live records yet"
-                description="Forecast records"
-                action={<Status>Preview · data pending</Status>}
-              />
+            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+              <label><span>Rows per page</span><select value={forecastRows} aria-label="Rows per page" onChange={event => { setForecastRows(Number(event.target.value)); setForecastPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
+              <span className="sl-staff-usage-pagination-note">No live records yet</span>
+              <Pagination compact page={forecastPage} pageSize={forecastRows} total={0} itemLabel="records" onPageChange={setForecastPage} />
             </div>
-
-            <footer className="sl-sa-forecast-footer">
-              <label>
-                <span>Rows per page</span>
-                <select defaultValue="10" disabled><option>10</option></select>
-              </label>
-              <span>Pagination will activate when live forecast records are available.</span>
-            </footer>
           </section>
         </main>
 
-        <aside className="sl-sa-forecast-rail" aria-label="Forecast analytics panels">
-          <Card id="sa-forecast-branch-accuracy" title="Forecast Accuracy by Branch">
-            <SuperAdminForecastingPending label="Branch forecast accuracy" compact />
+        <aside className="sl-sa-forecast-rail sl-sa-usage-analytics-rail" aria-label="Forecast analytics panels">
+          <Card id="sa-forecast-vs-actual" title="Forecast vs. Actual Usage" action={<label className="sl-dashboard-filter sl-sa-forecast-chart-period"><select aria-label="Forecast vs actual usage period" value={forecastTrendDays} onChange={event => setForecastTrendDays(event.target.value)}><option value="7">Last 7 days</option><option value="14">Last 14 days</option><option value="30">Last 30 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select></label>}>
+            <div className="sl-sa-forecast-chart-shell" aria-label="Forecast versus actual usage chart structure">
+              <div className="sl-sa-forecast-chart-legend"><span><i className="sl-sa-forecast-legend-line" />Forecasted Demand</span><span><i className="sl-sa-forecast-legend-line sl-sa-forecast-legend-actual" />Avg. Daily Usage</span></div>
+              <div className="sl-sa-forecast-chart-frame"><div className="sl-sa-forecast-chart-y" aria-label="Usage quantity axis"><span className="sl-sa-forecast-axis-title">Usage quantity</span></div><div className="sl-sa-forecast-chart-grid" aria-hidden="true"><i/><i/><i/><i/><i/></div><div className="sl-sa-forecast-chart-plot" aria-hidden="true"><span className="sl-sa-forecast-preview-line sl-sa-forecast-preview-forecast"/><span className="sl-sa-forecast-preview-line sl-sa-forecast-preview-actual"/></div><div className="sl-sa-forecast-chart-empty">Awaiting live forecast and usage data</div></div>
+              <div className="sl-sa-forecast-chart-x"><span className="sl-sa-forecast-axis-title">Date</span></div>
+            </div>
           </Card>
-
-          <Card id="sa-forecast-increase" title="Top Ingredients by Predicted Demand Increase">
-            <SuperAdminForecastingPending label="Predicted demand increases" compact />
-          </Card>
-
-          <Card id="sa-forecast-decrease" title="Top Ingredients by Predicted Demand Decrease">
-            <SuperAdminForecastingPending label="Predicted demand decreases" compact />
-          </Card>
-
-          <Card id="sa-forecast-insights" title="Forecast Insights">
-            <SuperAdminForecastingPending label="Forecast insights" compact />
-          </Card>
+          <Card id="sa-forecast-increase" title="Top Ingredients by Predicted Demand Increase"><div className="sl-sa-forecast-ranking-shell" aria-label="Predicted demand increase chart structure"><div className="sl-sa-forecast-ranking-axis"><span>Ingredient</span><span>Predicted demand change</span></div><div className="sl-sa-forecast-ranking-preview" aria-hidden="true"><i/><i/><i/><i/></div><div className="sl-sa-forecast-ranking-empty">Awaiting live forecast data</div></div></Card>
+          <Card id="sa-forecast-decrease" title="Top Ingredients by Predicted Demand Decrease"><div className="sl-sa-forecast-ranking-shell" aria-label="Predicted demand decrease chart structure"><div className="sl-sa-forecast-ranking-axis"><span>Ingredient</span><span>Predicted demand change</span></div><div className="sl-sa-forecast-ranking-preview" aria-hidden="true"><i/><i/><i/><i/></div><div className="sl-sa-forecast-ranking-empty">Awaiting live forecast data</div></div></Card>
+          <Card id="sa-forecast-insights" title="Forecast Insights"><div className="sl-sa-forecast-insights-shell" aria-label="Forecast insights structure"><div className="sl-sa-forecast-insight-row"><span>Demand pattern</span><strong>—</strong></div><div className="sl-sa-forecast-insight-row"><span>Forecast confidence</span><strong>—</strong></div><div className="sl-sa-forecast-insight-row"><span>Recommended attention</span><strong>—</strong></div></div></Card>
         </aside>
       </div>
     </div>
+
+    <Dialog open={forecastAction!==null} title={forecastAction==='delete'?'Confirm Delete':forecastAction==='edit'?'Edit Forecast Record':'Forecast Record Details'} onDismiss={() => setForecastAction(null)} className="sl-staff-waste-action-dialog">
+      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={forecastAction==='delete'?'A live forecast record is required before deletion can be confirmed.':forecastAction==='edit'?'A live forecast record is required before editing.':'Forecast record details will appear here when live records are available.'} /></div>
+      {forecastAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={() => setForecastAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live forecast record">Confirm Delete</button></div>}
+    </Dialog>
   </>;
 }
-
 
 function ManagerForecastingPage() {
   const [range, setRange] = useState('Current period');

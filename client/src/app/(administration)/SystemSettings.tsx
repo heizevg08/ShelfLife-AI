@@ -9,6 +9,7 @@ import {
   CalendarDays,
   Check,
   CircleAlert,
+  Info,
   CheckCircle2,
   ClipboardList,
   Database,
@@ -20,8 +21,10 @@ import {
   Mail,
   Megaphone,
   RefreshCw,
+  RotateCcw,
   MonitorSmartphone,
   ShieldCheck,
+  Settings,
   TimerReset,
   TrendingUp,
   UserCheck,
@@ -77,49 +80,55 @@ function SecurityRow({
 }
 
 function GeneralPanel() {
+  const [saveToastVisible, setSaveToastVisible] = useState(false);
+  const handleSaveChanges = () => {
+    setSaveToastVisible(true);
+    window.setTimeout(() => setSaveToastVisible(false), 3200);
+  };
+
   return (
     <div className="sl-v66-settings-grid">
       <section className="sl-v66-settings-panel" aria-labelledby="sl-v66-general-settings">
         <header className="sl-v66-panel-heading">
-          <h2 id="sl-v66-general-settings">General Settings</h2>
-          <p>Configure basic system information and preferences.</p>
+          <div className="sl-v303-section-title"><span className="sl-v303-section-icon"><Settings size={17} aria-hidden="true" /></span><div><h2 id="sl-v66-general-settings">General Settings</h2>
+          <p>Configure basic system information and preferences.</p></div></div>
         </header>
 
         <div className="sl-v66-form-grid">
           <label>
-            <span>System Name</span>
-            <input defaultValue="" placeholder="Configuration data pending" />
+            <span>System name</span>
+            <input defaultValue="" placeholder="Configuration data pending" readOnly />
           </label>
 
           <label>
-            <span>System Tagline</span>
-            <input defaultValue="" placeholder="Configuration data pending" />
+            <span>System tagline</span>
+            <input defaultValue="" placeholder="Configuration data pending" readOnly />
           </label>
 
           <label className="sl-v66-wide">
-            <span>System Description</span>
-            <textarea defaultValue="" placeholder="Configuration data pending" />
+            <span>System description</span>
+            <textarea defaultValue="" placeholder="Configuration data pending" readOnly />
             <small>Configuration service required before this field can be edited.</small>
           </label>
 
           <label>
-            <span>Time Zone</span>
+            <span>Time zone</span>
             <select defaultValue="asia-manila" aria-label="Time Zone"><option value="asia-manila">(GMT+8) Asia/Manila</option></select>
           </label>
 
           <label>
-            <span>Date Format</span>
+            <span>Date format</span>
             <select defaultValue="mmddyy" aria-label="Date Format"><option value="mmddyy">MM/DD/YY (e.g. Sep 20, 2026)</option><option value="iso8601">ISO 8601 (YYYY-MM-DD)</option></select>
           </label>
 
           <label>
-            <span>Default Language</span>
+            <span>Default language</span>
             <select defaultValue="english" aria-label="Default Language"><option value="english">English</option></select>
           </label>
 
           <label>
             <span>Currency</span>
-            <select defaultValue="php" aria-label="Currency"><option value="php">PHP (₱) - Philippine Peso</option></select>
+            <select defaultValue="php" aria-label="Currency"><option value="php">PHP (₱) — Philippine peso</option></select>
           </label>
 
         </div>
@@ -130,8 +139,12 @@ function GeneralPanel() {
         </div>
 
         <footer className="sl-v66-save-row sl-settings-single-save-row">
-          <p>Changes can be prepared here; saving requires the connected configuration services.</p>
-          <button type="button" className="sl-settings-save-changes sl-save-changes-ui" title="Configuration services are not fully connected yet">Save Changes</button>
+          <div className="sl-settings-notification-note" role="note">
+            <Info size={16} aria-hidden="true" />
+            <span>Notification settings may be overridden for individual users in their account settings.</span>
+          </div>
+          <button type="button" className="sl-button sl-button-primary sl-v56-add-user sl-settings-save-changes sl-save-changes-ui" onClick={handleSaveChanges} title="Configuration services are not fully connected yet">Save Changes</button>
+          {saveToastVisible && <div className="sl-system-settings-save-toast" role="status" aria-live="polite"><CheckCircle2 size={17} aria-hidden="true" /><span>Changes prepared. Saving requires the connected configuration services.</span></div>}
         </footer>
       </section>
 
@@ -148,7 +161,7 @@ function SecurityPanel({ embedded = false }: { embedded?: boolean } = {}) {
           <header className="sl-v70-section-head">
             <span className="sl-v70-section-icon"><ShieldCheck size={17} aria-hidden="true" /></span>
             <div>
-              <h2>Authentication &amp; Access</h2>
+              <h2>Authentication and Access</h2>
               <p>Configure authentication policies and access controls for all users.</p>
             </div>
           </header>
@@ -177,7 +190,6 @@ const notificationPreferences = [
     Icon: AlertTriangle,
     tone: 'critical',
     email: true,
-    inApp: true,
     push: true,
   },
   {
@@ -186,7 +198,6 @@ const notificationPreferences = [
     Icon: Bell,
     tone: 'attention',
     email: true,
-    inApp: true,
     push: true,
   },
   {
@@ -195,7 +206,6 @@ const notificationPreferences = [
     Icon: Boxes,
     tone: 'brand',
     email: true,
-    inApp: true,
     push: false,
   },
   {
@@ -204,7 +214,6 @@ const notificationPreferences = [
     Icon: ClipboardList,
     tone: 'brand',
     email: true,
-    inApp: true,
     push: false,
   },
   {
@@ -213,7 +222,6 @@ const notificationPreferences = [
     Icon: TrendingUp,
     tone: 'success',
     email: true,
-    inApp: true,
     push: false,
   },
   {
@@ -222,7 +230,6 @@ const notificationPreferences = [
     Icon: Megaphone,
     tone: 'brand',
     email: true,
-    inApp: true,
     push: true,
   },
   {
@@ -231,7 +238,6 @@ const notificationPreferences = [
     Icon: ShieldCheck,
     tone: 'critical',
     email: true,
-    inApp: true,
     push: true,
   },
 ] as const;
@@ -245,19 +251,19 @@ function NotificationPanel({ embedded = false }: { embedded?: boolean } = {}) {
             <div className="sl-v72-section-head">
               <span className="sl-v72-section-icon"><Bell size={17} aria-hidden="true" /></span>
               <div>
-                <h2>Notification Preferences</h2>
+                <h2>Notifications Preferences</h2>
                 <p>Enable or disable notification types. These settings apply to all users unless overridden at the user level.</p>
               </div>
             </div>
-            <button type="button" className="sl-v72-reset-button">Reset to Default</button>
+            <button type="button" className="sl-v72-reset-button"><RotateCcw size={15} aria-hidden="true" /><span>Reset to default</span></button>
           </header>
           <div className="sl-v72-preference-table-wrap">
             <table className="sl-v72-preference-table">
-              <thead><tr><th scope="col">Notification Type</th><th scope="col">Email</th><th scope="col">In-App</th><th scope="col">Push (Web)</th></tr></thead>
-              <tbody>{notificationPreferences.map(({ label, description, Icon, tone, email, inApp, push }) => (
+              <thead><tr><th scope="col">Notification Type</th><th scope="col">Email</th><th scope="col">Push (Web)</th></tr></thead>
+              <tbody>{notificationPreferences.map(({ label, description, Icon, tone, email, push }) => (
                 <tr key={label}>
                   <td><div className="sl-v72-pref-type"><span className={`sl-v72-pref-icon is-${tone}`}><Icon size={15} aria-hidden="true" /></span><div><strong>{label}</strong><small>{description}</small></div></div></td>
-                  <td><Toggle defaultChecked={email} /></td><td><Toggle defaultChecked={inApp} /></td><td><Toggle defaultChecked={push} /></td>
+                  <td><Toggle defaultChecked={email} /></td><td><Toggle defaultChecked={push} /></td>
                 </tr>
               ))}</tbody>
             </table>
@@ -373,7 +379,7 @@ function PlaceholderPanel({ title, description }: { title: string; description: 
 
 export default function SystemSettings() {
   return (
-    <div className="sl-system-settings-v70" data-ui-version="v192-general-only-syntax-fix">
+    <div className="sl-system-settings-v70" data-ui-version="v305-consistent-system-settings">
       <PageHeader
         eyebrow="System Settings"
         title="System Settings"

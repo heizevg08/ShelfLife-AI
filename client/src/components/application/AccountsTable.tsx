@@ -1,4 +1,4 @@
-import { Ban, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus, Activity, Users, UserCheck, UserX, ShieldCheck, Clock3, ArrowRight, Trash2 } from 'lucide-react';
+import { Ban, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus, Activity, Users, UserCheck, Clock3, ArrowRight, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { accountSummary, createAccount, getAccount, listAccounts, listAuditRecords, setAccountActive, updateAccount, type Account, type AuditRecord, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
@@ -30,7 +30,7 @@ export function AccountsTable() {
   const [page, setPage] = useState(1), [pageSize, setPageSize] = useState(10), [sort, setSort] = useState('createdAt'), [refresh, setRefresh] = useState(0);
   const [directorySearch, setDirectorySearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All Roles');
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [statusFilter, setStatusFilter] = useState('Active');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [recentActivity, setRecentActivity] = useState<Page<AuditRecord> | null>(null);
   const [data, setData] = useState<Page<Account> | null>(null), [loadError, setLoadError] = useState(false);
@@ -68,7 +68,7 @@ export function AccountsTable() {
     const filtered = data.items.filter(account => {
       const matchesSearch = !query || [account.name, account.email, account.role, account.isActive ? 'active' : 'inactive'].some(value => value.toLowerCase().includes(query));
       const matchesRole = roleFilter === 'All Roles' || account.role === roleFilter;
-      const matchesStatus = statusFilter === 'All Statuses' || (statusFilter === 'Active' ? account.isActive : !account.isActive);
+      const matchesStatus = statusFilter === 'Active' ? account.isActive : false;
       return matchesSearch && matchesRole && matchesStatus;
     });
 
@@ -187,9 +187,7 @@ export function AccountsTable() {
     : canDeriveCompleteRoleCounts ? loadedRoleCounts : backendRoleCounts;
   const totalUsers = summary?.totalUsers ?? data?.total ?? 0;
   const activeUsers = summary?.activeUsers ?? 0;
-  const inactiveUsers = summary?.inactiveUsers ?? 0;
   const activePercent = totalUsers ? Math.round((activeUsers / totalUsers) * 100) : 0;
-  const inactivePercent = totalUsers ? Math.round((inactiveUsers / totalUsers) * 100) : 0;
   const roleDistribution = (['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const).map(role => ({
     role,
     count: roleCounts[role] ?? 0,
@@ -216,8 +214,8 @@ export function AccountsTable() {
     {superAdmin && <section className="sl-sa-kpis sl-inventory-staff-kpis" aria-label="User management summary">
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Total Users</span><strong>{summary ? totalUsers : '—'}</strong><small>{summary ? 'System-wide accounts' : 'Preview · data pending'}</small></div></article>
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UserCheck aria-hidden="true" /></span><div><span>Active Accounts</span><strong>{summary ? activeUsers : '—'}</strong><small>{summary ? `▲ ${activePercent}% active` : 'Preview · data pending'}</small></div></article>
-      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><UserX aria-hidden="true" /></span><div><span>Inactive Accounts</span><strong>{summary ? inactiveUsers : '—'}</strong><small>{summary ? `${inactivePercent}% inactive` : 'Preview · data pending'}</small></div></article>
-      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ShieldCheck aria-hidden="true" /></span><div><span>Roles</span><strong>4</strong><small>Super Admin, Admin, Manager, Inventory Staff</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Idle Accounts</span><strong>—</strong><small>Session status data pending</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Ban aria-hidden="true" /></span><div><span>Suspended Accounts</span><strong>—</strong><small>Session status data pending</small></div></article>
     </section>}
 
     <div className={superAdmin ? 'sl-v56-main-grid' : undefined}>
@@ -239,12 +237,12 @@ export function AccountsTable() {
           </label>
           <label className="sl-v56-filter">Status
             <select className="sl-admin-input" value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(1); }}>
-              <option>All Statuses</option><option>Active</option><option>Inactive</option>
+              <option>Active</option><option>Idle</option><option>Suspended</option><option>Logged Out</option>
             </select>
           </label>
           {!superAdmin && <span className="sl-admin-clear-filters">Clear Filters</span>}
           <button className="sl-button sl-v56-reset" onClick={() => {
-            setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
+            setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('Active'); setPage(1);
           }}>Reset</button>
           {!superAdmin && <button className="sl-button sl-button-primary sl-admin-users-apply" type="button" onClick={() => setPage(1)}>Apply Filters</button>}
           {superAdmin && <button className="sl-button sl-button-primary sl-v56-add-user" disabled={busy} onClick={() => {

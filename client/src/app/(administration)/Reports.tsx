@@ -157,6 +157,47 @@ function ManagerReports() {
   </>;
 }
 
+
+function SuperAdminReports() {
+  const [reportDateRange, setReportDateRange] = useState('any');
+  const [reportDateFrom, setReportDateFrom] = useState('');
+  const [reportDateTo, setReportDateTo] = useState('');
+  const [reportType, setReportType] = useState('All Report Types');
+  const [reportIngredient, setReportIngredient] = useState('All Ingredients');
+
+  const resetReportFilters = () => {
+    setReportDateRange('any');
+    setReportDateFrom('');
+    setReportDateTo('');
+    setReportType('All Report Types');
+    setReportIngredient('All Ingredients');
+  };
+
+  return <>
+    <PageHeader eyebrow="Analytics" title="Reports" description="Waste, inventory, and forecast reporting for system-wide oversight." />
+    <div className="sl-admin-view sl-sa-reports-page sl-sa-reports-superadmin-v288 sl-sa-batches-page sl-sa-ingredients-page sl-superadmin-dashboard-v49 sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Reporting summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Package aria-hidden="true" /></span><div><span>Overstock Inventory Value</span><strong>—</strong><small>Awaiting overstock valuation API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2 aria-hidden="true" /></span><div><span>Weekly Waste Cost</span><strong>—</strong><small>Awaiting waste-cost API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Awaiting forecast accuracy API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>30-Day Waste Value</span><strong>—</strong><small>Awaiting reporting summary API</small></div></article>
+      </section>
+
+      <div className="sl-sa-ingredients-table-filters sl-sa-reports-inventory-filters">
+        <div className="sl-sa-ingredients-filter-card" aria-label="Report filters">
+          <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={reportDateRange} onChange={event => setReportDateRange(event.target.value)} aria-label="Report date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
+          <label><span>Report Type</span><select value={reportType} onChange={event => setReportType(event.target.value)}><option>All Report Types</option></select></label>
+          <label><span>Ingredient</span><select value={reportIngredient} onChange={event => setReportIngredient(event.target.value)}><option>All Ingredients</option></select></label>
+          {reportDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom report date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={reportDateFrom} max={reportDateTo || undefined} onChange={event => setReportDateFrom(event.target.value)} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={reportDateTo} min={reportDateFrom || undefined} onChange={event => setReportDateTo(event.target.value)} /></label></div>}
+          <div className="sl-sa-ingredients-filter-actions"><button className="sl-button" type="button" onClick={resetReportFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-reports-download-menu" /></div>
+        </div>
+      </div>
+
+      <div className="sl-sa-reports-grid"><Card id="sl-weekly-waste-preview" title="Weekly Waste Cost"><PendingPanel label="Weekly waste cost"/></Card><Card id="sl-forecast-accuracy-preview" title="Forecast vs Actual Consumption"><PendingPanel label="Forecast vs actual consumption"/></Card></div><Card id="sl-high-waste-breakdown" title="High-Waste Breakdown"><PendingPanel label="High-waste ingredient breakdown"/></Card>
+    </div>
+  </>;
+}
+
 function LegacyReports() {
   return <><PageHeader eyebrow="Analytics" title="Reports" description="Waste, inventory, and forecast reporting for system-wide oversight."/><div className="sl-admin-view sl-sa-reports-page sl-staff-usage-v150">
     <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Reporting summary">
@@ -174,5 +215,6 @@ export default function Reports(){
   const { user } = useApplicationWorkspace();
   if (user.role === 'Admin') return <AdminReports />;
   if (user.role === 'Manager') return <ManagerReports />;
+  if (user.role === 'Super Admin') return <SuperAdminReports />;
   return <LegacyReports />;
 }

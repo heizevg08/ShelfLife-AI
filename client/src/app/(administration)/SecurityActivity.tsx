@@ -18,7 +18,7 @@ import {
   Globe2,
   ArrowRight,
 } from 'lucide-react';
-import { DataState, PageHeader, Status } from '../../components/application/primitives';
+import { DataState, ExportControl, PageHeader, Status } from '../../components/application/primitives';
 
 const tabs = [
   'Overview',
@@ -136,6 +136,7 @@ function AuditLogsPanel() {
             <label className="sl-v203-filter-field"><span>Module</span><select defaultValue="all" aria-label="Audit log module"><option value="all">All Modules</option><option value="dashboard">Dashboard</option><option value="users">Users</option><option value="security-activity">Security &amp; Activity</option><option value="system-settings">System Settings</option><option value="ingredients">Ingredients</option><option value="inventory-batches">Inventory Batches</option><option value="inventory">Inventory</option><option value="stock-in">Stock-In</option><option value="usage">Usage</option><option value="usage-waste">Usage &amp; Waste</option><option value="usage-recording">Usage Recording</option><option value="waste">Waste</option><option value="waste-recording">Waste Recording</option><option value="change-requests">Change Requests</option><option value="my-requests">My Requests</option><option value="expiration-fefo">Expiration / FEFO</option><option value="forecasting">Forecasting</option><option value="alerts">Alerts</option><option value="audit-logs">Audit Logs</option><option value="reports">Reports</option><option value="reports-analytics">Reports &amp; Analytics</option></select></label>
             <div className="sl-v203-filter-actions">
               <button type="button" className="sl-button">Reset</button>
+              <ExportControl label="Export" menuId="sl-sa-security-audit-export-menu" />
             </div>
           </div>
 
@@ -179,9 +180,10 @@ function ActiveSessionsPanel() {
               </div>
             </label>
             <label className="sl-v203-filter-field"><span>Role</span><select defaultValue="all"><option value="all">All Roles</option><option value="super-admin">Super Admin</option><option value="admin">Admin</option><option value="manager">Manager</option><option value="inventory-staff">Inventory Staff</option></select></label>
-            <label className="sl-v203-filter-field"><span>Status</span><select defaultValue="active"><option value="active">Active</option><option value="idle">Idle</option><option value="suspended">Suspended</option><option value="logged-out">Logged Out</option></select></label>
+            <label className="sl-v203-filter-field"><span>Status</span><select defaultValue="active"><option value="active">Active</option><option value="idle">Idle</option><option value="logged-out">Logged Out</option></select></label>
             <div className="sl-v203-filter-actions">
               <button type="button" className="sl-button">Reset</button>
+              <ExportControl label="Export" menuId="sl-sa-security-sessions-export-menu" />
             </div>
           </div>
 
