@@ -1066,7 +1066,7 @@ function SuperAdminInventoryBatchesPage() {
 
       <div className="sl-sa-ingredients-layout sl-sa-batches-ingredients-layout">
         <main className="sl-sa-ingredients-main sl-sa-batches-ingredients-main">
-          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Inventory batch records">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records" aria-label="Inventory batch records">
             <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
               <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
               <h2>Inventory Batch Records</h2>
@@ -1093,15 +1093,14 @@ function SuperAdminInventoryBatchesPage() {
                 <tbody>
                   <tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row">
                     <td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td>
-                    <td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Inventory batch actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View inventory batch" title="View" onClick={() => setBatchAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit inventory batch" title="Edit" onClick={() => setBatchAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete inventory batch" title="Delete" onClick={() => setBatchAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td>
+                    <td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Inventory batch actions preview"><button type="button" className="sl-icon-button" aria-label="View inventory batch" title="View" onClick={() => setBatchAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button" aria-label="Edit inventory batch" title="Edit" onClick={() => setBatchAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button sl-staff-waste-delete" aria-label="Delete inventory batch" title="Delete" onClick={() => setBatchAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+            <div className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
               <label><span>Rows per page</span><select value={batchRows} aria-label="Rows per page" onChange={event => { setBatchRows(Number(event.target.value)); setBatchPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
-              <span className="sl-staff-usage-pagination-note">Showing 0 to 0 of 0 batches</span>
               <Pagination compact page={batchPage} pageSize={batchRows} total={0} itemLabel="batches" onPageChange={setBatchPage} />
             </div>
           </section>
@@ -1172,7 +1171,7 @@ function SuperAdminUsagePage() {
 
       <div className="sl-sa-ingredients-layout sl-sa-usage-ingredients-layout">
         <main className="sl-sa-ingredients-main sl-sa-usage-ingredients-main">
-          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Usage records">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records" aria-label="Usage records">
             <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
               <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
               <h2>Usage Records</h2>
@@ -1191,13 +1190,12 @@ function SuperAdminUsagePage() {
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Usage records" tabIndex={0}>
               <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
                 <thead><tr><th scope="col">Date Used</th><th scope="col">Ingredient</th><th scope="col">Batch ID</th><th scope="col">Quantity Used</th><th scope="col">Recorded By</th><th scope="col">Actions</th></tr></thead>
-                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Usage actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View usage record" title="View" onClick={() => setUsageAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit usage record" title="Edit" onClick={() => setUsageAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete usage record" title="Delete" onClick={() => setUsageAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Usage actions preview"><button type="button" className="sl-icon-button" aria-label="View usage record" title="View" onClick={() => setUsageAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button" aria-label="Edit usage record" title="Edit" onClick={() => setUsageAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button sl-staff-waste-delete" aria-label="Delete usage record" title="Delete" onClick={() => setUsageAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
               </table>
             </div>
 
-            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+            <div className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
               <label><span>Rows per page</span><select value={usageRows} aria-label="Rows per page" onChange={event => { setUsageRows(Number(event.target.value)); setUsagePage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
-              <span className="sl-staff-usage-pagination-note">Showing 0 to 0 of 0 usage records</span>
               <Pagination compact page={usagePage} pageSize={usageRows} total={0} itemLabel="usage records" onPageChange={setUsagePage} />
             </div>
           </section>
@@ -1284,7 +1282,7 @@ function SuperAdminWastePage() {
 
       <div className="sl-sa-ingredients-layout sl-sa-waste-ingredients-layout">
         <main className="sl-sa-ingredients-main sl-sa-waste-ingredients-main">
-          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Waste records">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records" aria-label="Waste records">
             <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
               <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
               <h2>Waste Records</h2>
@@ -1304,13 +1302,12 @@ function SuperAdminWastePage() {
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Waste records" tabIndex={0}>
               <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
                 <thead><tr><th scope="col">Date</th><th scope="col">Ingredient</th><th scope="col">Batch ID</th><th scope="col">Quantity Wasted</th><th scope="col">Reason</th><th scope="col">Recorded By</th><th scope="col">Actions</th></tr></thead>
-                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View waste record" title="View" onClick={() => setWasteAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit waste record" title="Edit" onClick={() => setWasteAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete waste record" title="Delete" onClick={() => setWasteAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste actions preview"><button type="button" className="sl-icon-button" aria-label="View waste record" title="View" onClick={() => setWasteAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button" aria-label="Edit waste record" title="Edit" onClick={() => setWasteAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button sl-staff-waste-delete" aria-label="Delete waste record" title="Delete" onClick={() => setWasteAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
               </table>
             </div>
 
-            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+            <div className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
               <label><span>Rows per page</span><select value={wasteRows} aria-label="Rows per page" onChange={event => { setWasteRows(Number(event.target.value)); setWastePage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
-              <span className="sl-staff-usage-pagination-note">Showing 0 to 0 of 0 waste records</span>
               <Pagination compact page={wastePage} pageSize={wasteRows} total={0} itemLabel="waste records" onPageChange={setWastePage} />
             </div>
           </section>
@@ -1384,7 +1381,7 @@ function SuperAdminChangeRequestsPage() {
 
       <div className="sl-sa-ingredients-layout sl-sa-batches-ingredients-layout">
         <main className="sl-sa-ingredients-main sl-sa-batches-ingredients-main">
-          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Change request records">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records" aria-label="Change request records">
             <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
               <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
               <h2>Change Request Records</h2>
@@ -1405,14 +1402,13 @@ function SuperAdminChangeRequestsPage() {
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Change request records" tabIndex={0}>
               <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
                 <thead><tr><th scope="col">Request ID</th><th scope="col">Request Type</th><th scope="col">Requested Change</th><th scope="col">Requested By</th><th scope="col">Date Requested</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
-                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Change request actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View change request" title="View" onClick={() => setRequestAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit change request" title="Edit" onClick={() => setRequestAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete change request" title="Delete" onClick={() => setRequestAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Change request actions preview"><button type="button" className="sl-icon-button" aria-label="View change request" title="View" onClick={() => setRequestAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button" aria-label="Edit change request" title="Edit" onClick={() => setRequestAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button sl-staff-waste-delete" aria-label="Delete change request" title="Delete" onClick={() => setRequestAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
               </table>
             </div>
 
-            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+            <div className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
               <label><span>Rows per page</span><select value={requestRows} aria-label="Rows per page" onChange={event => { setRequestRows(Number(event.target.value)); setRequestPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
-              <span className="sl-staff-usage-pagination-note">Showing 0 to 0 of 0 change requests</span>
-              <Pagination compact page={requestPage} pageSize={requestRows} total={0} itemLabel="requests" onPageChange={setRequestPage} />
+              <Pagination compact page={requestPage} pageSize={requestRows} total={0} itemLabel="change requests" onPageChange={setRequestPage} />
             </div>
           </section>
         </main>
@@ -1484,7 +1480,7 @@ export function SuperAdminExpirationMonitoringPage() {
 
       <div className="sl-sa-expiration-layout sl-sa-ingredients-layout sl-sa-usage-ingredients-layout">
         <main className="sl-sa-expiration-main sl-sa-ingredients-main sl-sa-usage-ingredients-main">
-          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Expiration and FEFO records">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records" aria-label="Expiration and FEFO records">
             <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
               <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
               <h2>Expiration &amp; FEFO Records</h2>
@@ -1505,13 +1501,12 @@ export function SuperAdminExpirationMonitoringPage() {
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Expiration and FEFO records" tabIndex={0}>
               <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
                 <thead><tr><th scope="col">Batch ID</th><th scope="col">Ingredient</th><th scope="col">Quantity</th><th scope="col">Expiration Date</th><th scope="col">Status</th><th scope="col">Days Left</th><th scope="col">Actions</th></tr></thead>
-                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Expiration record actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View expiration record" title="View" onClick={() => setExpirationAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit expiration record" title="Edit" onClick={() => setExpirationAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete expiration record" title="Delete" onClick={() => setExpirationAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Expiration record actions preview"><button type="button" className="sl-icon-button" aria-label="View expiration record" title="View" onClick={() => setExpirationAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button" aria-label="Edit expiration record" title="Edit" onClick={() => setExpirationAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button sl-staff-waste-delete" aria-label="Delete expiration record" title="Delete" onClick={() => setExpirationAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
               </table>
             </div>
 
-            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+            <div className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
               <label><span>Rows per page</span><select value={expirationRows} aria-label="Rows per page" onChange={event => { setExpirationRows(Number(event.target.value)); setExpirationPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
-              <span className="sl-staff-usage-pagination-note">Showing 0 to 0 of 0 expiration records</span>
               <Pagination compact page={expirationPage} pageSize={expirationRows} total={0} itemLabel="records" onPageChange={setExpirationPage} />
             </div>
           </section>
@@ -1598,7 +1593,7 @@ export function SuperAdminForecastingPage() {
 
       <div className="sl-sa-forecast-layout sl-sa-ingredients-layout sl-sa-usage-ingredients-layout">
         <main className="sl-sa-forecast-main sl-sa-ingredients-main sl-sa-usage-ingredients-main">
-          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Forecast records">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records" aria-label="Forecast records">
             <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>Forecast Records</h2></header>
 
             <div className="sl-sa-ingredients-table-filters">
@@ -1615,14 +1610,13 @@ export function SuperAdminForecastingPage() {
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Forecast records" tabIndex={0}>
               <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
                 <thead><tr><th scope="col">Ingredient</th><th scope="col">Current Stock</th><th scope="col">Avg. Daily Usage</th><th scope="col">Forecasted Demand</th><th scope="col">Forecast Accuracy</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
-                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Forecast record actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View forecast record" title="View" onClick={() => setForecastAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit forecast record" title="Edit" onClick={() => setForecastAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete forecast record" title="Delete" onClick={() => setForecastAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
+                <tbody><tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Forecast record actions preview"><button type="button" className="sl-icon-button" aria-label="View forecast record" title="View" onClick={() => setForecastAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button" aria-label="Edit forecast record" title="Edit" onClick={() => setForecastAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-icon-button sl-staff-waste-delete" aria-label="Delete forecast record" title="Delete" onClick={() => setForecastAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr></tbody>
               </table>
             </div>
 
-            <div className="sl-staff-usage-footer sl-sa-ingredients-footer">
+            <div className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
               <label><span>Rows per page</span><select value={forecastRows} aria-label="Rows per page" onChange={event => { setForecastRows(Number(event.target.value)); setForecastPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label>
-              <span className="sl-staff-usage-pagination-note">Showing 0 to 0 of 0 forecasts</span>
-              <Pagination compact page={forecastPage} pageSize={forecastRows} total={0} itemLabel="records" onPageChange={setForecastPage} />
+              <Pagination compact page={forecastPage} pageSize={forecastRows} total={0} itemLabel="forecasts" onPageChange={setForecastPage} />
             </div>
           </section>
         </main>
