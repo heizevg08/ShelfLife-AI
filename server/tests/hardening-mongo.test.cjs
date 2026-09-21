@@ -55,10 +55,10 @@ test('MongoDB enforces indexes, durable atomic login counters, soft archives, au
     await assert.rejects(service.create(actorId, { ...input, name: 'MILK' }), e => e.code === 11000);
     await assert.rejects(ingredients.findByIdAndUpdate(created.id, { category: 'Unknown' }, { runValidators: true }).exec());
     await assert.rejects(ingredients.findByIdAndUpdate(created.id, { unitOfMeasure: 'liter' }, { runValidators: true }).exec());
-    await service.update(actorId, created.id, { ...input, brand: 'New' });
-    assert.equal(await service.remove(actorId, created.id), true);
-    assert.equal(await service.remove(actorId, created.id), false);
-    assert.equal(await service.update(actorId, created.id, input), null);
+    await service.update(actorId, created.id, { ...input, brand: 'New' }, 0);
+    assert.equal(await service.remove(actorId, created.id, 1), true);
+    assert.equal(await service.remove(actorId, created.id, 2), false);
+    assert.equal(await service.update(actorId, created.id, input, 2), null);
     // Raw-driver read: verifies persistence independently of Mongoose defaults/serialization.
     const archived = await ingredients.collection.findOne({ _id: new driver.Types.ObjectId(created.id) });
     assert.ok(archived, 'archived ingredient must still exist in MongoDB');
@@ -88,19 +88,20 @@ test('MongoDB enforces indexes, durable atomic login counters, soft archives, au
     await assert.rejects(failing.create(actorId, secondInput), /Simulated audit failure/);
     assert.equal(await ingredients.countDocuments(), 1);
     const retained = await service.create(actorId, secondInput);
-    await assert.rejects(failing.update(actorId, retained.id, { ...secondInput, brand: 'Must roll back' }));
+    await assert.rejects(failing.update(actorId, retained.id, { ...secondInput, brand: 'Must roll back' }, 0));
     assert.equal((await ingredients.findById(retained.id).lean()).brand, '');
-    await assert.rejects(failing.remove(actorId, retained.id));
+    await assert.rejects(failing.remove(actorId, retained.id, 0));
     assert.equal(await ingredients.countDocuments(), 2);
     assert.equal((await ingredients.collection.findOne({ _id: new driver.Types.ObjectId(retained.id) })).isActive, true);
 
     // Pre-migration documents without a flag remain visible and can be archived.
-    await ingredients.collection.updateOne({ _id: new driver.Types.ObjectId(retained.id) }, { $unset: { isActive: '' } });
+    await ingredients.collection.updateOne({ _id: new driver.Types.ObjectId(retained.id) }, { $unset: { isActive: '', version: '' } });
     const legacyPage = await service.list(ingredientPagination({}));
     assert.equal(legacyPage.total, 1);
     assert.equal(legacyPage.items[0].isActive, true);
-    const concurrent = await Promise.all([service.remove(actorId, retained.id), service.remove(actorId, retained.id)]);
-    assert.deepEqual(concurrent.sort(), [false, true]);
+    const concurrent = await Promise.allSettled([service.remove(actorId, retained.id, 0), service.remove(actorId, retained.id, 0)]);
+    assert.equal(concurrent.filter(result => result.status === 'fulfilled' && result.value === true).length, 1);
+    assert.equal(concurrent.filter(result => result.status === 'rejected' && result.reason.status === 409).length, 1);
     assert.equal(await audits.countDocuments({ targetId: retained.id, action: 'DEACTIVATE' }), 1);
     assert.equal((await ingredients.collection.findOne({ _id: new driver.Types.ObjectId(retained.id) })).isActive, false);
 

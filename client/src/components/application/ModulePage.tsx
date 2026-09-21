@@ -193,7 +193,7 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
   const dismiss = () => { if (!busy) setPreview(null); };
   const open = () => { if (!permissions.create) return; setEditIngredient(null); setForm(emptyIngredient); setErrors({}); setFormError(''); setPreview('Ingredients'); };
   const openEdit = (item: Ingredient) => { if (!permissions.update) return; setEditIngredient(item); setForm({ name:item.name, brand:item.brand || '', category:item.category, unit:item.unitOfMeasure, minStock:item.minimumStock === undefined ? '' : String(item.minimumStock), unitCost:item.standardUnitCost === undefined ? '' : String(item.standardUnitCost), shelfLife:item.defaultShelfLifeDays === undefined ? '' : String(item.defaultShelfLifeDays), description:item.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
-  const removeIngredient = async () => { if (!permissions.remove || !deleteTarget || actionBusy) return; setActionBusy(true); setDeleteError(''); try { await deleteIngredient(deleteTarget.id); setDeleteTarget(null); setRefresh(value => value + 1); } catch (error) { setDeleteError(error instanceof ApiError ? error.message : 'The ingredient could not be archived. Check your connection and try again.'); } finally { setActionBusy(false); } };
+  const removeIngredient = async () => { if (!permissions.remove || !deleteTarget || actionBusy) return; setActionBusy(true); setDeleteError(''); try { await deleteIngredient(deleteTarget.id, deleteTarget.version); setDeleteTarget(null); setRefresh(value => value + 1); } catch (error) { setDeleteError(error instanceof ApiError ? error.message : 'The ingredient could not be archived. Check your connection and try again.'); } finally { setActionBusy(false); } };
   const save = async (event: FormEvent) => {
     event.preventDefault();
     if (busy || !(editIngredient ? permissions.update : permissions.create)) return;
@@ -212,7 +212,7 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
     const input: IngredientInput = { name: clean.name, brand: clean.brand, description: clean.description, category: clean.category, unitOfMeasure: clean.unit, ...(clean.minStock === '' ? {} : { minimumStock: Number(clean.minStock) }), ...(clean.unitCost === '' ? {} : { standardUnitCost: Number(clean.unitCost) }), ...(clean.shelfLife === '' ? {} : { defaultShelfLifeDays: Number(clean.shelfLife) }) };
     setBusy(true); setErrors({}); setFormError('');
     try {
-      const result = editIngredient ? await updateIngredient(editIngredient.id, input) : await createIngredient(input);
+      const result = editIngredient ? await updateIngredient(editIngredient.id, input, editIngredient.version) : await createIngredient(input);
       setMessage('');
       setSuccessIngredient(result.ingredient);
       setEditIngredient(null);
