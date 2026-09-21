@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { AlertTriangle, ArrowRight, Box, FileText, LockKeyhole, ShieldCheck, UsersRound } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Box, UsersRound } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { dashboardSummary, listAccounts, listAuditRecords, type Account, type AuditRecord, type DashboardSummary } from '../../services/administration';
 import type { SessionUser } from '../../services/auth';
@@ -8,9 +8,6 @@ import { Card, DataState, Status, PageHeader} from '../application/primitives';
 const AUTO_REFRESH_MS = 15000;
 const roleOrder = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
 
-function UnavailableMetric({ label }: { label: string }) {
-  return <div className="sl-sa-unavailable"><strong>—</strong><span>{label}</span></div>;
-}
 
 export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   const [greeting, setGreeting] = useState('Good morning');
@@ -62,9 +59,24 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     if (accountsTotal === null || accounts.length !== accountsTotal) return null;
     return roleOrder.map(role => ({ role, count: accounts.filter(account => account.role === role).length }));
   }, [accounts, accountsTotal]);
+  const dashboardRoleDistribution = roleOrder.map(role => ({
+    role,
+    count: completeRoleDistribution?.find(item => item.role === role)?.count ?? null,
+  }));
+  const distributionTotal = completeRoleDistribution?.reduce((sum, item) => sum + item.count, 0) ?? 0;
+  const distributionStops = dashboardRoleDistribution.reduce<{ cursor: number; stops: string[] }>((state, item, index) => {
+    const palette = ['#0b8755', '#79c9a3', '#ffd166', '#67a98f'];
+    const next = state.cursor + (distributionTotal && item.count !== null ? (item.count / distributionTotal) * 100 : 25);
+    state.stops.push(`${palette[index]} ${state.cursor}% ${next}%`);
+    state.cursor = next;
+    return state;
+  }, { cursor: 0, stops: [] });
+  const distributionBackground = distributionTotal
+    ? `radial-gradient(circle at center,#ffffff 0 48%,transparent 49%),conic-gradient(${distributionStops.stops.join(',')})`
+    : 'radial-gradient(circle at center,#ffffff 0 48%,transparent 49%),conic-gradient(#e9eef3 0 100%)';
 
   const totalUsers = summary?.totalUsers ?? accountsTotal;
-  return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49 sl-staff-usage-v150">
+  return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49 sl-staff-usage-v150 sl-superadmin-users-page-v60 sl-superadmin-users-page-v63 sl-superadmin-users-page-v64">
     <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
       <PageHeader eyebrow="Dashboard" title={`${greeting}, ${user.firstName || 'Super Admin'}.`} />
       <p className="sl-dashboard-description">Monitor system-wide activity, security, operations and administrative oversight.</p>
@@ -76,25 +88,57 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Active Alerts</span><strong>—</strong><small>Awaiting alert summary API</small></div></article>
     </section>
 
-    <section className="sl-sa-analytics-row">
-      <Card id="sl-sa-expiration" title="Expiration Status (All Ingredients)"><div className="sl-sa-preview-state"><DataState kind="empty" title="No live records yet" description="Expiration analytics" action={<Status>Preview · data pending</Status>} /></div></Card>
-      <Card id="sl-sa-waste" title="Waste Trend (Last 6 Months)"><div className="sl-sa-preview-state"><DataState kind="empty" title="No live records yet" description="Waste analytics" action={<Status>Preview · data pending</Status>} /></div></Card>
-      <Card id="sl-sa-forecast" title="Forecast Accuracy (Last 6 Months)"><div className="sl-sa-preview-state"><DataState kind="empty" title="No live records yet" description="Forecast accuracy" action={<Status>Preview · data pending</Status>} /></div></Card>
+    <section className="sl-sa-analytics-row sl-sa-analytics-row-v317">
+      <Card id="sl-sa-expiration" title="Expiration Status (All Ingredients)">
+        <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface">
+          <div className="sl-sa-expiration-donut" aria-hidden="true"><strong>—</strong><span>Batches</span></div>
+          <div className="sl-sa-chart-legend" aria-label="Expiration status legend">
+            <div><i className="is-good"/><span>Good Shelf Life</span><strong>—</strong></div>
+            <div><i className="is-expiring"/><span>Expiring</span><strong>—</strong></div>
+            <div><i className="is-expired"/><span>Expired</span><strong>—</strong></div>
+          </div>
+          <span className="sl-sa-chart-empty-note">No live records yet</span>
+        </div>
+      </Card>
+      <Card id="sl-sa-waste" title="Waste Trend (Last 6 Months)">
+        <div className="sl-sa-chart-surface sl-sa-line-chart-surface" aria-label="Waste trend line chart">
+          <div className="sl-sa-chart-y-axis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span></div>
+          <div className="sl-sa-line-chart-plot" aria-hidden="true"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><path d="M0 48 L100 48" /></svg></div>
+          <div className="sl-sa-chart-x-axis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span><span>—</span><span>—</span></div>
+          <span className="sl-sa-chart-empty-note">No live records yet</span>
+        </div>
+      </Card>
+      <Card id="sl-sa-forecast" title="Forecast Accuracy (Last 6 Months)">
+        <div className="sl-sa-chart-surface sl-sa-bar-chart-surface" aria-label="Forecast accuracy bar chart">
+          <div className="sl-sa-chart-y-axis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span></div>
+          <div className="sl-sa-bar-chart-plot" aria-hidden="true">{Array.from({ length: 6 }).map((_, index) => <i key={index} />)}</div>
+          <div className="sl-sa-chart-x-axis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span><span>—</span><span>—</span></div>
+          <span className="sl-sa-chart-empty-note">No live records yet</span>
+        </div>
+      </Card>
+      <section id="sl-sa-distribution" className="sl-v56-side-card sl-sa-dashboard-distribution-card">
+        <h2>User Distribution</h2>
+        <div className="sl-v56-distribution">
+          <div className="sl-v56-donut" style={{ background: distributionBackground }}>
+            <strong>{completeRoleDistribution ? accountsTotal : '—'}</strong><span>Users</span>
+          </div>
+          <div className="sl-v56-legend">
+            {dashboardRoleDistribution.map(item => <div key={item.role}>
+              <span className="sl-v56-dot" data-role={item.role} />
+              <span>{item.role}</span><strong>{item.count ?? '—'}</strong>
+            </div>)}
+          </div>
+        </div>
+      </section>
     </section>
 
     <section className="sl-sa-middle-row">
       <Card id="sl-sa-expiring-items" title="Critical / Expiring Items" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View all <ArrowRight size={14}/></Link>}>
-        <DataState kind="empty" title="No live records yet" description="Expiration / FEFO records" action={<Status>Preview · data pending</Status>} />
+        <div className="sl-table-scroll"><table className="sl-data-table sl-sa-expiring-table"><thead><tr><th>Ingredient</th><th>Batch</th><th>Expiry Date</th><th>Status</th></tr></thead><tbody><tr><td colSpan={4} className="sl-empty-cell"><DataState kind="empty" title="No live records yet" description="Expiration / FEFO records" /></td></tr></tbody></table></div>
       </Card>
       <Card id="sl-sa-recent-activity" title="Recent System Activity" action={<Link href="/SecurityActivity" className="sl-text-link">View all <ArrowRight size={14}/></Link>}>
-        {auditError ? <DataState kind="error" title="Activity could not be loaded" description="Check connectivity and try again." /> : !audit ? <DataState kind="loading" title="Loading activity" description="" /> : <div className="sl-table-scroll"><table className="sl-data-table sl-sa-activity-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>{audit.items.length === 0 ? <tr><td colSpan={4} className="sl-empty-table-message">No system activity recorded yet.</td></tr> : audit.items.map(row => <tr key={row.id}><td>{new Date(row.timestamp).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',hour12:true})}</td><td>{row.actor.name}<small>{row.actor.role}</small></td><td>{row.action.replaceAll('_',' ')}</td><td>{row.targetType}<small>{row.targetId}</small></td></tr>)}</tbody></table></div>}
+        <div className="sl-table-scroll"><table className="sl-data-table sl-sa-activity-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>{auditError ? <tr><td colSpan={4} className="sl-empty-cell"><DataState kind="error" title="Activity could not be loaded" description="Check connectivity and try again." /></td></tr> : !audit ? <tr><td colSpan={4} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="" /></td></tr> : audit.items.length === 0 ? <tr><td colSpan={4} className="sl-empty-cell"><DataState kind="empty" title="No system activity recorded yet" description="Recorded system activity will appear here." /></td></tr> : audit.items.map(row => <tr key={row.id}><td>{new Date(row.timestamp).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',hour12:true})}</td><td>{row.actor.name}<small>{row.actor.role}</small></td><td>{row.action.replaceAll('_',' ')}</td><td>{row.targetType}<small>{row.targetId}</small></td></tr>)}</tbody></table></div>
       </Card>
-    </section>
-
-    <section className="sl-sa-bottom-row">
-      <Card id="sl-sa-services" title="System Services"><div className="sl-sa-service-list"><div><span><ShieldCheck size={16}/> Application API</span><Status tone="success">Connected through current session</Status></div><div><span><Box size={16}/> Database</span><Status>Detailed health unavailable</Status></div><div><span><FileText size={16}/> File Storage</span><Status>Health unavailable</Status></div><div><span><LockKeyhole size={16}/> Authentication</span><Status tone="success">Session verified</Status></div></div></Card>
-      <Card id="sl-sa-distribution" title="User Distribution (All Roles)">{completeRoleDistribution ? <div className="sl-sa-role-distribution"><div className="sl-sa-role-total"><strong>{accountsTotal}</strong><span>Users</span></div><div className="sl-sa-role-legend">{completeRoleDistribution.map(item => <div key={item.role}><span>{item.role}</span><strong>{item.count}</strong></div>)}</div></div> : <DataState kind="empty" title="No live records yet" description="User distribution" action={<Status>Preview · data pending</Status>} />}</Card>
-      <Card id="sl-sa-security" title="Security Overview" action={<Link href="/SecurityActivity" className="sl-text-link">View all <ArrowRight size={14}/></Link>}><div className="sl-sa-security-grid"><div><ShieldCheck/><span>Audit Records</span><strong>{audit?.total.toLocaleString() ?? (auditError ? 'Unavailable' : 'Loading…')}</strong></div><div><LockKeyhole/><span>Security Events</span><UnavailableMetric label="No summary API" /></div><div><AlertTriangle/><span>Failed Login Attempts</span><UnavailableMetric label="No summary API" /></div><div><UsersRound/><span>Active Sessions</span><UnavailableMetric label="No summary API" /></div></div></Card>
     </section>
   </div>;
 }

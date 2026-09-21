@@ -17051,3 +17051,159 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   justify-self:end!important;
   margin-right:0!important;
 }
+
+/* V316 — Super Admin /SuperAdminDashboard only.
+   System Services + Security Overview removed; User Distribution reuses the
+   established Super Admin /UserManagement distribution component language. */
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-row{
+  grid-template-columns:1fr;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-distribution{
+  grid-template-columns:minmax(7.4rem,.95fr) minmax(9rem,1.15fr);
+  width:min(100%,34rem);
+}
+@media(max-width:700px){
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-distribution{
+    grid-template-columns:1fr;
+    width:100%;
+  }
+  .sl-superadmin-dashboard-v49 .sl-sa-dashboard-distribution-card .sl-v56-legend{
+    width:min(100%,18rem);
+    margin-inline:auto;
+  }
+}
+
+/* V317 — Super Admin /SuperAdminDashboard only: keep the complete designed UI visible
+   without fabricated records, and place User Distribution in the analytics row. */
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  align-items:stretch;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-card,
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-sa-dashboard-distribution-card{
+  min-width:0;
+  min-height:clamp(15.5rem,17vw,18rem);
+  height:100%;
+  box-sizing:border-box;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-dashboard-distribution-card{
+  width:auto;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-dashboard-distribution-card .sl-v56-distribution{
+  grid-template-columns:1fr;
+  align-content:center;
+  width:100%;
+  min-height:calc(100% - 2.25rem);
+  gap:clamp(.75rem,1vw,1rem);
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-dashboard-distribution-card .sl-v56-legend{
+  width:100%;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-data-shell{
+  position:relative;
+  min-height:clamp(11.5rem,13vw,14rem);
+  overflow:hidden;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-chart-canvas{
+  position:absolute;
+  inset:.25rem 0 0;
+  border-left:1px solid var(--sl-border-subtle);
+  border-bottom:1px solid var(--sl-border-subtle);
+  background:repeating-linear-gradient(to top,transparent 0 2.5rem,var(--sl-border-subtle) calc(2.5rem + 1px));
+  opacity:.7;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-data-shell > .sl-state{
+  position:relative;
+  z-index:1;
+  min-height:clamp(11.5rem,13vw,14rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:clamp(1rem,1.5vw,1.5rem);
+}
+.sl-superadmin-dashboard-v49 .sl-sa-expiring-table,
+.sl-superadmin-dashboard-v49 .sl-sa-activity-table{
+  width:100%;
+  min-width:36rem;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-expiring-table .sl-empty-cell,
+.sl-superadmin-dashboard-v49 .sl-sa-activity-table .sl-empty-cell{
+  height:clamp(9rem,11vw,12rem);
+  padding:0!important;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-expiring-table .sl-empty-cell .sl-state,
+.sl-superadmin-dashboard-v49 .sl-sa-activity-table .sl-empty-cell .sl-state{
+  min-height:clamp(9rem,11vw,12rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:clamp(1rem,1.5vw,1.5rem);
+}
+@media(max-width:1400px){
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:700px){
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317{grid-template-columns:1fr;}
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-card,
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 > .sl-sa-dashboard-distribution-card{min-height:auto;}
+}
+
+/* V318 — Super Admin /SuperAdminDashboard only: complete analytics chart surfaces.
+   User Distribution deliberately uses the exact /UserManagement V60 classes without dashboard geometry overrides. */
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-dashboard-distribution-card .sl-v56-distribution{
+  grid-template-columns:minmax(7.4rem,.95fr) minmax(9rem,1.15fr);
+  align-items:center;
+  gap:clamp(.65rem,.54rem + .24vw,.88rem);
+  padding-top:clamp(.62rem,.52rem + .2vw,.78rem);
+  min-height:0;
+  width:auto;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-dashboard-distribution-card .sl-v56-legend{width:auto}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-surface{
+  position:relative;
+  min-height:clamp(11.5rem,13vw,14rem);
+  height:100%;
+  box-sizing:border-box;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-expiration-donut-surface{
+  display:grid;
+  grid-template-columns:minmax(7.4rem,.95fr) minmax(9rem,1.15fr);
+  align-items:center;
+  gap:clamp(.65rem,.54rem + .24vw,.88rem);
+  padding:clamp(.62rem,.52rem + .2vw,.78rem) 0 1.8rem;
+}
+.sl-superadmin-dashboard-v49 .sl-sa-expiration-donut{
+  width:clamp(7.25rem,7.6vw,8.15rem);aspect-ratio:1;border-radius:50%;display:grid;place-content:center;margin:auto;text-align:center;
+  box-shadow:inset 0 0 0 1px rgba(13,84,63,.03);
+  background:radial-gradient(circle at center,#fff 0 48%,transparent 49%),conic-gradient(#e9eef3 0 100%);
+}
+.sl-superadmin-dashboard-v49 .sl-sa-expiration-donut strong{font-size:clamp(1.3rem,1.08rem + .5vw,1.7rem);line-height:1;color:#132f75}
+.sl-superadmin-dashboard-v49 .sl-sa-expiration-donut span{font-size:var(--v60-xs);color:#5d6d80}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-legend{display:grid;gap:clamp(.34rem,.29rem + .1vw,.44rem)}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-legend>div{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.42rem;font-size:var(--v60-xs);color:#19345f}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-legend i{width:.66rem;height:.66rem;border-radius:50%;background:#07543f}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-legend i.is-expiring{background:#f7b83f}.sl-superadmin-dashboard-v49 .sl-sa-chart-legend i.is-expired{background:#d92943}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-empty-note{position:absolute;left:50%;bottom:.35rem;transform:translateX(-50%);white-space:nowrap;font:var(--sl-font-supporting);color:var(--sl-muted)}
+.sl-superadmin-dashboard-v49 :is(.sl-sa-line-chart-surface,.sl-sa-bar-chart-surface){display:grid;grid-template-columns:1.8rem minmax(0,1fr);grid-template-rows:minmax(0,1fr) 1.35rem;padding:.6rem 0 1.55rem;gap:0 .35rem}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-y-axis{grid-column:1;grid-row:1;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;padding-bottom:.15rem;font-size:.68rem;color:var(--sl-muted)}
+.sl-superadmin-dashboard-v49 .sl-sa-chart-x-axis{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(6,1fr);align-items:end;text-align:center;font-size:.68rem;color:var(--sl-muted)}
+.sl-superadmin-dashboard-v49 :is(.sl-sa-line-chart-plot,.sl-sa-bar-chart-plot){grid-column:2;grid-row:1;border-left:1px solid var(--sl-border-subtle);border-bottom:1px solid var(--sl-border-subtle);background:repeating-linear-gradient(to top,transparent 0 2.5rem,var(--sl-border-subtle) calc(2.5rem + 1px));min-width:0;min-height:8rem}
+.sl-superadmin-dashboard-v49 .sl-sa-line-chart-plot svg{width:100%;height:100%;overflow:visible}.sl-superadmin-dashboard-v49 .sl-sa-line-chart-plot path{fill:none;stroke:var(--sl-brand);stroke-width:1.25;vector-effect:non-scaling-stroke;opacity:.22;stroke-dasharray:3 3}
+.sl-superadmin-dashboard-v49 .sl-sa-bar-chart-plot{display:grid;grid-template-columns:repeat(6,1fr);align-items:end;gap:clamp(.3rem,.5vw,.55rem);padding:0 clamp(.25rem,.5vw,.5rem)}
+.sl-superadmin-dashboard-v49 .sl-sa-bar-chart-plot i{display:block;height:.35rem;min-height:.35rem;border-radius:.3rem .3rem 0 0;background:var(--sl-brand);opacity:.18}
+@media(max-width:1400px){
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-dashboard-distribution-card .sl-v56-distribution{grid-template-columns:minmax(7.4rem,.95fr) minmax(9rem,1.15fr)}
+}
+@media(max-width:700px){
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-dashboard-distribution-card .sl-v56-distribution,
+  .sl-superadmin-dashboard-v49 .sl-sa-expiration-donut-surface{grid-template-columns:1fr}
+  .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317 .sl-sa-dashboard-distribution-card .sl-v56-legend,
+  .sl-superadmin-dashboard-v49 .sl-sa-chart-legend{width:min(100%,18rem);margin-inline:auto}
+}
