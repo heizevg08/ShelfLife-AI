@@ -1,5 +1,8 @@
 # Development authentication
 
+For systemConfig, versioned ingredient PATCH/pagination, and InventoryBatch
+endpoints, see the [inventory backend contract](../docs/inventory-api.md).
+
 Use Node 24 LTS. The canonical server compiles to CommonJS and always selects the
 `shelflifeai` database on the cluster identified by `MONGO_URI`. It never uses the
 legacy `test` database. No seed runs during server startup.
@@ -77,7 +80,7 @@ transaction, invalidates their existing access/refresh sessions and pending rese
 tokens, and records sanitized before/after snapshots as a System audit event.
 Canonical role strings are `Inventory Staff`, `Inventory Manager`, `Admin`, and
 `Super Admin`. New writes reject `Manager`. Ingredient privileges now follow the brief;
-ingredient reads permit all four roles, creation permits Inventory Manager and Inventory Staff, and update/archive permits Inventory Manager only. `DELETE /api/ingredients/:id` now soft-archives the document with `isActive: false` and returns 204. Run maintenance before starting this revision
+ingredient reads permit all four roles, creation permits Inventory Manager and Inventory Staff, and update/archive permits Inventory Manager only. PATCH updates and DELETE archives require JSON `expectedVersion`; stale writes return 409. `DELETE /api/ingredients/:id` soft-archives the document with `isActive: false` and returns 204. Lists use `page`/`limit`. Run maintenance before starting this revision
 against any database containing the old role.
 
 **Client transition:** the Vite frontend now uses canonical role names and the ingredient permissions above.

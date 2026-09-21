@@ -10,6 +10,7 @@ const schema = new Schema({
   minimumStock: { type: Number, min: 0 },
   standardUnitCost: { type: Number, min: 0 },
   defaultShelfLifeDays: { type: Number, min: 1 },
+  version: { type: Number, default: 0, min: 0, max: Number.MAX_SAFE_INTEGER, validate: Number.isSafeInteger },
   isActive: { type: Boolean, required: true, default: true },
   createdBy: { type: Schema.Types.ObjectId, required: true, immutable: true, ref: 'User' },
 }, { timestamps: true, versionKey: false, collection: 'ingredients', strict: 'throw' });

@@ -56,7 +56,7 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
       const actorById = new Map(actorRows.map(actor => [actor._id.toString(), { id: actor._id.toString(), name: `${actor.firstName} ${actor.lastName}`, role: actor.role }]));
       return { items: rows.map(row => {
         const userId = row.userId?.toString() ?? null;
-        return { id: row._id.toString(), userId, actorType: row.actorType ?? 'User', oldValue: auditSnapshot(row.targetType, row.oldValue), newValue: auditSnapshot(row.targetType, row.newValue), actor: userId ? actorById.get(userId) ?? { id: userId, name: 'Unknown account', role: 'Unavailable' } : { id: 'system', name: 'System maintenance', role: 'System' }, action: row.action, targetType: row.targetType, targetId: row.targetId.toString(), timestamp: row.timestamp.toISOString() };
+        return { id: row._id.toString(), ...(row.reason ? { reason: row.reason } : {}), userId, actorType: row.actorType ?? 'User', oldValue: auditSnapshot(row.targetType, row.oldValue), newValue: auditSnapshot(row.targetType, row.newValue), actor: userId ? actorById.get(userId) ?? { id: userId, name: 'Unknown account', role: 'Unavailable' } : { id: 'system', name: 'System maintenance', role: 'System' }, action: row.action, targetType: row.targetType, targetId: row.targetId.toString(), timestamp: row.timestamp.toISOString() };
       }), page: query.page, pageSize: query.pageSize, total };
     },
     async transaction(work) {

@@ -8,6 +8,7 @@ const schema = new Schema({
   targetId: { type: Schema.Types.ObjectId, required: true, immutable: true },
   oldValue: { type: Schema.Types.Mixed, default: null, immutable: true },
   newValue: { type: Schema.Types.Mixed, default: null, immutable: true },
+  reason: { type: String, maxlength: 500, immutable: true },
   timestamp: { type: Date, required: true, default: Date.now, immutable: true },
 }, { collection: 'auditRecords', versionKey: false, strict: 'throw' });
 

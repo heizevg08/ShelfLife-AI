@@ -81,7 +81,7 @@ Other operational routes retain their existing preview access policy. There are
 no backend guards to reconcile for APIs that do not yet exist; UI visibility is
 not permission to access a future API.
 
-Ingredient removal currently uses DELETE and permanently removes the record with an audit snapshot; a soft-archive lifecycle has not been implemented.
+Ingredient removal uses DELETE with `expectedVersion` and soft-archives the record. Updates use PATCH with the selected version; the ingredient service adapts API `limit` pagination to the existing widget. A 409 conflict requires reloading before retrying. See the [inventory API contract](../docs/inventory-api.md).
 
 ## Migration review and remaining verification
 

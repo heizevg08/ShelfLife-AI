@@ -1,4 +1,5 @@
-import { invalid, pagination } from './administration';
+import { bodyFields, expectedVersion, inventoryPagination } from './inventory-contract';
+import { invalid } from './administration';
 
 import { INGREDIENT_CATEGORIES, INGREDIENT_UNITS } from '../models/ingredient-options';
 export { INGREDIENT_CATEGORIES, INGREDIENT_UNITS } from '../models/ingredient-options';
@@ -52,12 +53,24 @@ export function ingredientInput(body: unknown): IngredientInput {
 }
 
 export function ingredientPagination(query: Record<string, unknown>) {
-  for (const key of Object.keys(query)) if (!['page', 'pageSize', 'search', 'category', 'includeArchived'].includes(key)) invalid(key);
+  for (const key of Object.keys(query)) if (!['page', 'limit', 'search', 'category', 'includeArchived'].includes(key)) invalid(key);
   if (query.includeArchived !== undefined && query.includeArchived !== 'true' && query.includeArchived !== 'false') invalid('includeArchived', 'Use true or false');
-  const page = pagination(Object.fromEntries(['page', 'pageSize'].filter(key => query[key] !== undefined).map(key => [key, query[key]])), ['createdAt'], 'createdAt');
+  const page = inventoryPagination(query);
   const search = query.search === undefined ? '' : cleanText('search', query.search, false, 100);
   const category = query.category === undefined ? '' : query.category;
   if (typeof category !== 'string' || (category && !INGREDIENT_CATEGORIES.includes(category as typeof INGREDIENT_CATEGORIES[number]))) invalid('category', 'Select a valid category');
   return { ...page, search, category: category as '' | typeof INGREDIENT_CATEGORIES[number], includeArchived: query.includeArchived === 'true' };
 }
 export type IngredientPageQuery = ReturnType<typeof ingredientPagination>;
+
+export function ingredientPatch(body: unknown) {
+  const input = bodyFields(body, ['expectedVersion', 'name', 'brand', 'description', 'category', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays']);
+  const version = expectedVersion(input.expectedVersion);
+  const { expectedVersion: ignored, ...fields } = input;
+  if (!Object.keys(fields).length) invalid('body', 'Provide at least one ingredient field');
+  // Reuse create validation while retaining PATCH omission semantics.
+  const validated = ingredientInput({ name: 'placeholder', category: 'Other', unitOfMeasure: 'pcs', ...fields });
+  for (const key of ['minimumStock', 'standardUnitCost', 'defaultShelfLifeDays']) if (key in fields && !(key in validated)) invalid(key);
+  const patch = Object.fromEntries(Object.keys(fields).map(key => [key, validated[key as keyof IngredientInput]])) as Partial<IngredientInput>;
+  return { patch, expectedVersion: version };
+}

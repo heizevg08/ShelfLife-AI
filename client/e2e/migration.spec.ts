@@ -36,6 +36,7 @@ async function mockApi(page: Page, role: WorkspaceRole, loggedIn = true) {
       if (path.endsWith('/reactivate')) accounts[0].isActive = true;
       return json({ user: accounts[0] });
     }
+    if (path === '/api/ingredients') return json({ items: [], total: 0, page: 1, limit: 10 });
     return json({ items: path === '/api/users' ? accounts : [], total: path === '/api/users' ? accounts.length : 0, page: 1, pageSize: 10 });
   });
   return { writes, forbiddenCalls };
@@ -44,8 +45,8 @@ async function mockApi(page: Page, role: WorkspaceRole, loggedIn = true) {
 for (const role of roles) {
   test(`${role}: ingredient controls match read/create/update/remove permissions`, async ({ page }) => {
     await mockApi(page, role);
-    const ingredient = { id: '3'.repeat(24), name: 'Permission Milk', brand: '', description: '', category: 'Dairy', unitOfMeasure: 'L', createdBy: { id: '1'.repeat(24), name: 'Test' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-    await page.route('**/api/ingredients?*', route => route.fulfill({ json: { items: [ingredient], total: 1, page: 1, pageSize: 10 } }));
+    const ingredient = { id: '3'.repeat(24), name: 'Permission Milk', version: 0, brand: '', description: '', category: 'Dairy', unitOfMeasure: 'L', createdBy: { id: '1'.repeat(24), name: 'Test' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    await page.route('**/api/ingredients?*', route => route.fulfill({ json: { items: [ingredient], total: 1, page: 1, limit: 10 } }));
     await page.goto('/Ingredients');
     await expect(page.getByRole('button', { name: 'View Permission Milk', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Add Ingredient', exact: true })).toHaveCount(['Inventory Manager', 'Inventory Staff'].includes(role) ? 1 : 0);

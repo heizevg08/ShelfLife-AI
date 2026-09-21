@@ -13,8 +13,8 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
 
   router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff']), actions.list);
   router.post('/', authorizeAdministration(['Inventory Manager', 'Inventory Staff']), json({ limit: '100kb' }), actions.create);
-  router.put('/:id', authorizeAdministration(['Inventory Manager']), json({ limit: '100kb' }), actions.update);
-  router.delete('/:id', authorizeAdministration(['Inventory Manager']), actions.remove);
+  router.patch('/:id', authorizeAdministration(['Inventory Manager']), json({ limit: '100kb' }), actions.update);
+  router.delete('/:id', authorizeAdministration(['Inventory Manager']), json({ limit: '100kb' }), actions.remove);
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });
   const error: ErrorRequestHandler = (value, _req, res, next) => {
     if (res.headersSent) { next(value); return; }

@@ -25,7 +25,7 @@ test('API-backed route permissions match the actual backend guards', () => {
   assert.deepEqual([...canonicalWorkspaceAccess['/Ingredients']], rolesIn(ingredients, /router.get\('\/', authorizeAdministration\((\[[^\]]+\])/));
   const writeRoles = (action: 'create' | 'update' | 'remove') => roles.filter(role => ingredientPermissions(role)[action]);
   assert.deepEqual(writeRoles('create'), rolesIn(ingredients, /router.post\('\/', authorizeAdministration\((\[[^\]]+\])/));
-  assert.deepEqual(writeRoles('update'), rolesIn(ingredients, /router.put\('\/:id', authorizeAdministration\((\[[^\]]+\])/));
+  assert.deepEqual(writeRoles('update'), rolesIn(ingredients, /router.patch\('\/:id', authorizeAdministration\((\[[^\]]+\])/));
   assert.deepEqual(writeRoles('remove'), rolesIn(ingredients, /router.delete\('\/:id', authorizeAdministration\((\[[^\]]+\])/));
   assert.deepEqual([...canonicalWorkspaceAccess['/UserManagement']], rolesIn(administration, /router.use\('\/users', authorizeAdministration\((\[[^\]]+\])/));
   assert.deepEqual([...canonicalWorkspaceAccess['/AdministrativeAudit']], rolesIn(administration, /router.get\('\/audit-records', authorizeAdministration\((\[[^\]]+\])/));

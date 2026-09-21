@@ -1,3 +1,7 @@
+import type { InventoryBatchService } from './services/inventory-batches';
+import { inventoryBatchRoutes } from './routes/inventory-batch.routes';
+import type { SystemConfigService } from './services/system-config';
+import { systemConfigRoutes } from './routes/system-config.routes';
 import express from 'express';
 import cors from 'cors';
 import { corsOptions } from './config/cors';
@@ -10,14 +14,14 @@ import type { AdministrationService } from './services/administration';
 import { ingredientRoutes } from './routes/ingredient.routes';
 import type { IngredientService } from './services/ingredients';
 
-export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService) {
+export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, systemConfig?: SystemConfigService, batches?: InventoryBatchService) {
   const app = express();
   app.disable('x-powered-by');
   app.use(cors(corsOptions(origins)));
   const json = express.json({ limit: '100kb' });
   app.use((req, res, next) => {
     // New administration APIs parse only after their authentication/authorization gates.
-    if ((administration || ingredients) && /^\/api\/(users|dashboard|audit-records|ingredients)(\/|$)/.test(req.path)) { next(); return; }
+    if (/^\/api\/(users|dashboard|audit-records|ingredients|system-config|inventory-batches)(\/|$)/.test(req.path)) { next(); return; }
     json(req, res, next);
   });
   app.use('/api/health', healthRoutes(isReady));
@@ -30,6 +34,8 @@ export function createApp(origins: readonly string[], isReady: () => boolean, au
     });
   }
   if (auth && ingredients) app.use('/api/ingredients', ingredientRoutes(auth, ingredients));
+  if (auth && systemConfig) app.use('/api/system-config', systemConfigRoutes(auth, systemConfig));
+  if (auth && batches) app.use('/api/inventory-batches', inventoryBatchRoutes(auth, batches));
   app.use(notFound);
   app.use(errorHandler);
   return app;

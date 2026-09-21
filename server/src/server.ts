@@ -1,3 +1,7 @@
+import { inventoryBatchModel, provisionBatchIndexes } from './models/inventory-batch';
+import { createInventoryBatches, type InventoryBatchService } from './services/inventory-batches';
+import { systemConfigModel } from './models/system-config';
+import { createSystemConfig, type SystemConfigService } from './services/system-config';
 import { loginAttemptModel } from './models/login-attempt';
 import { createLoginLimiter, mongoLoginAttemptStore } from './services/login-limiter';
 import { provisionHardeningIndexes } from './services/backend-maintenance';
@@ -55,11 +59,11 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, systemConfig?: SystemConfigService, batches?: InventoryBatchService) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, systemConfig, batches));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -140,17 +144,23 @@ if (require.main === module) {
       },
     }, createResetEmail(process.env));
     const audits = auditRecordModel(driver);
+    const configRows = systemConfigModel(driver);
+    const systemConfig = createSystemConfig(driver, configRows, audits);
     const administration = createAdministration(createAdministrationStore(driver, users, audits));
     const ingredientRows = ingredientModel(driver);
     const ingredients = createIngredients(createIngredientStore(driver, ingredientRows, users, audits));
+    const batchRows = inventoryBatchModel(driver);
+    const batches = createInventoryBatches(driver, batchRows, ingredientRows, audits, systemConfig);
     const attempts = loginAttemptModel(driver);
     const loginLimiter = createLoginLimiter(mongoLoginAttemptStore(attempts));
     const database = createDatabase(driver);
     const indexedDatabase = { ...database, connect: async (uri: string) => {
       await database.connect(uri);
       await provisionHardeningIndexes(ingredientRows, attempts);
+      await configRows.createCollection();
+      await provisionBatchIndexes(batchRows);
     } };
-    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients);
+    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, systemConfig, batches);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');
