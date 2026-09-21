@@ -3,6 +3,10 @@
 Vite + React + TypeScript PWA and an Express/Mongoose API, managed with npm workspaces.
 Run commands below from `C:\Final_Project\ShelfLife-AI` unless noted otherwise.
 
+The single trunk is `stable`. Follow the [team Git workflow](docs/git-workflow.md):
+feature branches, pull requests, and at least one teammate approval. GitHub
+protection enforcement is pending a plan upgrade; the repository stays private.
+
 ## Requirements
 
 - Node.js 24.x and npm. `.nvmrc` records 24.20.0; a newer Node 24 patch also satisfies the backend's engine requirement.
