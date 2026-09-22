@@ -43,6 +43,11 @@ verify enforcement. Never make the repository public just to enable protection.
 
 ## Trunk transition
 
+The transition below is historical. On 22 September 2026, obsolete branch names
+were retired in favor of verified archive tags. See the
+[branch consolidation record](branch-consolidation.md) for exact commit IDs,
+selected ports, excluded work, and recovery commands.
+
 The previous `stable` tip, `e14c948`, contains 25 commits absent from the previous
 `rinse-revision`. A fast-forward is impossible without importing that work.
 Preserve it as `codex/archive-stable-e14c948`, then rename the verified

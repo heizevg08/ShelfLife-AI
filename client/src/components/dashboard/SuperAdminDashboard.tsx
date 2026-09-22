@@ -63,6 +63,21 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     return roleOrder.map(role => ({ role, count: accounts.filter(account => account.role === role).length }));
   }, [accounts, accountsTotal]);
 
+  // Adapted from the UI branch: chart only a complete account result, never a
+  // single page presented as the system-wide distribution.
+  const distributionTotal = completeRoleDistribution?.reduce((sum, item) => sum + item.count, 0) ?? 0;
+  const roleColors = ['#0b8755', '#79c9a3', '#ffd166', '#67a98f'];
+  let cursor = 0;
+  const distributionStops = (completeRoleDistribution ?? []).map((item, index) => {
+    const next = cursor + (distributionTotal ? item.count / distributionTotal * 100 : 0);
+    const stop = `${roleColors[index]} ${cursor}% ${next}%`;
+    cursor = next;
+    return stop;
+  });
+  const distributionBackground = distributionTotal
+    ? `radial-gradient(circle at center, white 0 48%, transparent 49%), conic-gradient(${distributionStops.join(',')})`
+    : 'radial-gradient(circle at center, white 0 48%, transparent 49%), #e9eef3';
+
   const totalUsers = summary?.totalUsers ?? accountsTotal;
   return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49">
     <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
@@ -93,7 +108,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
 
     <section className="sl-sa-bottom-row">
       <Card id="sl-sa-services" title="System Services"><div className="sl-sa-service-list"><div><span><ShieldCheck size={16}/> Application API</span><Status tone="success">Connected through current session</Status></div><div><span><Box size={16}/> Database</span><Status>Detailed health unavailable</Status></div><div><span><FileText size={16}/> File Storage</span><Status>Health unavailable</Status></div><div><span><LockKeyhole size={16}/> Authentication</span><Status tone="success">Session verified</Status></div></div></Card>
-      <Card id="sl-sa-distribution" title="User Distribution (All Roles)">{completeRoleDistribution ? <div className="sl-sa-role-distribution"><div className="sl-sa-role-total"><strong>{accountsTotal}</strong><span>Users</span></div><div className="sl-sa-role-legend">{completeRoleDistribution.map(item => <div key={item.role}><span>{item.role}</span><strong>{item.count}</strong></div>)}</div></div> : <DataState kind="empty" title="No live records yet" description="User distribution" action={<Status>Preview · data pending</Status>} />}</Card>
+      <Card id="sl-sa-distribution" title="User Distribution (All Roles)">{completeRoleDistribution ? <div className="sl-sa-role-distribution"><div className="sl-sa-role-total sl-sa-role-donut" style={{ background: distributionBackground }} aria-hidden="true"><strong>{accountsTotal}</strong><span>Users</span></div><div className="sl-sa-role-legend">{completeRoleDistribution.map((item, index) => <div key={item.role}><span><i className="sl-sa-role-swatch" style={{ background: roleColors[index] }} aria-hidden="true" />{item.role}</span><strong>{item.count}</strong></div>)}</div></div> : <DataState kind="empty" title="No live records yet" description="User distribution" action={<Status>Preview · data pending</Status>} />}</Card>
       <Card id="sl-sa-security" title="Security Overview" action={<Link href="/SecurityActivity" className="sl-text-link">View all <ArrowRight size={14}/></Link>}><div className="sl-sa-security-grid"><div><ShieldCheck/><span>Audit Records</span><strong>{audit?.total.toLocaleString() ?? (auditError ? 'Unavailable' : 'Loading…')}</strong></div><div><LockKeyhole/><span>Security Events</span><UnavailableMetric label="No summary API" /></div><div><AlertTriangle/><span>Failed Login Attempts</span><UnavailableMetric label="No summary API" /></div><div><UsersRound/><span>Active Sessions</span><UnavailableMetric label="No summary API" /></div></div></Card>
     </section>
   </div>;

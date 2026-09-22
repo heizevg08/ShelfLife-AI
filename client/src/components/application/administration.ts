@@ -2,7 +2,7 @@ import { Bell, Boxes, ChartNoAxesCombined, ClipboardList, Clock, Leaf, ListCheck
 
 // Product responsibilities only; these definitions do not grant API permissions.
 export const administrationAreas = [
-  { id: 'accounts', path: '/AdminAccounts', label: 'Users', Icon: UsersRound, summary: 'Manage authorized user accounts' },
+  { id: 'accounts', path: '/UserManagement', label: 'Users', Icon: UsersRound, summary: 'Manage authorized user accounts' },
   { id: 'settings', path: '/SystemSettings', label: 'System Settings', Icon: Settings2, summary: 'Application configuration' },
   { id: 'security', path: '/SecurityActivity', label: 'Security & Activity', Icon: ShieldCheck, summary: 'Protected security and audit activity' },
 
