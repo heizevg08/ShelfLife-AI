@@ -2,6 +2,42 @@ import { test, expect, type Page } from '@playwright/test';
 import { canonicalWorkspaceAccess, dashboardPaths, type WorkspaceRole } from '../src/components/application/workspace';
 
 const roles: WorkspaceRole[] = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'];
+
+test('Super Admin distribution uses canonical roles and refuses incomplete account totals', async ({ page }) => {
+  await mockApi(page, 'Super Admin');
+  let total = 4;
+  await page.route('**/api/users?*', route => route.fulfill({ json: {
+    items: roles.map((role, index) => ({ id: String(index), role, name: role, isActive: true })),
+    page: 1, pageSize: 10, total,
+  } }));
+  await page.goto('/SuperAdminDashboard');
+  const distribution = page.locator('section[aria-labelledby="sl-sa-distribution"]');
+  await expect(distribution.locator('.sl-sa-role-donut')).toBeVisible();
+  for (const role of roles) {
+    await expect(distribution.locator('.sl-sa-role-legend > div').filter({ has: page.getByText(role, { exact: true }) }).locator('strong')).toHaveText('1');
+  }
+  total = 20;
+  await page.reload();
+  await expect(distribution.getByText('No live records yet')).toBeVisible();
+  await expect(distribution.locator('.sl-sa-role-donut')).toHaveCount(0);
+});
+
+test('audit table keeps headings visible during request failure and retry', async ({ page }) => {
+  await mockApi(page, 'Admin');
+  let failing = true;
+  await page.route('**/api/audit-records?*', route => route.fulfill({
+    status: failing ? 500 : 200,
+    json: failing ? { error: { message: 'Unavailable' } } : { items: [], page: 1, pageSize: 10, total: 0 },
+  }));
+  await page.goto('/AdministrativeAudit');
+  const table = page.getByRole('region', { name: 'Administrative audit records', exact: true });
+  await expect(table.getByRole('columnheader', { name: 'Date & Time' })).toBeVisible();
+  await expect(table.getByText('Activity could not be loaded')).toBeVisible();
+  failing = false;
+  await table.getByRole('button', { name: 'Retry' }).click();
+  await expect(table.getByText('No administrative activity yet')).toBeVisible();
+});
+
 async function mockApi(page: Page, role: WorkspaceRole, loggedIn = true) {
   const writes: { path: string; body: any }[] = [];
   const forbiddenCalls: string[] = [];
