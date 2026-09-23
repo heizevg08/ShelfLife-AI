@@ -1,4 +1,5 @@
-import { Router, json, type ErrorRequestHandler } from 'express';
+import { Router, type ErrorRequestHandler } from 'express';
+import { mongoInputGuard, secureJson as json } from '../middleware/request-security.middleware';
 import type { AuthService } from '../services/auth';
 import type { IngredientService } from '../services/ingredients';
 import { authenticate } from '../middleware/auth.middleware';
@@ -11,7 +12,7 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
 
-  router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff']), actions.list);
+  router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff']), mongoInputGuard, actions.list);
   router.post('/', authorizeAdministration(['Inventory Manager', 'Inventory Staff']), json({ limit: '100kb' }), actions.create);
   router.patch('/:id', authorizeAdministration(['Inventory Manager']), json({ limit: '100kb' }), actions.update);
   router.delete('/:id', authorizeAdministration(['Inventory Manager']), json({ limit: '100kb' }), actions.remove);

@@ -4,6 +4,8 @@ import type { SystemConfigService } from './services/system-config';
 import { systemConfigRoutes } from './routes/system-config.routes';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import { secureJson } from './middleware/request-security.middleware';
 import { corsOptions } from './config/cors';
 import { healthRoutes } from './routes/health.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
@@ -17,8 +19,16 @@ import type { IngredientService } from './services/ingredients';
 export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, systemConfig?: SystemConfigService, batches?: InventoryBatchService) {
   const app = express();
   app.disable('x-powered-by');
+  app.use(helmet({
+    strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true },
+    xFrameOptions: { action: 'deny' },
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: { defaultSrc: ["'none'"], baseUri: ["'none'"], frameAncestors: ["'none'"], formAction: ["'none'"] },
+    },
+  }));
   app.use(cors(corsOptions(origins)));
-  const json = express.json({ limit: '100kb' });
+  const json = secureJson({ limit: '100kb' });
   app.use((req, res, next) => {
     // New administration APIs parse only after their authentication/authorization gates.
     if (/^\/api\/(users|dashboard|audit-records|ingredients|system-config|inventory-batches)(\/|$)/.test(req.path)) { next(); return; }
