@@ -21,7 +21,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
-import { DataState, ExportControl, PageHeader, Pagination, Status } from '../../components/application/primitives';
+import { ExportControl, PageHeader, Pagination } from '../../components/application/primitives';
 import { listAuditRecords, type AuditRecord, type Page } from '../../services/administration';
 
 const tabs = [
@@ -32,23 +32,11 @@ const tabs = [
 
 type SecurityTab = (typeof tabs)[number];
 
-function PlaceholderBadge() {
-  return null;
-}
-
-function SecurityPending({ label, compact = false }: { label: string; compact?: boolean }) {
-  return (
-    <div className={`sl-staff-usage-pending${compact ? ' compact' : ''}`}>
-      <DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} />
-    </div>
-  );
-}
-
 function OverviewPanel({ onNavigate }: { onNavigate: (tab: SecurityTab) => void }) {
   return (
-    <div className="sl-staff-usage-layout">
+    <div className="sl-security-overview-panel">
       <main className="sl-staff-usage-main">
-        <section className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="recent-security-activity-title">
+        <section className="sl-staff-usage-card sl-staff-usage-records sl-security-overview-records" aria-labelledby="recent-security-activity-title">
           <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
             <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
             <h2 id="recent-security-activity-title">Recent Security &amp; System Activity</h2>
@@ -57,12 +45,12 @@ function OverviewPanel({ onNavigate }: { onNavigate: (tab: SecurityTab) => void 
           <div className="sl-staff-usage-table-shell">
             <table className="sl-data-table sl-staff-usage-table sl-security-overview-table sl-security-overview-activity-table">
               <thead><tr><th>Date &amp; Time</th><th>User</th><th>Activity</th><th>Module</th><th>Status</th></tr></thead>
-              <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={5} className="sl-staff-usage-preview-state-cell"><SecurityPending label="Security and system activity" /></td></tr></tbody>
+              <tbody><tr className="sl-security-overview-empty-row" aria-label="No recent security or system activity available">{Array.from({ length: 5 }).map((_, index) => <td key={index}>—</td>)}</tr></tbody>
             </table>
           </div>
         </section>
 
-        <section className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="active-sessions-title">
+        <section className="sl-staff-usage-card sl-staff-usage-records sl-security-overview-records" aria-labelledby="active-sessions-title">
           <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
             <span className="sl-staff-usage-head-icon"><Monitor aria-hidden="true" /></span>
             <h2 id="active-sessions-title">Active Sessions</h2>
@@ -71,42 +59,11 @@ function OverviewPanel({ onNavigate }: { onNavigate: (tab: SecurityTab) => void 
           <div className="sl-staff-usage-table-shell">
             <table className="sl-data-table sl-staff-usage-table sl-security-overview-table sl-security-overview-sessions-table">
               <thead><tr><th>User</th><th>Role</th><th>Login Time</th><th>Last Activity</th><th>Actions</th></tr></thead>
-              <tbody><tr className="sl-staff-usage-preview-row"><td colSpan={5} className="sl-staff-usage-preview-state-cell"><SecurityPending label="Active sessions" /></td></tr></tbody>
+              <tbody><tr className="sl-security-overview-empty-row" aria-label="No active session records available">{Array.from({ length: 4 }).map((_, index) => <td key={index}>—</td>)}<td><button type="button" className="sl-button sl-icon-button" disabled aria-label="View session unavailable"><Eye size={16} aria-hidden="true" /></button></td></tr></tbody>
             </table>
           </div>
         </section>
       </main>
-
-      <aside className="sl-staff-usage-rail">
-        <section className="sl-staff-usage-card sl-staff-usage-sidecard">
-          <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><ShieldCheck aria-hidden="true" /></span><h2>Security Status</h2></header>
-          <div className="sl-v207-security-distribution" aria-label="Security status distribution with no live values yet">
-            <div className="sl-v207-security-donut" aria-hidden="true"><strong>—</strong></div>
-            <div className="sl-v207-security-legend">
-              <div><span className="sl-v207-security-dot is-secure" /><span>Secure</span><strong>—</strong></div>
-              <div><span className="sl-v207-security-dot is-attention" /><span>Attention</span><strong>—</strong></div>
-              <div><span className="sl-v207-security-dot is-risk" /><span>Risk</span><strong>—</strong></div>
-              <div><span className="sl-v207-security-dot is-critical" /><span>Critical</span><strong>—</strong></div>
-            </div>
-          </div>
-        </section>
-        <section className="sl-staff-usage-card sl-staff-usage-sidecard">
-          <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><BarChart3 aria-hidden="true" /></span><h2>Top Security Events (7 Days)</h2></header>
-          <div className="sl-v206-events-chart" aria-label="Top security events chart preview with no live values yet">
-            {['Authentication','Access Control','Account Changes','System Settings','Audit Events'].map((label, index) => (
-              <div className="sl-v206-event-row" key={label}>
-                <div><span>{label}</span><strong>—</strong></div>
-                <span className={`sl-v206-event-track tone-${index + 1}`} aria-hidden="true"><i /></span>
-              </div>
-            ))}
-            <small>Live values will populate when security-event analytics are connected.</small>
-          </div>
-        </section>
-        <section className="sl-staff-usage-card sl-staff-usage-sidecard">
-          <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon attention"><AlertTriangle aria-hidden="true" /></span><h2>Security Alerts</h2></header>
-          <SecurityPending label="Security alerts" compact />
-        </section>
-      </aside>
     </div>
   );
 }
@@ -254,22 +211,6 @@ function ActiveSessionsPanel() {
   );
 }
 
-function GenericPlaceholder({ title }: { title: string }) {
-  return (
-    <section className="sl-v78-card">
-      <div className="sl-v78-state-wrap">
-        <DataState
-          kind="empty"
-          title="No live records yet"
-          description={`${title} will appear here when the backend connection is available.`}
-        />
-        <p className="sl-v79-context-copy">{title}</p>
-        <PlaceholderBadge />
-      </div>
-    </section>
-  );
-}
-
 export default function SecurityActivity() {
   const [activeTab, setActiveTab] = useState<SecurityTab>('Overview');
   const navigateTab = (tab: SecurityTab) => {
@@ -282,7 +223,7 @@ export default function SecurityActivity() {
   };
 
   return (
-    <div className="sl-security-activity-v78 sl-staff-usage-v150" data-ui-version="v199-superadmin-dashboard-kpi-parity">
+    <div className="sl-security-activity-v78 sl-staff-usage-v150" data-ui-version="dashboard-kpi-parity">
       <PageHeader
         eyebrow="Security & Activity"
         title="Security & Activity"
@@ -292,19 +233,19 @@ export default function SecurityActivity() {
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Security overview">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><ShieldCheck aria-hidden="true" /></span>
-          <div><span>Total Users</span><strong>—</strong><small>Preview · data pending</small></div>
+          <div><span>Total Users</span><strong>—</strong><small>Account summary unavailable</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info">
           <span className="sl-sa-kpi-icon"><UsersRound aria-hidden="true" /></span>
-          <div><span>Active Sessions</span><strong>—</strong><small>Preview · data pending</small></div>
+          <div><span>Active Sessions</span><strong>—</strong><small>Session service unavailable</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><FileText aria-hidden="true" /></span>
-          <div><span>Audit Logs (30 Days)</span><strong>—</strong><small>Preview · data pending</small></div>
+          <div><span>Audit Logs (30 Days)</span><strong>—</strong><small>Audit summary unavailable</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
-          <div><span>Security Alerts</span><strong>—</strong><small>Preview · data pending</small></div>
+          <div><span>Security Alerts</span><strong>—</strong><small>Security alert service unavailable</small></div>
         </article>
       </section>
 

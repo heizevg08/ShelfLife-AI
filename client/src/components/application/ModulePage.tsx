@@ -72,7 +72,7 @@ function InventoryStaffWastePage() {
   const [ingredient,setIngredient]=useState(''); const [batch,setBatch]=useState(''); const [qty,setQty]=useState(''); const [reason,setReason]=useState(''); const [method,setMethod]=useState(''); const [notes,setNotes]=useState('');
   const [date,setDate]=useState(''); const [time,setTime]=useState(''); const [search,setSearch]=useState(''); const [reasonFilter,setReasonFilter]=useState('All Reasons'); const [range,setRange]=useState('Last 7 Days'); const [rows,setRows]=useState('10');
   const clear=()=>{setIngredient('');setBatch('');setQty('');setReason('');setMethod('');setNotes('');setDate('');setTime('')};
-  const Pending=({label,compact=false}:{label:string;compact?:boolean})=><div className={`sl-staff-waste-pending${compact?' compact':''}`}><DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} /></div>;
+  const Pending=({label,compact=false}:{label:string;compact?:boolean})=><div className={`sl-staff-waste-pending${compact?' compact':''}`}><DataState kind="empty" title={`${label} unavailable`} description="Waste analytics are not connected yet." /></div>;
   const WasteForm=()=> <form className="sl-staff-waste-form" onSubmit={e=>e.preventDefault()}>
     <label><span>Ingredient <b>*</b></span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option value="">Search or select ingredient...</option></select></label>
     <label><span>Batch ID <b>*</b></span><select value={batch} onChange={e=>setBatch(e.target.value)}><option value="">Select batch ID...</option></select></label>
@@ -87,18 +87,18 @@ function InventoryStaffWastePage() {
   return <>
     <PageHeader title="Waste Recording" description="Record ingredients that are discarded or no longer usable. Help us reduce food waste." />
     <div className="sl-admin-view sl-staff-waste-v159">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-waste-kpis" aria-label="Waste summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Today</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Most Wasted Ingredient</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3/></span><div><span>Common Waste Reason</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown/></span><div><span>Estimated Value Lost</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-waste-kpis sl-kpi-reference-v201" aria-label="Waste summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Today</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Most Wasted Ingredient</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3/></span><div><span>Common Waste Reason</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown/></span><div><span>Estimated Value Lost</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
       <div className="sl-staff-waste-layout">
         <main className="sl-staff-waste-main">
           <section className="sl-staff-waste-card sl-staff-waste-records"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><Clock3/></span><h2>Recent Waste Records</h2></header>
-            <div className="sl-staff-waste-toolbar"><label className="sl-staff-waste-search"><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or reason..."/></label><select value={reasonFilter} onChange={e=>setReasonFilter(e.target.value)}><option>All Reasons</option><option>Expired</option><option>Spoiled</option><option>Trimming</option><option>Over-preparation</option></select><select value={range} onChange={e=>setRange(e.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select><button type="button" className="sl-button" title="Export will become available when waste records are connected"><Download size={16}/>Export</button><button ref={addButton} type="button" className="sl-button sl-button-primary" onClick={()=>setAddOpen(true)}><Plus size={16}/>Add Waste</button></div>
-            <div className="sl-staff-waste-table-shell"><table className="sl-data-table sl-staff-waste-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity','Unit','Reason','Disposition','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody><tr className="sl-staff-waste-preview-row"><td colSpan={8}><Pending label="Waste records"/></td><td className="sl-staff-waste-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste record actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View waste record" title="View" onClick={()=>setWasteAction('view')}><Eye size={16}/></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit waste record" title="Edit" onClick={()=>setWasteAction('edit')}><Pencil size={16}/></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete waste record" title="Delete" onClick={()=>setWasteAction('delete')}><Trash2 size={16}/></button></div></td></tr></tbody></table></div>
-            <footer className="sl-staff-waste-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>setRows(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label><span>Pagination will activate when live waste records are available.</span><div className="sl-staff-waste-pagination"><button type="button">‹</button><button type="button" aria-current="page">1</button><button type="button">›</button></div></footer>
+            <div className="sl-staff-waste-toolbar"><label className="sl-staff-waste-search"><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or reason..."/></label><select value={reasonFilter} onChange={e=>setReasonFilter(e.target.value)}><option>All Reasons</option><option>Expired</option><option>Spoiled</option><option>Trimming</option><option>Over-preparation</option></select><select value={range} onChange={e=>setRange(e.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select><button type="button" className="sl-button sl-download-trigger sl-inventory-staff-export" title="Export will become available when waste records are connected"><Download size={16}/>Export</button><button ref={addButton} type="button" className="sl-button sl-button-primary" onClick={()=>setAddOpen(true)}><Plus size={16}/>Add Waste</button></div>
+            <div className="sl-staff-waste-table-shell"><table className="sl-data-table sl-staff-waste-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity','Unit','Reason','Disposition','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody><tr className="sl-staff-waste-preview-row sl-staff-records-dash-row">{Array.from({length:8}).map((_,index)=><td key={index}>—</td>)}<td className="sl-staff-waste-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste record actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View waste record" title="View" onClick={()=>setWasteAction('view')}><Eye size={16}/></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit waste record" title="Edit" onClick={()=>setWasteAction('edit')}><Pencil size={16}/></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete waste record" title="Delete" onClick={()=>setWasteAction('delete')}><Trash2 size={16}/></button></div></td></tr></tbody></table></div>
+            <footer className="sl-staff-waste-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>setRows(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label><span>Showing 0 to 0 of 0 waste records</span><div className="sl-staff-waste-pagination"><button type="button">‹</button><button type="button" aria-current="page">1</button><button type="button">›</button></div></footer>
           </section>
         </main>
         <aside className="sl-staff-waste-rail">
@@ -117,24 +117,29 @@ function InventoryStaffWastePage() {
 
 function ManagerUsageWastePage() {
   const [range, setRange] = useState('Current period');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [category, setCategory] = useState('All Categories');
   const [ingredient, setIngredient] = useState('All Ingredients');
   const [location, setLocation] = useState('All Locations');
   const [frequency, setFrequency] = useState('Daily');
   const [wastePeriod, setWastePeriod] = useState('This Month');
-  const reset = () => { setRange('Current period'); setCategory('All Categories'); setIngredient('All Ingredients'); setLocation('All Locations'); setFrequency('Daily'); setWastePeriod('This Month'); };
-  const Pending = ({ description }: { description: string }) => <div className="sl-manager-usage-pending"><DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} /></div>;
+  const [rows, setRows] = useState(10);
+  const [page, setPage] = useState(1);
+  const reset = () => { setRange('Current period'); setDateFrom(''); setDateTo(''); setCategory('All Categories'); setIngredient('All Ingredients'); setLocation('All Locations'); setFrequency('Daily'); setWastePeriod('This Month'); setPage(1); };
+  const Pending = ({ label }: { label: string }) => <div className="sl-manager-usage-pending"><DataState kind="empty" title={`${label} unavailable`} description="Usage and waste analytics are not connected yet." /></div>;
   return <>
     <PageHeader title="Usage & Waste" description="Monitor ingredient usage and waste to identify trends, reduce losses, and improve efficiency." />
     <div className="sl-admin-view sl-manager-usage-waste-v121">
-      <div className="sl-sa-kpis sl-admin-reference-kpis sl-manager-usage-kpis" aria-label="Usage and waste summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Total Ingredients Used</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Trash2 /></span><div><span>Total Waste</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3 /></span><div><span>Waste Rate</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Estimated Cost of Waste</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      <div className="sl-sa-kpis sl-admin-reference-kpis sl-manager-usage-kpis sl-kpi-reference-v201" aria-label="Usage and waste summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Total Ingredients Used</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2 /></span><div><span>Total Waste</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3 /></span><div><span>Waste Rate</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Estimated Cost of Waste</span><strong>—</strong><small>Data unavailable</small></div></article>
       </div>
       <section className="sl-manager-usage-filters" aria-label="Usage and waste filters">
-        <label><span>Date Range</span><select className="sl-admin-input" value={range} onChange={e=>setRange(e.target.value)}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option></select></label>
+        <label><span>Date Range</span><select className="sl-admin-input" value={range} onChange={event => { setRange(event.target.value); setPage(1); }}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option><option>Custom</option></select></label>
+        {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage and waste date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label></div>}
         <label><span>Ingredient Category</span><select className="sl-admin-input" value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
         <label><span>Ingredient</span><select className="sl-admin-input" value={ingredient} onChange={e=>setIngredient(e.target.value)}><option>All Ingredients</option></select></label>
         <label><span>Location</span><select className="sl-admin-input" value={location} onChange={e=>setLocation(e.target.value)}><option>All Locations</option></select></label>
@@ -142,14 +147,14 @@ function ManagerUsageWastePage() {
       </section>
 
       <div className="sl-manager-usage-analytics">
-        <Card id="manager-usage-trend" title="Usage vs. Waste Trend" action={<label className="sl-dashboard-filter"><select value={frequency} onChange={e=>setFrequency(e.target.value)} aria-label="Usage trend frequency"><option>Daily</option><option>Weekly</option><option>Monthly</option></select></label>}><Pending description="Usage and waste trend analytics are not connected yet." /></Card>
-        <Card id="manager-waste-reason" title="Waste by Reason"><Pending description="Waste-reason analytics are not connected yet." /></Card>
-        <Card id="manager-top-waste" title="Top 5 Ingredients by Waste" action={<label className="sl-dashboard-filter"><select value={wastePeriod} onChange={e=>setWastePeriod(e.target.value)} aria-label="Top waste period"><option>This Week</option><option>This Month</option><option>This Quarter</option><option>This Year</option></select></label>}><Pending description="Ingredient waste rankings are not connected yet." /></Card>
+        <Card id="manager-usage-trend" title="Usage vs. Waste Trend" action={<label className="sl-dashboard-filter"><select value={frequency} onChange={e=>setFrequency(e.target.value)} aria-label="Usage trend frequency"><option>Daily</option><option>Weekly</option><option>Monthly</option></select></label>}><Pending label="Usage and waste trend" /></Card>
+        <Card id="manager-waste-reason" title="Waste by Reason"><Pending label="Waste-reason analytics" /></Card>
+        <Card id="manager-top-waste" title="Top 5 Ingredients by Waste" action={<label className="sl-dashboard-filter"><select value={wastePeriod} onChange={e=>setWastePeriod(e.target.value)} aria-label="Top waste period"><option>This Week</option><option>This Month</option><option>This Quarter</option><option>This Year</option></select></label>}><Pending label="Ingredient waste rankings" /></Card>
       </div>
-      <section className="sl-manager-usage-records" aria-label="Usage and waste records">
-        <header><div><FileInput size={18}/><strong>Usage & Waste Records</strong></div><button className="sl-button" type="button" disabled><Download size={16}/>Export</button></header>
-        <div className="sl-manager-usage-table-shell"><table className="sl-data-table"><thead><tr>{['Date','Ingredient','Type','Quantity','Related Batch','Reason / Notes','Recorded By','Actions'].map(x=><th key={x}>{x}</th>)}</tr></thead></table><Pending description="Usage and waste transaction records are not connected yet." /></div>
-        <footer><label>Rows per page <select className="sl-admin-input" disabled><option>10</option></select></label><span>Preview · data pending</span></footer>
+      <section className="sl-manager-usage-records sl-reference-records" aria-label="Usage and waste records">
+        <header><div><span className="sl-staff-usage-head-icon"><FileInput size={18}/></span><strong>Usage &amp; Waste Records</strong></div><button className="sl-button sl-download-trigger" type="button" disabled><Download size={16}/>Export</button></header>
+        <div className="sl-manager-usage-table-shell"><table className="sl-data-table sl-reference-records-table"><thead><tr>{['Date','Ingredient','Type','Quantity','Related Batch','Reason / Notes','Recorded By','Actions'].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody><tr aria-label="Usage and waste values unavailable">{Array.from({length:8}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table></div>
+        <footer className="sl-reference-records-footer"><label>Rows per page <select className="sl-admin-input" value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="usage and waste records" onPageChange={setPage} /></footer>
       </section>
     </div>
   </>;
@@ -161,6 +166,8 @@ function InventoryStaffUsagePage() {
   const [search, setSearch] = useState('');
   const [purpose, setPurpose] = useState('All Purposes');
   const [range, setRange] = useState('Last 7 Days');
+  const [usageDateFrom, setUsageDateFrom] = useState('');
+  const [usageDateTo, setUsageDateTo] = useState('');
   const [filtersApplied, setFiltersApplied] = useState(false);
   const [ingredient, setIngredient] = useState('');
   const [batch, setBatch] = useState('');
@@ -175,7 +182,7 @@ function InventoryStaffUsagePage() {
   const clearForm = () => { setIngredient(''); setBatch(''); setDateUsed(''); setQuantity(''); setUsedFor(''); setMenu(''); setNotes(''); };
   const Pending = ({ label, compact = false }: { label: string; compact?: boolean }) => (
     <div className={`sl-staff-usage-pending${compact ? ' compact' : ''}`}>
-      <DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} />
+      <DataState kind="empty" title={`${label} unavailable`} description="The supporting inventory service is not connected yet." />
     </div>
   );
 
@@ -186,22 +193,22 @@ function InventoryStaffUsagePage() {
     />
 
     <div className="sl-admin-view sl-staff-usage-v150">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Usage summary">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-kpi-reference-v201" aria-label="Usage summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
-          <div><span>Total Usage Today</span><strong>—</strong><small>Preview · data pending</small></div>
+          <div><span>Total Usage Today</span><strong>—</strong><small>Data unavailable</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info">
           <span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span>
-          <div><span>Total Records Today</span><strong>—</strong><small>Preview · data pending</small></div>
+          <div><span>Total Records Today</span><strong>—</strong><small>Data unavailable</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
-          <div><span>Most Used Ingredient</span><strong>—</strong><small>Preview · data pending</small></div>
+          <div><span>Most Used Ingredient</span><strong>—</strong><small>Data unavailable</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
-          <div><span>Current Stock (After Usage)</span><strong>—</strong><small>Preview · data pending</small></div>
+          <div><span>Current Stock (After Usage)</span><strong>—</strong><small>Data unavailable</small></div>
         </article>
       </section>
 
@@ -218,15 +225,16 @@ function InventoryStaffUsagePage() {
             <div className="sl-staff-usage-toolbar">
               <label className="sl-staff-usage-search"><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or menu..." aria-label="Search usage records" /></label>
               <select value={purpose} onChange={e=>{setPurpose(e.target.value);setFiltersApplied(false)}} aria-label="Filter by purpose"><option>All Purposes</option><option>Menu Preparation</option><option>Staff Meal</option><option>Testing / R&amp;D</option><option>Others</option></select>
-              <select value={range} onChange={e=>{setRange(e.target.value);setFiltersApplied(false)}} aria-label="Filter by date range"><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select>
-              <button type="button" className={`sl-button ${filtersApplied ? '' : 'sl-button-primary'} sl-staff-usage-filter-apply`} onClick={()=>{ if(filtersApplied){ setSearch(''); setPurpose('All Purposes'); setRange('Last 7 Days'); setFiltersApplied(false); } else { setFiltersApplied(true); } }}>{filtersApplied ? 'Reset' : 'Apply'}</button>
+              <select value={range} onChange={e=>{setRange(e.target.value);setFiltersApplied(false)}} aria-label="Filter by date range"><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option><option>Custom</option></select>
+              {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => { setUsageDateFrom(event.target.value); setFiltersApplied(false); }} /></label><label><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => { setUsageDateTo(event.target.value); setFiltersApplied(false); }} /></label></div>}
+              <button type="button" className={`sl-button ${filtersApplied ? '' : 'sl-button-primary'} sl-staff-usage-filter-apply`} onClick={()=>{ if(filtersApplied){ setSearch(''); setPurpose('All Purposes'); setRange('Last 7 Days'); setUsageDateFrom(''); setUsageDateTo(''); setFiltersApplied(false); } else { setFiltersApplied(true); } }}>{filtersApplied ? 'Reset' : 'Apply'}</button>
             </div>
             <div className="sl-staff-usage-table-shell">
               <table className="sl-data-table sl-staff-usage-table">
                 <thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Used','Unit','Used For','Menu','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead>
                 <tbody>
-                  <tr className="sl-staff-usage-preview-row">
-                    <td colSpan={8} className="sl-staff-usage-preview-state-cell"><Pending label="Usage records" /></td>
+                  <tr className="sl-staff-usage-preview-row sl-staff-records-dash-row">
+                    {Array.from({length:8}).map((_,index)=><td key={index}>—</td>)}
                     <td className="sl-staff-usage-preview-actions-cell">
                       <div className="sl-staff-usage-row-actions" aria-label="Usage record action preview">
                         <button type="button" className="sl-icon-button" aria-label="View usage record" title="View" onClick={()=>setPreviewAction('view')}><Eye size={16} aria-hidden="true" /></button>
@@ -240,7 +248,7 @@ function InventoryStaffUsagePage() {
             </div>
             <footer className="sl-staff-usage-footer">
               <label><span>Rows per page</span><select value={rowsPerPage} onChange={e=>setRowsPerPage(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label>
-              <span className="sl-staff-usage-pagination-note">Pagination will activate when live usage records are available.</span>
+              <span className="sl-staff-usage-pagination-note">Showing 0 to 0 of 0 usage records</span>
               <div className="sl-staff-usage-pagination" aria-label="Usage pagination preview"><button type="button" aria-label="Previous page">‹</button><button type="button" aria-current="page">1</button><button type="button" aria-label="Next page">›</button></div>
             </footer>
           </section>
@@ -333,21 +341,26 @@ function InventoryStaffUsagePage() {
 
 function InventoryStaffStockInPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [stockSearch, setStockSearch] = useState('');
+  const [stockSupplier, setStockSupplier] = useState('All Suppliers');
+  const [stockDateRange, setStockDateRange] = useState('Last 30 Days');
+  const [stockRows, setStockRows] = useState(10);
+  const [stockPage, setStockPage] = useState(1);
   const addStockInButton = useRef<HTMLButtonElement>(null);
   const Pending = ({ description, compact = false }: { description: string; compact?: boolean }) => (
     <div className={`sl-staff-stockin-pending${compact ? ' compact' : ''}`}>
-      <DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} />
+      <DataState kind="empty" title={`${description} unavailable`} description="The stock-in service is not connected yet." />
     </div>
   );
-  const StockInFormPreview = ({ asDialog = false }: { asDialog?: boolean }) => <form className={`sl-staff-stockin-form${asDialog ? ' sl-staff-stockin-form-dialog' : ''}`} aria-label="New stock-in entry preview">
-    <label><span>Supplier <b>*</b></span><select disabled><option>Select supplier...</option></select></label>
-    <label><span>Date Received <b>*</b></span><div className="sl-staff-stockin-date"><CalendarDays size={16} aria-hidden="true" /><input disabled value="Data pending" readOnly /></div></label>
-    <label><span>Ingredient <b>*</b></span><div className="sl-staff-stockin-search"><Search size={16} aria-hidden="true" /><input disabled placeholder="Search or select ingredient..." /></div></label>
-    <label><span>Batch ID <b>*</b></span><input disabled placeholder="Auto-generate or enter batch ID..." /></label>
-    <label><span>Expiry Date <b>*</b></span><div className="sl-staff-stockin-date"><input disabled placeholder="Select date" /><CalendarDays size={16} aria-hidden="true" /></div></label>
-    <label><span>Quantity Received <b>*</b></span><div className="sl-staff-stockin-quantity"><input disabled placeholder="Enter quantity" /><select disabled><option>kg</option></select></div></label>
-    <label><span>Unit Cost (Optional)</span><div className="sl-staff-stockin-money"><span>₱</span><input disabled value="0.00" readOnly /></div></label>
-    <label className="sl-staff-stockin-notes"><span>Notes (Optional)</span><input disabled placeholder="e.g., delivery condition, remarks, invoice reference..." /></label>
+  const StockInFormPreview = ({ asDialog = false }: { asDialog?: boolean }) => <form className={`sl-staff-stockin-form${asDialog ? ' sl-staff-stockin-form-dialog' : ''}`} aria-label="New stock-in entry">
+    <label><span>Supplier <b>*</b></span><select defaultValue=""><option value="">Select supplier...</option></select></label>
+    <label><span>Date Received <b>*</b></span><div className="sl-staff-stockin-date"><CalendarDays size={16} aria-hidden="true" /><input type="date" /></div></label>
+    <label><span>Ingredient <b>*</b></span><div className="sl-staff-stockin-search"><Search size={16} aria-hidden="true" /><input placeholder="Search or select ingredient..." /></div></label>
+    <label><span>Batch ID <b>*</b></span><input placeholder="Auto-generate or enter batch ID..." /></label>
+    <label><span>Expiry Date <b>*</b></span><div className="sl-staff-stockin-date"><input type="date" /><CalendarDays size={16} aria-hidden="true" /></div></label>
+    <label><span>Quantity Received <b>*</b></span><div className="sl-staff-stockin-quantity"><input inputMode="decimal" placeholder="Enter quantity" /><select defaultValue="kg"><option>kg</option></select></div></label>
+    <label><span>Unit Cost (Optional)</span><div className="sl-staff-stockin-money"><span>₱</span><input inputMode="decimal" placeholder="0.00" /></div></label>
+    <label className="sl-staff-stockin-notes"><span>Notes (Optional)</span><input placeholder="e.g., delivery condition, remarks, invoice reference..." /></label>
   </form>;
 
   return <>
@@ -357,11 +370,11 @@ function InventoryStaffStockInPage() {
     />
 
     <div className="sl-admin-view sl-staff-stockin-v145">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-stockin-kpis" aria-label="Stock-in summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Total Stock-In Today</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Quantity Received</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Active Deliveries</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Suppliers This Month</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-stockin-kpis sl-kpi-reference-v201" aria-label="Stock-in summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Total Stock-In Today</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Quantity Received</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Active Deliveries</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Suppliers This Month</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
 
       <div className="sl-staff-stockin-layout">
@@ -369,24 +382,19 @@ function InventoryStaffStockInPage() {
           <section className="sl-staff-stockin-history" aria-labelledby="staff-stockin-history-title">
             <header><div><h2 id="staff-stockin-history-title" className="sl-section-title">Stock History</h2></div></header>
             <div className="sl-staff-stockin-history-filters">
-              <label className="sl-staff-stockin-history-search"><span className="sl-sr-only">Search stock-in history</span><div><Search size={16} aria-hidden="true" /><input disabled placeholder="Search by ingredient, batch ID, or supplier..." /></div></label>
-              <label><span className="sl-sr-only">Supplier</span><select disabled><option>All Suppliers</option></select></label>
-              <label><span className="sl-sr-only">Date range</span><select disabled><option>Last 30 Days</option></select></label>
-              <div className="sl-staff-stockin-history-actions"><button type="button" className="sl-button" onClick={() => {}} title="Export will become available when the backend is fully connected"><Download size={15} aria-hidden="true" />Export</button><button ref={addStockInButton} type="button" className="sl-button sl-button-primary" onClick={() => setAddModalOpen(true)}><Plus size={15} aria-hidden="true" />Add Stock-In</button></div>
+              <label className="sl-staff-stockin-history-search"><span className="sl-sr-only">Search stock-in history</span><div><Search size={16} aria-hidden="true" /><input value={stockSearch} onChange={event => setStockSearch(event.target.value)} placeholder="Search by ingredient, batch ID, or supplier..." /></div></label>
+              <label><span className="sl-sr-only">Supplier</span><select value={stockSupplier} onChange={event => setStockSupplier(event.target.value)}><option>All Suppliers</option></select></label>
+              <label><span className="sl-sr-only">Date range</span><select value={stockDateRange} onChange={event => setStockDateRange(event.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></label>
+              <div className="sl-staff-stockin-history-actions"><button type="button" className="sl-button sl-download-trigger sl-inventory-staff-export" onClick={() => {}} title="Export will become available when the backend is fully connected"><Download size={16} aria-hidden="true" />Export</button><button ref={addStockInButton} type="button" className="sl-button sl-button-primary" onClick={() => setAddModalOpen(true)}><Plus size={15} aria-hidden="true" />Add Stock-In</button></div>
             </div>
             <div className="sl-staff-stockin-table-wrap">
-              <table className="sl-staff-stockin-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Supplier','Quantity','Unit','Expiry Date','Recorded By','Actions'].map(column => <th key={column}>{column}</th>)}</tr></thead></table>
-              <div className="sl-staff-stockin-table-state"><Pending description="Stock-in history" /></div>
+              <table className="sl-staff-stockin-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Supplier','Quantity','Unit','Expiry Date','Recorded By','Actions'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr className="sl-staff-records-dash-row">{Array.from({length:9}).map((_,index)=><td key={index}>—</td>)}</tr></tbody></table>
             </div>
-            <footer className="sl-staff-stockin-footer"><label>Rows per page <select defaultValue="10" disabled><option>10</option></select></label><span>Pagination will activate when live stock-in records are available.</span></footer>
+            <footer className="sl-staff-stockin-footer"><label>Rows per page <select value={stockRows} onChange={event => { setStockRows(Number(event.target.value)); setStockPage(1); }}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label><Pagination compact page={stockPage} pageSize={stockRows} total={0} itemLabel="stock-in records" onPageChange={setStockPage} /></footer>
           </section>
         </main>
 
         <aside className="sl-staff-stockin-rail" aria-label="Stock-in support panels">
-          <section className="sl-staff-stockin-guidelines" aria-labelledby="stockin-guidelines-title">
-            <header><div><Truck size={18} aria-hidden="true" /><h2 id="stockin-guidelines-title">Receiving Guidelines</h2></div></header>
-            <ol><li>Verify supplier and delivery details</li><li>Check quantity and unit of measurement</li><li>Confirm expiry date and batch condition</li><li>Keep the delivery receipt for reference</li></ol>
-          </section>
           <Card id="staff-stockin-recent-deliveries" title="Recent Deliveries" action={<button type="button" className="sl-text-link sl-staff-stockin-view-all" onClick={() => {}} title="Live delivery records will open when the backend is fully connected">View All <ArrowRight size={14} /></button>}><Pending description="Recent deliveries" compact /></Card>
           <Card id="staff-stockin-low-stock" title="Low Stock Ingredients" action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}><Pending description="Low-stock ingredients" compact /></Card>
         </aside>
@@ -397,12 +405,11 @@ function InventoryStaffStockInPage() {
       open={addModalOpen}
       onDismiss={() => setAddModalOpen(false)}
       returnFocus={addStockInButton}
-      className="sl-staff-stockin-dialog"
-      title={<span className="sl-staff-stockin-dialog-heading"><span className="sl-staff-stockin-entry-icon"><Plus aria-hidden="true" /></span><span><span className="sl-staff-stockin-dialog-title">Add Stock-In</span><small>Fill in the details of the received ingredients.</small></span></span>}
+      className="sl-staff-stockin-dialog sl-add-user-dialog sl-account-reference-dialog sl-stockin-reference-dialog"
+      title={<span className="sl-staff-stockin-dialog-heading sl-account-dialog-heading"><span className="sl-staff-stockin-entry-icon sl-account-dialog-icon"><Plus aria-hidden="true" /></span><span><span className="sl-staff-stockin-dialog-title sl-account-dialog-title">Add Stock-In</span><small>Fill in the details of the received ingredients.</small></span></span>}
       actions={<><button type="button" className="sl-button" data-initial-focus onClick={() => setAddModalOpen(false)}>Cancel</button><button type="button" className="sl-button sl-button-primary" onClick={() => {}} title="Saving will become available when the backend is fully connected">Save Stock-In</button></>}
     >
       <div className="sl-staff-stockin-dialog-body">
-        <Status>Preview · data pending</Status>
         <StockInFormPreview asDialog />
       </div>
     </Dialog>
@@ -414,6 +421,8 @@ function InventoryStaffInventoryBatchesPage() {
   const [category, setCategory] = useState('All Categories');
   const [batchStatus, setBatchStatus] = useState('All Statuses');
   const [sortBy, setSortBy] = useState('FEFO (Earliest Expiry)');
+  const [rows, setRows] = useState(10);
+  const [page, setPage] = useState(1);
   const reset = () => {
     setSearch('');
     setCategory('All Categories');
@@ -422,7 +431,7 @@ function InventoryStaffInventoryBatchesPage() {
   };
   const Pending = ({ description, compact = false }: { description: string; compact?: boolean }) => (
     <div className={`sl-staff-inventory-pending${compact ? ' compact' : ''}`}>
-      <DataState kind="empty" title="No live records yet" description={description} action={<Status>Preview · data pending</Status>} />
+      <DataState kind="empty" title={`${description} unavailable`} description="Inventory analytics are not connected yet." />
     </div>
   );
 
@@ -430,11 +439,11 @@ function InventoryStaffInventoryBatchesPage() {
     <PageHeader title="Inventory Batches" description="View and monitor all ingredient batches. Check stock levels, expiration dates, and FEFO order." />
 
     <div className="sl-admin-view sl-staff-inventory-v149">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-inventory-kpis" aria-label="Inventory batch summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Batches Near Expiry (≤ 7 days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-inventory-kpis sl-kpi-reference-v201" aria-label="Inventory batch summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Batches Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
 
       <div className="sl-staff-inventory-layout">
@@ -456,13 +465,13 @@ function InventoryStaffInventoryBatchesPage() {
               <div className="sl-table-scroll sl-staff-inventory-table-wrap" role="region" aria-label="Inventory Batches preview" tabIndex={0}>
                 <table className="sl-data-table sl-placeholder-table sl-staff-inventory-table">
                   <thead><tr>{['','Ingredient','Batch ID','Category','Date Received','Expiry Date','Days Left','Current Stock','Unit','Status','Actions'].map((x,i)=><th scope="col" key={`${x}-${i}`}>{x}</th>)}</tr></thead>
-                  <tbody><tr className="sl-placeholder-state-row"><td colSpan={11} className="sl-empty-cell"><Pending description="Inventory batch records" /></td></tr></tbody>
+                  <tbody><tr className="sl-staff-records-dash-row">{Array.from({length:11}).map((_,index)=><td key={index}>—</td>)}</tr></tbody>
                 </table>
               </div>
 
               <footer className="sl-staff-inventory-footer">
-                <label>Rows per page <select defaultValue="10"><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
-                <span>Pagination will activate when live batch records are available.</span>
+                <label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
+                <Pagination compact page={page} pageSize={rows} total={0} itemLabel="batch records" onPageChange={setPage} />
               </footer>
             </div>
           </section>
@@ -484,17 +493,20 @@ function ManagerInventoryPage() {
   const [expiration, setExpiration] = useState('All');
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('All Items');
+  const [rows, setRows] = useState(10);
+  const [page, setPage] = useState(1);
   const reset = () => { setCategory('All Categories'); setStatus('All Statuses'); setExpiration('All'); setSearch(''); setTab('All Items'); };
   return <>
     <PageHeader eyebrow="Inventory" title="Inventory" description="Monitor stock levels, expiration dates, and FEFO priority for your branch." />
     <div className="sl-admin-view sl-manager-inventory-v119">
-      <div className="sl-sa-kpis sl-admin-reference-kpis sl-manager-inventory-kpis" aria-label="Inventory summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Items Near Expiry (≤ 7 days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><PackageX /></span><div><span>Low Stock Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Total Inventory Value</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      <div className="sl-sa-kpis sl-admin-reference-kpis sl-manager-inventory-kpis sl-kpi-reference-v201" aria-label="Inventory summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Items Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><PackageX /></span><div><span>Low Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Total Inventory Value</span><strong>—</strong><small>Data unavailable</small></div></article>
       </div>
-      <section className="sl-manager-inventory-directory" aria-label="Inventory directory">
+      <section className="sl-manager-inventory-directory sl-reference-records" aria-label="Inventory directory">
+        <header className="sl-reference-records-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><strong>Inventory Records</strong></header>
         <div className="sl-manager-inventory-filters">
           <label className="sl-manager-inventory-search"><span>Search</span><span className="sl-directory-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ingredient, batch ID, or supplier..." /></span></label>
           <label><span>Category</span><select className="sl-admin-input" value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option><option>Produce</option><option>Dairy</option><option>Meat & Poultry</option><option>Pantry & Others</option></select></label>
@@ -507,14 +519,13 @@ function ManagerInventoryPage() {
           <button className="sl-button" type="button" disabled><Download size={16}/>Export Inventory</button>
         </div>
         <div className="sl-manager-inventory-table-shell">
-          <table className="sl-data-table sl-manager-inventory-table" aria-label="Inventory items"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Unit','Expiration Date','Days Left','Status','Supplier','Actions'].map(c=><th key={c}>{c}</th>)}</tr></thead></table>
-          <div className="sl-manager-inventory-empty"><DataState kind="empty" title="No live records yet" description="Inventory batch records for this branch are not connected yet." action={<Status>Preview · data pending</Status>} /></div>
+          <table className="sl-data-table sl-manager-inventory-table sl-reference-records-table" aria-label="Inventory items"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Unit','Expiration Date','Days Left','Status','Supplier','Actions'].map(c=><th key={c}>{c}</th>)}</tr></thead><tbody><tr aria-label="Inventory values unavailable">{Array.from({length:10}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table>
         </div>
-        <div className="sl-manager-inventory-footer"><label>Rows per page <select className="sl-admin-input" disabled><option>10</option></select></label><span>Preview · data pending</span></div>
+        <div className="sl-manager-inventory-footer sl-reference-records-footer"><label>Rows per page <select className="sl-admin-input" value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="inventory records" onPageChange={setPage} /></div>
       </section>
       <div className="sl-manager-inventory-lower-grid">
-        <section className="sl-manager-inventory-panel"><header><div><strong>FEFO Priority</strong><small>Top batches to use first (First Expire, First Out)</small></div><Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="No live records yet" description="FEFO priority will appear when batch expiration data is connected." action={<Status>Preview · data pending</Status>} /></div></section>
-        <section className="sl-manager-inventory-panel"><header><strong>Inventory by Category</strong><Link href="/ReportsAnalytics" className="sl-text-link">View Details <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="No live records yet" description="Category distribution requires live inventory records." action={<Status>Preview · data pending</Status>} /></div></section>
+        <section className="sl-manager-inventory-panel sl-reference-records"><header><div><strong><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>FEFO Priority</strong><small>Top batches to use first (First Expire, First Out)</small></div><Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link></header><div className="sl-manager-inventory-table-shell"><table className="sl-data-table sl-reference-records-table" aria-label="FEFO priority batches"><thead><tr>{['Ingredient','Batch ID','Expiry Date','Days Left','Priority'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr aria-label="FEFO priority values unavailable">{Array.from({length:5}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table></div></section>
+        <section className="sl-manager-inventory-panel"><header><strong>Inventory by Category</strong><Link href="/ReportsAnalytics" className="sl-text-link">View Details <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="Category distribution unavailable" description="Category distribution requires live inventory records." /></div></section>
       </div>
     </div>
   </>;
@@ -523,6 +534,8 @@ function ManagerInventoryPage() {
 function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | null; setPreview: (value: PreviewId | null) => void }) {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [category, setCategory] = useState('All');
+  const [unitFilter, setUnitFilter] = useState('All Units');
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -551,12 +564,12 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
     const abort = new AbortController();
     const timer = window.setTimeout(() => {
       setLoadError(false);
-      listIngredients(page, 10, search.trim(), category === 'All' ? '' : category, abort.signal).then(value => {
+      listIngredients(page, pageSize, search.trim(), category === 'All' ? '' : category, abort.signal).then(value => {
         if (!abort.signal.aborted) setData(value);
       }).catch(() => { if (!abort.signal.aborted) setLoadError(true); });
     }, 250);
     return () => { window.clearTimeout(timer); abort.abort(); };
-  }, [page, search, category, refresh]);
+  }, [page, pageSize, search, category, refresh]);
   const setField = (key: IngredientField, value: string) => {
     setForm(current => ({ ...current, [key]: value }));
     setErrors(current => ({ ...current, [key]: undefined }));
@@ -614,17 +627,17 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
     <div className="sl-admin-view sl-admin-ingredients-reference">
       <section className="sl-admin-ingredient-kpis" aria-label="Ingredient summary">
         <article data-tone="success"><span className="sl-admin-ingredient-kpi-icon"><Leaf /></span><div><small>Total Ingredients</small><strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong><span>{data ? 'Live ingredient catalogue' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</span></div></article>
-        <article data-tone="attention"><span className="sl-admin-ingredient-kpi-icon"><Grid2X2 /></span><div><small>Categories</small><strong>{data ? loadedCategories : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
-        <article data-tone="brand"><span className="sl-admin-ingredient-kpi-icon"><Tag /></span><div><small>Common Units</small><strong>{data ? loadedUnits : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
+        <article data-tone="brand"><span className="sl-admin-ingredient-kpi-icon"><Grid2X2 /></span><div><small>Categories</small><strong>{data ? loadedCategories : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
+        <article data-tone="attention"><span className="sl-admin-ingredient-kpi-icon"><Tag /></span><div><small>Common Units</small><strong>{data ? loadedUnits : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
         <article data-tone="critical"><span className="sl-admin-ingredient-kpi-icon"><AlertTriangle /></span><div><small>For Review</small><strong>—</strong><span>Requires inventory batch data</span></div></article>
       </section>
 
       <section className="sl-admin-ingredient-filter-card" aria-label="Ingredient filters">
         <label className="sl-admin-ingredient-search"><span>Search ingredients</span><div><Search size={17}/><input type="search" placeholder="Search by name, category, or description..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} /></div></label>
         <label><span>Category</span><select value={category} onChange={e => { setCategory(e.target.value); setPage(1); }}><option value="All">All Categories</option>{INGREDIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select></label>
-        <label><span>Unit</span><select disabled title="Unit filtering will activate when supported by the ingredient API"><option>All Units</option></select></label>
-        <label><span>Status</span><select disabled title="Status filtering will activate when ingredient status is available in the API"><option>All Statuses</option></select></label>
-        <button className="sl-button" type="button" onClick={() => { setSearch(''); setCategory('All'); setPage(1); }}>Reset</button>
+        <label><span>Unit</span><select value={unitFilter} onChange={event => { setUnitFilter(event.target.value); setPage(1); }} title="The selected unit is retained while API filtering is unavailable"><option>All Units</option>{INGREDIENT_UNITS.map(value => <option key={value}>{value}</option>)}</select></label>
+        <label><span>Status</span><select value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(1); }} title="The selected status is retained while API filtering is unavailable"><option>All Statuses</option><option>Active</option></select></label>
+        <button className="sl-button" type="button" onClick={() => { setSearch(''); setCategory('All'); setUnitFilter('All Units'); setStatusFilter('All Statuses'); setPage(1); }}>Reset</button>
         <button className="sl-button sl-button-primary" type="button" onClick={() => setRefresh(value => value + 1)}>Apply Filters</button>
       </section>
 
@@ -639,7 +652,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
           : !data.items.length ? <tr><td colSpan={8} className="sl-empty-cell"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} action={<Status>Preview · data pending</Status>} /></td></tr>
           : data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><Status>Active</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Remove ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button></div></td></tr>)}
         </tbody></table></div>
-        {data && <div className="sl-admin-ingredient-pagination"><label>Rows per page <select value={data.pageSize} disabled><option>{data.pageSize}</option></select></label><Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} /></div>}
+        {data && <div className="sl-admin-ingredient-pagination"><label>Rows per page <select value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} /></div>}
       </section>
     </div>
     <Dialog
@@ -675,9 +688,8 @@ function SuperAdminIngredientPending({ label, compact = false }: { label: string
   return <div className={`sl-sa-ingredients-pending${compact ? ' compact' : ''}`}>
     <DataState
       kind="empty"
-      title="No live records yet"
-      description={label}
-      action={<Status>Preview · data pending</Status>}
+      title={`${label} unavailable`}
+      description="The supporting ingredient service is not connected yet."
     />
   </div>;
 }
@@ -797,7 +809,7 @@ function SuperAdminIngredientsPage() {
     </div>
 
     <div className="sl-admin-view sl-sa-ingredients-page">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Ingredient summary">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-kpi-reference-v201" aria-label="Ingredient summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
           <div>
@@ -883,7 +895,6 @@ function SuperAdminIngredientsPage() {
               <span>Supplier</span>
               <select value={supplierFilter} onChange={event => { setSupplierFilter(event.target.value); setPage(1); }} aria-label="Supplier filter">
                 <option>All Suppliers</option>
-                <option disabled>Supplier values · data pending</option>
               </select>
             </label>
 
@@ -891,7 +902,6 @@ function SuperAdminIngredientsPage() {
               <span>Status</span>
               <select value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(1); }} aria-label="Status filter">
                 <option>All Statuses</option>
-                <option disabled>Status values · data pending</option>
               </select>
             </label>
 
@@ -1078,7 +1088,7 @@ function SuperAdminInventoryBatchesPage() {
                   <span>Search batches</span>
                   <div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by batch ID or ingredient…" value={batchSearch} onChange={event => setBatchSearch(event.target.value)} /></div>
                 </label>
-                <label><span>Ingredient</span><select value={batchIngredient} onChange={event => { setBatchIngredient(event.target.value); setBatchPage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+                <label><span>Ingredient</span><select value={batchIngredient} onChange={event => { setBatchIngredient(event.target.value); setBatchPage(1); }}><option>All Ingredients</option></select></label>
                 <label><span>Status</span><select value={batchStatus} onChange={event => { setBatchStatus(event.target.value); setBatchPage(1); }}><option>All Statuses</option><option>Active</option><option>Expiring Soon</option><option>Expired</option></select></label>
                 <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={batchDateRange} onChange={event => { setBatchDateRange(event.target.value); setBatchPage(1); }} aria-label="Inventory batch date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
                 {batchDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom inventory batch date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={batchDateFrom} max={batchDateTo || undefined} onChange={event => { setBatchDateFrom(event.target.value); setBatchPage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={batchDateTo} min={batchDateFrom || undefined} onChange={event => { setBatchDateTo(event.target.value); setBatchPage(1); }} /></label></div>}
@@ -1121,9 +1131,8 @@ function SuperAdminUsagePending({ label, compact = false }: { label: string; com
   return <div className={`sl-sa-usage-pending${compact ? ' compact' : ''}`}>
     <DataState
       kind="empty"
-      title="No live records yet"
-      description={label}
-      action={<Status>Preview · data pending</Status>}
+      title={`${label} unavailable`}
+      description="The supporting usage service is not connected yet."
     />
   </div>;
 }
@@ -1180,7 +1189,7 @@ function SuperAdminUsagePage() {
             <div className="sl-sa-ingredients-table-filters">
               <div className="sl-sa-ingredients-filter-card" aria-label="Usage filters">
                 <label className="sl-sa-ingredients-search"><span>Search usage records</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by ingredient, batch ID, dish, or user…" value={usageSearch} onChange={event => { setUsageSearch(event.target.value); setUsagePage(1); }} /></div></label>
-                <label><span>Ingredient</span><select value={usageIngredient} onChange={event => { setUsageIngredient(event.target.value); setUsagePage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+                <label><span>Ingredient</span><select value={usageIngredient} onChange={event => { setUsageIngredient(event.target.value); setUsagePage(1); }}><option>All Ingredients</option></select></label>
                 <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={usageDateRange} onChange={event => { setUsageDateRange(event.target.value); setUsagePage(1); }} aria-label="Usage date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
                 {usageDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => { setUsageDateFrom(event.target.value); setUsagePage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => { setUsageDateTo(event.target.value); setUsagePage(1); }} /></label></div>}
                 <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={resetUsageFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-usage-export-menu" /></div>
@@ -1230,9 +1239,8 @@ function SuperAdminWastePending({ label, compact = false }: { label: string; com
   return <div className={`sl-sa-waste-pending${compact ? ' compact' : ''}`}>
     <DataState
       kind="empty"
-      title="No live records yet"
-      description={label}
-      action={<Status>Preview · data pending</Status>}
+      title={`${label} unavailable`}
+      description="The supporting waste service is not connected yet."
     />
   </div>;
 }
@@ -1291,8 +1299,8 @@ function SuperAdminWastePage() {
             <div className="sl-sa-ingredients-table-filters">
               <div className="sl-sa-ingredients-filter-card" aria-label="Waste filters">
                 <label className="sl-sa-ingredients-search"><span>Search waste records</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by ingredient, batch ID, reason, or remarks…" value={wasteSearch} onChange={event => { setWasteSearch(event.target.value); setWastePage(1); }} /></div></label>
-                <label><span>Ingredient</span><select value={wasteIngredient} onChange={event => { setWasteIngredient(event.target.value); setWastePage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
-                <label><span>Reason</span><select value={wasteReason} onChange={event => { setWasteReason(event.target.value); setWastePage(1); }}><option>All Reasons</option><option disabled>Reason values · data pending</option></select></label>
+                <label><span>Ingredient</span><select value={wasteIngredient} onChange={event => { setWasteIngredient(event.target.value); setWastePage(1); }}><option>All Ingredients</option></select></label>
+                <label><span>Reason</span><select value={wasteReason} onChange={event => { setWasteReason(event.target.value); setWastePage(1); }}><option>All Reasons</option><option>Expired</option><option>Spoiled</option><option>Trimming</option><option>Over-preparation</option><option>Damaged Packaging</option><option>Other</option></select></label>
                 <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={wasteDateRange} onChange={event => { setWasteDateRange(event.target.value); setWastePage(1); }} aria-label="Waste date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
                 {wasteDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom waste date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={wasteDateFrom} max={wasteDateTo || undefined} onChange={event => { setWasteDateFrom(event.target.value); setWastePage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={wasteDateTo} min={wasteDateFrom || undefined} onChange={event => { setWasteDateTo(event.target.value); setWastePage(1); }} /></label></div>}
                 <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={resetWasteFilters}>Reset</button><ExportControl label="Export" menuId="sl-sa-waste-export-menu" /></div>
@@ -1334,9 +1342,8 @@ function SuperAdminChangeRequestsPending({ label, compact = false }: { label: st
   return <div className={`sl-sa-change-pending${compact ? ' compact' : ''}`}>
     <DataState
       kind="empty"
-      title="No live records yet"
-      description={label}
-      action={<Status>Preview · data pending</Status>}
+      title={`${label} unavailable`}
+      description="The supporting change-request service is not connected yet."
     />
   </div>;
 }
@@ -1390,7 +1397,7 @@ function SuperAdminChangeRequestsPage() {
             <div className="sl-sa-ingredients-table-filters">
               <div className="sl-sa-ingredients-filter-card" aria-label="Change request filters">
                 <label className="sl-sa-ingredients-search"><span>Search requests</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by request ID, ingredient, user, or details…" value={requestSearch} onChange={event => setRequestSearch(event.target.value)} /></div></label>
-                <label><span>Request Type</span><select value={requestType} onChange={event => { setRequestType(event.target.value); setRequestPage(1); }}><option>All Types</option><option disabled>Request types · data pending</option></select></label>
+                <label><span>Request Type</span><select value={requestType} onChange={event => { setRequestType(event.target.value); setRequestPage(1); }}><option>All Types</option><option>Stock Adjustment</option><option>Usage Correction</option><option>Waste Correction</option></select></label>
                 <label><span>Status</span><select value={requestStatus} onChange={event => { setRequestStatus(event.target.value); setRequestPage(1); }}><option>All Statuses</option><option>Pending</option><option>Approved</option><option>Rejected</option></select></label>
                 <label><span>Requested By Role</span><select value={requestRole} onChange={event => { setRequestRole(event.target.value); setRequestPage(1); }}><option>All Roles</option><option>Admin</option><option>Manager</option><option>Inventory Staff</option></select></label>
                 <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={requestDateRange} onChange={event => { setRequestDateRange(event.target.value); setRequestPage(1); }} aria-label="Change request date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
@@ -1426,9 +1433,8 @@ function SuperAdminExpirationPending({ label, compact = false }: { label: string
   return <div className={`sl-sa-expiration-pending${compact ? ' compact' : ''}`}>
     <DataState
       kind="empty"
-      title="No live records yet"
-      description={label}
-      action={<Status>Preview · data pending</Status>}
+      title={`${label} unavailable`}
+      description="The supporting expiration service is not connected yet."
     />
   </div>;
 }
@@ -1489,7 +1495,7 @@ export function SuperAdminExpirationMonitoringPage() {
             <div className="sl-sa-ingredients-table-filters">
               <div className="sl-sa-ingredients-filter-card" aria-label="Expiration monitoring filters">
                 <label className="sl-sa-ingredients-search"><span>Search batches</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by batch ID or ingredient…" value={expirationSearch} onChange={event => setExpirationSearch(event.target.value)} /></div></label>
-                <label><span>Ingredient</span><select value={expirationIngredient} onChange={event => { setExpirationIngredient(event.target.value); setExpirationPage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+                <label><span>Ingredient</span><select value={expirationIngredient} onChange={event => { setExpirationIngredient(event.target.value); setExpirationPage(1); }}><option>All Ingredients</option></select></label>
                 <label><span>Status</span><select value={expirationStatus} onChange={event => { setExpirationStatus(event.target.value); setExpirationPage(1); }}><option>All Statuses</option><option>Active</option><option>Expiring Soon</option><option>Expired</option></select></label>
                 <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Date Range</span><select value={expirationDateRange} onChange={event => { setExpirationDateRange(event.target.value); setExpirationPage(1); }} aria-label="Expiration date range"><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
                 {expirationDateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom expiration date range"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={expirationDateFrom} max={expirationDateTo || undefined} onChange={event => { setExpirationDateFrom(event.target.value); setExpirationPage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={expirationDateTo} min={expirationDateFrom || undefined} onChange={event => { setExpirationDateTo(event.target.value); setExpirationPage(1); }} /></label></div>}
@@ -1543,9 +1549,8 @@ function SuperAdminForecastingPending({ label, compact = false }: { label: strin
   return <div className={`sl-sa-forecast-pending${compact ? ' compact' : ''}`}>
     <DataState
       kind="empty"
-      title="No live records yet"
-      description={label}
-      action={<Status>Preview · data pending</Status>}
+      title={`${label} unavailable`}
+      description="The supporting forecasting service is not connected yet."
     />
   </div>;
 }
@@ -1599,7 +1604,7 @@ export function SuperAdminForecastingPage() {
             <div className="sl-sa-ingredients-table-filters">
               <div className="sl-sa-ingredients-filter-card" aria-label="Forecast filters">
                 <label className="sl-sa-ingredients-search"><span>Search forecasts</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by ingredient or forecast…" value={forecastSearch} onChange={event => setForecastSearch(event.target.value)} /></div></label>
-                <label><span>Ingredient</span><select value={forecastIngredient} onChange={event => { setForecastIngredient(event.target.value); setForecastPage(1); }}><option>All Ingredients</option><option disabled>Ingredient values · data pending</option></select></label>
+                <label><span>Ingredient</span><select value={forecastIngredient} onChange={event => { setForecastIngredient(event.target.value); setForecastPage(1); }}><option>All Ingredients</option></select></label>
                 <label><span>Status</span><select value={forecastStatus} onChange={event => { setForecastStatus(event.target.value); setForecastPage(1); }}><option>All Statuses</option><option>Increase</option><option>Stable</option><option>Decrease</option></select></label>
                 <label className="sl-v203-filter-field sl-v219-date-range-field"><span>Forecast Period</span><select value={forecastPeriod} onChange={event => { setForecastPeriod(event.target.value); setForecastPage(1); }} aria-label="Forecast period"><option value="any">Any period</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
                 {forecastPeriod === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom forecast period"><label className="sl-v203-filter-field"><span>From</span><input type="date" value={forecastDateFrom} max={forecastDateTo || undefined} onChange={event => { setForecastDateFrom(event.target.value); setForecastPage(1); }} /></label><label className="sl-v203-filter-field"><span>To</span><input type="date" value={forecastDateTo} min={forecastDateFrom || undefined} onChange={event => { setForecastDateTo(event.target.value); setForecastPage(1); }} /></label></div>}
@@ -1645,18 +1650,23 @@ export function SuperAdminForecastingPage() {
 
 function ManagerForecastingPage() {
   const [range, setRange] = useState('Current period');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [category, setCategory] = useState('All Categories');
   const [branch, setBranch] = useState('Current Branch');
   const [trendPeriod, setTrendPeriod] = useState('Last 30 Days');
-  const Pending = ({ label, compact = false }: { label: string; compact?: boolean }) => <div className={`sl-mgr-forecast-pending${compact ? ' compact' : ''}`}><DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} /></div>;
+  const [search, setSearch] = useState('');
+  const [rows, setRows] = useState(10);
+  const [page, setPage] = useState(1);
+  const Pending = ({ label, compact = false }: { label: string; compact?: boolean }) => <div className={`sl-mgr-forecast-pending${compact ? ' compact' : ''}`}><DataState kind="empty" title={`${label} unavailable`} description="Forecasting data is not connected yet." /></div>;
   return <>
     <PageHeader title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
     <div className="sl-admin-view sl-mgr-forecast-page">
-      <section className="sl-sa-kpis sl-admin-reference-kpis sl-mgr-forecast-kpis" aria-label="Forecasting summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At Risk of Overstock</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      <section className="sl-sa-kpis sl-admin-reference-kpis sl-mgr-forecast-kpis sl-kpi-reference-v201" aria-label="Forecasting summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At Risk of Overstock</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
 
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
@@ -1666,14 +1676,16 @@ function ManagerForecastingPage() {
       </section>
 
       <section className="sl-mgr-forecast-filters" aria-label="Forecast filters">
-        <label><span>Date Range</span><select value={range} onChange={e=>setRange(e.target.value)}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option></select></label>
+        <label><span>Date Range</span><select value={range} onChange={event => { setRange(event.target.value); setPage(1); }}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option><option>Custom</option></select></label>
+        {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom forecast date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label></div>}
         <label><span>Ingredient Category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
         <label><span>Branch</span><select value={branch} onChange={e=>setBranch(e.target.value)}><option>Current Branch</option></select></label>
         <button className="sl-button sl-button-primary" type="button">Apply Filters</button>
       </section>
 
-      <Card id="mgr-ingredient-forecasts" title="Ingredient Forecasts" action={<div className="sl-mgr-forecast-table-actions"><span className="sl-directory-search"><Search size={16}/><input disabled placeholder="Search ingredients..." /></span><button className="sl-button" disabled><Download size={16}/> Export Forecast</button></div>}>
-        <div className="sl-mgr-forecast-tablewrap"><table><thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th><th>Actions</th></tr></thead></table><Pending label="Ingredient forecasts" /></div>
+      <Card id="mgr-ingredient-forecasts" title={<span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><span>Ingredient Forecasts</span></span>} action={<div className="sl-mgr-forecast-table-actions"><span className="sl-directory-search"><Search size={16}/><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search ingredients..." /></span><button className="sl-button sl-download-trigger" disabled><Download size={16}/> Export Forecast</button></div>}>
+        <div className="sl-mgr-forecast-tablewrap"><table className="sl-reference-records-table"><thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th><th>Actions</th></tr></thead><tbody><tr aria-label="Forecast values unavailable">{Array.from({length:9}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table></div>
+        <div className="sl-mgr-forecast-footer sl-reference-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="forecasts" onPageChange={setPage} /></div>
       </Card>
     </div>
   </>;
@@ -1681,39 +1693,58 @@ function ManagerForecastingPage() {
 
 
 function ManagerChangeRequestsPage() {
-  const Pending = ({ label }: { label: string }) => <DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} />;
+  type SelectedRequest = { id: string; type?: string; target?: string; requestedChange?: string; submittedBy?: string; submittedAt?: string; status?: string; reason?: string };
+  const [search, setSearch] = useState('');
+  const [requestType, setRequestType] = useState('All Types');
+  const [submittedBy, setSubmittedBy] = useState('All Staff');
+  const [status, setStatus] = useState('All Statuses');
+  const [dateRange, setDateRange] = useState('Last 30 Days');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [rows, setRows] = useState(10);
+  const [page, setPage] = useState(1);
+  const [selectedRequest, setSelectedRequest] = useState<SelectedRequest | null>(null);
+  const reset = () => { setSearch(''); setRequestType('All Types'); setSubmittedBy('All Staff'); setStatus('All Statuses'); setDateRange('Last 30 Days'); setDateFrom(''); setDateTo(''); setPage(1); };
   return <>
     <PageHeader title="Change Requests" description="Review and decide on inventory-related requests submitted by your team." />
     <div className="sl-admin-view sl-mgr-cr-page">
-      <section className="sl-mgr-cr-kpis" aria-label="Change request summary">
-        <article className="sl-mgr-cr-kpi tone-blue"><span className="sl-mgr-cr-icon"><FileInput/></span><div><small>Total Requests</small><strong>—</strong><span>Preview · data pending</span></div></article>
-        <article className="sl-mgr-cr-kpi tone-amber"><span className="sl-mgr-cr-icon"><Clock3/></span><div><small>Pending Review</small><strong>—</strong><span>Requires your action</span></div></article>
-        <article className="sl-mgr-cr-kpi tone-green"><span className="sl-mgr-cr-icon"><CheckCircle2/></span><div><small>Approved (This Month)</small><strong>—</strong><span>Preview · data pending</span></div></article>
-        <article className="sl-mgr-cr-kpi tone-red"><span className="sl-mgr-cr-icon"><AlertTriangle/></span><div><small>Rejected (This Month)</small><strong>—</strong><span>Preview · data pending</span></div></article>
+      <section className="sl-sa-kpis sl-mgr-cr-kpis sl-kpi-reference-v201" aria-label="Change request summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput/></span><div><span>Total Requests</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Clock3/></span><div><span>Pending Review</span><strong>—</strong><small>Requires your action</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CheckCircle2/></span><div><span>Approved (This Month)</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle/></span><div><span>Rejected (This Month)</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
-      <div className="sl-mgr-cr-layout">
-        <section className="sl-mgr-cr-listcard">
-          <nav className="sl-mgr-cr-tabs" aria-label="Request status">
-            <button className="active">All Requests <span>—</span></button><button>Pending <span>—</span></button><button>Approved <span>—</span></button><button>Rejected <span>—</span></button>
-          </nav>
+      <div className={`sl-mgr-cr-layout${selectedRequest ? ' has-selected-request' : ' no-selected-request'}`}>
+        <section className="sl-mgr-cr-listcard sl-reference-records">
+          <header className="sl-reference-records-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><strong>Change Request Records</strong></header>
           <div className="sl-mgr-cr-filters">
-            <label className="search"><span className="sr-only">Search requests</span><div><Search size={17}/><input placeholder="Search requests..." disabled /></div></label>
-            <label><span>Request Type</span><select disabled><option>All Types</option></select></label>
-            <label><span>Submitted By</span><select disabled><option>All Staff</option></select></label>
-            <label><span>Date Range</span><div className="date"><CalendarDays size={16}/><select disabled><option>Last 30 Days</option></select></div></label>
-            <button className="sl-button" disabled>Reset</button>
+            <label className="search"><span className="sr-only">Search requests</span><div><Search size={17}/><input placeholder="Search requests..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div></label>
+            <label><span>Request Type</span><select value={requestType} onChange={event => { setRequestType(event.target.value); setPage(1); }}><option>All Types</option><option>Stock Adjustment</option><option>Usage Correction</option><option>Waste Correction</option></select></label>
+            <label><span>Submitted By</span><select value={submittedBy} onChange={event => { setSubmittedBy(event.target.value); setPage(1); }}><option>All Staff</option></select></label>
+            <label><span>Status</span><select value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}>{['All Statuses','Approved','Pending','Rejected'].map(option => <option key={option}>{option}</option>)}</select></label>
+            <label><span>Date Range</span><div className="date"><CalendarDays size={16}/><select value={dateRange} onChange={event => { setDateRange(event.target.value); setPage(1); }}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option><option>Custom</option></select></div></label>
+            {dateRange === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom change request date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label></div>}
+            <button className="sl-button" type="button" onClick={reset}>Reset</button>
           </div>
           <div className="sl-mgr-cr-tablewrap">
-            <table className="sl-mgr-cr-table"><thead><tr><th></th><th>#</th><th>Request ID</th><th>Type</th><th>Ingredient / Batch</th><th>Requested Change</th><th>Submitted By</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead></table>
-            <div className="sl-mgr-cr-empty"><Pending label="Change requests" /></div>
+            <table className="sl-mgr-cr-table sl-reference-records-table"><thead><tr><th>#</th><th>Request ID</th><th>Type</th><th>Ingredient / Batch</th><th>Requested Change</th><th>Submitted By</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr aria-label="Change request values unavailable">{Array.from({length:9}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table>
           </div>
-          <footer className="sl-mgr-cr-footer"><label>Rows per page <select disabled><option>10</option></select></label><span>Pagination will appear when live request records are available.</span></footer>
+          <footer className="sl-mgr-cr-footer sl-reference-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="request records" onPageChange={setPage} /></footer>
         </section>
-        <aside className="sl-mgr-cr-details">
-          <header><strong>Request Details</strong><button aria-label="Close request details" disabled>×</button></header>
-          <div className="sl-mgr-cr-detail-empty"><Pending label="Select a request to review its details" /></div>
+        {selectedRequest && <aside className="sl-mgr-cr-details">
+          <header><strong>Request Details</strong><button type="button" aria-label="Close request details" onClick={() => setSelectedRequest(null)}>×</button></header>
+          <dl className="sl-mgr-cr-detail-fields" aria-label="Selected change request details">
+            <div><dt>Request ID</dt><dd>{selectedRequest.id}</dd></div>
+            <div><dt>Request Type</dt><dd>{selectedRequest.type ?? '—'}</dd></div>
+            <div><dt>Ingredient / Batch</dt><dd>{selectedRequest.target ?? '—'}</dd></div>
+            <div><dt>Requested Change</dt><dd>{selectedRequest.requestedChange ?? '—'}</dd></div>
+            <div><dt>Submitted By</dt><dd>{selectedRequest.submittedBy ?? '—'}</dd></div>
+            <div><dt>Date Submitted</dt><dd>{selectedRequest.submittedAt ?? '—'}</dd></div>
+            <div><dt>Status</dt><dd>{selectedRequest.status ?? '—'}</dd></div>
+            <div className="sl-mgr-cr-detail-reason"><dt>Reason</dt><dd>{selectedRequest.reason ?? '—'}</dd></div>
+          </dl>
           <footer><button className="reject" disabled>Reject</button><button className="approve" disabled>Approve</button></footer>
-        </aside>
+        </aside>}
       </div>
     </div>
   </>;
@@ -1724,6 +1755,11 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   const [preview, setPreview] = useState<PreviewId | null>(null);
   const [accountTotals, setAccountTotals] = useState<DashboardSummary | null>(null);
   const [accountTotalsError, setAccountTotalsError] = useState(false);
+  const [adminInventorySearch, setAdminInventorySearch] = useState('');
+  const [adminInventoryCategory, setAdminInventoryCategory] = useState('All Categories');
+  const [adminInventoryStatus, setAdminInventoryStatus] = useState('All Statuses');
+  const [adminInventoryRows, setAdminInventoryRows] = useState(10);
+  const [adminInventoryPage, setAdminInventoryPage] = useState(1);
   useEffect(() => {
     if (moduleId !== 'UserManagement') return;
     const abort = new AbortController(); setAccountTotalsError(false);
@@ -1740,14 +1776,14 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
     return <>
       <PageHeader eyebrow={adminUsers ? undefined : 'Administration'} title={adminUsers ? 'Users' : 'User Management'} description={adminUsers ? 'Manage establishment users, their roles, and access within ShelfLife AI.' : 'Control access, manage permissions, and monitor system participants.'} />
       <div className={`sl-admin-view sl-user-management-view${adminUsers ? ' sl-admin-users-reference' : ''}`}>
-        {adminUsers ? <div className="sl-admin-users-kpis" aria-label="User summary">
+        {adminUsers ? <div className="sl-admin-users-kpis sl-kpi-reference-v201" aria-label="User summary">
           {[
-            { label:'Total Users', value:liveValue(accountTotals?.totalUsers), detail:accountTotals ? `↑ ${accountTotals.totalUsers} live` : 'Awaiting account summary', tone:'total', Icon:Users },
-            { label:'Admin', value:liveValue(roleCount('Admin')), detail:accountTotals ? pct(roleCount('Admin')) : 'Awaiting role summary', tone:'admin', Icon:User },
-            { label:'Managers', value:liveValue(roleCount('Manager')), detail:accountTotals ? pct(roleCount('Manager')) : 'Awaiting role summary', tone:'manager', Icon:Users },
-            { label:'Inventory Staff', value:liveValue(roleCount('Inventory Staff')), detail:accountTotals ? pct(roleCount('Inventory Staff')) : 'Awaiting role summary', tone:'staff', Icon:Users },
-          ].map(({label,value,detail,tone,Icon}) => <section key={label} className="sl-admin-users-kpi" data-tone={tone}>
-            <span className="sl-admin-users-kpi-icon" aria-hidden="true"><Icon size={24}/></span>
+            { label:'Total Users', value:liveValue(accountTotals?.totalUsers), detail:accountTotals ? `↑ ${accountTotals.totalUsers} live` : 'Awaiting account summary', tone:'brand', Icon:Users },
+            { label:'Admin', value:liveValue(roleCount('Admin')), detail:accountTotals ? pct(roleCount('Admin')) : 'Awaiting role summary', tone:'info', Icon:User },
+            { label:'Managers', value:liveValue(roleCount('Manager')), detail:accountTotals ? pct(roleCount('Manager')) : 'Awaiting role summary', tone:'attention', Icon:Users },
+            { label:'Inventory Staff', value:liveValue(roleCount('Inventory Staff')), detail:accountTotals ? pct(roleCount('Inventory Staff')) : 'Awaiting role summary', tone:'critical', Icon:Users },
+          ].map(({label,value,detail,tone,Icon}) => <section key={label} className="sl-admin-users-kpi sl-sa-kpi" data-tone={tone}>
+            <span className="sl-admin-users-kpi-icon sl-sa-kpi-icon" aria-hidden="true"><Icon size={24}/></span>
             <div className="sl-admin-users-kpi-copy"><strong>{value}</strong><span>{label}</span><small>{detail}</small></div>
           </section>)}
         </div> : <SummaryCards items={[
@@ -1781,25 +1817,24 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'InventoryBatches' && user.role === 'Admin') return <>
     <PageHeader eyebrow="Inventory" title="Inventory" description="View and monitor current stock levels, expiration status, and inventory distribution for your establishment." />
     <div className="sl-admin-view sl-admin-inventory-v111">
-      <div className="sl-sa-kpis sl-admin-reference-kpis sl-admin-inventory-kpis" aria-label="Inventory summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Near Expiry (≤ 7 days)</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>Expired Items</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      <div className="sl-sa-kpis sl-admin-reference-kpis sl-admin-inventory-kpis sl-kpi-reference-v201" aria-label="Inventory summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>Expired Items</span><strong>—</strong><small>Data unavailable</small></div></article>
       </div>
-      <section className="sl-admin-inventory-directory" aria-label="Inventory batches">
+      <section className="sl-admin-inventory-directory sl-reference-records" aria-label="Inventory batches">
         <div className="sl-admin-inventory-filterbar">
-          <label className="sl-admin-inventory-search"><span>Search inventory</span><span className="sl-directory-search"><Search size={17} aria-hidden="true" /><input type="search" placeholder="Search ingredient, batch ID, or supplier..." aria-label="Search inventory" disabled /></span></label>
-          <label><span>Category</span><select className="sl-admin-input" disabled><option>All Categories</option></select></label>
-          <label><span>Status</span><select className="sl-admin-input" disabled><option>All Statuses</option></select></label>
-          <div className="sl-admin-inventory-filter-actions"><button type="button" className="sl-button" disabled>Reset</button><button type="button" className="sl-button sl-button-primary" disabled>Apply Filters</button></div>
+          <label className="sl-admin-inventory-search"><span>Search inventory</span><span className="sl-directory-search"><Search size={17} aria-hidden="true" /><input type="search" placeholder="Search ingredient, batch ID, or supplier..." aria-label="Search inventory" value={adminInventorySearch} onChange={event => { setAdminInventorySearch(event.target.value); setAdminInventoryPage(1); }} /></span></label>
+          <label><span>Category</span><select className="sl-admin-input" value={adminInventoryCategory} onChange={event => { setAdminInventoryCategory(event.target.value); setAdminInventoryPage(1); }}><option>All Categories</option></select></label>
+          <label><span>Status</span><select className="sl-admin-input" value={adminInventoryStatus} onChange={event => { setAdminInventoryStatus(event.target.value); setAdminInventoryPage(1); }}><option>All Statuses</option><option>In Stock</option><option>Low Stock</option><option>Near Expiry</option><option>Expired</option></select></label>
+          <div className="sl-admin-inventory-filter-actions"><button type="button" className="sl-button" onClick={() => { setAdminInventorySearch(''); setAdminInventoryCategory('All Categories'); setAdminInventoryStatus('All Statuses'); setAdminInventoryPage(1); }}>Reset</button><button type="button" className="sl-button sl-button-primary" title="Filters will apply when inventory endpoints are connected">Apply Filters</button></div>
         </div>
-        <div className="sl-admin-inventory-tablebar"><strong>Inventory items</strong><button type="button" className="sl-button" disabled><Download size={16} aria-hidden="true" />Export</button></div>
+        <div className="sl-admin-inventory-tablebar"><strong><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>Inventory Records</strong><button type="button" className="sl-button sl-download-trigger" disabled><Download size={16} aria-hidden="true" />Export</button></div>
         <div className="sl-admin-inventory-table-shell">
-          <table className="sl-data-table sl-admin-inventory-table" aria-label="Inventory items"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Unit','Expiry Date','Days Left','Status','Location','Supplier','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead></table>
-          <div className="sl-admin-inventory-empty"><DataState kind="empty" title="No live records yet" description="Inventory batch data is not connected yet." action={<Status>Preview · data pending</Status>} /></div>
+          <table className="sl-data-table sl-admin-inventory-table sl-reference-records-table" aria-label="Inventory items"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Unit','Expiry Date','Days Left','Status','Location','Supplier','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody><tr aria-label="Inventory item values unavailable">{Array.from({ length: 11 }).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table>
         </div>
-        <div className="sl-admin-inventory-footer"><label>Rows per page <select className="sl-admin-input" disabled><option>10</option></select></label><span className="sl-admin-inventory-pagination-placeholder">Preview · data pending</span></div>
+        <div className="sl-admin-inventory-footer sl-reference-records-footer"><label>Rows per page <select className="sl-admin-input" value={adminInventoryRows} onChange={event => { setAdminInventoryRows(Number(event.target.value)); setAdminInventoryPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={adminInventoryPage} pageSize={adminInventoryRows} total={0} itemLabel="inventory records" onPageChange={setAdminInventoryPage} /></div>
       </section>
     </div>
   </>;

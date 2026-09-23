@@ -9,9 +9,8 @@ function PendingPanel({ label, compact = false }: { label: string; compact?: boo
     <div className={`sl-manager-reports-pending${compact ? ' compact' : ''}`}>
       <DataState
         kind="empty"
-        title="No live records yet"
-        description={label}
-        action={<Status>Preview · data pending</Status>}
+        title={`${label} unavailable`}
+        description="Reporting analytics are not connected yet."
       />
     </div>
   );
@@ -19,6 +18,13 @@ function PendingPanel({ label, compact = false }: { label: string; compact?: boo
 
 function AdminReports() {
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const [dateRange, setDateRange] = useState('any');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [reportType, setReportType] = useState('All Reports');
+  const [category, setCategory] = useState('All Categories');
+  const [groupBy, setGroupBy] = useState('None');
+  const reset = () => { setDateRange('any'); setDateFrom(''); setDateTo(''); setReportType('All Reports'); setCategory('All Categories'); setGroupBy('None'); };
   const reports = [
     ['Inventory Summary', 'Current stock levels and inventory value per ingredient.', 'Inventory'],
     ['Expiration Report', 'Ingredients nearing or past expiration.', 'Expiration'],
@@ -32,19 +38,20 @@ function AdminReports() {
     <PageHeader title="Reports" description="Generate and view reports on inventory, usage, waste, and ingredient data for your establishment." />
     <div className="sl-admin-view sl-admin-reports-v114">
       <section className="sl-admin-reports-filters" aria-label="Report filters">
-        <label><span>Date Range</span><div className="sl-admin-reports-date"><CalendarDays size={16}/><span>Data pending</span><ChevronDown size={15}/></div></label>
-        <label><span>Report Type</span><select disabled><option>All Reports</option></select></label>
-        <label><span>Category</span><select disabled><option>All Categories</option></select></label>
-        <label><span>Group By</span><select disabled><option>None</option></select></label>
-        <button className="sl-button sl-admin-reports-reset" type="button" disabled><RotateCcw size={14}/> Reset</button>
-        <button className="sl-button sl-button-primary" type="button" disabled><SlidersHorizontal size={14}/> Apply Filters</button>
+        <label><span>Date Range</span><div className="sl-admin-reports-date"><CalendarDays size={16}/><select value={dateRange} onChange={event => setDateRange(event.target.value)}><option value="any">Any date</option><option value="week">Last 7 Days</option><option value="month">Last 30 Days</option><option value="custom">Custom</option></select></div></label>
+        {dateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom report date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => setDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => setDateTo(event.target.value)} /></label></div>}
+        <label><span>Report Type</span><select value={reportType} onChange={event => setReportType(event.target.value)}><option>All Reports</option><option>Inventory</option><option>Expiration</option><option>Waste</option><option>Usage</option><option>Master Data</option></select></label>
+        <label><span>Category</span><select value={category} onChange={event => setCategory(event.target.value)}><option>All Categories</option><option>Inventory</option><option>Expiration</option><option>Waste</option><option>Usage</option><option>Master Data</option></select></label>
+        <label><span>Group By</span><select value={groupBy} onChange={event => setGroupBy(event.target.value)}><option>None</option><option>Category</option><option>Day</option><option>Week</option><option>Month</option></select></label>
+        <button className="sl-button sl-admin-reports-reset" type="button" onClick={reset}><RotateCcw size={14}/> Reset</button>
+        <button className="sl-button sl-button-primary" type="button" title="Filters will apply when reporting endpoints are connected"><SlidersHorizontal size={14}/> Apply Filters</button>
       </section>
 
-      <section className="sl-admin-reports-kpis" aria-label="Report summary">
-        <article className="sl-admin-reports-kpi" data-tone="green"><span className="sl-admin-reports-kpi-icon"><Package/></span><div><span>Total Inventory Value</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-admin-reports-kpi" data-tone="amber"><span className="sl-admin-reports-kpi-icon"><Trash2/></span><div><span>Total Waste Cost</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-admin-reports-kpi" data-tone="blue"><span className="sl-admin-reports-kpi-icon"><Leaf/></span><div><span>Total Ingredients</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-admin-reports-kpi" data-tone="violet"><span className="sl-admin-reports-kpi-icon"><ClipboardList/></span><div><span>Total Batches</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      <section className="sl-admin-reports-kpis sl-kpi-reference-v201" aria-label="Report summary">
+        <article className="sl-admin-reports-kpi sl-sa-kpi" data-tone="brand"><span className="sl-admin-reports-kpi-icon sl-sa-kpi-icon"><Package/></span><div><span>Total Inventory Value</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-admin-reports-kpi sl-sa-kpi" data-tone="info"><span className="sl-admin-reports-kpi-icon sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Cost</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-admin-reports-kpi sl-sa-kpi" data-tone="attention"><span className="sl-admin-reports-kpi-icon sl-sa-kpi-icon"><Leaf/></span><div><span>Total Ingredients</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-admin-reports-kpi sl-sa-kpi" data-tone="critical"><span className="sl-admin-reports-kpi-icon sl-sa-kpi-icon"><ClipboardList/></span><div><span>Total Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
 
       <section className="sl-admin-reports-charts">
@@ -53,12 +60,12 @@ function AdminReports() {
         <Card id="sl-admin-stock-status-distribution" title="Stock Status Distribution"><PendingPanel label="Stock status distribution" compact /></Card>
       </section>
 
-      <div className="sl-admin-reports-available"><Card id="sl-admin-available-reports" title="Available Reports">
+      <div className="sl-admin-reports-available"><Card id="sl-admin-available-reports" title={<span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><FileBarChart2 aria-hidden="true" /></span><span>Available Reports</span></span>}>
         <div className="sl-admin-reports-table-scroll">
           <div className="sl-admin-reports-table" role="table" aria-label="Available reports">
             <div className="sl-admin-reports-row sl-admin-reports-head" role="row"><span>Report Name</span><span>Description</span><span>Category</span><span>Last Generated</span><span>Actions</span></div>
             {reports.map(([name,desc,category]) => <div className="sl-admin-reports-row" role="row" key={name}>
-              <span className="sl-admin-report-name"><i><FileBarChart2 size={15}/></i>{name}</span><span>{desc}</span><span><b data-category={category}>{category}</b></span><span className="sl-admin-report-pending">Data pending</span><span><button type="button" disabled>Generate</button></span>
+              <span className="sl-admin-report-name"><i><FileBarChart2 size={15}/></i>{name}</span><span>{desc}</span><span><b data-category={category}>{category}</b></span><span className="sl-admin-report-pending">—</span><span><button type="button" disabled>Generate</button></span>
             </div>)}
           </div>
         </div>
@@ -72,6 +79,14 @@ function AdminReports() {
 
 function ManagerReports() {
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const [movementPeriod, setMovementPeriod] = useState('Daily');
+  const [usagePeriod, setUsagePeriod] = useState('This Month');
+  const [forecastPeriod, setForecastPeriod] = useState('Last 30 Days');
+  const [dateRange, setDateRange] = useState('any');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [location, setLocation] = useState('All Locations');
+  const [category, setCategory] = useState('All Categories');
   const reportTemplates = [
     ['Inventory Summary', 'Stock levels, usage, and current inventory value', 'Custom', 'PDF / Excel'],
     ['Usage & Waste Report', 'Ingredient usage, waste amounts, and waste rate', 'Custom', 'PDF / Excel'],
@@ -83,21 +98,21 @@ function ManagerReports() {
   return <>
     <PageHeader title="Reports & Analytics" description="Turn your inventory data into actionable insights." />
     <div className="sl-admin-view sl-manager-reports-v139">
-      <section className="sl-manager-reports-kpis" aria-label="Report summary">
-        <article className="sl-manager-reports-kpi" data-tone="green"><span className="sl-manager-reports-kpi-icon"><BarChart3 /></span><div><span>Total Ingredients Used</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-manager-reports-kpi" data-tone="critical"><span className="sl-manager-reports-kpi-icon"><Trash2 /></span><div><span>Total Waste</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-manager-reports-kpi" data-tone="attention"><span className="sl-manager-reports-kpi-icon"><PieChart /></span><div><span>Waste Rate</span><strong>—</strong><small>Preview · data pending</small></div></article>
-        <article className="sl-manager-reports-kpi" data-tone="brand"><span className="sl-manager-reports-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Preview · data pending</small></div></article>
+      <section className="sl-manager-reports-kpis sl-kpi-reference-v201" aria-label="Report summary">
+        <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="brand"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><BarChart3 /></span><div><span>Total Ingredients Used</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="info"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><Trash2 /></span><div><span>Total Waste</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="attention"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><PieChart /></span><div><span>Waste Rate</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="critical"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
 
       <section className="sl-manager-reports-grid sl-manager-reports-grid-top" aria-label="Analytics overview">
-        <Card id="manager-reports-movement" title="Inventory Movement Trend" action={<div className="sl-manager-reports-card-select"><select disabled><option>Daily</option></select></div>}><PendingPanel label="Inventory movement trend" compact /></Card>
+        <Card id="manager-reports-movement" title="Inventory Movement Trend" action={<div className="sl-manager-reports-card-select"><select value={movementPeriod} onChange={event => setMovementPeriod(event.target.value)}><option>Daily</option><option>Weekly</option><option>Monthly</option></select></div>}><PendingPanel label="Inventory movement trend" compact /></Card>
         <Card id="manager-reports-waste-reason" title="Waste by Reason"><PendingPanel label="Waste reason breakdown" compact /></Card>
-        <Card id="manager-reports-top-usage" title="Top 5 Ingredients by Usage" action={<div className="sl-manager-reports-card-select"><select disabled><option>This Month</option></select></div>}><PendingPanel label="Top ingredient usage" compact /></Card>
+        <Card id="manager-reports-top-usage" title="Top 5 Ingredients by Usage" action={<div className="sl-manager-reports-card-select"><select value={usagePeriod} onChange={event => setUsagePeriod(event.target.value)}><option>This Week</option><option>This Month</option><option>This Quarter</option></select></div>}><PendingPanel label="Top ingredient usage" compact /></Card>
       </section>
 
       <section className="sl-manager-reports-grid sl-manager-reports-grid-bottom" aria-label="Forecast and category analytics">
-        <Card id="manager-reports-forecast-actual" title="Forecast vs. Actual Usage" action={<div className="sl-manager-reports-card-select"><select disabled><option>Last 30 Days</option></select></div>}><PendingPanel label="Forecast versus actual usage" compact /></Card>
+        <Card id="manager-reports-forecast-actual" title="Forecast vs. Actual Usage" action={<div className="sl-manager-reports-card-select"><select value={forecastPeriod} onChange={event => setForecastPeriod(event.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></div>}><PendingPanel label="Forecast versus actual usage" compact /></Card>
         <Card id="manager-reports-expiration-risk" title="Expiration Risk Distribution"><PendingPanel label="Expiration risk distribution" compact /></Card>
         <Card id="manager-reports-category-value" title="Inventory Value by Category"><PendingPanel label="Inventory value by category" compact /></Card>
       </section>
@@ -105,15 +120,16 @@ function ManagerReports() {
       <section className="sl-manager-reports-filter-bar" aria-label="Report filters">
         <label>
           <span>Date Range</span>
-          <div className="sl-manager-reports-date"><CalendarDays size={16}/><span>Data pending</span><ChevronDown size={15}/></div>
+          <div className="sl-manager-reports-date"><CalendarDays size={16}/><select value={dateRange} onChange={event => setDateRange(event.target.value)}><option value="any">Any date</option><option value="week">Last 7 Days</option><option value="month">Last 30 Days</option><option value="custom">Custom</option></select></div>
         </label>
+        {dateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom manager report date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => setDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => setDateTo(event.target.value)} /></label></div>}
         <label>
           <span>Location</span>
-          <select disabled><option>All Locations</option></select>
+          <select value={location} onChange={event => setLocation(event.target.value)}><option>All Locations</option></select>
         </label>
         <label>
           <span>Report Category</span>
-          <select disabled><option>All Categories</option></select>
+          <select value={category} onChange={event => setCategory(event.target.value)}><option>All Categories</option><option>Inventory</option><option>Usage &amp; Waste</option><option>Expiration</option><option>Forecasting</option></select>
         </label>
         <button className="sl-button sl-button-primary" type="button" disabled>
           <BarChart3 size={15} /> Generate Report
@@ -121,7 +137,7 @@ function ManagerReports() {
       </section>
 
       <section className="sl-manager-reports-bottom" aria-label="Available reports">
-        <Card id="manager-reports-available" title="Available Reports">
+        <Card id="manager-reports-available" title={<span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><FileBarChart2 aria-hidden="true" /></span><span>Available Reports</span></span>}>
           <div className="sl-manager-reports-table-scroll">
             <div className="sl-manager-reports-table" role="table" aria-label="Available reports">
               <div className="sl-manager-reports-row sl-manager-reports-head" role="row">
@@ -206,7 +222,7 @@ function LegacyReports() {
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Awaiting forecast accuracy API</small></div></article>
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>30-Day Waste Value</span><strong>—</strong><small>Awaiting reporting summary API</small></div></article>
     </section>
-    <section className="sl-sa-reports-filter-card"><label><span>Date Range</span><div className="sl-sa-reports-date"><CalendarDays size={16}/><input value="Data pending" readOnly disabled/></div></label><label><span>Report Type</span><select disabled><option>All Report Types</option></select></label><label><span>Ingredient</span><select disabled><option>All Ingredients</option></select></label><div className="sl-sa-reports-filter-actions"><button className="sl-button sl-button-primary" disabled>Apply Filters</button><div className="sl-sa-reports-download"><ExportControl label="Download" menuId="sl-sa-reports-download-menu" /></div></div></section>
+      <section className="sl-sa-reports-filter-card"><label><span>Date Range</span><div className="sl-sa-reports-date"><CalendarDays size={16}/><input value="Data pending" readOnly disabled/></div></label><label><span>Report Type</span><select disabled><option>All Report Types</option></select></label><label><span>Ingredient</span><select disabled><option>All Ingredients</option></select></label><div className="sl-sa-reports-filter-actions"><button className="sl-button sl-button-primary" disabled>Apply Filters</button><div className="sl-sa-reports-download"><ExportControl label="Download" menuId="sl-sa-reports-download-menu" /></div></div></section>
     <div className="sl-sa-reports-grid"><Card id="sl-weekly-waste-preview" title="Weekly Waste Cost"><PendingPanel label="Weekly waste cost"/></Card><Card id="sl-forecast-accuracy-preview" title="Forecast vs Actual Consumption"><PendingPanel label="Forecast vs actual consumption"/></Card></div><Card id="sl-high-waste-breakdown" title="High-Waste Breakdown"><PendingPanel label="High-waste ingredient breakdown"/></Card>
   </div></>;
 }

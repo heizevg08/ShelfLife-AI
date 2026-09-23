@@ -41,7 +41,7 @@ export function WasteForecastAnalytics() {
       <article className="sl-analytics-preview-card sl-waste-value-card" data-tone="critical">
         <div className="sl-analytics-card-heading"><h3>30-Day Waste Value</h3></div>
         <strong className="sl-analytics-empty-value">—</strong>
-        <div className="sl-preview-bars sl-analytics-empty-chart sl-analytics-empty-chart-compact" role="img" aria-label="30-day waste value data unavailable">
+          <div className="sl-preview-bars sl-analytics-empty-chart sl-analytics-empty-chart-compact" role="img" aria-label="30-day waste value data unavailable">
           <i /><i /><i /><i /><i /><i />
         </div>
         <p className="sl-supporting sl-analytics-state-copy">Awaiting waste analytics service</p>

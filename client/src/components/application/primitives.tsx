@@ -75,12 +75,7 @@ export function PlaceholderTable({ label, columns, description, rows = 4 }: { la
   return <div className="sl-table-scroll" role="region" aria-label={`${label} preview`} tabIndex={0}>
     <table className="sl-data-table sl-placeholder-table">
       <thead><tr>{columns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
-      <tbody>
-        <tr className="sl-placeholder-state-row"><td colSpan={columns.length} className="sl-empty-cell">
-          <DataState kind="empty" title="No live records yet" description={description} />
-        </td></tr>
-
-      </tbody>
+      <tbody><tr aria-label={`${description} unavailable`}>{columns.map((column, index) => <td key={`${column}-${index}`}>—</td>)}</tr></tbody>
     </table>
   </div>;
 }
@@ -95,7 +90,7 @@ export function UnavailableTable({ label, columns, description, stateTitle = 'Re
   </div>;
 }
 
-export function Card({ title, children, id, action }: { title: string; children: ReactNode; id: string; action?: ReactNode }) {
+export function Card({ title, children, id, action }: { title: ReactNode; children: ReactNode; id: string; action?: ReactNode }) {
   return (
     <section className="sl-card" aria-labelledby={id}>
       <div className="sl-card-header">

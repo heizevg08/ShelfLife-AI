@@ -9,9 +9,8 @@ function PendingPanel({ label, compact = false }: { label: string; compact?: boo
     <div className={`sl-sa-alerts-pending${compact ? ' compact' : ''}`}>
       <DataState
         kind="empty"
-        title="No live records yet"
-        description={label}
-        action={<Status>Preview · data pending</Status>}
+        title={`${label} unavailable`}
+        description="The alert service is not connected yet."
       />
     </div>
   );
@@ -24,15 +23,23 @@ function ManagerAlertPending({ label, compact = false }: { label: string; compac
     <div className={`sl-manager-alerts-pending${compact ? ' compact' : ''}`}>
       <DataState
         kind="empty"
-        title="No live records yet"
-        description={label}
-        action={<Status>Preview · data pending</Status>}
+        title={`${label} unavailable`}
+        description="The alert service is not connected yet."
       />
     </div>
   );
 }
 
 function ManagerAlerts() {
+  const [tab, setTab] = useState('All Alerts');
+  const [search, setSearch] = useState('');
+  const [type, setType] = useState('All Types');
+  const [priority, setPriority] = useState('All Priorities');
+  const [location, setLocation] = useState('All Locations');
+  const [rows, setRows] = useState(10);
+  const [page, setPage] = useState(1);
+  const [trendRange, setTrendRange] = useState('Last 30 Days');
+  const reset = () => { setTab('All Alerts'); setSearch(''); setType('All Types'); setPriority('All Priorities'); setLocation('All Locations'); setPage(1); };
   return <>
     <PageHeader
       title="Alerts"
@@ -40,47 +47,48 @@ function ManagerAlerts() {
     />
 
     <div className="sl-admin-view sl-manager-alerts-v134">
-      <section className="sl-manager-alerts-kpis" aria-label="Alert summary">
-        <article className="sl-manager-alerts-kpi" data-tone="critical">
-          <span className="sl-manager-alerts-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
-          <div><span>Expiring Soon</span><strong>—</strong><small>Preview · data pending</small></div>
+      <section className="sl-manager-alerts-kpis sl-kpi-reference-v201" aria-label="Alert summary">
+        <article className="sl-manager-alerts-kpi sl-sa-kpi" data-tone="brand">
+          <span className="sl-manager-alerts-kpi-icon sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+          <div><span>Expiring Soon</span><strong>—</strong><small>Expiration alerts unavailable</small></div>
         </article>
-        <article className="sl-manager-alerts-kpi" data-tone="attention">
-          <span className="sl-manager-alerts-kpi-icon"><Boxes aria-hidden="true" /></span>
-          <div><span>Low Stock</span><strong>—</strong><small>Preview · data pending</small></div>
+        <article className="sl-manager-alerts-kpi sl-sa-kpi" data-tone="info">
+          <span className="sl-manager-alerts-kpi-icon sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
+          <div><span>Low Stock</span><strong>—</strong><small>Stock alerts unavailable</small></div>
         </article>
-        <article className="sl-manager-alerts-kpi" data-tone="brand">
-          <span className="sl-manager-alerts-kpi-icon"><TrendingUp aria-hidden="true" /></span>
-          <div><span>Forecast Risk</span><strong>—</strong><small>Preview · data pending</small></div>
+        <article className="sl-manager-alerts-kpi sl-sa-kpi" data-tone="attention">
+          <span className="sl-manager-alerts-kpi-icon sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
+          <div><span>Forecast Risk</span><strong>—</strong><small>Forecast alerts unavailable</small></div>
         </article>
-        <article className="sl-manager-alerts-kpi" data-tone="neutral">
-          <span className="sl-manager-alerts-kpi-icon"><Info aria-hidden="true" /></span>
-          <div><span>Other Alerts</span><strong>—</strong><small>Preview · data pending</small></div>
+        <article className="sl-manager-alerts-kpi sl-sa-kpi" data-tone="critical">
+          <span className="sl-manager-alerts-kpi-icon sl-sa-kpi-icon"><Info aria-hidden="true" /></span>
+          <div><span>Other Alerts</span><strong>—</strong><small>Alert summary unavailable</small></div>
         </article>
       </section>
 
       <div className="sl-manager-alerts-layout">
         <main className="sl-manager-alerts-main">
-          <section className="sl-manager-alerts-records-card" aria-label="Alert records">
+          <section className="sl-manager-alerts-records-card sl-reference-records" aria-label="Alert records">
+            <header className="sl-reference-records-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><strong>Alert Records</strong></header>
             <nav className="sl-manager-alerts-tabs" aria-label="Alert categories">
-              {['All Alerts', 'Expiring Soon', 'Low Stock', 'Forecast Risk', 'Other'].map((label, index) => (
-                <button key={label} type="button" className={index === 0 ? 'active' : ''} disabled>{label}</button>
+              {['All Alerts', 'Expiring Soon', 'Low Stock', 'Forecast Risk', 'Other'].map(label => (
+                <button key={label} type="button" className={tab === label ? 'active' : ''} onClick={() => { setTab(label); setPage(1); }}>{label}</button>
               ))}
             </nav>
 
             <div className="sl-manager-alerts-filters" aria-label="Alert filters">
               <label className="sl-manager-alerts-search">
                 <span className="sl-sr-only">Search alerts</span>
-                <div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search alerts..." disabled /></div>
+                <div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search alerts..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
               </label>
-              <label><span>Alert Type</span><select disabled><option>All Types</option></select></label>
-              <label><span>Priority</span><select disabled><option>All Priorities</option></select></label>
-              <label><span>Location</span><select disabled><option>All Locations</option></select></label>
-              <button type="button" className="sl-button" disabled>Reset</button>
+              <label><span>Alert Type</span><select value={type} onChange={event => { setType(event.target.value); setPage(1); }}><option>All Types</option><option>Expiration</option><option>Low Stock</option><option>Forecast Risk</option><option>Other</option></select></label>
+              <label><span>Priority</span><select value={priority} onChange={event => { setPriority(event.target.value); setPage(1); }}><option>All Priorities</option><option>High</option><option>Medium</option><option>Low</option></select></label>
+              <label><span>Location</span><select value={location} onChange={event => { setLocation(event.target.value); setPage(1); }}><option>All Locations</option></select></label>
+              <button type="button" className="sl-button" onClick={reset}>Reset</button>
             </div>
 
             <div className="sl-manager-alerts-table-wrap">
-              <table className="sl-manager-alerts-table">
+              <table className="sl-manager-alerts-table sl-reference-records-table">
                 <thead><tr>
                   <th aria-label="Select"></th>
                   <th>Date &amp; Time</th>
@@ -92,22 +100,20 @@ function ManagerAlerts() {
                   <th>Status</th>
                   <th>Actions</th>
                 </tr></thead>
+                <tbody><tr>{Array.from({ length: 9 }).map((_, index) => <td key={index}>—</td>)}</tr></tbody>
               </table>
-              <div className="sl-manager-alerts-table-state">
-                <ManagerAlertPending label="Alert records" />
-              </div>
             </div>
 
-            <footer className="sl-manager-alerts-footer">
-              <label><span>Rows per page</span><select defaultValue="10" disabled><option>10</option></select></label>
-              <span>Pagination will activate when live alert records are available.</span>
+            <footer className="sl-manager-alerts-footer sl-reference-records-footer">
+              <label><span>Rows per page</span><select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label>
+              <Pagination compact page={page} pageSize={rows} total={0} itemLabel="alert records" onPageChange={setPage} />
             </footer>
           </section>
         </main>
 
         <aside className="sl-manager-alerts-rail" aria-label="Alert analytics">
           <Card id="manager-alert-trends" title="Alert Trends">
-            <div className="sl-manager-alerts-card-select"><select defaultValue="Last 30 Days" disabled><option>Last 30 Days</option></select></div>
+            <div className="sl-manager-alerts-card-select"><select value={trendRange} onChange={event => setTrendRange(event.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></div>
             <ManagerAlertPending label="Alert trends" compact />
           </Card>
           <Card id="manager-alert-priority" title="Alerts by Priority">
@@ -201,6 +207,11 @@ function SuperAdminAlerts() {
 }
 
 function BaseAlerts() {
+  const [dateRange, setDateRange] = useState('any');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [rows, setRows] = useState(10);
+  const [page, setPage] = useState(1);
   return <>
     <div className="sl-sa-usage-heading">
       <header className="sl-page-header sl-sa-usage-page-header">
@@ -230,22 +241,23 @@ function BaseAlerts() {
                 <label className="sl-sa-ingredients-search"><span>Search alerts</span><div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search by ingredient, batch ID, or message…" /></div></label>
                 <label><span>Alert Type</span><select defaultValue="All Types"><option>All Types</option><option>Expiry</option><option>Low Stock</option><option>Overstock</option><option>Forecast Deviation</option></select></label>
                 <label><span>Status</span><select defaultValue="All Statuses"><option>All Statuses</option><option>Active</option><option>Acknowledged</option><option>Resolved</option></select></label>
-                <label><span>Branch</span><select defaultValue="All Branches"><option>All Branches</option><option disabled>Branch values · data pending</option></select></label>
-                <label><span>Date Range</span><select defaultValue="Any date"><option>Any date</option><option>Last week</option><option>Last month</option><option>Last year</option><option>Custom</option></select></label>
-                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button">Reset</button><button type="button" className="sl-button">Export</button></div>
+                <label><span>Branch</span><select defaultValue="All Branches"><option>All Branches</option></select></label>
+                <label className="sl-v219-date-range-field"><span>Date Range</span><select value={dateRange} onChange={event => setDateRange(event.target.value)}><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
+                {dateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom alert date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => setDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => setDateTo(event.target.value)} /></label></div>}
+                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={() => { setDateRange('any'); setDateFrom(''); setDateTo(''); }}>Reset</button><button type="button" className="sl-button">Export</button></div>
               </div>
             </div>
 
             <div className="sl-sa-ingredients-table-wrap sl-staff-usage-table-wrap">
               <table className="sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table sl-sa-alerts-record-table">
                 <thead><tr><th>Alert ID</th><th>Ingredient</th><th>Avg. Daily Usage</th><th>Alert Type</th><th>Severity</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody><tr className="sl-sa-alerts-empty-row"><td colSpan={8}><div className="sl-sa-alerts-inline-empty"><Bell size={18} aria-hidden="true" /><span>Awaiting live alert records.</span></div></td></tr></tbody>
+                <tbody><tr className="sl-sa-records-dash-row">{Array.from({ length: 8 }).map((_, index) => <td key={index}>—</td>)}</tr></tbody>
               </table>
             </div>
 
             <footer className="sl-sa-ingredients-table-footer sl-staff-usage-table-footer">
-              <label><span>Rows per page</span><select defaultValue="10"><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
-              <div className="sl-sa-ingredients-pagination" aria-label="Alert pagination"><button type="button" className="sl-button" disabled>Previous</button><span>Page 1</span><button type="button" className="sl-button" disabled>Next</button></div>
+              <label><span>Rows per page</span><select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
+              <Pagination compact page={page} pageSize={rows} total={0} itemLabel="alert records" onPageChange={setPage} />
             </footer>
           </section>
         </main>

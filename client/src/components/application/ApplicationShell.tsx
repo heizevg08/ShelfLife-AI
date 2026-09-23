@@ -122,7 +122,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   useEffect(() => {
     // Roles with compact desktop navigation enter in the collapsed rail state after login.
     // The rail can still expand temporarily on hover or persistently from the toggle button.
-    if (user?.role === 'Admin' || user?.role === 'Super Admin' || user?.role === 'Inventory Staff') {
+    if (user?.role === 'Admin' || user?.role === 'Super Admin' || user?.role === 'Manager' || user?.role === 'Inventory Staff') {
       sidebarHover.cancel();
       setHoverExpanded(false);
       setCollapsed(true);

@@ -1,13 +1,16 @@
 import { Link } from 'expo-router';
-import { AlertTriangle, ArrowRight, Box, FileText, UsersRound } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Box, CalendarClock, FileText, Target, Trash2, UsersRound, type LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { dashboardSummary, listAccounts, listAuditRecords, type Account, type AuditRecord, type DashboardSummary } from '../../services/administration';
-import type { SessionUser } from '../../services/auth';
+import { sessionDisplayName, type SessionUser } from '../../services/auth';
 import { Card, Status, PageHeader} from '../application/primitives';
 
 const AUTO_REFRESH_MS = 15000;
 const roleOrder = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
 
+function ChartCardTitle({ Icon, children }: { Icon: LucideIcon; children: string }) {
+  return <span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><Icon aria-hidden="true" /></span><span>{children}</span></span>;
+}
 
 export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   const [greeting, setGreeting] = useState('Good morning');
@@ -62,7 +65,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     role,
     count: backendRoleDistribution?.find(item => item.role === role)?.count ?? null,
   }));
-  const distributionTotal = backendRoleDistribution?.reduce((sum, item) => sum + item.count, 0) ?? 0;
+  const distributionTotal = backendRoleDistribution?.reduce((sum, item) => sum + (item.count ?? 0), 0) ?? 0;
   const distributionStops = dashboardRoleDistribution.reduce<{ cursor: number; stops: string[] }>((state, item, index) => {
     const palette = ['#0b8755', '#79c9a3', '#ffd166', '#67a98f'];
     if (!distributionTotal || item.count === null) return state;
@@ -78,7 +81,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   const totalUsers = summary?.totalUsers ?? accountsTotal;
   return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49 sl-staff-usage-v150 sl-superadmin-users-page-v60 sl-superadmin-users-page-v63 sl-superadmin-users-page-v64">
     <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
-      <PageHeader eyebrow="Dashboard" title={`${greeting}, ${user.firstName || 'Super Admin'}.`} />
+      <PageHeader eyebrow="Dashboard" title={`${greeting}, ${sessionDisplayName(user)}.`} />
       <p className="sl-dashboard-description">Monitor system-wide activity, security, operations and administrative oversight.</p>
     </div>
     <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="System overview">
@@ -89,7 +92,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     </section>
 
     <section className="sl-sa-analytics-row sl-sa-analytics-row-v317">
-      <Card id="sl-sa-expiration" title="Expiration Status (All Ingredients)">
+      <Card id="sl-sa-expiration" title={<ChartCardTitle Icon={CalendarClock}>Expiration Status (All Ingredients)</ChartCardTitle>}>
         <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface">
           <div className="sl-sa-expiration-donut" aria-hidden="true"><strong>—</strong><span>Batches</span></div>
           <div className="sl-sa-chart-legend" aria-label="Expiration status legend">
@@ -97,26 +100,30 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
             <div><i className="is-expiring"/><span>Expiring Soon</span><strong>—</strong></div>
             <div><i className="is-expired"/><span>Expired</span><strong>—</strong></div>
           </div>
-          <span className="sl-sa-chart-empty-note">No live records yet</span>
+          <span className="sl-sa-chart-empty-note">Expiration data unavailable</span>
         </div>
       </Card>
-      <Card id="sl-sa-waste" title="Waste Trend (Last 6 Months)">
-        <div className="sl-sa-chart-surface sl-sa-line-chart-surface" aria-label="Waste trend line chart">
+      <Card id="sl-sa-waste" title={<ChartCardTitle Icon={Trash2}>Waste Trend (Last 6 Months)</ChartCardTitle>}>
+        <div className="sl-sa-chart-surface sl-sa-line-chart-surface" role="img" aria-label="Six-month waste quantity trend; live values unavailable">
+          <span className="sl-sa-chart-y-title">Waste Quantity</span>
           <div className="sl-sa-chart-y-axis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span></div>
           <div className="sl-sa-line-chart-plot" aria-hidden="true"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><path d="M0 48 L100 48" /></svg></div>
           <div className="sl-sa-chart-x-axis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span><span>—</span><span>—</span></div>
-          <span className="sl-sa-chart-empty-note">No live records yet</span>
+          <span className="sl-sa-chart-x-title">Month</span>
+          <span className="sl-sa-chart-empty-note">Waste trend unavailable</span>
         </div>
       </Card>
-      <Card id="sl-sa-forecast" title="Forecast Accuracy (Last 6 Months)">
-        <div className="sl-sa-chart-surface sl-sa-bar-chart-surface" aria-label="Forecast accuracy bar chart">
+      <Card id="sl-sa-forecast" title={<ChartCardTitle Icon={Target}>Forecast Accuracy (Last 6 Months)</ChartCardTitle>}>
+        <div className="sl-sa-chart-surface sl-sa-bar-chart-surface" role="img" aria-label="Six-month forecast accuracy percentage; live values unavailable">
+          <span className="sl-sa-chart-y-title">Forecast Accuracy (%)</span>
           <div className="sl-sa-chart-y-axis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span></div>
           <div className="sl-sa-bar-chart-plot" aria-hidden="true">{Array.from({ length: 6 }).map((_, index) => <i key={index} />)}</div>
           <div className="sl-sa-chart-x-axis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span><span>—</span><span>—</span></div>
-          <span className="sl-sa-chart-empty-note">No live records yet</span>
+          <span className="sl-sa-chart-x-title">Month</span>
+          <span className="sl-sa-chart-empty-note">Forecast accuracy unavailable</span>
         </div>
       </Card>
-      <Card id="sl-sa-distribution" title="User Distribution">
+      <Card id="sl-sa-distribution" title={<ChartCardTitle Icon={UsersRound}>User Distribution</ChartCardTitle>}>
         <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface sl-sa-user-distribution-surface">
           <div className="sl-sa-expiration-donut sl-sa-user-distribution-donut" style={{ background: distributionBackground }}>
             <strong>{backendRoleDistribution ? distributionTotal.toLocaleString() : '—'}</strong><span>Users</span>

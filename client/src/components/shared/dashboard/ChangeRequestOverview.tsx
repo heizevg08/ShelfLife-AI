@@ -14,9 +14,9 @@ export function ChangeRequestOverview() {
         <strong aria-hidden="true">—</strong>
       </div>
       <div className="sl-preview-legend">
-        <span><i className="sl-dot sl-dot-success" /> Approved <strong>—</strong></span>
-        <span><i className="sl-dot sl-dot-attention" /> Pending <strong>—</strong></span>
-        <span><i className="sl-dot sl-dot-critical" /> Rejected <strong>—</strong></span>
+          <span><i className="sl-dot sl-dot-success" /> Approved <strong>—</strong></span>
+          <span><i className="sl-dot sl-dot-attention" /> Pending <strong>—</strong></span>
+          <span><i className="sl-dot sl-dot-critical" /> Rejected <strong>—</strong></span>
       </div>
       <p className="sl-supporting">Awaiting request service</p>
     </div>

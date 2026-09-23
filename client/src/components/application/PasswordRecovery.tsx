@@ -57,6 +57,6 @@ export function PasswordRecovery({ token }: { token?: string }) {
       : <div className="sl-field"><label htmlFor="sl-recovery-email">Email</label><input ref={field} id="sl-recovery-email" type="email" autoComplete="email" required value={email} onChange={event => { setEmail(event.target.value); setFieldError(''); setError(''); setMessage(''); }} disabled={pending} aria-invalid={!!fieldError} aria-describedby={`sl-reset-feedback${fieldError ? ' sl-recovery-field-error' : ''}`} /></div>}
     {fieldError && <p id="sl-recovery-field-error" role="alert" className="sl-field-error">{fieldError}</p>}
     <div id="sl-reset-feedback">{error && <p role="alert" className="sl-field-error">{error}</p>}{message && <p role="status">{message}</p>}</div>
-    <button className="sl-button sl-button-primary" disabled={pending}>{pending ? 'Please wait...' : token ? 'Reset password' : 'Request recovery'}</button>
+      <button className="sl-button sl-button-primary" disabled={pending}>{pending ? 'Please wait...' : token ? 'Reset password' : 'Request recovery'}</button>
   </form>;
 }

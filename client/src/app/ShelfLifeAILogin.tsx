@@ -132,7 +132,7 @@ export default function ShelfLifeLogin() {
               <label className="sl-remember"><input type="checkbox" checked={rememberMe} disabled={isLoading} onChange={event => setRememberMe(event.target.checked)} />Remember me</label>
               <button ref={recoveryButton} type="button" className="sl-text-action" onClick={() => setRecoveryOpen(true)}>Forgot Password</button>
             </div>
-            <button className="sl-button sl-button-primary sl-login-submit" type="submit" disabled={isLoading}>
+          <button className="sl-button sl-button-primary sl-login-submit" type="submit" disabled={isLoading}>
               {isLoading ? <LoaderCircle size={18} className="sl-spin" aria-hidden="true" /> : <LogIn size={18} aria-hidden="true" />}
               <span>{isLoading ? 'Logging in...' : 'Log in'}</span>
             </button>

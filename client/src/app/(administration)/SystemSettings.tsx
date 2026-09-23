@@ -255,7 +255,7 @@ function NotificationPanel({ embedded = false }: { embedded?: boolean } = {}) {
                 <p>Enable or disable notification types. These settings apply to all users unless overridden at the user level.</p>
               </div>
             </div>
-            <button type="button" className="sl-v72-reset-button"><RotateCcw size={15} aria-hidden="true" /><span>Reset to default</span></button>
+            <button type="button" className="sl-v72-reset-button"><RotateCcw size={15} aria-hidden="true" /><span>Reset to Default</span></button>
           </header>
           <div className="sl-v72-preference-table-wrap">
             <table className="sl-v72-preference-table">
@@ -315,7 +315,7 @@ function MaintenancePanel() {
               <span className="sl-v73-section-icon"><TimerReset size={16} aria-hidden="true" /></span>
               <div><h2>System Health</h2><p>Real-time status of system services.</p></div>
             </div>
-            <Status>Data pending</Status>
+            <Status>Monitoring unavailable</Status>
           </header>
           <DataState
             kind="empty"
@@ -334,7 +334,7 @@ function MaintenancePanel() {
           </header>
           <DataState
             kind="empty"
-            title="No live records yet"
+            title="Maintenance schedule unavailable"
             description="Scheduled maintenance will appear here when the maintenance backend is connected."
           />
         </section>
@@ -349,7 +349,7 @@ function MaintenancePanel() {
           </header>
           <DataState
             kind="empty"
-            title="No live records yet"
+            title="Maintenance activity unavailable"
             description="Maintenance activity will appear here when its audit backend is connected."
           />
         </section>
