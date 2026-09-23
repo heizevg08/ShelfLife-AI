@@ -34,7 +34,7 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
 
   useEffect(() => {
     const abort = new AbortController();
-    if (!data) setError(false);
+    setError(false);
     const cutoffDays = periodFilter === 'Last week' ? 7 : periodFilter === 'Last month' ? 30 : periodFilter === 'Last year' ? 365 : 0;
     const specificStart = periodFilter === 'Custom' && specificFrom ? new Date(`${specificFrom}T00:00:00`).toISOString() : undefined;
     const specificEnd = periodFilter === 'Custom' && specificTo ? new Date(`${specificTo}T23:59:59.999`).toISOString() : undefined;
@@ -45,7 +45,7 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
       to: specificEnd,
     };
     listAuditRecords(page, recent ? 5 : pageSize, 'desc', filters, abort.signal)
-      .then(value => { if (!abort.signal.aborted) { setData(value); setLastUpdatedAt(new Date()); } })
+      .then(value => { if (!abort.signal.aborted) { setError(false); setData(value); setLastUpdatedAt(new Date()); } })
       .catch(() => { if (!abort.signal.aborted) setError(true); });
     return () => abort.abort();
   }, [page, pageSize, refresh, recent, actorFilter, actionFilter, periodFilter, specificFrom, specificTo]);

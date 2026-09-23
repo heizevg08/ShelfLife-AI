@@ -4,7 +4,8 @@ import { accountInput, auditPagination, objectId, pagination, invalid } from '..
 
 export function administrationControllers(service: AdministrationService): Record<'list' | 'get' | 'create' | 'update' | 'deactivate' | 'reactivate' | 'summary' | 'audit', RequestHandler> {
   const lifecycle = (active: boolean): RequestHandler => async (req, res) => {
-    if (req.body && Object.keys(req.body).length) invalid('body', 'No fields are accepted');
+    if (req.body !== undefined && (req.body === null || typeof req.body !== 'object' || Array.isArray(req.body)
+      || Object.getPrototypeOf(req.body) !== Object.prototype || Object.keys(req.body).length)) invalid('body', 'No fields are accepted');
     res.json({ user: await service.setActive(res.locals.user, objectId(req.params.id), active) });
   };
   return {

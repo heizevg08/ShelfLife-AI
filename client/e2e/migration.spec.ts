@@ -203,3 +203,71 @@ test('anonymous deep links redirect to login and lockout has useful feedback', a
   await page.getByRole('button', { name: 'Log in', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Too many failed attempts');
 });
+
+test('ingredient text limits block oversized submissions and only required fields have stars', async ({ page }) => {
+  const api = await mockApi(page, 'Inventory Manager');
+  await page.goto('/Ingredients');
+  await page.getByRole('button', { name: 'Add Ingredient', exact: true }).click();
+  const form = page.locator('#sl-ingredient-form');
+  for (const label of ['Name', 'Category', 'Unit of measure']) {
+    await expect(form.locator('label').filter({ has: page.getByLabel(label, { exact: false }) }).locator('.sl-required-mark')).toHaveCount(1);
+  }
+  for (const placeholder of ['e.g. FreshFarm', 'e.g. Boneless, skinless chicken breast']) {
+    await expect(form.getByPlaceholder(placeholder).locator('..').locator('.sl-required-mark')).toHaveCount(0);
+  }
+  for (const id of ['minStock', 'unitCost', 'shelfLife']) {
+    await expect(form.locator(`label:has(#ingredient-${id}-input) .sl-required-mark`)).toHaveCount(0);
+  }
+  await form.getByPlaceholder('e.g. Chicken Breast').fill('Milk');
+  await form.getByLabel('Category').selectOption('Dairy');
+  await form.getByLabel('Unit of measure').selectOption('L');
+  for (const [placeholder, limit] of [['e.g. Chicken Breast', 100], ['e.g. FreshFarm', 100], ['e.g. Boneless, skinless chicken breast', 500]] as const) {
+    const input = form.getByPlaceholder(placeholder);
+    await expect(input).toHaveAttribute('maxlength', String(limit));
+    // Bypass native entry limits to verify submit validation independently.
+    await input.evaluate(element => element.removeAttribute('maxlength'));
+    await input.fill('x'.repeat(limit + 1));
+    await page.getByRole('button', { name: 'Save Ingredient', exact: true }).click();
+    await expect(input).toHaveAttribute('aria-invalid', 'true');
+    await expect(form.getByText(`Use at most ${limit} characters.`, { exact: true })).toBeVisible();
+    expect(api.writes.filter(request => request.path === '/api/ingredients')).toHaveLength(0);
+    await input.fill(placeholder === 'e.g. Chicken Breast' ? 'Milk' : '');
+  }
+});
+
+test('audit retry clears errors after previously loaded data fails to refresh', async ({ page }) => {
+  await mockApi(page, 'Admin');
+  let fail = false;
+  await page.route('**/api/audit-records?*', route => route.fulfill({ status: fail ? 500 : 200, json: fail ? { error: { message: 'Unavailable' } } : { items: [], page: 1, pageSize: 10, total: 0 } }));
+  await page.goto('/AdministrativeAudit');
+  await expect(page.getByText('No administrative activity yet', { exact: true })).toBeVisible();
+  fail = true;
+  // The existing periodic refresh must fail after data already exists.
+  await expect(page.getByText('Activity could not be loaded', { exact: true })).toBeVisible({ timeout: 22000 });
+  fail = false;
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(page.getByText('No administrative activity yet', { exact: true })).toBeVisible();
+  await expect(page.getByText('Activity could not be loaded', { exact: true })).toHaveCount(0);
+});
+
+test('Security settings disable unconnected controls and identify unenforced policies', async ({ page }) => {
+  await mockApi(page, 'Super Admin');
+  await page.goto('/SystemSettings');
+  await page.getByRole('button', { name: 'Security', exact: true }).click();
+  const panel = page.locator('.sl-v70-security-grid');
+  await expect(panel.getByRole('button', { name: 'Save Settings', exact: true })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Discard Changes', exact: true })).toBeDisabled();
+  for (const title of ['Require Multi-Factor Authentication (MFA)', 'Restrict Concurrent Sessions']) {
+    const control = panel.getByRole('switch', { name: title, exact: true });
+    await expect(control).toBeDisabled();
+    await expect(control.locator('..').getByText('Not enforced yet', { exact: true })).toBeVisible();
+  }
+  await expect(panel.locator('select')).toHaveCount(4);
+  for (const select of await panel.locator('select').all()) {
+    await expect(select).toBeDisabled();
+    await expect(select.locator('..').getByText('Not connected yet', { exact: true })).toBeVisible();
+  }
+  await expect(panel.getByRole('switch')).toHaveCount(10);
+  for (const control of await panel.getByRole('switch').all()) await expect(control).toBeDisabled();
+  await expect(panel.locator('.sl-v70-linklike[aria-disabled="true"]')).toHaveCount(2);
+});
