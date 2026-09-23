@@ -153,3 +153,21 @@ test('HTTP lifecycle records the authenticated actor and rejects mass assignment
     assert.equal(filtered.items[0].action, 'REACTIVATE');
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });
+
+test('password-setting paths reject whitespace only and preserve significant edge spaces', async () => {
+  const { readDevAdmin } = require('../dist/config/auth');
+  const f = fixture(), password = '  valid-password-only  ';
+  const fields = { firstName: 'New', lastName: 'Admin', email: 'new@shelflife.com', role: 'Admin' };
+  const env = { NODE_ENV: 'development', DEV_ADMIN_EMAIL: fields.email, DEV_ADMIN_FIRST_NAME: fields.firstName, DEV_ADMIN_LAST_NAME: fields.lastName };
+  for (const blank of ['', ' '.repeat(12), '\t\n '.repeat(12)]) {
+    assert.throws(() => accountInput({ ...fields, password: blank }, true), error => error.status === 400 && error.details.some(detail => detail.field === 'password'));
+    assert.throws(() => readDevAdmin({ ...env, DEV_ADMIN_PASSWORD: blank }), /DEV_ADMIN_PASSWORD/);
+  }
+  const input = accountInput({ ...fields, password }, true);
+  assert.equal(input.password, password);
+  await f.service.create(f.rows()[0], input);
+  assert.equal(await verifyPassword(password, f.hash()), true);
+  assert.equal(await verifyPassword(password.trim(), f.hash()), false);
+  assert.equal(readDevAdmin({ ...env, DEV_ADMIN_PASSWORD: password }).password, password);
+  assert.throws(() => accountInput({ password }, false)); // No admin-reset path on account PATCH.
+});

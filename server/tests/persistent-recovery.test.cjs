@@ -85,3 +85,17 @@ test('Resend boundary is disabled without configuration and requires provider ac
   assert(sent.text.includes('#reset='));assert(!sent.text.includes('?reset='));
   await assert.rejects(createResetEmail(env,async()=>new Response('{}',{status:500})).send('recipient@example.com','a'.repeat(64)));
 });
+
+test('reset completion rejects whitespace-only passwords without consuming the token and preserves edge spaces', async () => {
+  let consumed = 0, stored;
+  const recovery = createPasswordRecovery({ consumeReset: async (_token, _date, hash) => { consumed++; stored = hash; return true; } });
+  const token = 'a'.repeat(64), password = '  valid-password-only  ';
+  for (const blank of ['', ' '.repeat(12), '\t\n '.repeat(12)]) {
+    await assert.rejects(recovery.complete({ token, password: blank }), error => error.status === 400);
+  }
+  assert.equal(consumed, 0);
+  await recovery.complete({ token, password });
+  assert.equal(consumed, 1);
+  assert.equal(await verifyPassword(password, stored), true);
+  assert.equal(await verifyPassword(password.trim(), stored), false);
+});
