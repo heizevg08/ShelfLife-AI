@@ -65,6 +65,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const [collapsed, setCollapsed] = useState(false);
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const railCollapsed = collapsed && !hoverExpanded;
+  const userManagementTooltip = pathname === '/UserManagement' && user?.role === 'Super Admin';
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [logoutError, setLogoutError] = useState(false);
   const [logoutPending, setLogoutPending] = useState(false);
@@ -234,7 +235,9 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
               className="sl-nav-item"
               aria-current={pathname === path || (path === '/UsageWaste' && ['/Usage', '/Waste'].includes(pathname)) || (path === '/InventoryBatches' && pathname === '/ExpirationMonitoring') ? 'page' : undefined}
               aria-label={label}
-              title={!mobile && railCollapsed ? label : undefined}
+              title={!mobile && railCollapsed && !userManagementTooltip ? label : undefined}
+              onMouseEnter={event => !mobile && userManagementTooltip && setFocusedNavigation({ label, top: event.currentTarget.getBoundingClientRect().top })}
+              onMouseLeave={() => { if (userManagementTooltip) setFocusedNavigation(null); }}
               onFocus={event => !mobile && railCollapsed && setFocusedNavigation({ label, top: event.currentTarget.getBoundingClientRect().top })}
               onBlur={() => setFocusedNavigation(null)}
               onKeyDown={event => { if (event.key === 'Escape') setFocusedNavigation(null); }}
@@ -357,8 +360,8 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
         </div>
       </aside>
 
-      {/* Native hover titles plus a visible keyboard label avoid clipped sidebar tooltips. */}
-      {railCollapsed && focusedNavigation && (
+      {/* User Management keeps hover/focus labels inside the rail, clear of page content. */}
+      {(railCollapsed || userManagementTooltip) && focusedNavigation && (
         <span className="sl-navigation-focus-label" style={{ top: focusedNavigation.top }} aria-hidden="true">
           {focusedNavigation.label}
         </span>
