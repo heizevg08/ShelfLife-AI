@@ -234,3 +234,18 @@ test('ingredient text limits block oversized submissions and only required field
     await input.fill(placeholder === 'e.g. Chicken Breast' ? 'Milk' : '');
   }
 });
+
+test('audit retry clears errors after previously loaded data fails to refresh', async ({ page }) => {
+  await mockApi(page, 'Admin');
+  let fail = false;
+  await page.route('**/api/audit-records?*', route => route.fulfill({ status: fail ? 500 : 200, json: fail ? { error: { message: 'Unavailable' } } : { items: [], page: 1, pageSize: 10, total: 0 } }));
+  await page.goto('/AdministrativeAudit');
+  await expect(page.getByText('No administrative activity yet', { exact: true })).toBeVisible();
+  fail = true;
+  // The existing periodic refresh must fail after data already exists.
+  await expect(page.getByText('Activity could not be loaded', { exact: true })).toBeVisible({ timeout: 22000 });
+  fail = false;
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(page.getByText('No administrative activity yet', { exact: true })).toBeVisible();
+  await expect(page.getByText('Activity could not be loaded', { exact: true })).toHaveCount(0);
+});
