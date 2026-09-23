@@ -72,18 +72,21 @@ function SecurityRow({
   title,
   description,
   enabled = false,
+  unavailable,
 }: {
   title: string;
   description: string;
   enabled?: boolean;
+  unavailable?: 'Not enforced yet' | 'Not connected yet';
 }) {
   return (
     <div className="sl-v70-switch-item">
       <div>
         <div className="sl-v70-switch-title">{title}</div>
         <p>{description}</p>
+        {unavailable && <small className="sl-supporting">{unavailable}</small>}
       </div>
-      <Toggle defaultChecked={enabled} />
+      {unavailable ? <button type="button" role="switch" aria-label={title} aria-checked={false} disabled className="sl-v70-toggle"><span /></button> : <Toggle defaultChecked={enabled} />}
     </div>
   );
 }
@@ -232,26 +235,28 @@ function SecurityPanel() {
           <div className="sl-v70-field-grid">
             <label>
               <span>Password Policy</span>
-              <select defaultValue="strong">
+              <select disabled defaultValue="strong">
                 <option value="strong">Strong (recommended)</option>
               </select>
+              <small className="sl-supporting">Not connected yet</small>
               <small>Minimum 8 characters, with uppercase, lowercase, number, and special character.</small>
             </label>
 
             <label>
               <span>Session Timeout</span>
-              <select defaultValue="15">
+              <select disabled defaultValue="15">
                 <option value="15">15 minutes</option>
               </select>
+              <small className="sl-supporting">Not connected yet</small>
               <small>Automatically logs out inactive users.</small>
             </label>
           </div>
 
           <div className="sl-v70-switch-grid">
-            <SecurityRow title="Require Multi-Factor Authentication (MFA)" description="Require MFA for all users (recommended)." enabled />
-            <SecurityRow title="Enforce Account Lockout" description="Lock account after 5 failed login attempts." enabled />
-            <SecurityRow title="Allow Remember Me" description="Allow users to stay signed in on trusted devices." />
-            <SecurityRow title="Restrict Concurrent Sessions" description="Limit each user to one active session per account." enabled />
+            <SecurityRow title="Require Multi-Factor Authentication (MFA)" description="Require MFA for all users (recommended)." enabled unavailable="Not enforced yet" />
+            <SecurityRow title="Enforce Account Lockout" description="Lock account after 5 failed login attempts." enabled unavailable="Not connected yet" />
+            <SecurityRow title="Allow Remember Me" description="Allow users to stay signed in on trusted devices." unavailable="Not connected yet" />
+            <SecurityRow title="Restrict Concurrent Sessions" description="Limit each user to one active session per account." enabled unavailable="Not enforced yet" />
           </div>
         </article>
 
@@ -267,20 +272,21 @@ function SecurityPanel() {
           <div className="sl-v70-field-grid">
             <label>
               <span>Default Role for New Users</span>
-              <select defaultValue="inventory">
+              <select disabled defaultValue="inventory">
                 <option value="inventory">Inventory Staff</option>
               </select>
+              <small className="sl-supporting">Not connected yet</small>
               <small>Role assigned when a new user is created.</small>
             </label>
 
             <div className="sl-v70-inline-control">
-              <SecurityRow title="Require Admin Approval for New Users" description="New user accounts require approval before activation." enabled />
+              <SecurityRow title="Require Admin Approval for New Users" description="New user accounts require approval before activation." enabled unavailable="Not connected yet" />
             </div>
           </div>
 
           <div className="sl-v70-switch-grid">
-            <SecurityRow title="Allow Role Modification" description="Allow Super Admin to edit user roles." enabled />
-            <SecurityRow title="Restrict Self-Promotion" description="Prevent users from changing their own role to a higher privilege level." enabled />
+            <SecurityRow title="Allow Role Modification" description="Allow Super Admin to edit user roles." enabled unavailable="Not connected yet" />
+            <SecurityRow title="Restrict Self-Promotion" description="Prevent users from changing their own role to a higher privilege level." enabled unavailable="Not connected yet" />
           </div>
         </article>
 
@@ -294,28 +300,29 @@ function SecurityPanel() {
           </header>
 
           <div className="sl-v70-switch-grid">
-            <SecurityRow title="Encrypt Sensitive Data" description="Encrypt sensitive data (e.g., passwords, tokens, personal information)." enabled />
-            <SecurityRow title="Enable Audit Logging" description="Log all sensitive actions and configuration changes." enabled />
+            <SecurityRow title="Encrypt Sensitive Data" description="Encrypt sensitive data (e.g., passwords, tokens, personal information)." enabled unavailable="Not connected yet" />
+            <SecurityRow title="Enable Audit Logging" description="Log all sensitive actions and configuration changes." enabled unavailable="Not connected yet" />
           </div>
 
           <div className="sl-v70-field-grid">
             <label>
               <span>Data Retention Period</span>
-              <select defaultValue="2years">
+              <select disabled defaultValue="2years">
                 <option value="2years">2 years</option>
               </select>
+              <small className="sl-supporting">Not connected yet</small>
               <small>How long to keep audit logs and security records.</small>
             </label>
 
             <div className="sl-v70-inline-control">
-              <SecurityRow title="Mask Personal Information" description="Mask personal data in logs and exports." enabled />
+              <SecurityRow title="Mask Personal Information" description="Mask personal data in logs and exports." enabled unavailable="Not connected yet" />
             </div>
           </div>
         </article>
 
         <footer className="sl-v70-actions">
-          <button type="button" className="sl-v70-secondary">Discard Changes</button>
-          <button type="button" className="sl-v70-primary">Save Settings</button>
+          <button type="button" disabled className="sl-v70-secondary">Discard Changes</button><span className="sl-supporting">Not connected yet</span>
+          <button type="button" disabled className="sl-v70-primary">Save Settings</button><span className="sl-supporting">Not connected yet</span>
         </footer>
       </section>
 
@@ -343,7 +350,7 @@ function SecurityPanel() {
                 <h2>Security Policies</h2>
               </div>
             </div>
-            <span className="sl-v70-linklike">Edit</span>
+            <span className="sl-v70-linklike" aria-disabled="true">Edit <small className="sl-supporting">Not connected yet</small></span>
           </header>
 
           <dl className="sl-v70-policy-list">
@@ -363,7 +370,7 @@ function SecurityPanel() {
               <span className="sl-v70-section-icon"><Bell size={16} aria-hidden="true" /></span>
               <div><h2>Recent Security Events</h2></div>
             </div>
-            <span className="sl-v70-linklike">View all →</span>
+            <span className="sl-v70-linklike" aria-disabled="true">View all → <small className="sl-supporting">Not connected yet</small></span>
           </header>
           <DataState
             kind="empty"

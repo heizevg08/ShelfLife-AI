@@ -249,3 +249,25 @@ test('audit retry clears errors after previously loaded data fails to refresh', 
   await expect(page.getByText('No administrative activity yet', { exact: true })).toBeVisible();
   await expect(page.getByText('Activity could not be loaded', { exact: true })).toHaveCount(0);
 });
+
+test('Security settings disable unconnected controls and identify unenforced policies', async ({ page }) => {
+  await mockApi(page, 'Super Admin');
+  await page.goto('/SystemSettings');
+  await page.getByRole('button', { name: 'Security', exact: true }).click();
+  const panel = page.locator('.sl-v70-security-grid');
+  await expect(panel.getByRole('button', { name: 'Save Settings', exact: true })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Discard Changes', exact: true })).toBeDisabled();
+  for (const title of ['Require Multi-Factor Authentication (MFA)', 'Restrict Concurrent Sessions']) {
+    const control = panel.getByRole('switch', { name: title, exact: true });
+    await expect(control).toBeDisabled();
+    await expect(control.locator('..').getByText('Not enforced yet', { exact: true })).toBeVisible();
+  }
+  await expect(panel.locator('select')).toHaveCount(4);
+  for (const select of await panel.locator('select').all()) {
+    await expect(select).toBeDisabled();
+    await expect(select.locator('..').getByText('Not connected yet', { exact: true })).toBeVisible();
+  }
+  await expect(panel.getByRole('switch')).toHaveCount(10);
+  for (const control of await panel.getByRole('switch').all()) await expect(control).toBeDisabled();
+  await expect(panel.locator('.sl-v70-linklike[aria-disabled="true"]')).toHaveCount(2);
+});
