@@ -72,7 +72,9 @@ test('HTTP login/me verify tokens and current user state, with safe responses', 
   assert.equal(JSON.stringify(result).includes('password'),false);assert.equal(JSON.stringify(result).includes(row.passwordHash),false);
   const claims=jwt.verify(result.accessToken,secret,{algorithms:['HS256'],issuer:'shelflifeai',audience:'shelflifeai-client'});
   assert.equal(claims.exp-claims.iat,900);assert.equal(claims.sub,row._id);assert.equal(claims.role,undefined);
-  for(const body of [{email:seedInput.email,password:'wrong'},{email:'missing@shelflife.com',password:seedInput.password},{email:'admin@example.com',password:seedInput.password},{email:{$ne:null},password:seedInput.password},{}]){
+  // Operator-bearing objects are now rejected by the request guard before login.
+  assert.equal((await login({email:{$ne:null},password:seedInput.password})).status,400);
+  for(const body of [{email:seedInput.email,password:'wrong'},{email:'missing@shelflife.com',password:seedInput.password},{email:'admin@example.com',password:seedInput.password},{}]){
     const r=await login(body);assert.equal(r.status,401);assert.deepEqual(await r.json(),{error:{message:'Invalid email or password'}});
   }
   async function me(token){return fetch(base+'/me',{headers:token?{Authorization:'Bearer '+token}:{}})}

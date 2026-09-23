@@ -1,4 +1,5 @@
-import { Router, json, type ErrorRequestHandler } from 'express';
+import { Router, type ErrorRequestHandler } from 'express';
+import { secureJson as json } from '../middleware/request-security.middleware';
 import type { AuthService } from '../services/auth';
 import type { AdministrationService } from '../services/administration';
 import { authenticate } from '../middleware/auth.middleware';
