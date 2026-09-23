@@ -32,7 +32,8 @@ export function AccountsTable() {
   const [roleFilter, setRoleFilter] = useState('All Roles');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [recentActivity, setRecentActivity] = useState<Page<AuditRecord> | null>(null);
+  const [recentActivity, setRecentActivity] = useState<AuditRecord[] | null>(null);
+  const [activityError, setActivityError] = useState(false);
   const [data, setData] = useState<Page<Account> | null>(null), [loadError, setLoadError] = useState(false);
   const [mode, setMode] = useState<'create' | 'view' | 'edit' | 'lifecycle' | null>(null), [selected, setSelected] = useState<Account | null>(null);
   const [fields, setFields] = useState(blank), [errors, setErrors] = useState<Record<string, string>>({}), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
@@ -57,7 +58,19 @@ export function AccountsTable() {
   useEffect(() => {
     if (!superAdmin) return;
     const abort = new AbortController();
-    listAuditRecords(1, 5, 'desc', {}, abort.signal).then(setRecentActivity).catch(() => setRecentActivity(null));
+    setActivityError(false);
+    async function loadAccountActivity() {
+      const accounts: AuditRecord[] = [];
+      // The existing audit API has no target filter. Search newest-first pages
+      // rather than mistaking the latest five events for account activity.
+      for (let auditPage = 1; !abort.signal.aborted; auditPage += 1) {
+        const result = await listAuditRecords(auditPage, 100, 'desc', {}, abort.signal);
+        accounts.push(...result.items.filter(record => record.targetType === 'User'));
+        if (accounts.length >= 5 || !result.items.length || result.page * result.pageSize >= result.total) break;
+      }
+      if (!abort.signal.aborted) setRecentActivity(accounts.slice(0, 5));
+    }
+    void loadAccountActivity().catch(() => { if (!abort.signal.aborted) setActivityError(true); });
     return () => abort.abort();
   }, [superAdmin, refresh]);
 
@@ -195,6 +208,7 @@ export function AccountsTable() {
   const auditActionLabel: Record<string, string> = {
     CREATE: 'Created a user account',
     UPDATE: 'Updated account details',
+    DELETE: 'Deleted a user account',
     DEACTIVATE: 'Deactivated an account',
     REACTIVATE: 'Reactivated an account',
   };
@@ -317,9 +331,10 @@ export function AccountsTable() {
 
         <section className="sl-v56-side-card sl-v56-activity">
           <div className="sl-v60-activity-head"><h2>Recent Account Activity</h2><a href="/SecurityActivity">View all <span aria-hidden="true">→</span></a></div>
-          {!recentActivity ? <p className="sl-supporting">Loading activity…</p>
-          : !recentActivity.items.length ? <div className="sl-v58-activity-empty"><span className="sl-v56-activity-icon"><Activity size={15} aria-hidden="true" /></span><div><strong>No account activity yet</strong><span>Recorded account changes will appear here.</span></div></div>
-          : <ul>{recentActivity.items.map(record => <li key={record.id}>
+          {activityError ? <p className="sl-supporting" role="status">Account activity could not be loaded.</p>
+          : !recentActivity ? <p className="sl-supporting">Loading activity…</p>
+          : !recentActivity.length ? <div className="sl-v58-activity-empty"><span className="sl-v56-activity-icon"><Activity size={15} aria-hidden="true" /></span><div><strong>No account activity yet</strong><span>Recorded account changes will appear here.</span></div></div>
+          : <ul>{recentActivity.map(record => <li key={record.id}>
               <span className="sl-v56-activity-icon"><Activity size={13} aria-hidden="true" /></span>
               <div><strong>{record.actor.name}</strong><span>{auditActionLabel[record.action] ?? record.action}</span>
               <time dateTime={record.timestamp}>{new Date(record.timestamp).toLocaleString(undefined, { month: 'short', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</time></div>
