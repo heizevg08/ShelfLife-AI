@@ -10,6 +10,7 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
   const router = Router(), actions = ingredientControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
+  router.get('/categories', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.categories);
   router.use(authorizeAdministration(['Admin']));
   router.use(json({ limit: '100kb' }));
   router.get('/', actions.list);

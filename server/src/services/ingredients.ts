@@ -1,4 +1,4 @@
-import type { IngredientInput, IngredientPageQuery } from '../validators/ingredient';
+import { INGREDIENT_CATEGORIES, type IngredientInput, type IngredientPageQuery } from '../validators/ingredient';
 
 export interface Ingredient {
   id: string;
@@ -22,6 +22,7 @@ export interface IngredientStore {
 }
 export function createIngredients(store: IngredientStore) {
   return {
+    categories: () => [...INGREDIENT_CATEGORIES],
     list: (query: IngredientPageQuery) => store.list(query),
     create: (actorId: string, input: IngredientInput) => store.create(actorId, input),
     update: (id: string, input: IngredientInput) => store.update(id, input),

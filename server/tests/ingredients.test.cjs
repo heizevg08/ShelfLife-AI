@@ -10,6 +10,7 @@ const { ingredientInput, ingredientPagination } = require('../dist/validators/in
 
 const admin = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Admin User', email: 'admin@shelflife.com', role: 'Admin', isActive: true, authVersion: 0 };
 const manager = { id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Manager User', email: 'manager@shelflife.com', role: 'Manager', isActive: true, authVersion: 0 };
+const staff = { id: '3'.repeat(24), _id: '3'.repeat(24), name: 'Inventory Staff User', email: 'staff@shelflife.com', role: 'Inventory Staff', isActive: true, authVersion: 0 };
 
 test('ingredient validation preserves the ingredient/batch boundary and numeric rules', () => {
   const valid = ingredientInput({ name: '  Whole   Milk ', brand: '', description: '', category: 'Dairy', unitOfMeasure: ' liter ', minimumStock: 0, standardUnitCost: 0, defaultShelfLifeDays: 7 });
@@ -42,7 +43,7 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
     async update(id, input) { const index = rows.findIndex(row => row.id === id); if (index < 0) return null; rows[index] = { ...rows[index], ...input, updatedAt: new Date().toISOString() }; return rows[index]; },
     async remove(id) { const index = rows.findIndex(row => row.id === id); if (index < 0) return false; rows.splice(index, 1); return true; },
   };
-  const users = [admin, manager];
+  const users = [admin, manager, staff];
   const auth = createAuth({ byId: async id => users.find(user => user.id === id) || null, byEmail: async () => null }, randomBytes(48).toString('hex'));
   const app = createApp([], () => true, auth, undefined, undefined, createIngredients(store));
   const http = createServer(app); http.listen(0, '127.0.0.1'); await once(http, 'listening');
@@ -53,6 +54,9 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
   try {
     assert.equal((await request(undefined)).status, 401);
     assert.equal((await request(manager)).status, 403);
+    const categories = await request(staff, 'GET', undefined, '/categories');
+    assert.equal(categories.status, 200);
+    assert.deepEqual((await categories.json()).categories, ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other']);
     assert.equal((await request(admin, 'POST', { ...input, expirationDate: '2030-01-01' })).status, 400);
     const created = await request(admin, 'POST', input); assert.equal(created.status, 201);
     const body = await created.json(); assert.equal(body.ingredient.name, 'Whole Milk'); assert.equal(body.ingredient.createdBy.id, admin.id);

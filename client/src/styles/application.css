@@ -22763,7 +22763,7 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
   display: flex;
 }
 .sl-staff-inventory-v149 .sl-staff-inventory-rail .sl-sa-expiration-donut-surface {
-  column-gap: clamp(1rem,.8rem + .4vw,1.35rem);
+  column-gap: clamp(var(--sl-space-5),1rem + .4vw,var(--sl-space-6));
 }
 .sl-staff-inventory-v149 .sl-staff-inventory-rail .sl-text-link {
   white-space: nowrap;
@@ -29299,16 +29299,16 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-superadmin-dashboard-v49 .sl-sa-user-distribution-donut {
   box-shadow: inset 0 0 0 1px #0d543f08;
 }
-.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role=Super\ Admin] {
+.sl-superadmin-dashboard-v49 .sl-sa-chart-legend i[data-series="1"],.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role=Super\ Admin] {
   background: #0b8755;
 }
-.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role=Admin] {
+.sl-superadmin-dashboard-v49 .sl-sa-chart-legend i[data-series="2"],.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role=Admin] {
   background: #79c9a3;
 }
-.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role=Manager] {
+.sl-superadmin-dashboard-v49 .sl-sa-chart-legend i[data-series="3"],.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role=Manager] {
   background: #ffd166;
 }
-.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role=Inventory\ Staff] {
+.sl-superadmin-dashboard-v49 .sl-sa-chart-legend i[data-series="4"],.sl-superadmin-dashboard-v49 .sl-sa-user-distribution-legend i[data-role=Inventory\ Staff] {
   background: #67a98f;
 }
 .sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 {
@@ -30003,6 +30003,16 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   outline: 2px solid var(--sl-focus);
   outline-offset: 1px;
   border-color: var(--sl-focus);
+}
+.sl-staff-inventory-v149 .sl-staff-inventory-record-filters select {
+  text-align: left;
+  text-align-last: left;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2333443b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 9px center;
+  background-repeat: no-repeat;
+  background-size: 12px 12px;
+  appearance: none;
+  padding: 0 28px 0 12px;
 }
 .sl-sa-account-pattern-records .sl-sa-ingredients-search>div {
   background: 0 0;

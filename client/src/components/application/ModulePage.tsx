@@ -9,7 +9,7 @@ import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSumm
 import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
-import { createIngredient, deleteIngredient, listIngredients, updateIngredient, type Ingredient, type IngredientInput } from '../../services/ingredients';
+import { createIngredient, deleteIngredient, listIngredientCategories, listIngredients, updateIngredient, type Ingredient, type IngredientInput } from '../../services/ingredients';
 
 
 const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
@@ -416,19 +416,36 @@ function InventoryStaffStockInPage() {
   </>;
 }
 
+function UnavailableInventoryBatchActions() {
+  return <div className="sl-staff-waste-row-actions" aria-label="Inventory batch actions unavailable">
+    <button type="button" className="sl-icon-button" disabled aria-label="View inventory batch unavailable" title="View unavailable"><Eye size={16} aria-hidden="true" /></button>
+    <button type="button" className="sl-icon-button" disabled aria-label="Edit inventory batch unavailable" title="Edit unavailable"><Pencil size={16} aria-hidden="true" /></button>
+    <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled aria-label="Delete inventory batch unavailable" title="Delete unavailable"><Trash2 size={16} aria-hidden="true" /></button>
+  </div>;
+}
+
 function InventoryStaffInventoryBatchesPage() {
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All Categories');
-  const [batchStatus, setBatchStatus] = useState('All Statuses');
+  const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoriesUnavailable, setCategoriesUnavailable] = useState(false);
+  const [batchStatus, setBatchStatus] = useState('');
   const [sortBy, setSortBy] = useState('FEFO (Earliest Expiry)');
   const [rows, setRows] = useState(10);
   const [page, setPage] = useState(1);
   const reset = () => {
     setSearch('');
-    setCategory('All Categories');
-    setBatchStatus('All Statuses');
+    setCategory('');
+    setBatchStatus('');
     setSortBy('FEFO (Earliest Expiry)');
   };
+  useEffect(() => {
+    const controller = new AbortController();
+    listIngredientCategories(controller.signal)
+      .then(result => { setCategories(result.categories); setCategoriesUnavailable(false); })
+      .catch(error => { if (error?.name !== 'AbortError') { setCategories([]); setCategoriesUnavailable(true); } });
+    return () => controller.abort();
+  }, []);
   return <>
     <PageHeader title="Inventory Batches" description="View and monitor all ingredient batches. Check stock levels, expiration dates, and FEFO order." />
 
@@ -453,9 +470,9 @@ function InventoryStaffInventoryBatchesPage() {
             <div className="sl-sa-ingredients-table-filters">
               <div className="sl-sa-ingredients-filter-card sl-staff-inventory-record-filters">
                 <label className="sl-sa-ingredients-search"><span>Search batches</span><div><Search size={16} aria-hidden="true"/><input type="search" value={search} onChange={e=>{ setSearch(e.target.value); setPage(1); }} placeholder="Search ingredient or batch ID..." aria-label="Search inventory batches" /></div></label>
-                <label><span>Category</span><select value={category} onChange={e=>{ setCategory(e.target.value); setPage(1); }}><option>All Categories</option></select></label>
-                <label><span>Status</span><select value={batchStatus} onChange={e=>{ setBatchStatus(e.target.value); setPage(1); }}><option>All Statuses</option></select></label>
-                <label><span>Sort by</span><select value={sortBy} onChange={e=>{ setSortBy(e.target.value); setPage(1); }} aria-label="Sort inventory batches"><option>FEFO (Earliest Expiry)</option><option>Latest Received</option><option>Ingredient Name</option></select></label>
+                <label><span>Category</span><select value={category} title={categoriesUnavailable ? 'Category options are unavailable' : undefined} onChange={e=>{ setCategory(e.target.value); setPage(1); }}><option value="">All Categories</option>{categories.map(value=><option key={value} value={value}>{value}</option>)}</select></label>
+                <label><span>Status</span><select value={batchStatus} onChange={e=>{ setBatchStatus(e.target.value); setPage(1); }}><option value="">All Statuses</option><option value="In Stock">In Stock</option><option value="Low Stock">Low Stock</option><option value="Near Expiry">Near Expiry</option><option value="Expired">Expired</option></select></label>
+                <label><span>Sort by</span><select value={sortBy} onChange={e=>{ setSortBy(e.target.value); setPage(1); }} aria-label="Sort inventory batches"><option>FEFO (Earliest Expiry)</option><option>Latest Received</option><option>Ingredient Name</option><option>None</option></select></label>
                 <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{ reset(); setPage(1); }}>Reset</button></div>
               </div>
             </div>
@@ -463,7 +480,7 @@ function InventoryStaffInventoryBatchesPage() {
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Inventory Batches preview" tabIndex={0}>
               <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-inventory-records-table">
                 <thead><tr>{['Ingredient','Batch ID','Category','Date Received','Expiry Date','Days Left','Current Stock','Unit','Status','Actions'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead>
-                <tbody><tr className="sl-sa-records-dash-row sl-staff-records-dash-row" aria-label="Inventory batch values unavailable">{Array.from({length:10}).map((_,index)=><td className={index === 9 ? 'sl-sa-ingredients-actions-cell' : undefined} key={index}>—</td>)}</tr></tbody>
+                <tbody><tr className="sl-sa-records-dash-row sl-staff-records-dash-row" aria-label="Inventory batch values unavailable">{Array.from({length:9}).map((_,index)=><td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><UnavailableInventoryBatchActions /></td></tr></tbody>
               </table>
             </div>
 
@@ -479,10 +496,10 @@ function InventoryStaffInventoryBatchesPage() {
             <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface" role="img" aria-label="Inventory status breakdown; live values unavailable">
               <div className="sl-sa-expiration-donut" aria-hidden="true"><strong>—</strong><span>Batches</span></div>
               <div className="sl-sa-chart-legend" aria-label="Inventory status legend">
-                <div><i className="is-good"/><span>In Stock</span><strong>—</strong></div>
-                <div><i className="is-expiring"/><span>Low Stock</span><strong>—</strong></div>
-                <div><i className="is-expiring"/><span>Near Expiry</span><strong>—</strong></div>
-                <div><i className="is-expired"/><span>Expired</span><strong>—</strong></div>
+                <div><i data-series="1"/><span>In Stock</span><strong>—</strong></div>
+                <div><i data-series="2"/><span>Low Stock</span><strong>—</strong></div>
+                <div><i data-series="3"/><span>Near Expiry</span><strong>—</strong></div>
+                <div><i data-series="4"/><span>Expired</span><strong>—</strong></div>
               </div>
               <span className="sl-sa-chart-empty-note">Status data unavailable</span>
             </div>
@@ -491,7 +508,6 @@ function InventoryStaffInventoryBatchesPage() {
             <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
               <span className="sl-staff-usage-head-icon"><CalendarDays aria-hidden="true" /></span>
               <h2 id="staff-inventory-upcoming-title">Upcoming Expirations</h2>
-              <div className="sl-staff-usage-head-actions"><Link href="/ExpirationMonitoring" className="sl-staff-usage-viewall sl-v209-viewall-button">View All <ArrowRight size={14} aria-hidden="true" /></Link></div>
             </header>
             <div className="sl-dashboard-source-table-shell" role="region" aria-label="Upcoming expiration batches" tabIndex={0}>
               <table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['Ingredient','Batch ID','Expiry Date','Days Left'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead><tbody><tr>{Array.from({length:4}).map((_,index)=><td key={index}>—</td>)}</tr></tbody></table>

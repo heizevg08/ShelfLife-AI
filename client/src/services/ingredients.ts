@@ -31,6 +31,7 @@ export function listIngredients(page = 1, pageSize = 25, search = '', category =
   if (category) query.set('category', category);
   return apiClient<Page<Ingredient>>(`/ingredients?${query}`, { signal });
 }
+export const listIngredientCategories = (signal?: AbortSignal) => apiClient<{ categories: string[] }>('/ingredients/categories', { signal });
 export const createIngredient = (input: IngredientInput) => apiClient<{ ingredient: Ingredient }>('/ingredients', { method: 'POST', body: JSON.stringify(input) });
 
 export const updateIngredient = (id: string, input: IngredientInput) => apiClient<{ ingredient: Ingredient }>(`/ingredients/${id}`, { method: 'PUT', body: JSON.stringify(input) });
