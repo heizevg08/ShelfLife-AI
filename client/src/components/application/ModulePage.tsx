@@ -429,58 +429,74 @@ function InventoryStaffInventoryBatchesPage() {
     setBatchStatus('All Statuses');
     setSortBy('FEFO (Earliest Expiry)');
   };
-  const Pending = ({ description, compact = false }: { description: string; compact?: boolean }) => (
-    <div className={`sl-staff-inventory-pending${compact ? ' compact' : ''}`}>
-      <DataState kind="empty" title={`${description} unavailable`} description="Inventory analytics are not connected yet." />
-    </div>
-  );
-
   return <>
     <PageHeader title="Inventory Batches" description="View and monitor all ingredient batches. Check stock levels, expiration dates, and FEFO order." />
 
     <div className="sl-admin-view sl-staff-inventory-v149">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-inventory-kpis sl-kpi-reference-v201" aria-label="Inventory batch summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Batches Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
-      </section>
+      <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150">
+        <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-inventory-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Inventory batch summary">
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Batches Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
+        </section>
+      </div>
 
       <div className="sl-staff-inventory-layout">
         <main className="sl-staff-inventory-main">
-          <section className="sl-card sl-staff-inventory-directory" aria-labelledby="staff-inventory-batches-title">
-            <div className="sl-card-header sl-staff-inventory-table-title">
-              <h2 id="staff-inventory-batches-title" className="sl-section-title">Inventory Batches</h2>
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-inventory-records" aria-labelledby="staff-inventory-batches-title">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+              <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
+              <h2 id="staff-inventory-batches-title">Inventory Batches</h2>
+            </header>
+
+            <div className="sl-sa-ingredients-table-filters">
+              <div className="sl-sa-ingredients-filter-card sl-staff-inventory-record-filters">
+                <label className="sl-sa-ingredients-search"><span>Search batches</span><div><Search size={16} aria-hidden="true"/><input type="search" value={search} onChange={e=>{ setSearch(e.target.value); setPage(1); }} placeholder="Search ingredient or batch ID..." aria-label="Search inventory batches" /></div></label>
+                <label><span>Category</span><select value={category} onChange={e=>{ setCategory(e.target.value); setPage(1); }}><option>All Categories</option></select></label>
+                <label><span>Status</span><select value={batchStatus} onChange={e=>{ setBatchStatus(e.target.value); setPage(1); }}><option>All Statuses</option></select></label>
+                <label><span>Sort by</span><select value={sortBy} onChange={e=>{ setSortBy(e.target.value); setPage(1); }} aria-label="Sort inventory batches"><option>FEFO (Earliest Expiry)</option><option>Latest Received</option><option>Ingredient Name</option></select></label>
+                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{ reset(); setPage(1); }}>Reset</button></div>
+              </div>
             </div>
 
-            <div className="sl-card-body sl-staff-inventory-card-body">
-              <div className="sl-staff-inventory-filters">
-                <label className="sl-staff-inventory-search"><span className="sl-sr-only">Search inventory batches</span><div><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ingredient or batch ID..." /></div></label>
-                <label><span className="sl-sr-only">Category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
-                <label><span className="sl-sr-only">Status</span><select value={batchStatus} onChange={e=>setBatchStatus(e.target.value)}><option>All Statuses</option></select></label>
-                <label className="sl-staff-inventory-sort"><span className="sl-sr-only">Sort by</span><select value={sortBy} onChange={e=>setSortBy(e.target.value)} aria-label="Sort inventory batches"><option>FEFO (Earliest Expiry)</option><option>Latest Received</option><option>Ingredient Name</option></select></label>
-                <button type="button" className="sl-button sl-staff-inventory-reset" onClick={reset}>Reset</button>
-              </div>
-
-              <div className="sl-table-scroll sl-staff-inventory-table-wrap" role="region" aria-label="Inventory Batches preview" tabIndex={0}>
-                <table className="sl-data-table sl-placeholder-table sl-staff-inventory-table">
-                  <thead><tr>{['','Ingredient','Batch ID','Category','Date Received','Expiry Date','Days Left','Current Stock','Unit','Status','Actions'].map((x,i)=><th scope="col" key={`${x}-${i}`}>{x}</th>)}</tr></thead>
-                  <tbody><tr className="sl-staff-records-dash-row">{Array.from({length:11}).map((_,index)=><td key={index}>—</td>)}</tr></tbody>
-                </table>
-              </div>
-
-              <footer className="sl-staff-inventory-footer">
-                <label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
-                <Pagination compact page={page} pageSize={rows} total={0} itemLabel="batch records" onPageChange={setPage} />
-              </footer>
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Inventory Batches preview" tabIndex={0}>
+              <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-inventory-records-table">
+                <thead><tr>{['Ingredient','Batch ID','Category','Date Received','Expiry Date','Days Left','Current Stock','Unit','Status','Actions'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead>
+                <tbody><tr className="sl-sa-records-dash-row sl-staff-records-dash-row" aria-label="Inventory batch values unavailable">{Array.from({length:10}).map((_,index)=><td className={index === 9 ? 'sl-sa-ingredients-actions-cell' : undefined} key={index}>—</td>)}</tr></tbody>
+              </table>
             </div>
+
+            <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
+              <label><span>Rows per page</span><select value={rows} aria-label="Rows per page" onChange={event => { setRows(Number(event.target.value)); setPage(1); }}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
+              <Pagination compact page={page} pageSize={rows} total={0} itemLabel="batch records" onPageChange={setPage} />
+            </footer>
           </section>
         </main>
 
-        <aside className="sl-staff-inventory-rail" aria-label="Inventory analytics">
-          <Card id="staff-inventory-storage" title="Storage Distribution"><Pending description="Storage distribution" compact /></Card>
-          <Card id="staff-inventory-status" title="Status Breakdown"><Pending description="Inventory status breakdown" compact /></Card>
-          <Card id="staff-inventory-upcoming" title="Upcoming Expirations" action={<Link href="/ExpirationMonitoring" className="sl-text-link">View All <ArrowRight size={14} aria-hidden="true" /></Link>}><Pending description="Upcoming expiration batches" compact /></Card>
+        <aside className="sl-staff-inventory-rail sl-superadmin-dashboard-v49" aria-label="Inventory analytics">
+          <Card id="staff-inventory-status" title={<span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><BarChart3 aria-hidden="true" /></span><span>Status Breakdown</span></span>}>
+            <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface" role="img" aria-label="Inventory status breakdown; live values unavailable">
+              <div className="sl-sa-expiration-donut" aria-hidden="true"><strong>—</strong><span>Batches</span></div>
+              <div className="sl-sa-chart-legend" aria-label="Inventory status legend">
+                <div><i className="is-good"/><span>In Stock</span><strong>—</strong></div>
+                <div><i className="is-expiring"/><span>Low Stock</span><strong>—</strong></div>
+                <div><i className="is-expiring"/><span>Near Expiry</span><strong>—</strong></div>
+                <div><i className="is-expired"/><span>Expired</span><strong>—</strong></div>
+              </div>
+              <span className="sl-sa-chart-empty-note">Status data unavailable</span>
+            </div>
+          </Card>
+          <section id="staff-inventory-upcoming" className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="staff-inventory-upcoming-title">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+              <span className="sl-staff-usage-head-icon"><CalendarDays aria-hidden="true" /></span>
+              <h2 id="staff-inventory-upcoming-title">Upcoming Expirations</h2>
+              <div className="sl-staff-usage-head-actions"><Link href="/ExpirationMonitoring" className="sl-staff-usage-viewall sl-v209-viewall-button">View All <ArrowRight size={14} aria-hidden="true" /></Link></div>
+            </header>
+            <div className="sl-dashboard-source-table-shell" role="region" aria-label="Upcoming expiration batches" tabIndex={0}>
+              <table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['Ingredient','Batch ID','Expiry Date','Days Left'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead><tbody><tr>{Array.from({length:4}).map((_,index)=><td key={index}>—</td>)}</tr></tbody></table>
+            </div>
+          </section>
         </aside>
       </div>
     </div>
@@ -1708,17 +1724,18 @@ function ManagerChangeRequestsPage() {
   return <>
     <PageHeader title="Change Requests" description="Review and decide on inventory-related requests submitted by your team." />
     <div className="sl-admin-view sl-mgr-cr-page">
-      <section className="sl-sa-kpis sl-mgr-cr-kpis sl-kpi-reference-v201" aria-label="Change request summary">
+      <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Change request summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput/></span><div><span>Total Requests</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Clock3/></span><div><span>Pending Review</span><strong>—</strong><small>Requires your action</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CheckCircle2/></span><div><span>Approved (This Month)</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle/></span><div><span>Rejected (This Month)</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
       <div className={`sl-mgr-cr-layout${selectedRequest ? ' has-selected-request' : ' no-selected-request'}`}>
-        <section className="sl-mgr-cr-listcard sl-reference-records">
-          <header className="sl-reference-records-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><strong>Change Request Records</strong></header>
-          <div className="sl-mgr-cr-filters">
-            <label className="search"><span className="sr-only">Search requests</span><div><Search size={17}/><input placeholder="Search requests..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div></label>
+        <section className="sl-mgr-cr-listcard sl-sa-account-pattern-records sl-manager-request-records">
+          <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>Change Request Records</h2></header>
+          <div className="sl-sa-ingredients-table-filters">
+          <div className="sl-sa-ingredients-filter-card sl-mgr-cr-filters">
+            <label className="search sl-sa-ingredients-search"><span className="sl-sr-only">Search requests</span><div><Search size={17}/><input placeholder="Search requests..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div></label>
             <label><span>Request Type</span><select value={requestType} onChange={event => { setRequestType(event.target.value); setPage(1); }}><option>All Types</option><option>Stock Adjustment</option><option>Usage Correction</option><option>Waste Correction</option></select></label>
             <label><span>Submitted By</span><select value={submittedBy} onChange={event => { setSubmittedBy(event.target.value); setPage(1); }}><option>All Staff</option></select></label>
             <label><span>Status</span><select value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}>{['All Statuses','Approved','Pending','Rejected'].map(option => <option key={option}>{option}</option>)}</select></label>
@@ -1726,10 +1743,11 @@ function ManagerChangeRequestsPage() {
             {dateRange === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom change request date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label></div>}
             <button className="sl-button" type="button" onClick={reset}>Reset</button>
           </div>
-          <div className="sl-mgr-cr-tablewrap">
-            <table className="sl-mgr-cr-table sl-reference-records-table"><thead><tr><th>#</th><th>Request ID</th><th>Type</th><th>Ingredient / Batch</th><th>Requested Change</th><th>Submitted By</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr aria-label="Change request values unavailable">{Array.from({length:9}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table>
           </div>
-          <footer className="sl-mgr-cr-footer sl-reference-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="request records" onPageChange={setPage} /></footer>
+          <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell sl-mgr-cr-tablewrap">
+            <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-mgr-cr-table"><thead><tr><th>#</th><th>Request ID</th><th>Type</th><th>Ingredient / Batch</th><th>Requested Change</th><th>Submitted By</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr className="sl-sa-records-dash-row" aria-label="Change request values unavailable">{Array.from({length:9}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table>
+          </div>
+          <footer className="sl-records-footer sl-staff-usage-footer sl-mgr-cr-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="request records" onPageChange={setPage} /></footer>
         </section>
         {selectedRequest && <aside className="sl-mgr-cr-details">
           <header><strong>Request Details</strong><button type="button" aria-label="Close request details" onClick={() => setSelectedRequest(null)}>×</button></header>

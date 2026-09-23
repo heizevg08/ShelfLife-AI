@@ -22720,178 +22720,39 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
   height: 100%;
   display: grid;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-directory {
-  border: 1px solid var(--sl-border);
-  border-radius: var(--sl-radius-lg);
-  background: var(--sl-surface);
+.sl-staff-inventory-v149 .sl-staff-inventory-records {
   width: 100%;
   min-width: 0;
-  height: 100%;
-  box-shadow: var(--sl-shadow);
-  flex-direction: column;
-  display: flex;
-  overflow: hidden;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-table-title {
-  border-bottom: 1px solid var(--sl-border-subtle);
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--sl-space-3);
-  min-height: 52px;
-  padding: .75rem 1rem;
-  display: flex;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table-title .sl-section-title {
-  overflow-wrap: anywhere;
-  min-width: 0;
-  margin: 0;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-card-body {
-  flex-direction: column;
-  flex: 1;
-  align-items: stretch;
-  min-width: 0;
-  padding: 0;
-  display: flex;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-filters {
-  border-bottom: 1px solid var(--sl-border-subtle);
+.sl-staff-inventory-v149 .sl-staff-inventory-record-filters {
   grid-template-columns: minmax(14rem,1.55fr) minmax(8.5rem,.7fr) minmax(8rem,.65fr) minmax(10rem,.8fr) auto;
-  align-items: end;
-  gap: .55rem;
-  padding: .65rem .78rem;
-  display: grid;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-filters label {
-  gap: .25rem;
-  min-width: 0;
-  display: grid;
+.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(1) {
+  width: 13%;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-filters input,.sl-staff-inventory-v149 .sl-staff-inventory-filters select,.sl-staff-inventory-v149 .sl-staff-inventory-filters .sl-button {
-  border: 1px solid var(--sl-border);
-  width: 100%;
-  min-width: 0;
-  height: 2.3rem;
-  color: var(--sl-muted);
-  font: inherit;
-  background: #fff;
-  border-radius: .42rem;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-search>div {
-  position: relative;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-search svg {
-  color: var(--sl-muted);
-  position: absolute;
-  top: 50%;
-  left: .7rem;
-  transform: translateY(-50%);
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-search input {
-  padding-left: 2.15rem;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-reset {
-  justify-content: center;
-  align-items: center;
-  min-width: 5rem;
-  padding: 0 .75rem;
-  display: inline-flex;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table-wrap {
-  flex: 1;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  overflow-x: auto;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table {
-  table-layout: fixed;
-  border-collapse: collapse;
-  text-align: left;
-  width: 100%;
-  min-width: 76rem;
-  font: var(--sl-font-body);
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table th {
-  white-space: nowrap;
-  vertical-align: middle;
-  text-align: center;
-  height: 44px;
-  font: var(--sl-font-label);
-  text-transform: uppercase;
-  letter-spacing: .045em;
-  background: var(--sl-surface-subtle);
-  border-block: 1px solid var(--sl-border);
-  padding: .625rem .875rem;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:first-child {
-  padding-left: 1rem;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:last-child {
-  padding-right: 1rem;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:first-child {
-  width: 4%;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(2) {
-  width: 12%;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(3),.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(4) {
+.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(2),.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(3) {
   width: 10%;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(5),.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(6) {
-  width: 11%;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(7) {
-  width: 8%;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(8) {
+.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(4) {
   width: 12%;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(9) {
-  width: 7%;
+.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(5) {
+  width: 11%;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(10) {
+.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(6) {
   width: 8%;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-table th:nth-child(11) {
+.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(7) {
+  width: 12%;
+}
+.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(8) {
   width: 7%;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-table .sl-empty-cell {
-  height: clamp(16rem,26vw,20rem);
-  text-align: center!important;
-  border-bottom: 0!important;
-  padding: 0!important;
+.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(9) {
+  width: 8%;
 }
-.sl-staff-inventory-v149 .sl-staff-inventory-table tbody tr:last-child td {
-  border-bottom: 0!important;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-table .sl-staff-inventory-pending {
-  min-height: clamp(16rem,26vw,20rem);
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-footer {
-  color: var(--sl-muted);
-  border-top: 0;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-top: auto;
-  padding: .68rem .78rem;
-  font-size: clamp(.66rem,.62rem + .08vw,.73rem);
-  display: flex;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-footer label {
-  align-items: center;
-  gap: .5rem;
-  display: flex;
-}
-.sl-staff-inventory-v149 .sl-staff-inventory-footer select {
-  border: 1px solid var(--sl-border);
-  cursor: pointer;
-  background: #fff;
-  border-radius: .4rem;
-  height: 2rem;
+.sl-staff-inventory-v149 .sl-staff-inventory-records-table th:nth-child(10) {
+  width: 9%;
 }
 .sl-staff-inventory-v149 .sl-staff-inventory-rail .sl-card {
   min-width: 0;
@@ -22900,6 +22761,9 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
 .sl-staff-inventory-v149 .sl-staff-inventory-rail .sl-card-body {
   min-height: clamp(9.5rem,13vw,11.5rem);
   display: flex;
+}
+.sl-staff-inventory-v149 .sl-staff-inventory-rail .sl-sa-expiration-donut-surface {
+  column-gap: clamp(1rem,.8rem + .4vw,1.35rem);
 }
 .sl-staff-inventory-v149 .sl-staff-inventory-rail .sl-text-link {
   white-space: nowrap;
@@ -22923,47 +22787,37 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
     height: auto;
   }
   .sl-staff-inventory-v149 .sl-staff-inventory-rail {
-    grid-template-columns: repeat(3,minmax(0,1fr));
+    grid-template-columns: repeat(2,minmax(0,1fr));
   }
-  .sl-staff-inventory-v149 .sl-staff-inventory-filters {
+  .sl-staff-inventory-v149 .sl-staff-inventory-record-filters {
     grid-template-columns: minmax(12rem,1.4fr) repeat(2,minmax(8rem,1fr)) minmax(9rem,1fr) auto;
   }
 }
 @media (width<=860px){
-  .sl-staff-inventory-v149 .sl-staff-inventory-filters {
+  .sl-staff-inventory-v149 .sl-staff-inventory-record-filters {
     grid-template-columns: repeat(2,minmax(0,1fr));
   }
-  .sl-staff-inventory-v149 .sl-staff-inventory-search {
+  .sl-staff-inventory-v149 .sl-staff-inventory-record-filters .sl-sa-ingredients-search {
     grid-column: 1/-1;
-  }
-  .sl-staff-inventory-v149 .sl-staff-inventory-reset {
-    width: 100%;
   }
   .sl-staff-inventory-v149 .sl-staff-inventory-rail {
     grid-template-columns: 1fr;
   }
 }
 @media (width<=560px){
-  .sl-staff-inventory-v149 .sl-staff-inventory-kpis,.sl-staff-inventory-v149 .sl-staff-inventory-filters {
+  .sl-staff-inventory-v149 .sl-staff-inventory-kpis,.sl-staff-inventory-v149 .sl-staff-inventory-record-filters {
     grid-template-columns: 1fr;
   }
-  .sl-staff-inventory-v149 .sl-staff-inventory-search {
+  .sl-staff-inventory-v149 .sl-staff-inventory-record-filters .sl-sa-ingredients-search {
     grid-column: auto;
-  }
-  .sl-staff-inventory-v149 .sl-staff-inventory-footer {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }
 @media (resolution>=1.25x){
   .sl-staff-inventory-v149 .sl-staff-inventory-kpis {
     grid-template-columns: repeat(auto-fit,minmax(min(100%,12rem),1fr));
   }
-  .sl-staff-inventory-v149 .sl-staff-inventory-filters {
+  .sl-staff-inventory-v149 .sl-staff-inventory-record-filters {
     grid-template-columns: repeat(auto-fit,minmax(min(100%,10.5rem),1fr));
-  }
-  .sl-staff-inventory-v149 .sl-staff-inventory-reset {
-    width: 100%;
   }
 }
 .sl-staff-usage-v150 {
@@ -30377,7 +30231,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   height: auto!important;
   padding-block: clamp(.52rem,.44rem + .16vw,.66rem)!important;
 }
-.sl-staff-usage-v150 .sl-staff-usage-table-shell,.sl-staff-waste-v159 .sl-staff-waste-table-shell,.sl-staff-stockin-v145 .sl-staff-stockin-table-wrap,.sl-staff-inventory-v149 .sl-staff-inventory-table-wrap,.sl-staff-requests-v162 .sl-staff-requests-table-shell {
+.sl-staff-usage-v150 .sl-staff-usage-table-shell,.sl-staff-waste-v159 .sl-staff-waste-table-shell,.sl-staff-stockin-v145 .sl-staff-stockin-table-wrap,.sl-staff-requests-v162 .sl-staff-requests-table-shell {
   min-height: clamp(16rem,24vw,22rem);
 }
 .sl-staff-stockin-v145 .sl-staff-stockin-table,.sl-staff-inventory-v149 .sl-staff-inventory-table,.sl-staff-requests-v162 .sl-staff-requests-table {
@@ -30851,7 +30705,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   height: auto!important;
   padding-block: clamp(.52rem,.44rem + .16vw,.66rem)!important;
 }
-.sl-staff-usage-v150 .sl-staff-usage-table-shell,.sl-staff-waste-v159 .sl-staff-waste-table-shell,.sl-staff-stockin-v145 .sl-staff-stockin-table-wrap,.sl-staff-inventory-v149 .sl-staff-inventory-table-wrap,.sl-staff-requests-v162 .sl-staff-requests-table-shell {
+.sl-staff-usage-v150 .sl-staff-usage-table-shell,.sl-staff-waste-v159 .sl-staff-waste-table-shell,.sl-staff-stockin-v145 .sl-staff-stockin-table-wrap,.sl-staff-requests-v162 .sl-staff-requests-table-shell {
   min-height: clamp(16rem,24vw,22rem);
 }
 .sl-staff-stockin-v145 .sl-staff-stockin-table,.sl-staff-inventory-v149 .sl-staff-inventory-table,.sl-staff-requests-v162 .sl-staff-requests-table {
@@ -31309,27 +31163,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card {
   min-width: 0;
 }
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo {
-  width: 100%;
-  max-width: 100%;
-  justify-self: stretch;
-  overflow: hidden;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo .sl-inventory-staff-dashboard-table {
-  width: 100%;
-  min-width: 0;
-  overflow-x: clip;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo table {
-  table-layout: fixed;
-  width: 100%;
-  min-width: 0;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo :is(th,td) {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  padding-inline: clamp(.28rem,.22rem + .15vw,.45rem);
-}
 .sl-inventory-staff-dashboard-v140 #inventory-staff-expiration-timeline .sl-card-body {
   min-height: 0;
   height: 100%;
@@ -31462,7 +31295,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-manager-dashboard-v120 :is(#manager-upcoming-expirations,#manager-pending-requests) > .sl-card-body { padding: 0; }
 
 /* Keep the FEFO card on the right grid edge and let the timeline size to its content. */
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo { grid-column-end: -1; }
 .sl-inventory-staff-dashboard-v140 #inventory-staff-expiration-timeline .sl-card-body { height: auto; }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-expiration-chart {
   align-content: normal;
@@ -31735,82 +31567,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
     margin-left: 0;
   }
 }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics {
-  grid-template-columns: repeat(4,minmax(0,1fr));
-  grid-template-areas: none;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-expiration-timeline {
-  grid-area: auto;
-  grid-column: 1;
-  grid-row: 1;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-stock-status {
-  grid-area: auto;
-  grid-column: 2;
-  grid-row: 1;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo {
-  grid-area: auto;
-  grid-column: 3/-1;
-  grid-row: 1;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo .sl-inventory-staff-dashboard-table {
-  box-sizing: border-box;
-  overflow: visible;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo table {
-  box-sizing: border-box;
-  table-layout: fixed;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo :is(th,td) {
-  white-space: normal;
-  word-break: normal;
-  overflow-wrap: anywhere;
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo :is(th,td):nth-child(1) { width: 8%; }
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo :is(th,td):nth-child(2) { width: 28%; }
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo :is(th,td):nth-child(3) { width: 21%; }
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo :is(th,td):nth-child(4) { width: 25%; }
-.sl-inventory-staff-dashboard-v140 #inventory-staff-fefo :is(th,td):nth-child(5) { width: 18%; }
-@media (width<=1180px){
-  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics {
-    grid-template-columns: repeat(2,minmax(0,1fr));
-  }
-  .sl-inventory-staff-dashboard-v140 #inventory-staff-expiration-timeline {
-    grid-column: 1/-1;
-    grid-row: 1;
-  }
-  .sl-inventory-staff-dashboard-v140 #inventory-staff-stock-status {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .sl-inventory-staff-dashboard-v140 #inventory-staff-fefo {
-    grid-column: 2;
-    grid-row: 2;
-  }
-}
-@media (width<=760px){
-  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics {
-    grid-template-columns: 1fr;
-  }
-  .sl-inventory-staff-dashboard-v140 #inventory-staff-expiration-timeline,
-  .sl-inventory-staff-dashboard-v140 #inventory-staff-stock-status,
-  .sl-inventory-staff-dashboard-v140 #inventory-staff-fefo {
-    grid-column: 1;
-  }
-  .sl-inventory-staff-dashboard-v140 #inventory-staff-expiration-timeline {
-    grid-row: 1;
-  }
-  .sl-inventory-staff-dashboard-v140 #inventory-staff-stock-status {
-    grid-row: 2;
-  }
-  .sl-inventory-staff-dashboard-v140 #inventory-staff-fefo {
-    grid-row: 3;
-  }
-}
 .sl-mgr-cr-layout.no-selected-request {
   grid-template-columns: minmax(0,1fr);
 }
@@ -31992,3 +31748,263 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-reference-records-table :is(th,td) { text-align: left!important; vertical-align: middle!important; height: auto!important; padding: clamp(.52rem,.45rem + .15vw,.66rem) clamp(.55rem,.45rem + .2vw,.72rem); }
 .sl-reference-records-table th { font-size: .7rem; font-weight: 650; }
 .sl-reference-records-table td { font-size: .75rem; }
+
+/* Target roles inherit the established Super Admin dashboard geometry without changing its source. */
+.sl-dashboard-source-layout {
+  font-size: clamp(1rem,.92rem + .18vw,1.075rem);
+  gap: clamp(.875rem,1vw,1.125rem);
+}
+.sl-dashboard-source-layout > .sl-dashboard-source-heading {
+  margin-bottom: 0;
+  display: block;
+}
+.sl-dashboard-source-layout > .sl-dashboard-source-heading > .sl-page-header {
+  margin: 0;
+  padding-bottom: 0;
+}
+.sl-dashboard-source-layout > .sl-dashboard-source-heading > .sl-dashboard-description {
+  color: var(--sl-muted);
+  font: var(--sl-font-supporting);
+  margin: clamp(.18rem,.12rem + .12vw,.28rem) 0 0;
+  font-size: clamp(.95rem,.82rem + .22vw,1.08rem);
+  line-height: 1.5;
+}
+.sl-dashboard-source-kpis {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  align-items: stretch;
+  gap: clamp(.75rem,.6rem + .35vw,1rem);
+  display: grid;
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi {
+  border: 1px solid var(--sl-border);
+  border-top-width: 3px;
+  border-radius: var(--sl-radius-lg);
+  background: var(--sl-surface);
+  box-shadow: none;
+  align-items: center;
+  gap: clamp(.7rem,.55rem + .45vw,1rem);
+  min-width: 0;
+  min-height: clamp(6.6rem,6rem + 2vw,8rem);
+  padding: clamp(.8rem,.7rem + .35vw,1.15rem);
+  display: flex;
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi .sl-sa-kpi-icon {
+  border-radius: 50%;
+  flex: 0 0 clamp(3.25rem,3vw,3.75rem);
+  width: clamp(3.25rem,3vw,3.75rem);
+  height: clamp(3.25rem,3vw,3.75rem);
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi .sl-sa-kpi-icon svg {
+  width: clamp(1.5rem,1.35rem + .25vw,1.75rem);
+  height: clamp(1.5rem,1.35rem + .25vw,1.75rem);
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi > div {
+  min-width: 0;
+  gap: 1px;
+  display: grid;
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi > div > span {
+  color: var(--sl-muted);
+  font-size: clamp(.875rem,.82rem + .15vw,.975rem);
+  line-height: 1.35;
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi > div > strong {
+  color: var(--sl-text);
+  font-size: clamp(1.75rem,1.55rem + .55vw,2.15rem);
+  line-height: 1.05;
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi > div > small {
+  color: var(--sl-muted);
+  font-size: clamp(.8125rem,.77rem + .13vw,.9rem);
+  line-height: 1.4;
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi[data-tone=brand] {
+  border-color: #d7eee4;
+  border-top-color: var(--sl-brand);
+  background: linear-gradient(110deg,#f7fffb,#fff);
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi[data-tone=info] {
+  border-color: #0c5797 #dceaf7 #dceaf7;
+  background: linear-gradient(110deg,#f6fbff,#fff);
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi[data-tone=attention] {
+  border-color: #f3e6c7;
+  border-top-color: var(--sl-attention);
+  background: linear-gradient(110deg,#fffaf0,#fff);
+}
+.sl-dashboard-source-kpis > .sl-sa-kpi[data-tone=critical] {
+  border-color: #f5d8dc;
+  border-top-color: var(--sl-critical);
+  background: linear-gradient(110deg,#fff6f7,#fff);
+}
+.sl-dashboard-source-layout .sl-card {
+  border: 1px solid var(--sl-border);
+  border-radius: var(--sl-radius-lg);
+  background: var(--sl-surface);
+  box-shadow: var(--sl-shadow-sm);
+}
+.sl-dashboard-source-layout .sl-card-header {
+  min-height: clamp(3.25rem,3rem + .5vw,3.65rem);
+  padding: clamp(.65rem,.56rem + .2vw,.82rem) clamp(.8rem,.68rem + .3vw,1rem);
+}
+.sl-dashboard-source-layout .sl-section-title {
+  font-size: clamp(1.05rem,.98rem + .25vw,1.2rem);
+  font-weight: 650;
+  line-height: 1.35;
+}
+.sl-dashboard-source-layout .sl-text-link {
+  font-size: clamp(.875rem,.82rem + .15vw,.975rem);
+  font-weight: 600;
+}
+.sl-dashboard-source-layout .sl-card-body {
+  padding: 0;
+}
+.sl-dashboard-source-table-shell {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+.sl-dashboard-source-table {
+  table-layout: fixed;
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.sl-dashboard-source-table :is(th,td) {
+  border-bottom: 1px solid var(--sl-border-subtle);
+  text-align: center;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  padding: .7rem .75rem;
+}
+.sl-dashboard-source-table th {
+  background: var(--sl-surface-subtle);
+  color: var(--sl-text);
+  font: var(--sl-font-label);
+  text-transform: uppercase;
+  letter-spacing: .045em;
+}
+.sl-dashboard-source-table td {
+  color: var(--sl-muted);
+  font: var(--sl-font-body);
+}
+.sl-dashboard-source-table :is(th,td):first-child {
+  text-align: left;
+}
+@media (width<=1100px){
+  .sl-dashboard-source-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (width<=600px){
+  .sl-dashboard-source-kpis { grid-template-columns: 1fr; }
+}
+
+/* Inventory Staff keeps Super Admin's four-column boundary while FEFO owns columns three and four. */
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  grid-template-areas: "timeline stock fefo fefo";
+  gap: clamp(.75rem,.6rem + .35vw,1rem);
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-expiration-timeline"] { grid-area: timeline; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-stock-status"] { grid-area: stock; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] { grid-area: fefo; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"],
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] .sl-card-body,
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] .sl-inventory-staff-fefo-table {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] .sl-inventory-staff-fefo-table {
+  overflow: visible;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] .sl-dashboard-source-table {
+  table-layout: fixed;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] :is(th,td):nth-child(1) { width: 8%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] :is(th,td):nth-child(2) { width: 28%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] :is(th,td):nth-child(3) { width: 21%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] :is(th,td):nth-child(4) { width: 25%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] :is(th,td):nth-child(5) { width: 18%; }
+@media (width<=1180px){
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    grid-template-areas: "timeline timeline" "stock fefo";
+  }
+}
+@media (width<=760px){
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics {
+    grid-template-columns: 1fr;
+    grid-template-areas: "timeline" "stock" "fefo";
+  }
+}
+
+/* Manager records use the locked account-management card, toolbar, table, and footer geometry. */
+.sl-manager-request-records .sl-mgr-cr-filters {
+  grid-template-columns: minmax(180px,1.25fr) repeat(4,minmax(120px,.9fr)) auto;
+}
+.sl-manager-request-records .sl-mgr-cr-tablewrap {
+  min-height: 23rem;
+}
+.sl-manager-request-records .sl-mgr-cr-table tbody td {
+  color: var(--sl-text);
+  font: var(--sl-font-body);
+  font-size: var(--v56-fs-sm);
+  font-weight: 400;
+  line-height: 1.45;
+}
+.sl-manager-request-records .sl-mgr-cr-footer {
+  color: inherit;
+  min-height: 54px;
+  padding: clamp(.55rem,.48rem + .2vw,.7rem) clamp(.7rem,.58rem + .28vw,.85rem);
+  font-size: inherit;
+}
+@media (width<=1200px){
+  .sl-manager-request-records .sl-mgr-cr-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .sl-manager-request-records .sl-mgr-cr-filters .search { grid-column: 1/-1; }
+}
+@media (width<=760px){
+  .sl-manager-request-records .sl-mgr-cr-filters { grid-template-columns: 1fr; }
+  .sl-manager-request-records .sl-mgr-cr-filters .search { grid-column: auto; }
+}
+
+/* Administrative Audit uses the same records footer flow as the locked account directory. */
+.sl-admin-audit-account-pattern .sl-admin-audit-records-footer {
+  flex-wrap: wrap;
+  align-items: center;
+  display: flex;
+}
+.sl-admin-audit-account-pattern .sl-admin-audit-records-footer .sl-pagination {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+@media (width<=760px){
+  .sl-admin-audit-account-pattern .sl-admin-audit-records-footer .sl-pagination {
+    justify-content: space-between;
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* Let the Inventory Staff expiration chart use the full equal-height card body. */
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-expiration-timeline"] {
+  grid-template-rows: auto minmax(0,1fr);
+  display: grid;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-expiration-timeline"] > .sl-card-body {
+  min-height: 0;
+  display: grid;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-expiration-timeline"] .sl-inventory-staff-expiration-chart {
+  align-content: stretch;
+  height: 100%;
+}

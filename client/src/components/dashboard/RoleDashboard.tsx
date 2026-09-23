@@ -10,13 +10,13 @@ import { listIngredients } from '../../services/ingredients';
 import { AuditTable } from '../application/AuditTable';
 import { sessionDisplayName } from '../../services/auth';
 
-function DashboardHeading({ userName }: { userName: string }) {
+function DashboardHeading({ userName, description, source = false }: { userName: string; description?: string; source?: boolean }) {
   const [greeting, setGreeting] = useState('Welcome');
   useEffect(() => {
     const update = () => { const hour = new Date().getHours(); setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'); };
     update(); const interval = window.setInterval(update, 30000); return () => window.clearInterval(interval);
   }, []);
-  return <div className="sl-dashboard-heading sl-dashboard-heading-v8"><PageHeader eyebrow="Dashboard" title={`${greeting}, ${userName}.`} /></div>;
+  return <div className={`sl-dashboard-heading sl-dashboard-heading-v8${source ? ' sl-dashboard-source-heading' : ''}`}><PageHeader eyebrow="Dashboard" title={`${greeting}, ${userName}.`} />{description && <p className="sl-dashboard-description">{description}</p>}</div>;
 }
 
 function DashboardCardTitle({ Icon, children }: { Icon: LucideIcon; children: ReactNode }) {
@@ -125,14 +125,11 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
     return () => abort.abort();
   }, []);
   const ingredientValue = ingredientTotal === null ? '—' : ingredientTotal.toLocaleString();
-  const dashTable = (label: string, columns: string[]) => <div className="sl-inventory-staff-dashboard-table" role="region" aria-label={label} tabIndex={0}><table><thead><tr>{columns.map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr>{columns.map(column => <td key={column}>—</td>)}</tr></tbody></table></div>;
+  const dashTable = (label: string, columns: string[], fitCard = false) => <div className={fitCard ? 'sl-dashboard-source-table-shell sl-inventory-staff-fefo-table' : 'sl-inventory-staff-dashboard-table sl-dashboard-source-table-shell'} role="region" aria-label={label} tabIndex={0}><table className="sl-data-table sl-dashboard-source-table"><thead><tr>{columns.map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr>{columns.map(column => <td key={column}>—</td>)}</tr></tbody></table></div>;
 
-  return <>
-    <DashboardHeading userName={userName} />
-    <p className="sl-dashboard-description">Your inventory overview for today. Keep track, record accurately, and help reduce food waste.</p>
-
-    <div className="sl-admin-view sl-inventory-staff-dashboard-v140">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-kpi-reference-v201" aria-label="Inventory staff dashboard summary">
+  return <div className="sl-admin-view sl-inventory-staff-dashboard-v140 sl-dashboard-source-layout">
+      <DashboardHeading userName={userName} source description="Your inventory overview for today. Keep track, record accurately, and help reduce food waste." />
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-dashboard-source-kpis" aria-label="Inventory staff dashboard summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Box aria-hidden="true" /></span><div><span>Total Ingredients</span><strong>{ingredientValue}</strong><small>{ingredientTotal !== null ? 'Live ingredient records' : ingredientFailed ? 'Ingredient service unavailable' : 'Loading ingredient records'}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>—</strong><small>Batch service unavailable</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><TriangleAlert aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>—</strong><small>Expiration service unavailable</small></div></article>
@@ -161,7 +158,7 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
           </div>
         </Card>
         <Card id="inventory-staff-fefo" title={<DashboardCardTitle Icon={ListOrdered}>Use First · FEFO</DashboardCardTitle>} action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
-          {dashTable('Use First FEFO', ['#', 'Ingredient', 'Batch ID', 'Expiry Date', 'Days Left'])}
+          {dashTable('Use First FEFO', ['#', 'Ingredient', 'Batch ID', 'Expiry Date', 'Days Left'], true)}
         </Card>
       </section>
 
@@ -173,8 +170,7 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
           {dashTable('My Pending Requests', ['#', 'Request ID', 'Submitted On', 'Status'])}
         </Card>
       </section>
-    </div>
-  </>;
+    </div>;
 }
 
 function UnavailableSummary({ role }: { role: 'Manager' | 'Inventory Staff' }) {

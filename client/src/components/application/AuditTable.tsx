@@ -1,9 +1,9 @@
-import { ChevronDown, Download, FileText, Filter, Search, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Download, FileText, Filter, ListChecks, Search, UsersRound, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { listAuditRecords, type AuditFilters, type AuditRecord, type Page } from '../../services/administration';
 import { administrationFilterCatalog } from './administration';
 import { reportExportFormats } from './module-content';
-import { DataState, ExportControl, Pagination, SummaryCards } from './primitives';
+import { DataState, ExportControl, Pagination } from './primitives';
 
 const AUTO_REFRESH_MS = 15000;
 const auditActionByLabel: Record<string, AuditFilters['action']> = {
@@ -102,12 +102,12 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
 
   return <>
     {adminOverview && <div className="sl-audit-overview" aria-label="Audit log overview and filters">
-      <SummaryCards items={[
-        { label: 'Total Logs', value: data?.total?.toLocaleString() ?? '—', detail: data ? 'Live audit records' : 'Awaiting audit data', tone: 'brand', trend: 'line' },
-        { label: 'Unique Users', value: data ? uniqueUsers.toLocaleString() : '—', detail: data ? `Across ${rows.length} loaded records` : 'Awaiting audit data', tone: 'success', trend: 'accuracy' },
-        { label: 'Most Common Action', value: commonAction?.[0] ?? '—', detail: commonAction ? `${commonAction[1]} loaded records` : 'Audit summary unavailable', tone: 'attention', trend: 'bars' },
-        { label: 'Critical Activities', value: '—', detail: 'Classification service unavailable', tone: 'critical', trend: 'segments' },
-      ]} />
+      <section className="sl-sa-kpis sl-dashboard-source-kpis sl-admin-audit-kpis" aria-label="Audit log summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileText aria-hidden="true" /></span><div><span>Total Logs</span><strong>{data?.total?.toLocaleString() ?? '—'}</strong><small>{data ? 'Live audit records' : 'Awaiting audit data'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UsersRound aria-hidden="true" /></span><div><span>Unique Users</span><strong>{data ? uniqueUsers.toLocaleString() : '—'}</strong><small>{data ? `Across ${rows.length} loaded records` : 'Awaiting audit data'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ListChecks aria-hidden="true" /></span><div><span>Most Common Action</span><strong>{commonAction?.[0] ?? '—'}</strong><small>{commonAction ? `${commonAction[1]} loaded records` : 'Audit summary unavailable'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>Critical Activities</span><strong>—</strong><small>Classification service unavailable</small></div></article>
+      </section>
       <div className="sl-audit-filter-strip">
         <label>Date Range<select className="sl-admin-input" value={periodFilter} onChange={event => { setPage(1); setPeriodFilter(event.target.value); setFiltersCommitted(false); }}>{administrationFilterCatalog.audit.period.map(period => <option key={period}>{period}</option>)}</select></label>
         {periodFilter === 'Custom' && <div className="sl-audit-specific-dates" aria-label="Custom date range"><label>From<input className="sl-admin-input" type="date" value={specificFrom} max={specificTo || undefined} onChange={event => { setSpecificFrom(event.target.value); setFiltersCommitted(false); }} /></label><label>To<input className="sl-admin-input" type="date" value={specificTo} min={specificFrom || undefined} onChange={event => { setSpecificTo(event.target.value); setFiltersCommitted(false); }} /></label></div>}
