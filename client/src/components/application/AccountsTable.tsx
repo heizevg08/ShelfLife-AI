@@ -32,7 +32,8 @@ export function AccountsTable() {
   const [roleFilter, setRoleFilter] = useState('All Roles');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [recentActivity, setRecentActivity] = useState<Page<AuditRecord> | null>(null);
+  const [recentActivity, setRecentActivity] = useState<AuditRecord[] | null>(null);
+  const [activityError, setActivityError] = useState(false);
   const [data, setData] = useState<Page<Account> | null>(null), [loadError, setLoadError] = useState(false);
   const [mode, setMode] = useState<'create' | 'view' | 'edit' | 'lifecycle' | null>(null), [selected, setSelected] = useState<Account | null>(null);
   const [fields, setFields] = useState(blank), [errors, setErrors] = useState<Record<string, string>>({}), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
@@ -57,7 +58,19 @@ export function AccountsTable() {
   useEffect(() => {
     if (!superAdmin) return;
     const abort = new AbortController();
-    listAuditRecords(1, 5, 'desc', {}, abort.signal).then(setRecentActivity).catch(() => setRecentActivity(null));
+    setActivityError(false);
+    async function loadAccountActivity() {
+      const accounts: AuditRecord[] = [];
+      // The existing audit API has no target filter. Search newest-first pages
+      // rather than mistaking the latest five events for account activity.
+      for (let auditPage = 1; !abort.signal.aborted; auditPage += 1) {
+        const result = await listAuditRecords(auditPage, 100, 'desc', {}, abort.signal);
+        accounts.push(...result.items.filter(record => record.targetType === 'User'));
+        if (accounts.length >= 5 || !result.items.length || result.page * result.pageSize >= result.total) break;
+      }
+      if (!abort.signal.aborted) setRecentActivity(accounts.slice(0, 5));
+    }
+    void loadAccountActivity().catch(() => { if (!abort.signal.aborted) setActivityError(true); });
     return () => abort.abort();
   }, [superAdmin, refresh]);
 
@@ -182,19 +195,10 @@ export function AccountsTable() {
     count: roleCounts[role] ?? 0,
   }));
   const distributionTotal = roleDistribution.reduce((sum, item) => sum + item.count, 0);
-  const distributionStops = roleDistribution.reduce<{ cursor: number; stops: string[] }>((state, item, index) => {
-    const palette = ['#07543f', '#63c978', '#f7b83f', '#72b8ef'];
-    const next = state.cursor + (distributionTotal ? (item.count / distributionTotal) * 100 : 25);
-    state.stops.push(`${palette[index]} ${state.cursor}% ${next}%`);
-    state.cursor = next;
-    return state;
-  }, { cursor: 0, stops: [] });
-  const distributionBackground = distributionTotal
-    ? `radial-gradient(circle at center,#ffffff 0 48%,transparent 49%),conic-gradient(${distributionStops.stops.join(',')})`
-    : 'radial-gradient(circle at center,#ffffff 0 48%,transparent 49%),conic-gradient(#e9eef3 0 100%)';
   const auditActionLabel: Record<string, string> = {
     CREATE: 'Created a user account',
     UPDATE: 'Updated account details',
+    DELETE: 'Deleted a user account',
     DEACTIVATE: 'Deactivated an account',
     REACTIVATE: 'Reactivated an account',
   };
@@ -213,7 +217,7 @@ export function AccountsTable() {
           <label className="sl-v56-filter sl-v56-search-field">Search users
             <div className="sl-directory-search sl-v56-search" role="search">
               <Search size={17} aria-hidden="true" />
-              <input type="search" value={directorySearch} placeholder="Search by name, email, or username…" aria-label="Search users"
+              <input type="search" value={directorySearch} placeholder="Search this page by name, email, role or status…" aria-label="Search users"
                 onChange={event => { setDirectorySearch(event.target.value); setPage(1); }} />
             </div>
           </label>
@@ -285,13 +289,16 @@ export function AccountsTable() {
         <section className="sl-v56-side-card">
           <h2>User Distribution</h2>
           <div className="sl-v56-distribution">
-            <div className="sl-v56-donut" style={{ background: distributionBackground }}>
+            <div className="sl-v56-distribution-total">
               <strong>{summary ? totalUsers : '—'}</strong><span>Users</span>
+            </div>
+            <div className="sl-v61-status-track" aria-hidden="true">
+              {roleDistribution.map(item => <span key={item.role} data-role={item.role} style={{ width: distributionTotal ? `${item.count / distributionTotal * 100}%` : '0%' }} />)}
             </div>
             <div className="sl-v56-legend">
               {roleDistribution.map(item => <div key={item.role}>
                 <span className="sl-v56-dot" data-role={item.role} />
-                <span>{item.role}</span><strong>{summary ? item.count : '—'}</strong>
+                <span>{item.role}</span><strong>{summary ? item.count : '—'}</strong><small>{summary ? `${distributionTotal ? Math.round(item.count / distributionTotal * 100) : 0}%` : '—'}</small>
               </div>)}
             </div>
           </div>
@@ -299,30 +306,25 @@ export function AccountsTable() {
 
         <section className="sl-v56-side-card">
           <h2>Account Status</h2>
-          <div className="sl-v61-status">
-            <div className="sl-v61-status-top"><span>Active</span><strong>{summary ? activeUsers : '—'}</strong></div>
-            <div className="sl-v61-status-bottom">
-              <div className="sl-v61-status-track"><span style={{ width: summary ? `${activePercent}%` : '0%' }} /></div>
-              <small>{summary ? `${activePercent}%` : '—'}</small>
-            </div>
+          <div className="sl-v61-status-track" aria-hidden="true">
+            <span data-kind="active" style={{ width: totalUsers ? `${activeUsers / totalUsers * 100}%` : '0%' }} />
+            <span data-kind="inactive" style={{ width: totalUsers ? `${inactiveUsers / totalUsers * 100}%` : '0%' }} />
           </div>
-          <div className="sl-v61-status" data-kind="inactive">
-            <div className="sl-v61-status-top"><span>Inactive</span><strong>{summary ? inactiveUsers : '—'}</strong></div>
-            <div className="sl-v61-status-bottom">
-              <div className="sl-v61-status-track"><span style={{ width: summary ? `${inactivePercent}%` : '0%' }} /></div>
-              <small>{summary ? `${inactivePercent}%` : '—'}</small>
-            </div>
+          <div className="sl-v56-legend">
+            <div><span className="sl-v56-dot" data-kind="active" /><span>Active</span><strong>{summary ? activeUsers : '—'}</strong><small>{summary ? `${activePercent}%` : '—'}</small></div>
+            <div><span className="sl-v56-dot" data-kind="inactive" /><span>Inactive</span><strong>{summary ? inactiveUsers : '—'}</strong><small>{summary ? `${inactivePercent}%` : '—'}</small></div>
           </div>
         </section>
 
         <section className="sl-v56-side-card sl-v56-activity">
           <div className="sl-v60-activity-head"><h2>Recent Account Activity</h2><a href="/SecurityActivity">View all <span aria-hidden="true">→</span></a></div>
-          {!recentActivity ? <p className="sl-supporting">Loading activity…</p>
-          : !recentActivity.items.length ? <div className="sl-v58-activity-empty"><span className="sl-v56-activity-icon"><Activity size={15} aria-hidden="true" /></span><div><strong>No account activity yet</strong><span>Recorded account changes will appear here.</span></div></div>
-          : <ul>{recentActivity.items.map(record => <li key={record.id}>
+          {activityError ? <p className="sl-supporting" role="status">Account activity could not be loaded.</p>
+          : !recentActivity ? <p className="sl-supporting">Loading activity…</p>
+          : !recentActivity.length ? <div className="sl-v58-activity-empty"><span className="sl-v56-activity-icon"><Activity size={15} aria-hidden="true" /></span><div><strong>No account activity yet</strong><span>Recorded account changes will appear here.</span></div></div>
+          : <ul>{recentActivity.map(record => <li key={record.id}>
               <span className="sl-v56-activity-icon"><Activity size={13} aria-hidden="true" /></span>
-              <div><strong>{record.actor.name}</strong><span>{auditActionLabel[record.action] ?? record.action}</span>
-              <time dateTime={record.timestamp}>{new Date(record.timestamp).toLocaleString(undefined, { month: 'short', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</time></div>
+              <div><strong>{record.actor.name}</strong><span>{auditActionLabel[record.action] ?? `${record.action} · ${record.targetType}`}</span></div>
+              <time dateTime={record.timestamp}>{new Date(record.timestamp).toLocaleString(undefined, { month: 'short', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</time>
             </li>)}</ul>}
         </section>
       </aside>}
