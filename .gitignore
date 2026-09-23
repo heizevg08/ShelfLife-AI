@@ -46,5 +46,4 @@ example
 /client/ios
 /client/android
 
-# Local development guidance
-/CODE_COMMENTING_GUIDELINE.md
+# Local development guidance is tracked as the repository-wide implementation standard.

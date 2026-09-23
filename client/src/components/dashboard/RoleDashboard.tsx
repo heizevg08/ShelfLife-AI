@@ -163,9 +163,6 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
       </section>
 
       <section className="sl-inventory-staff-bottom" aria-label="Inventory staff dashboard records">
-        <Card id="inventory-staff-recent-activity" title={<DashboardCardTitle Icon={Activity}>Recent Inventory Activity</DashboardCardTitle>} action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
-          {dashTable('Recent Inventory Activity', ['Date & Time', 'Type', 'Ingredient', 'Batch ID', 'Quantity', 'Performed By'])}
-        </Card>
         <Card id="inventory-staff-my-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>My Pending Requests</DashboardCardTitle>} action={<Link href="/MyRequests" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
           {dashTable('My Pending Requests', ['#', 'Request ID', 'Submitted On', 'Status'])}
         </Card>

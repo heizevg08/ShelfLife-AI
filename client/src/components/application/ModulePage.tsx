@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
+import { InventoryStaffAddButton, InventoryStaffModal, InventoryStaffModalForm } from './InventoryStaffModal';
 import { moduleContent, previewFields, type PreviewId } from './module-content';
 import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSummaryCards, PlaceholderTable, Status, SummaryCards } from './primitives';
 import { modules, type ModuleId } from './workspace';
@@ -14,6 +15,7 @@ import { createIngredient, deleteIngredient, listIngredientCategories, listIngre
 
 const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
 const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
+const INVENTORY_STAFF_DATE_RANGES = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom'] as const;
 type IngredientDraft = { name: string; brand: string; category: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
 const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
 type IngredientField = keyof IngredientDraft;
@@ -67,51 +69,45 @@ function FormPreview({ id }: { id: PreviewId }) {
 
 function InventoryStaffWastePage() {
   const [addOpen,setAddOpen]=useState(false);
-  const [wasteAction,setWasteAction]=useState<'view'|'edit'|'delete'|null>(null);
   const addButton=useRef<HTMLButtonElement>(null);
-  const [ingredient,setIngredient]=useState(''); const [batch,setBatch]=useState(''); const [qty,setQty]=useState(''); const [reason,setReason]=useState(''); const [method,setMethod]=useState(''); const [notes,setNotes]=useState('');
-  const [date,setDate]=useState(''); const [time,setTime]=useState(''); const [search,setSearch]=useState(''); const [reasonFilter,setReasonFilter]=useState('All Reasons'); const [range,setRange]=useState('Last 7 Days'); const [rows,setRows]=useState('10');
-  const clear=()=>{setIngredient('');setBatch('');setQty('');setReason('');setMethod('');setNotes('');setDate('');setTime('')};
-  const Pending=({label,compact=false}:{label:string;compact?:boolean})=><div className={`sl-staff-waste-pending${compact?' compact':''}`}><DataState kind="empty" title={`${label} unavailable`} description="Waste analytics are not connected yet." /></div>;
-  const WasteForm=()=> <form className="sl-staff-waste-form" onSubmit={e=>e.preventDefault()}>
+  const [ingredient,setIngredient]=useState(''); const [batch,setBatch]=useState(''); const [qty,setQty]=useState(''); const [reason,setReason]=useState('');
+  const [date,setDate]=useState(''); const [time,setTime]=useState(''); const [search,setSearch]=useState(''); const [reasonFilter,setReasonFilter]=useState('All Reasons'); const [range,setRange]=useState('Last 7 Days'); const [dateFrom,setDateFrom]=useState(''); const [dateTo,setDateTo]=useState(''); const [rows,setRows]=useState('10'); const [formMessage,setFormMessage]=useState('');
+  const clear=()=>{setIngredient('');setBatch('');setQty('');setReason('');setDate('');setTime('');setFormMessage('')};
+  const submitWaste=(event:FormEvent)=>{event.preventDefault();setFormMessage(ingredient&&batch&&qty&&reason&&date&&time?'Waste recording is not connected to the backend yet.':'Complete all required fields before saving.')};
+  const WasteForm=()=> <InventoryStaffModalForm onSubmit={submitWaste} message={formMessage} secondaryLabel="Clear" onSecondary={clear} primaryLabel="Save Waste Record" PrimaryIcon={Trash2}>
     <label><span>Ingredient <b>*</b></span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option value="">Search or select ingredient...</option></select></label>
     <label><span>Batch ID <b>*</b></span><select value={batch} onChange={e=>setBatch(e.target.value)}><option value="">Select batch ID...</option></select></label>
-    <label><span>Expiry Date</span><input disabled placeholder="Auto-filled from selected batch" /></label>
-    <label><span>Quantity Wasted <b>*</b></span><div className="sl-staff-waste-quantity"><input inputMode="decimal" value={qty} onChange={e=>setQty(e.target.value.replace(/[^0-9.]/g,''))} placeholder="Enter quantity"/><select aria-label="Unit"><option>kg</option></select></div></label>
-    <label><span>Date &amp; Time <b>*</b></span><div className="sl-staff-waste-datetime"><input type="date" value={date} onChange={e=>setDate(e.target.value)}/><input type="time" value={time} onChange={e=>setTime(e.target.value)}/></div></label>
-    <label><span>Reason for Waste <b>*</b></span><select value={reason} onChange={e=>setReason(e.target.value)}><option value="">Select reason...</option><option>Expired</option><option>Spoiled</option><option>Trimming</option><option>Over-preparation</option><option>Damaged Packaging</option><option>Other</option></select></label>
-    <label><span>Disposition Method <b>*</b></span><select value={method} onChange={e=>setMethod(e.target.value)}><option value="">Select method...</option><option>Compost</option><option>Landfill</option><option>Other</option></select></label>
-    <label><span>Notes (Optional)</span><input value={notes} onChange={e=>setNotes(e.target.value)} placeholder="e.g., spoiled, damaged packaging, over-prepared..."/></label>
-    <div className="sl-staff-waste-form-actions"><button type="button" className="sl-button" onClick={clear}>Clear</button><button type="button" className="sl-button sl-button-primary" title="Waste API is not connected yet"><Trash2 size={16}/>Save Waste Record</button></div>
-  </form>;
+    <label><span>Quantity Wasted <b>*</b></span><input inputMode="decimal" value={qty} onChange={e=>setQty(e.target.value.replace(/[^0-9.]/g,''))} placeholder="Enter quantity"/></label>
+    <label><span>Unit</span><input className="sl-staff-derived-unit" value="—" readOnly aria-label="Derived unit unavailable" /></label>
+    <label><span>Date <b>*</b></span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>
+    <label><span>Time <b>*</b></span><input type="time" value={time} onChange={e=>setTime(e.target.value)}/></label>
+    <label className="sl-staff-modal-wide"><span>Reason for Waste <b>*</b></span><select value={reason} onChange={e=>setReason(e.target.value)}><option value="">Select reason...</option><option>Expired</option><option>Spoiled</option><option>Trimming</option><option>Over-preparation</option><option>Damaged Packaging</option><option>Other</option></select></label>
+  </InventoryStaffModalForm>;
   return <>
     <PageHeader title="Waste Recording" description="Record ingredients that are discarded or no longer usable. Help us reduce food waste." />
     <div className="sl-admin-view sl-staff-waste-v159">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-waste-kpis sl-kpi-reference-v201" aria-label="Waste summary">
+      <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150">
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-waste-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Waste summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Today</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Most Wasted Ingredient</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3/></span><div><span>Common Waste Reason</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown/></span><div><span>Estimated Value Lost</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
+      </div>
       <div className="sl-staff-waste-layout">
         <main className="sl-staff-waste-main">
-          <section className="sl-staff-waste-card sl-staff-waste-records"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><Clock3/></span><h2>Recent Waste Records</h2></header>
-            <div className="sl-staff-waste-toolbar"><label className="sl-staff-waste-search"><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or reason..."/></label><select value={reasonFilter} onChange={e=>setReasonFilter(e.target.value)}><option>All Reasons</option><option>Expired</option><option>Spoiled</option><option>Trimming</option><option>Over-preparation</option></select><select value={range} onChange={e=>setRange(e.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select><button type="button" className="sl-button sl-download-trigger sl-inventory-staff-export" title="Export will become available when waste records are connected"><Download size={16}/>Export</button><button ref={addButton} type="button" className="sl-button sl-button-primary" onClick={()=>setAddOpen(true)}><Plus size={16}/>Add Waste</button></div>
-            <div className="sl-staff-waste-table-shell"><table className="sl-data-table sl-staff-waste-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity','Unit','Reason','Disposition','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody><tr className="sl-staff-waste-preview-row sl-staff-records-dash-row">{Array.from({length:8}).map((_,index)=><td key={index}>—</td>)}<td className="sl-staff-waste-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste record actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View waste record" title="View" onClick={()=>setWasteAction('view')}><Eye size={16}/></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit waste record" title="Edit" onClick={()=>setWasteAction('edit')}><Pencil size={16}/></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete waste record" title="Delete" onClick={()=>setWasteAction('delete')}><Trash2 size={16}/></button></div></td></tr></tbody></table></div>
-            <footer className="sl-staff-waste-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>setRows(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label><span>Showing 0 to 0 of 0 waste records</span><div className="sl-staff-waste-pagination"><button type="button">‹</button><button type="button" aria-current="page">1</button><button type="button">›</button></div></footer>
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-waste-card sl-staff-waste-records"><header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><Clock3/></span><h2>Recent Waste Records</h2></header>
+            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-waste-toolbar"><label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or reason..."/></div></label><label><span>Reason</span><select value={reasonFilter} onChange={e=>setReasonFilter(e.target.value)}><option>All Reasons</option><option>Expired</option><option>Spoiled</option><option>Damaged</option><option>Over-prepared</option><option>Other</option></select></label><label><span>Date range</span><select value={range} onChange={e=>setRange(e.target.value)}>{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>{range==='Custom'&&<div className="sl-v219-custom-date-range" aria-label="Custom waste date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo||undefined} onChange={e=>setDateFrom(e.target.value)}/></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom||undefined} onChange={e=>setDateTo(e.target.value)}/></label></div>}<div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setReasonFilter('All Reasons');setRange('Last 7 Days');setDateFrom('');setDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addButton} label="Add Waste" onClick={()=>setAddOpen(true)} /></div></div></div>
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell"><table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-waste-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity','Unit','Reason','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody><tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:7}).map((_,index)=><td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste record actions unavailable"><button type="button" className="sl-icon-button" disabled aria-label="View waste record unavailable" title="View unavailable"><Eye size={16}/></button></div></td></tr></tbody></table></div>
+            <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>setRows(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label><Pagination compact page={1} pageSize={Number(rows)} total={0} itemLabel="waste records" onPageChange={()=>{}} /></footer>
           </section>
         </main>
         <aside className="sl-staff-waste-rail">
-          <section className="sl-staff-waste-card sl-staff-waste-sidecard"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><BarChart3/></span><h2>Waste by Reason (Last 30 Days)</h2></header><Pending label="Waste by reason" compact/></section>
-          <section className="sl-staff-waste-card sl-staff-waste-sidecard"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><Leaf/></span><h2>Top Wasted Ingredients (Last 30 Days)</h2></header><Pending label="Top wasted ingredients" compact/></section>
+          <section className="sl-staff-waste-card sl-staff-waste-sidecard sl-superadmin-dashboard-v49"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><BarChart3/></span><h2>Waste by Reason (Last 30 Days)</h2></header><div className="sl-sa-chart-surface sl-sa-expiration-donut-surface" aria-label="Waste by reason values unavailable"><div className="sl-sa-expiration-donut"><strong>—</strong><span>Waste</span></div><div className="sl-sa-chart-legend"><div><i data-series="1"/><span>Expired</span><strong>—</strong></div><div><i data-series="2"/><span>Spoiled</span><strong>—</strong></div><div><i data-series="3"/><span>Other</span><strong>—</strong></div></div><span className="sl-sa-chart-empty-note">Waste data unavailable</span></div></section>
         </aside>
       </div>
     </div>
-    <Dialog open={addOpen} title={<span className="sl-staff-usage-dialog-title"><span className="sl-staff-waste-head-icon"><Trash2/></span><span><strong>New Waste Record</strong><small>Enter the details of the discarded ingredient.</small></span></span>} onDismiss={()=>setAddOpen(false)} returnFocus={addButton} className="sl-staff-waste-dialog"><section className="sl-staff-waste-card sl-staff-waste-modal-card"><WasteForm/></section></Dialog>
-    <Dialog open={wasteAction!==null} title={wasteAction==='delete'?'Confirm Delete':wasteAction==='edit'?'Edit Waste Record':'Waste Record Details'} onDismiss={()=>setWasteAction(null)} className="sl-staff-waste-action-dialog">
-      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={wasteAction==='delete'?'A live waste record is required before deletion can be confirmed.':wasteAction==='edit'?'A live waste record is required before editing.':'Waste record details will appear here when the backend is connected.'} action={<Status>Preview · data pending</Status>} /></div>
-      {wasteAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={()=>setWasteAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live backend record">Confirm Delete</button></div>}
-    </Dialog>
+    <InventoryStaffModal open={addOpen} title="New Waste Record" subtitle="Enter the details of the discarded ingredient." Icon={Trash2} onDismiss={()=>setAddOpen(false)} returnFocus={addButton}><WasteForm/></InventoryStaffModal>
   </>;
 }
 
@@ -168,23 +164,22 @@ function InventoryStaffUsagePage() {
   const [range, setRange] = useState('Last 7 Days');
   const [usageDateFrom, setUsageDateFrom] = useState('');
   const [usageDateTo, setUsageDateTo] = useState('');
-  const [filtersApplied, setFiltersApplied] = useState(false);
   const [ingredient, setIngredient] = useState('');
   const [batch, setBatch] = useState('');
   const [dateUsed, setDateUsed] = useState('');
   const [quantity, setQuantity] = useState('');
   const [usedFor, setUsedFor] = useState('');
   const [menu, setMenu] = useState('');
-  const [notes, setNotes] = useState('');
+  const [usageMessage, setUsageMessage] = useState('');
   const [addUsageOpen, setAddUsageOpen] = useState(false);
-  const [previewAction, setPreviewAction] = useState<'view' | 'edit' | 'delete' | null>(null);
   const addUsageButton = useRef<HTMLButtonElement>(null);
-  const clearForm = () => { setIngredient(''); setBatch(''); setDateUsed(''); setQuantity(''); setUsedFor(''); setMenu(''); setNotes(''); };
-  const Pending = ({ label, compact = false }: { label: string; compact?: boolean }) => (
-    <div className={`sl-staff-usage-pending${compact ? ' compact' : ''}`}>
-      <DataState kind="empty" title={`${label} unavailable`} description="The supporting inventory service is not connected yet." />
-    </div>
-  );
+  const clearForm = () => { setIngredient(''); setBatch(''); setDateUsed(''); setQuantity(''); setUsedFor(''); setMenu(''); setUsageMessage(''); };
+  const submitUsage = (event: FormEvent) => {
+    event.preventDefault();
+    setUsageMessage(ingredient && batch && dateUsed && quantity && usedFor
+      ? 'Usage recording is not connected to the backend yet.'
+      : 'Complete all required fields before saving.');
+  };
 
   return <>
     <PageHeader
@@ -193,7 +188,7 @@ function InventoryStaffUsagePage() {
     />
 
     <div className="sl-admin-view sl-staff-usage-v150">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-kpi-reference-v201" aria-label="Usage summary">
+      <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Usage summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
           <div><span>Total Usage Today</span><strong>—</strong><small>Data unavailable</small></div>
@@ -210,131 +205,65 @@ function InventoryStaffUsagePage() {
           <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
           <div><span>Current Stock (After Usage)</span><strong>—</strong><small>Data unavailable</small></div>
         </article>
-      </section>
+      </section></div>
 
       <div className="sl-staff-usage-layout">
         <main className="sl-staff-usage-main">
-          <section className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="recent-usage-title">
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records" aria-labelledby="recent-usage-title">
             <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
               <span className="sl-staff-usage-head-icon"><Clock3 aria-hidden="true" /></span>
               <h2 id="recent-usage-title">Recent Usage Records</h2>
-              <div className="sl-staff-usage-head-actions">
-                <button ref={addUsageButton} type="button" className="sl-button sl-button-primary sl-staff-usage-add" onClick={()=>setAddUsageOpen(true)}><Plus size={16} aria-hidden="true" />Add Usage</button>
-              </div>
             </header>
-            <div className="sl-staff-usage-toolbar">
-              <label className="sl-staff-usage-search"><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or menu..." aria-label="Search usage records" /></label>
-              <select value={purpose} onChange={e=>{setPurpose(e.target.value);setFiltersApplied(false)}} aria-label="Filter by purpose"><option>All Purposes</option><option>Menu Preparation</option><option>Staff Meal</option><option>Testing / R&amp;D</option><option>Others</option></select>
-              <select value={range} onChange={e=>{setRange(e.target.value);setFiltersApplied(false)}} aria-label="Filter by date range"><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option><option>Custom</option></select>
-              {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => { setUsageDateFrom(event.target.value); setFiltersApplied(false); }} /></label><label><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => { setUsageDateTo(event.target.value); setFiltersApplied(false); }} /></label></div>}
-              <button type="button" className={`sl-button ${filtersApplied ? '' : 'sl-button-primary'} sl-staff-usage-filter-apply`} onClick={()=>{ if(filtersApplied){ setSearch(''); setPurpose('All Purposes'); setRange('Last 7 Days'); setUsageDateFrom(''); setUsageDateTo(''); setFiltersApplied(false); } else { setFiltersApplied(true); } }}>{filtersApplied ? 'Reset' : 'Apply'}</button>
-            </div>
-            <div className="sl-staff-usage-table-shell">
-              <table className="sl-data-table sl-staff-usage-table">
-                <thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Used','Unit','Used For','Menu','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-usage-toolbar">
+              <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or menu..." aria-label="Search usage records" /></div></label>
+              <label><span>Purpose</span><select value={purpose} onChange={e=>setPurpose(e.target.value)} aria-label="Filter by purpose"><option>All Purposes</option><option>Menu Preparation</option><option>Staff Meal</option><option>Testing / R&amp;D</option><option>Others</option></select></label>
+              <label><span>Date range</span><select value={range} onChange={e=>setRange(e.target.value)} aria-label="Filter by date range">{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
+              {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => setUsageDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => setUsageDateTo(event.target.value)} /></label></div>}
+              <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setPurpose('All Purposes');setRange('Last 7 Days');setUsageDateFrom('');setUsageDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addUsageButton} label="Add Usage" onClick={()=>setAddUsageOpen(true)} /></div>
+            </div></div>
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell">
+              <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table">
+                <thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Used','Unit','Purpose','Menu','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead>
                 <tbody>
-                  <tr className="sl-staff-usage-preview-row sl-staff-records-dash-row">
+                  <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">
                     {Array.from({length:8}).map((_,index)=><td key={index}>—</td>)}
-                    <td className="sl-staff-usage-preview-actions-cell">
-                      <div className="sl-staff-usage-row-actions" aria-label="Usage record action preview">
-                        <button type="button" className="sl-icon-button" aria-label="View usage record" title="View" onClick={()=>setPreviewAction('view')}><Eye size={16} aria-hidden="true" /></button>
-                        <button type="button" className="sl-icon-button" aria-label="Edit usage record" title="Edit" onClick={()=>setPreviewAction('edit')}><Pencil size={16} aria-hidden="true" /></button>
-                        <button type="button" className="sl-icon-button sl-staff-usage-delete-action" aria-label="Delete usage record" title="Delete" onClick={()=>setPreviewAction('delete')}><Trash2 size={16} aria-hidden="true" /></button>
+                    <td className="sl-sa-ingredients-actions-cell">
+                      <div className="sl-staff-waste-row-actions" aria-label="Usage record actions unavailable">
+                        <button type="button" className="sl-icon-button" disabled aria-label="View usage record unavailable" title="View unavailable"><Eye size={16} aria-hidden="true" /></button>
                       </div>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <footer className="sl-staff-usage-footer">
+            <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
               <label><span>Rows per page</span><select value={rowsPerPage} onChange={e=>setRowsPerPage(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label>
-              <span className="sl-staff-usage-pagination-note">Showing 0 to 0 of 0 usage records</span>
-              <div className="sl-staff-usage-pagination" aria-label="Usage pagination preview"><button type="button" aria-label="Previous page">‹</button><button type="button" aria-current="page">1</button><button type="button" aria-label="Next page">›</button></div>
+              <Pagination compact page={1} pageSize={Number(rowsPerPage)} total={0} itemLabel="usage records" onPageChange={()=>{}} />
             </footer>
           </section>
         </main>
 
         <aside className="sl-staff-usage-rail">
-          <section className="sl-staff-usage-card sl-staff-usage-sidecard">
-            <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><Leaf aria-hidden="true" /></span><h2>FEFO Reminder</h2></header>
-            <p className="sl-staff-usage-sidehint">Use batches with the earliest expiry date first.</p>
-            <Pending label="FEFO reminders" compact />
-          </section>
-          <section className="sl-staff-usage-card sl-staff-usage-sidecard">
+          <section className="sl-staff-usage-card sl-staff-usage-sidecard sl-superadmin-dashboard-v49">
             <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileInput aria-hidden="true" /></span><h2>Today&apos;s Usage by Purpose</h2></header>
-            <Pending label="Usage by purpose" compact />
-          </section>
-          <section className="sl-staff-usage-card sl-staff-usage-sidecard">
-            <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon attention"><AlertTriangle aria-hidden="true" /></span><h2>Low Stock Warning</h2></header>
-            <Pending label="Low-stock warnings" compact />
+            <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface" aria-label="Usage by purpose values unavailable"><div className="sl-sa-expiration-donut"><strong>—</strong><span>Usage</span></div><div className="sl-sa-chart-legend"><div><i data-series="1"/><span>Menu</span><strong>—</strong></div><div><i data-series="2"/><span>Staff</span><strong>—</strong></div><div><i data-series="3"/><span>Other</span><strong>—</strong></div></div><span className="sl-sa-chart-empty-note">Usage data unavailable</span></div>
           </section>
         </aside>
       </div>
     </div>
 
-    <Dialog
-      open={addUsageOpen}
-      title={<span className="sl-staff-usage-dialog-title"><span className="sl-staff-usage-head-icon"><FileInput aria-hidden="true" /></span><span><strong>New Usage Record</strong><small>Enter the details of the ingredient used.</small></span></span>}
-      onDismiss={()=>setAddUsageOpen(false)}
-      returnFocus={addUsageButton}
-      className="sl-staff-usage-dialog sl-staff-usage-dialog-exact"
-    >
-      <section className="sl-staff-usage-card sl-staff-usage-form-card sl-staff-usage-modal-card">
-        <form className="sl-staff-usage-form" onSubmit={(e)=>e.preventDefault()}>
+    <InventoryStaffModal open={addUsageOpen} title="New Usage Record" subtitle="Enter the details of the ingredient used." Icon={FileInput} onDismiss={()=>setAddUsageOpen(false)} returnFocus={addUsageButton}>
+        <InventoryStaffModalForm onSubmit={submitUsage} message={usageMessage} secondaryLabel="Clear" onSecondary={clearForm} primaryLabel="Save Usage Record" PrimaryIcon={CheckCircle2}>
           <label><span>Ingredient <b>*</b></span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option value="">Search or select ingredient...</option></select></label>
           <label><span>Batch ID <b>*</b></span><select value={batch} onChange={e=>setBatch(e.target.value)}><option value="">Select batch...</option></select></label>
           <label><span>Date Used <b>*</b></span><input type="date" value={dateUsed} onChange={e=>setDateUsed(e.target.value)} /></label>
-          <label><span>Quantity Used <b>*</b></span><div className="sl-staff-usage-quantity"><input inputMode="decimal" value={quantity} onChange={e=>setQuantity(e.target.value.replace(/[^0-9.]/g,''))} placeholder="Enter quantity" /><select aria-label="Unit"><option>kg</option></select></div></label>
-          <label><span>Used For <b>*</b></span><select value={usedFor} onChange={e=>setUsedFor(e.target.value)}><option value="">Select purpose...</option><option>Menu Preparation</option><option>Staff Meal</option><option>Testing / R&amp;D</option><option>Others</option></select></label>
-          <label><span>Prepared Menu (Optional)</span><input value={menu} onChange={e=>setMenu(e.target.value)} placeholder="Enter menu name..." /></label>
-          <label className="sl-staff-usage-notes"><span>Notes (Optional)</span><input value={notes} onChange={e=>setNotes(e.target.value)} placeholder="e.g., breakfast service, staff meal, etc." /></label>
-          <div className="sl-staff-usage-form-actions">
-            <button type="button" className="sl-button" onClick={clearForm}>Clear</button>
-            <button type="button" className="sl-button sl-button-primary" title="Usage API is not connected yet"><CheckCircle2 size={16} aria-hidden="true" />Save Usage Record</button>
-          </div>
-        </form>
-      </section>
-    </Dialog>
+          <label><span>Quantity Used <b>*</b></span><input inputMode="decimal" value={quantity} onChange={e=>setQuantity(e.target.value.replace(/[^0-9.]/g,''))} placeholder="Enter quantity" /></label>
+          <label><span>Unit</span><input className="sl-staff-derived-unit" value="—" readOnly aria-label="Derived unit unavailable" /></label>
+          <label><span>Purpose <b>*</b></span><select value={usedFor} onChange={e=>setUsedFor(e.target.value)}><option value="">Select purpose...</option><option>Menu Preparation</option><option>Staff Meal</option><option>Testing / R&amp;D</option><option>Others</option></select></label>
+          {usedFor==='Menu Preparation'&&<label className="sl-staff-modal-wide"><span>Prepared Menu (Optional)</span><input value={menu} onChange={e=>setMenu(e.target.value)} placeholder="Enter menu name..." /></label>}
+        </InventoryStaffModalForm>
+    </InventoryStaffModal>
 
-    <Dialog
-      open={previewAction === 'view'}
-      title="Usage Record Details"
-      onDismiss={()=>setPreviewAction(null)}
-      className="sl-staff-usage-action-dialog"
-    >
-      <div className="sl-staff-usage-action-state">
-        <DataState kind="empty" title="No live records yet" description="Usage record details will be available when the Usage Recording backend is connected." action={<Status>Preview · data pending</Status>} />
-        <div className="sl-dialog-form-actions"><button type="button" className="sl-button" onClick={()=>setPreviewAction(null)}>Close</button></div>
-      </div>
-    </Dialog>
-
-    <Dialog
-      open={previewAction === 'edit'}
-      title="Edit Usage Record"
-      onDismiss={()=>setPreviewAction(null)}
-      className="sl-staff-usage-action-dialog"
-    >
-      <div className="sl-staff-usage-action-state">
-        <DataState kind="empty" title="No live records yet" description="A live usage record is required before its details can be edited." action={<Status>Preview · data pending</Status>} />
-        <div className="sl-dialog-form-actions"><button type="button" className="sl-button" onClick={()=>setPreviewAction(null)}>Close</button></div>
-      </div>
-    </Dialog>
-
-    <Dialog
-      open={previewAction === 'delete'}
-      title="Delete Usage Record?"
-      onDismiss={()=>setPreviewAction(null)}
-      className="sl-staff-usage-action-dialog sl-staff-usage-delete-dialog"
-    >
-      <div className="sl-staff-usage-delete-confirm">
-        <span className="sl-staff-usage-delete-icon"><Trash2 size={22} aria-hidden="true" /></span>
-        <div><strong>No live record is selected.</strong><p>Deletion will become available for each real usage row once Usage Recording is connected to the backend.</p></div>
-      </div>
-      <div className="sl-dialog-form-actions">
-        <button type="button" className="sl-button" onClick={()=>setPreviewAction(null)}>Cancel</button>
-        <button type="button" className="sl-button sl-button-danger" disabled title="Requires a live usage record">Delete</button>
-      </div>
-    </Dialog>
   </>;
 }
 
@@ -342,26 +271,41 @@ function InventoryStaffUsagePage() {
 function InventoryStaffStockInPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [stockSearch, setStockSearch] = useState('');
+  const [stockIngredient, setStockIngredient] = useState('All Ingredients');
+  const [stockIngredients, setStockIngredients] = useState<Ingredient[]>([]);
   const [stockSupplier, setStockSupplier] = useState('All Suppliers');
-  const [stockDateRange, setStockDateRange] = useState('Last 30 Days');
+  const [stockDateRange, setStockDateRange] = useState('Last 7 Days');
+  const [stockDateFrom, setStockDateFrom] = useState('');
+  const [stockDateTo, setStockDateTo] = useState('');
+  const [stockFormMessage, setStockFormMessage] = useState('');
   const [stockRows, setStockRows] = useState(10);
   const [stockPage, setStockPage] = useState(1);
   const addStockInButton = useRef<HTMLButtonElement>(null);
-  const Pending = ({ description, compact = false }: { description: string; compact?: boolean }) => (
-    <div className={`sl-staff-stockin-pending${compact ? ' compact' : ''}`}>
-      <DataState kind="empty" title={`${description} unavailable`} description="The stock-in service is not connected yet." />
-    </div>
-  );
-  const StockInFormPreview = ({ asDialog = false }: { asDialog?: boolean }) => <form className={`sl-staff-stockin-form${asDialog ? ' sl-staff-stockin-form-dialog' : ''}`} aria-label="New stock-in entry">
-    <label><span>Supplier <b>*</b></span><select defaultValue=""><option value="">Select supplier...</option></select></label>
-    <label><span>Date Received <b>*</b></span><div className="sl-staff-stockin-date"><CalendarDays size={16} aria-hidden="true" /><input type="date" /></div></label>
-    <label><span>Ingredient <b>*</b></span><div className="sl-staff-stockin-search"><Search size={16} aria-hidden="true" /><input placeholder="Search or select ingredient..." /></div></label>
-    <label><span>Batch ID <b>*</b></span><input placeholder="Auto-generate or enter batch ID..." /></label>
-    <label><span>Expiry Date <b>*</b></span><div className="sl-staff-stockin-date"><input type="date" /><CalendarDays size={16} aria-hidden="true" /></div></label>
-    <label><span>Quantity Received <b>*</b></span><div className="sl-staff-stockin-quantity"><input inputMode="decimal" placeholder="Enter quantity" /><select defaultValue="kg"><option>kg</option></select></div></label>
-    <label><span>Unit Cost (Optional)</span><div className="sl-staff-stockin-money"><span>₱</span><input inputMode="decimal" placeholder="0.00" /></div></label>
-    <label className="sl-staff-stockin-notes"><span>Notes (Optional)</span><input placeholder="e.g., delivery condition, remarks, invoice reference..." /></label>
-  </form>;
+  const stockForm = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    listIngredients(1, 100, '', '', controller.signal).then(result => setStockIngredients(result.items)).catch(error => {
+      if (!(error instanceof Error && error.name === 'AbortError')) setStockIngredients([]);
+    });
+    return () => controller.abort();
+  }, []);
+  const submitStockIn = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const complete = ['supplier','dateReceived','ingredient','batchId','expirationDate','quantityReceived'].every(field => String(data.get(field) ?? '').trim());
+    setStockFormMessage(complete ? 'Stock-in recording is not connected to the backend yet.' : 'Complete all required fields before saving.');
+  };
+  const StockInFormPreview = () => <InventoryStaffModalForm formRef={stockForm} onSubmit={submitStockIn} message={stockFormMessage} secondaryLabel="Clear" onSecondary={()=>{stockForm.current?.reset();setStockFormMessage('')}} primaryLabel="Save Stock-In" PrimaryIcon={PackagePlus}>
+    <label><span>Supplier <b>*</b></span><select name="supplier" defaultValue=""><option value="">Select supplier...</option></select></label>
+    <label><span>Date Received <b>*</b></span><input name="dateReceived" type="date" /></label>
+    <label><span>Ingredient <b>*</b></span><select name="ingredient" defaultValue=""><option value="">Search or select ingredient...</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
+    <label><span>Batch ID <b>*</b></span><input name="batchId" placeholder="Auto-generate or enter batch ID..." /></label>
+    <label><span>Expiry Date <b>*</b></span><input name="expirationDate" type="date" /></label>
+    <label><span>Quantity Received <b>*</b></span><input name="quantityReceived" inputMode="decimal" placeholder="Enter quantity" /></label>
+    <label><span>Unit</span><input className="sl-staff-derived-unit" value="—" readOnly aria-label="Derived unit unavailable" /></label>
+    <label><span>Unit Cost (Optional)</span><input name="unitCost" inputMode="decimal" placeholder="₱ 0.00" /></label>
+    <label className="sl-staff-stockin-notes"><span>Notes (Optional)</span><input name="notes" placeholder="e.g., delivery condition, remarks, invoice reference..." /></label>
+  </InventoryStaffModalForm>;
 
   return <>
     <PageHeader
@@ -370,57 +314,42 @@ function InventoryStaffStockInPage() {
     />
 
     <div className="sl-admin-view sl-staff-stockin-v145">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-stockin-kpis sl-kpi-reference-v201" aria-label="Stock-in summary">
+      <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-stockin-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Stock-in summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Total Stock-In Today</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Quantity Received</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Active Deliveries</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Suppliers This Month</span><strong>—</strong><small>Data unavailable</small></div></article>
-      </section>
+      </section></div>
 
       <div className="sl-staff-stockin-layout">
         <main className="sl-staff-stockin-main">
-          <section className="sl-staff-stockin-history" aria-labelledby="staff-stockin-history-title">
-            <header><div><h2 id="staff-stockin-history-title" className="sl-section-title">Stock History</h2></div></header>
-            <div className="sl-staff-stockin-history-filters">
-              <label className="sl-staff-stockin-history-search"><span className="sl-sr-only">Search stock-in history</span><div><Search size={16} aria-hidden="true" /><input value={stockSearch} onChange={event => setStockSearch(event.target.value)} placeholder="Search by ingredient, batch ID, or supplier..." /></div></label>
-              <label><span className="sl-sr-only">Supplier</span><select value={stockSupplier} onChange={event => setStockSupplier(event.target.value)}><option>All Suppliers</option></select></label>
-              <label><span className="sl-sr-only">Date range</span><select value={stockDateRange} onChange={event => setStockDateRange(event.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></label>
-              <div className="sl-staff-stockin-history-actions"><button type="button" className="sl-button sl-download-trigger sl-inventory-staff-export" onClick={() => {}} title="Export will become available when the backend is fully connected"><Download size={16} aria-hidden="true" />Export</button><button ref={addStockInButton} type="button" className="sl-button sl-button-primary" onClick={() => setAddModalOpen(true)}><Plus size={15} aria-hidden="true" />Add Stock-In</button></div>
+          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-stockin-history" aria-labelledby="staff-stockin-history-title">
+            <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><Clock3 aria-hidden="true" /></span><h2 id="staff-stockin-history-title">Stock History</h2></header>
+            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-stockin-history-filters">
+              <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input value={stockSearch} onChange={event => setStockSearch(event.target.value)} placeholder="Search by ingredient, batch ID, or supplier..." /></div></label>
+              <label><span>Ingredient</span><select value={stockIngredient} onChange={event => setStockIngredient(event.target.value)}><option>All Ingredients</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
+              <label><span>Supplier</span><select value={stockSupplier} onChange={event => setStockSupplier(event.target.value)}><option>All Suppliers</option></select></label>
+              <label><span>Date range</span><select value={stockDateRange} onChange={event => setStockDateRange(event.target.value)}>{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
+              {stockDateRange==='Custom'&&<div className="sl-v219-custom-date-range" aria-label="Custom stock-in date range"><label><span>From</span><input type="date" value={stockDateFrom} max={stockDateTo||undefined} onChange={event=>setStockDateFrom(event.target.value)}/></label><label><span>To</span><input type="date" value={stockDateTo} min={stockDateFrom||undefined} onChange={event=>setStockDateTo(event.target.value)}/></label></div>}
+              <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setStockSearch('');setStockIngredient('All Ingredients');setStockSupplier('All Suppliers');setStockDateRange('Last 7 Days');setStockDateFrom('');setStockDateTo('');setStockPage(1)}}>Reset</button><InventoryStaffAddButton buttonRef={addStockInButton} label="Add Stock-In" onClick={() => setAddModalOpen(true)} /></div>
+            </div></div>
+            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell">
+              <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-stockin-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Supplier','Quantity','Unit','Expiry Date','Recorded By','Actions'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:8}).map((_,index)=><td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Stock-in transaction actions unavailable"><button type="button" className="sl-icon-button" disabled aria-label="View stock-in transaction unavailable" title="View unavailable"><Eye size={16}/></button></div></td></tr></tbody></table>
             </div>
-            <div className="sl-staff-stockin-table-wrap">
-              <table className="sl-staff-stockin-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Supplier','Quantity','Unit','Expiry Date','Recorded By','Actions'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr className="sl-staff-records-dash-row">{Array.from({length:9}).map((_,index)=><td key={index}>—</td>)}</tr></tbody></table>
-            </div>
-            <footer className="sl-staff-stockin-footer"><label>Rows per page <select value={stockRows} onChange={event => { setStockRows(Number(event.target.value)); setStockPage(1); }}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label><Pagination compact page={stockPage} pageSize={stockRows} total={0} itemLabel="stock-in records" onPageChange={setStockPage} /></footer>
+            <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={stockRows} onChange={event => { setStockRows(Number(event.target.value)); setStockPage(1); }}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label><Pagination compact page={stockPage} pageSize={stockRows} total={0} itemLabel="stock-in records" onPageChange={setStockPage} /></footer>
           </section>
         </main>
 
-        <aside className="sl-staff-stockin-rail" aria-label="Stock-in support panels">
-          <Card id="staff-stockin-recent-deliveries" title="Recent Deliveries" action={<button type="button" className="sl-text-link sl-staff-stockin-view-all" onClick={() => {}} title="Live delivery records will open when the backend is fully connected">View All <ArrowRight size={14} /></button>}><Pending description="Recent deliveries" compact /></Card>
-          <Card id="staff-stockin-low-stock" title="Low Stock Ingredients" action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}><Pending description="Low-stock ingredients" compact /></Card>
-        </aside>
       </div>
     </div>
 
-    <Dialog
-      open={addModalOpen}
-      onDismiss={() => setAddModalOpen(false)}
-      returnFocus={addStockInButton}
-      className="sl-staff-stockin-dialog sl-add-user-dialog sl-account-reference-dialog sl-stockin-reference-dialog"
-      title={<span className="sl-staff-stockin-dialog-heading sl-account-dialog-heading"><span className="sl-staff-stockin-entry-icon sl-account-dialog-icon"><Plus aria-hidden="true" /></span><span><span className="sl-staff-stockin-dialog-title sl-account-dialog-title">Add Stock-In</span><small>Fill in the details of the received ingredients.</small></span></span>}
-      actions={<><button type="button" className="sl-button" data-initial-focus onClick={() => setAddModalOpen(false)}>Cancel</button><button type="button" className="sl-button sl-button-primary" onClick={() => {}} title="Saving will become available when the backend is fully connected">Save Stock-In</button></>}
-    >
-      <div className="sl-staff-stockin-dialog-body">
-        <StockInFormPreview asDialog />
-      </div>
-    </Dialog>
+    <InventoryStaffModal open={addModalOpen} title="Add Stock-In" subtitle="Fill in the details of the received ingredients." Icon={PackagePlus} onDismiss={() => setAddModalOpen(false)} returnFocus={addStockInButton}><StockInFormPreview /></InventoryStaffModal>
   </>;
 }
 
 function UnavailableInventoryBatchActions() {
   return <div className="sl-staff-waste-row-actions" aria-label="Inventory batch actions unavailable">
     <button type="button" className="sl-icon-button" disabled aria-label="View inventory batch unavailable" title="View unavailable"><Eye size={16} aria-hidden="true" /></button>
-    <button type="button" className="sl-icon-button" disabled aria-label="Edit inventory batch unavailable" title="Edit unavailable"><Pencil size={16} aria-hidden="true" /></button>
-    <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled aria-label="Delete inventory batch unavailable" title="Delete unavailable"><Trash2 size={16} aria-hidden="true" /></button>
   </div>;
 }
 
@@ -504,15 +433,6 @@ function InventoryStaffInventoryBatchesPage() {
               <span className="sl-sa-chart-empty-note">Status data unavailable</span>
             </div>
           </Card>
-          <section id="staff-inventory-upcoming" className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="staff-inventory-upcoming-title">
-            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
-              <span className="sl-staff-usage-head-icon"><CalendarDays aria-hidden="true" /></span>
-              <h2 id="staff-inventory-upcoming-title">Upcoming Expirations</h2>
-            </header>
-            <div className="sl-dashboard-source-table-shell" role="region" aria-label="Upcoming expiration batches" tabIndex={0}>
-              <table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['Ingredient','Batch ID','Expiry Date','Days Left'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead><tbody><tr>{Array.from({length:4}).map((_,index)=><td key={index}>—</td>)}</tr></tbody></table>
-            </div>
-          </section>
         </aside>
       </div>
     </div>
