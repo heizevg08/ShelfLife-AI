@@ -203,3 +203,34 @@ test('anonymous deep links redirect to login and lockout has useful feedback', a
   await page.getByRole('button', { name: 'Log in', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Too many failed attempts');
 });
+
+test('ingredient text limits block oversized submissions and only required fields have stars', async ({ page }) => {
+  const api = await mockApi(page, 'Inventory Manager');
+  await page.goto('/Ingredients');
+  await page.getByRole('button', { name: 'Add Ingredient', exact: true }).click();
+  const form = page.locator('#sl-ingredient-form');
+  for (const label of ['Name', 'Category', 'Unit of measure']) {
+    await expect(form.locator('label').filter({ has: page.getByLabel(label, { exact: false }) }).locator('.sl-required-mark')).toHaveCount(1);
+  }
+  for (const placeholder of ['e.g. FreshFarm', 'e.g. Boneless, skinless chicken breast']) {
+    await expect(form.getByPlaceholder(placeholder).locator('..').locator('.sl-required-mark')).toHaveCount(0);
+  }
+  for (const id of ['minStock', 'unitCost', 'shelfLife']) {
+    await expect(form.locator(`label:has(#ingredient-${id}-input) .sl-required-mark`)).toHaveCount(0);
+  }
+  await form.getByPlaceholder('e.g. Chicken Breast').fill('Milk');
+  await form.getByLabel('Category').selectOption('Dairy');
+  await form.getByLabel('Unit of measure').selectOption('L');
+  for (const [placeholder, limit] of [['e.g. Chicken Breast', 100], ['e.g. FreshFarm', 100], ['e.g. Boneless, skinless chicken breast', 500]] as const) {
+    const input = form.getByPlaceholder(placeholder);
+    await expect(input).toHaveAttribute('maxlength', String(limit));
+    // Bypass native entry limits to verify submit validation independently.
+    await input.evaluate(element => element.removeAttribute('maxlength'));
+    await input.fill('x'.repeat(limit + 1));
+    await page.getByRole('button', { name: 'Save Ingredient', exact: true }).click();
+    await expect(input).toHaveAttribute('aria-invalid', 'true');
+    await expect(form.getByText(`Use at most ${limit} characters.`, { exact: true })).toBeVisible();
+    expect(api.writes.filter(request => request.path === '/api/ingredients')).toHaveLength(0);
+    await input.fill(placeholder === 'e.g. Chicken Breast' ? 'Milk' : '');
+  }
+});
