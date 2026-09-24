@@ -17,6 +17,14 @@ import { createIngredient, deleteIngredient, listIngredientCategories, listIngre
 const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
 const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
 const INVENTORY_STAFF_DATE_RANGES = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom'] as const;
+const INVENTORY_STAFF_WASTE_REASONS = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'] as const;
+const INVENTORY_STAFF_USAGE_PURPOSES = [
+  { value: 'Menu Preparation', analyticsGroup: 'Menu' },
+  { value: 'Staff Meal', analyticsGroup: 'Staff' },
+  { value: 'Testing / R&D', analyticsGroup: 'Other' },
+  { value: 'Others', analyticsGroup: 'Other' },
+] as const;
+const INVENTORY_STAFF_USAGE_PURPOSE_GROUPS = Array.from(new Set(INVENTORY_STAFF_USAGE_PURPOSES.map(option => option.analyticsGroup)));
 type IngredientDraft = { name: string; brand: string; category: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
 const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
 type IngredientField = keyof IngredientDraft;
@@ -98,7 +106,7 @@ function InventoryStaffWastePage() {
       <div className="sl-staff-waste-layout">
         <main className="sl-staff-waste-main">
           <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-waste-card sl-staff-waste-records"><header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><Clock3/></span><h2>Recent Waste Records</h2></header>
-            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-waste-toolbar"><label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or reason..."/></div></label><label><span>Reason</span><select value={reasonFilter} onChange={e=>setReasonFilter(e.target.value)}><option>All Reasons</option><option>Expired</option><option>Spoiled</option><option>Damaged</option><option>Over-prepared</option><option>Other</option></select></label><label><span>Date range</span><select value={range} onChange={e=>setRange(e.target.value)}>{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>{range==='Custom'&&<div className="sl-v219-custom-date-range" aria-label="Custom waste date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo||undefined} onChange={e=>setDateFrom(e.target.value)}/></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom||undefined} onChange={e=>setDateTo(e.target.value)}/></label></div>}<div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setReasonFilter('All Reasons');setRange('Last 7 Days');setDateFrom('');setDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addButton} label="Add Waste" onClick={()=>setAddOpen(true)} /></div></div></div>
+            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-waste-toolbar"><label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or reason..."/></div></label><label><span>Reason</span><select value={reasonFilter} onChange={e=>setReasonFilter(e.target.value)}><option>All Reasons</option>{INVENTORY_STAFF_WASTE_REASONS.map(value=><option key={value}>{value}</option>)}</select></label><label><span>Date range</span><select value={range} onChange={e=>setRange(e.target.value)}>{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>{range==='Custom'&&<div className="sl-v219-custom-date-range" aria-label="Custom waste date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo||undefined} onChange={e=>setDateFrom(e.target.value)}/></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom||undefined} onChange={e=>setDateTo(e.target.value)}/></label></div>}<div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setReasonFilter('All Reasons');setRange('Last 7 Days');setDateFrom('');setDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addButton} label="Add Waste" onClick={()=>setAddOpen(true)} /></div></div></div>
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell"><table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-waste-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity','Unit','Reason','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody><tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:7}).map((_,index)=><td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste record actions unavailable"><button type="button" className="sl-icon-button" disabled aria-label="View waste record unavailable" title="View unavailable"><Eye size={16}/></button></div></td></tr></tbody></table></div>
             <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>setRows(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label><Pagination compact page={1} pageSize={Number(rows)} total={0} itemLabel="waste records" onPageChange={()=>{}} /></footer>
           </section>
@@ -107,9 +115,8 @@ function InventoryStaffWastePage() {
           <InventoryStaffAnalyticsCard
             ariaLabel="Waste by reason values unavailable"
             centerLabel="Waste"
-            className="sl-staff-waste-card"
             Icon={BarChart3}
-            items={[{ label: 'Expired', series: 1 }, { label: 'Spoiled', series: 2 }, { label: 'Other', series: 3 }]}
+            items={INVENTORY_STAFF_WASTE_REASONS.map((label, index) => ({ label, series: index + 1 }))}
             title="Waste by Reason (Last 30 Days)"
             unavailableMessage="Waste data unavailable"
           />
@@ -225,7 +232,7 @@ function InventoryStaffUsagePage() {
             </header>
             <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-usage-toolbar">
               <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or menu..." aria-label="Search usage records" /></div></label>
-              <label><span>Purpose</span><select value={purpose} onChange={e=>setPurpose(e.target.value)} aria-label="Filter by purpose"><option>All Purposes</option><option>Menu Preparation</option><option>Staff Meal</option><option>Testing / R&amp;D</option><option>Others</option></select></label>
+              <label><span>Purpose</span><select value={purpose} onChange={e=>setPurpose(e.target.value)} aria-label="Filter by purpose"><option>All Purposes</option>{INVENTORY_STAFF_USAGE_PURPOSES.map(option=><option key={option.value}>{option.value}</option>)}</select></label>
               <label><span>Date range</span><select value={range} onChange={e=>setRange(e.target.value)} aria-label="Filter by date range">{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
               {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => setUsageDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => setUsageDateTo(event.target.value)} /></label></div>}
               <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setPurpose('All Purposes');setRange('Last 7 Days');setUsageDateFrom('');setUsageDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addUsageButton} label="Add Usage" onClick={()=>setAddUsageOpen(true)} /></div>
@@ -256,9 +263,8 @@ function InventoryStaffUsagePage() {
           <InventoryStaffAnalyticsCard
             ariaLabel="Usage by purpose values unavailable"
             centerLabel="Usage"
-            className="sl-staff-usage-card"
             Icon={FileInput}
-            items={[{ label: 'Menu', series: 1 }, { label: 'Staff', series: 2 }, { label: 'Other', series: 3 }]}
+            items={INVENTORY_STAFF_USAGE_PURPOSE_GROUPS.map((label, index) => ({ label, series: index + 1 }))}
             title="Today's Usage by Purpose"
             unavailableMessage="Usage data unavailable"
           />
