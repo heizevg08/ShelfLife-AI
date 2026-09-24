@@ -107,7 +107,7 @@ function InventoryStaffWastePage() {
           <InventoryStaffAnalyticsCard
             ariaLabel="Waste by reason values unavailable"
             centerLabel="Waste"
-            className="sl-staff-waste-card sl-staff-waste-sidecard"
+            className="sl-staff-waste-card"
             Icon={BarChart3}
             items={[{ label: 'Expired', series: 1 }, { label: 'Spoiled', series: 2 }, { label: 'Other', series: 3 }]}
             title="Waste by Reason (Last 30 Days)"
@@ -256,7 +256,7 @@ function InventoryStaffUsagePage() {
           <InventoryStaffAnalyticsCard
             ariaLabel="Usage by purpose values unavailable"
             centerLabel="Usage"
-            className="sl-staff-usage-card sl-staff-usage-sidecard"
+            className="sl-staff-usage-card"
             Icon={FileInput}
             items={[{ label: 'Menu', series: 1 }, { label: 'Staff', series: 2 }, { label: 'Other', series: 3 }]}
             title="Today's Usage by Purpose"

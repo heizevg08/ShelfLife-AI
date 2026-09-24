@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { CheckCircle2, Clock3, Eye, FileInput, ListChecks, PackagePlus, Search, SlidersHorizontal, XCircle, type LucideIcon } from 'lucide-react';
 import { DataState, PageHeader, Pagination, Status } from '../../components/application/primitives';
 import { InventoryStaffModal, InventoryStaffModalForm } from '../../components/application/InventoryStaffModal';
+import { InventoryStaffAnalyticsCard } from '../../components/application/InventoryStaffAnalyticsCard';
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 import { ModulePage } from '../../components/application/ModulePage';
 
@@ -91,7 +92,7 @@ function InventoryStaffChangeRequests(){
           </section>
         </main>
         <aside className="sl-staff-requests-rail">
-          <section className="sl-staff-requests-card sl-staff-requests-sidecard sl-staff-request-status-card sl-superadmin-dashboard-v49"><header><span><ListChecks size={18}/></span><h2>My Request Status</h2></header><div className="sl-sa-chart-surface sl-sa-expiration-donut-surface" aria-label="Request status values unavailable"><div className="sl-sa-expiration-donut"><strong>—</strong><span>Requests</span></div><div className="sl-sa-chart-legend"><div><i data-series="1"/><span>Approved</span><strong>—</strong></div><div><i data-series="2"/><span>Pending</span><strong>—</strong></div><div><i data-series="3"/><span>Rejected</span><strong>—</strong></div></div><span className="sl-sa-chart-empty-note">Request data unavailable</span></div></section>
+          <InventoryStaffAnalyticsCard ariaLabel="Request status values unavailable" centerLabel="Requests" className="sl-staff-requests-card sl-staff-request-status-card" Icon={ListChecks} items={[{label:'Approved',series:1},{label:'Pending',series:2},{label:'Rejected',series:3}]} title="My Request Status" unavailableMessage="Request data unavailable" />
           <section className="sl-staff-requests-card sl-staff-requests-sidecard"><header><span><ListChecks size={18}/></span><h2>Request Types</h2></header><div className="sl-staff-request-types">{INVENTORY_REQUEST_WORKFLOWS.map(({Icon,title,copy})=><button type="button" key={title} className="sl-staff-request-type-button" onClick={event=>{quickTypeButton.current=event.currentTarget;setQuickType(title);setRequestDraft(EMPTY_REQUEST_DRAFT);setRequestMessage('')}}><span className="icon"><Icon size={16}/></span><p><strong>{title}</strong><small>{copy}</small></p></button>)}</div></section>
         </aside>
       </div>

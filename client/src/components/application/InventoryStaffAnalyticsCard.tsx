@@ -25,8 +25,8 @@ export function InventoryStaffAnalyticsCard({
   unavailableMessage,
 }: InventoryStaffAnalyticsCardProps) {
   return <section className={`${className} sl-superadmin-dashboard-v49 sl-inventory-staff-breakdown-card`}>
-    <header className="sl-inventory-staff-breakdown-head">
-      <span className="sl-inventory-staff-breakdown-icon"><Icon aria-hidden="true" /></span>
+    <header className="sl-staff-usage-card-head">
+      <span className="sl-staff-usage-head-icon"><Icon aria-hidden="true" /></span>
       <h2>{title}</h2>
     </header>
     <div className="sl-inventory-staff-breakdown-body" role="img" aria-label={ariaLabel}>

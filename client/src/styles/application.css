@@ -32115,11 +32115,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   align-items: start;
   align-self: start;
 }
-.sl-staff-requests-v162 .sl-staff-request-status-card .sl-sa-expiration-donut-surface {
-  height: auto;
-  min-height: 0;
-  padding: clamp(.75rem,.62rem + .28vw,.95rem) 0 clamp(1.8rem,1.55rem + .4vw,2rem);
-}
 @media (width>=1051px){
   .sl-staff-waste-v159 .sl-staff-waste-rail {
     grid-template-rows: auto;
@@ -32135,7 +32130,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 
 /* An intrinsic content group keeps route-specific rail widths from changing analytics-card geometry. */
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-card {
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-inventory-staff-breakdown-card {
   box-sizing: border-box;
   border: 1px solid var(--sl-border-subtle);
   border-radius: var(--sl-radius-lg);
@@ -32151,33 +32146,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   display: flex;
   overflow: hidden;
 }
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-head {
-  border-bottom: 1px solid var(--sl-border-subtle);
-  align-items: center;
-  gap: .55rem;
-  min-height: 52px;
-  padding: .75rem .85rem;
-  display: flex;
-}
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-head h2 {
-  font: var(--sl-font-section-title);
-  margin: 0;
-}
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-icon {
-  border-radius: .5rem;
-  background: var(--sl-brand-soft);
-  width: 30px;
-  height: 30px;
-  color: var(--sl-brand);
-  flex: none;
-  place-items: center;
-  display: grid;
-}
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-icon svg {
-  width: 18px;
-  height: 18px;
-}
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-body {
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-inventory-staff-breakdown-body {
   box-sizing: border-box;
   grid-template-rows: auto auto;
   grid-template-columns: minmax(0,1fr);
@@ -32190,42 +32159,42 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   padding: clamp(.9rem,.72rem + .4vw,1.2rem) clamp(1rem,.75rem + .7vw,1.6rem);
   display: grid;
 }
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-visual {
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-inventory-staff-breakdown-visual {
   grid-row: 1;
   grid-column: 1;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: clamp(.65rem,.5rem + .35vw,1rem);
+  gap: clamp(.65rem,.52rem + .24vw,.85rem);
   min-width: 0;
   display: flex;
 }
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-visual .sl-sa-expiration-donut {
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-inventory-staff-breakdown-visual .sl-sa-expiration-donut {
   flex: none;
   margin: 0;
 }
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-legend {
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-inventory-staff-breakdown-legend {
   box-sizing: border-box;
-  flex: 0 1 10.5rem;
-  width: min(100%,10.5rem);
+  flex: 0 1 9.5rem;
+  width: min(100%,9.5rem);
   min-width: min(100%,8.5rem);
-  padding-inline: clamp(.25rem,.18rem + .18vw,.4rem);
+  padding-inline: clamp(.4rem,.32rem + .18vw,.55rem);
   display: grid;
 }
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-legend > div {
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-inventory-staff-breakdown-legend > div {
   grid-template-columns: .66rem minmax(0,1fr) minmax(1.75rem,max-content);
   align-items: center;
   gap: .42rem;
   width: 100%;
   display: grid;
 }
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-legend > div > strong {
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-inventory-staff-breakdown-legend > div > strong {
   justify-self: end;
   width: auto;
   min-width: 1.75rem;
   text-align: right;
 }
-:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-note {
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-inventory-staff-breakdown-note {
   grid-row: 2;
   grid-column: 1/-1;
   justify-self: center;
@@ -32233,4 +32202,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   color: var(--sl-muted);
   font: var(--sl-font-supporting);
   text-align: center;
+}
+.sl-staff-waste-v159 .sl-staff-waste-rail > .sl-inventory-staff-breakdown-card {
+  grid-column: 1/-1;
 }
