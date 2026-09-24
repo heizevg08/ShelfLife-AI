@@ -32133,3 +32133,104 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
     grid-template-columns: minmax(0,1fr);
   }
 }
+
+/* An intrinsic content group keeps route-specific rail widths from changing analytics-card geometry. */
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-card {
+  box-sizing: border-box;
+  border: 1px solid var(--sl-border-subtle);
+  border-radius: var(--sl-radius-lg);
+  background: var(--sl-surface);
+  box-shadow: var(--sl-shadow-card);
+  flex-direction: column;
+  align-self: start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-head {
+  border-bottom: 1px solid var(--sl-border-subtle);
+  align-items: center;
+  gap: .55rem;
+  min-height: 52px;
+  padding: .75rem .85rem;
+  display: flex;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-head h2 {
+  font: var(--sl-font-section-title);
+  margin: 0;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-icon {
+  border-radius: .5rem;
+  background: var(--sl-brand-soft);
+  width: 30px;
+  height: 30px;
+  color: var(--sl-brand);
+  flex: none;
+  place-items: center;
+  display: grid;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-icon svg {
+  width: 18px;
+  height: 18px;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-body {
+  box-sizing: border-box;
+  grid-template-rows: auto auto;
+  grid-template-columns: minmax(0,1fr);
+  align-content: center;
+  row-gap: clamp(.65rem,.52rem + .3vw,.9rem);
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: clamp(11.5rem,13vw,14rem);
+  padding: clamp(.9rem,.72rem + .4vw,1.2rem) clamp(1rem,.75rem + .7vw,1.6rem);
+  display: grid;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-visual {
+  grid-row: 1;
+  grid-column: 1;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(.65rem,.5rem + .35vw,1rem);
+  min-width: 0;
+  display: flex;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-visual .sl-sa-expiration-donut {
+  flex: none;
+  margin: 0;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-legend {
+  box-sizing: border-box;
+  flex: 0 1 10.5rem;
+  width: min(100%,10.5rem);
+  min-width: min(100%,8.5rem);
+  padding-inline: clamp(.25rem,.18rem + .18vw,.4rem);
+  display: grid;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-legend > div {
+  grid-template-columns: .66rem minmax(0,1fr) minmax(1.75rem,max-content);
+  align-items: center;
+  gap: .42rem;
+  width: 100%;
+  display: grid;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-legend > div > strong {
+  justify-self: end;
+  width: auto;
+  min-width: 1.75rem;
+  text-align: right;
+}
+:is(.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-inventory-staff-breakdown-note {
+  grid-row: 2;
+  grid-column: 1/-1;
+  justify-self: center;
+  width: 100%;
+  color: var(--sl-muted);
+  font: var(--sl-font-supporting);
+  text-align: center;
+}

@@ -5,6 +5,7 @@ import { AccountsTable } from './AccountsTable';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
 import { InventoryStaffAddButton, InventoryStaffModal, InventoryStaffModalForm } from './InventoryStaffModal';
+import { InventoryStaffAnalyticsCard } from './InventoryStaffAnalyticsCard';
 import { moduleContent, previewFields, type PreviewId } from './module-content';
 import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSummaryCards, PlaceholderTable, Status, SummaryCards } from './primitives';
 import { modules, type ModuleId } from './workspace';
@@ -103,7 +104,15 @@ function InventoryStaffWastePage() {
           </section>
         </main>
         <aside className="sl-staff-waste-rail">
-          <section className="sl-staff-waste-card sl-staff-waste-sidecard sl-superadmin-dashboard-v49"><header className="sl-staff-waste-card-head"><span className="sl-staff-waste-head-icon"><BarChart3/></span><h2>Waste by Reason (Last 30 Days)</h2></header><div className="sl-sa-chart-surface sl-sa-expiration-donut-surface" aria-label="Waste by reason values unavailable"><div className="sl-sa-expiration-donut"><strong>—</strong><span>Waste</span></div><div className="sl-sa-chart-legend"><div><i data-series="1"/><span>Expired</span><strong>—</strong></div><div><i data-series="2"/><span>Spoiled</span><strong>—</strong></div><div><i data-series="3"/><span>Other</span><strong>—</strong></div></div><span className="sl-sa-chart-empty-note">Waste data unavailable</span></div></section>
+          <InventoryStaffAnalyticsCard
+            ariaLabel="Waste by reason values unavailable"
+            centerLabel="Waste"
+            className="sl-staff-waste-card sl-staff-waste-sidecard"
+            Icon={BarChart3}
+            items={[{ label: 'Expired', series: 1 }, { label: 'Spoiled', series: 2 }, { label: 'Other', series: 3 }]}
+            title="Waste by Reason (Last 30 Days)"
+            unavailableMessage="Waste data unavailable"
+          />
         </aside>
       </div>
     </div>
@@ -244,10 +253,15 @@ function InventoryStaffUsagePage() {
         </main>
 
         <aside className="sl-staff-usage-rail">
-          <section className="sl-staff-usage-card sl-staff-usage-sidecard sl-superadmin-dashboard-v49">
-            <header className="sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileInput aria-hidden="true" /></span><h2>Today&apos;s Usage by Purpose</h2></header>
-            <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface" aria-label="Usage by purpose values unavailable"><div className="sl-sa-expiration-donut"><strong>—</strong><span>Usage</span></div><div className="sl-sa-chart-legend"><div><i data-series="1"/><span>Menu</span><strong>—</strong></div><div><i data-series="2"/><span>Staff</span><strong>—</strong></div><div><i data-series="3"/><span>Other</span><strong>—</strong></div></div><span className="sl-sa-chart-empty-note">Usage data unavailable</span></div>
-          </section>
+          <InventoryStaffAnalyticsCard
+            ariaLabel="Usage by purpose values unavailable"
+            centerLabel="Usage"
+            className="sl-staff-usage-card sl-staff-usage-sidecard"
+            Icon={FileInput}
+            items={[{ label: 'Menu', series: 1 }, { label: 'Staff', series: 2 }, { label: 'Other', series: 3 }]}
+            title="Today's Usage by Purpose"
+            unavailableMessage="Usage data unavailable"
+          />
         </aside>
       </div>
     </div>
