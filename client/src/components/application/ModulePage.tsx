@@ -591,11 +591,11 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
   return <>
     <PageHeader title="Ingredients" description="Manage ingredient master data used across your establishment." />
     <div className="sl-admin-view sl-admin-ingredients-reference">
-      <section className="sl-admin-ingredient-kpis" aria-label="Ingredient summary">
-        <article data-tone="success"><span className="sl-admin-ingredient-kpi-icon"><Leaf /></span><div><small>Total Ingredients</small><strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong><span>{data ? 'Live ingredient catalogue' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</span></div></article>
-        <article data-tone="brand"><span className="sl-admin-ingredient-kpi-icon"><Grid2X2 /></span><div><small>Categories</small><strong>{data ? loadedCategories : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
-        <article data-tone="attention"><span className="sl-admin-ingredient-kpi-icon"><Tag /></span><div><small>Common Units</small><strong>{data ? loadedUnits : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
-        <article data-tone="critical"><span className="sl-admin-ingredient-kpi-icon"><AlertTriangle /></span><div><small>For Review</small><strong>—</strong><span>Requires inventory batch data</span></div></article>
+      <section className="sl-admin-ingredient-kpis sl-kpi-reference-v201 sl-dashboard-kpis" aria-label="Ingredient summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-admin-ingredient-kpi-icon sl-sa-kpi-icon"><Leaf /></span><div><span>Total Ingredients</span><strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong><small>{data ? 'Live ingredient catalogue' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-admin-ingredient-kpi-icon sl-sa-kpi-icon"><Grid2X2 /></span><div><span>Categories</span><strong>{data ? loadedCategories : '—'}</strong><small>{data ? 'Across loaded records' : 'Live data pending'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-admin-ingredient-kpi-icon sl-sa-kpi-icon"><Tag /></span><div><span>Common Units</span><strong>{data ? loadedUnits : '—'}</strong><small>{data ? 'Across loaded records' : 'Live data pending'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-admin-ingredient-kpi-icon sl-sa-kpi-icon"><AlertTriangle /></span><div><span>For Review</span><strong>—</strong><small>Requires inventory batch data</small></div></article>
       </section>
 
       <section className="sl-admin-ingredient-filter-card" aria-label="Ingredient filters">
@@ -1744,7 +1744,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
     return <>
       <PageHeader eyebrow={adminUsers ? undefined : 'Administration'} title={adminUsers ? 'Users' : 'User Management'} description={adminUsers ? 'Manage establishment users, their roles, and access within ShelfLife AI.' : 'Control access, manage permissions, and monitor system participants.'} />
       <div className={`sl-admin-view sl-user-management-view${adminUsers ? ' sl-admin-users-reference' : ''}`}>
-        {adminUsers ? <div className="sl-admin-users-kpis sl-kpi-reference-v201" aria-label="User summary">
+        {adminUsers ? <div className="sl-admin-users-kpis sl-kpi-reference-v201 sl-dashboard-kpis" aria-label="User summary">
           {[
             { label:'Total Users', value:liveValue(accountTotals?.totalUsers), detail:accountTotals ? `↑ ${accountTotals.totalUsers} live` : 'Awaiting account summary', tone:'brand', Icon:Users },
             { label:'Admin', value:liveValue(roleCount('Admin')), detail:accountTotals ? pct(roleCount('Admin')) : 'Awaiting role summary', tone:'info', Icon:User },
@@ -1752,7 +1752,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
             { label:'Inventory Staff', value:liveValue(roleCount('Inventory Staff')), detail:accountTotals ? pct(roleCount('Inventory Staff')) : 'Awaiting role summary', tone:'critical', Icon:Users },
           ].map(({label,value,detail,tone,Icon}) => <section key={label} className="sl-admin-users-kpi sl-sa-kpi" data-tone={tone}>
             <span className="sl-admin-users-kpi-icon sl-sa-kpi-icon" aria-hidden="true"><Icon size={24}/></span>
-            <div className="sl-admin-users-kpi-copy"><strong>{value}</strong><span>{label}</span><small>{detail}</small></div>
+            <div className="sl-admin-users-kpi-copy"><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>
           </section>)}
         </div> : <SummaryCards items={[
           { label: 'Total users', value: liveValue(accountTotals?.totalUsers), detail: 'Directory total from live account data', tone: 'brand', trend: 'line' },
@@ -1785,7 +1785,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'InventoryBatches' && user.role === 'Admin') return <>
     <PageHeader eyebrow="Inventory" title="Inventory" description="View and monitor current stock levels, expiration status, and inventory distribution for your establishment." />
     <div className="sl-admin-view sl-admin-inventory-v111">
-      <div className="sl-sa-kpis sl-admin-reference-kpis sl-admin-inventory-kpis sl-kpi-reference-v201" aria-label="Inventory summary">
+      <div className="sl-sa-kpis sl-admin-reference-kpis sl-admin-inventory-kpis sl-kpi-reference-v201 sl-dashboard-kpis" aria-label="Inventory summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>

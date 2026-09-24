@@ -102,7 +102,7 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
 
   return <>
     {adminOverview && <div className="sl-audit-overview" aria-label="Audit log overview and filters">
-      <section className="sl-sa-kpis sl-dashboard-source-kpis sl-admin-audit-kpis" aria-label="Audit log summary">
+      <section className="sl-sa-kpis sl-dashboard-source-kpis sl-admin-audit-kpis sl-dashboard-kpis" aria-label="Audit log summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileText aria-hidden="true" /></span><div><span>Total Logs</span><strong>{data?.total?.toLocaleString() ?? '—'}</strong><small>{data ? 'Live audit records' : 'Awaiting audit data'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UsersRound aria-hidden="true" /></span><div><span>Unique Users</span><strong>{data ? uniqueUsers.toLocaleString() : '—'}</strong><small>{data ? `Across ${rows.length} loaded records` : 'Awaiting audit data'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ListChecks aria-hidden="true" /></span><div><span>Most Common Action</span><strong>{commonAction?.[0] ?? '—'}</strong><small>{commonAction ? `${commonAction[1]} loaded records` : 'Audit summary unavailable'}</small></div></article>

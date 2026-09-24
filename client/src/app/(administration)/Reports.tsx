@@ -47,7 +47,7 @@ function AdminReports() {
         <button className="sl-button sl-button-primary" type="button" title="Filters will apply when reporting endpoints are connected"><SlidersHorizontal size={14}/> Apply Filters</button>
       </section>
 
-      <section className="sl-admin-reports-kpis sl-kpi-reference-v201" aria-label="Report summary">
+      <section className="sl-admin-reports-kpis sl-kpi-reference-v201 sl-dashboard-kpis" aria-label="Report summary">
         <article className="sl-admin-reports-kpi sl-sa-kpi" data-tone="brand"><span className="sl-admin-reports-kpi-icon sl-sa-kpi-icon"><Package/></span><div><span>Total Inventory Value</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-admin-reports-kpi sl-sa-kpi" data-tone="info"><span className="sl-admin-reports-kpi-icon sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Cost</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-admin-reports-kpi sl-sa-kpi" data-tone="attention"><span className="sl-admin-reports-kpi-icon sl-sa-kpi-icon"><Leaf/></span><div><span>Total Ingredients</span><strong>—</strong><small>Data unavailable</small></div></article>

@@ -46,7 +46,7 @@ function AdminDashboardContent({ userName }: { userName: string }) {
     <DashboardHeading userName={userName} />
     <p className="sl-dashboard-description">Here&apos;s an overview of your establishment&apos;s inventory and ingredient status.</p>
     <div className="sl-admin-view sl-admin-dashboard-v103">
-      <section className="sl-sa-kpis sl-admin-reference-kpis sl-kpi-reference-v201" aria-label="Establishment inventory overview">
+      <section className="sl-sa-kpis sl-admin-reference-kpis sl-kpi-reference-v201 sl-dashboard-kpis" aria-label="Establishment inventory overview">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Total Ingredients</span><strong>{ingredientValue}</strong><small>{ingredientFailed ? 'Ingredient service unavailable' : ingredientTotal === null ? 'Loading ingredient records' : 'Live ingredient records'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Low Stock Items</span><strong>—</strong><small>Inventory summary pending</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Expiring Soon</span><strong>—</strong><small>Expiration summary pending</small></div></article>
