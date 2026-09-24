@@ -31920,97 +31920,23 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   background: linear-gradient(110deg,#fff6f7,#fff);
 }
 
-/* Dashboard summary cards share the Super Admin dashboard's established visual contract. */
-.sl-admin-view .sl-dashboard-kpis {
-  grid-template-columns: repeat(4,minmax(0,1fr));
-  align-items: stretch;
-  gap: clamp(.75rem,.6rem + .35vw,1rem);
-  display: grid;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi {
-  box-sizing: border-box;
-  border: 1px solid var(--sl-border);
-  border-top-width: 3px;
-  border-radius: var(--sl-radius-lg);
-  background: var(--sl-surface);
-  min-width: 0;
-  min-height: clamp(6.6rem,6rem + 2vw,8rem);
-  box-shadow: none;
-  align-items: center;
-  gap: clamp(.7rem,.55rem + .45vw,1rem);
-  padding: clamp(.8rem,.7rem + .35vw,1.15rem);
-  display: flex;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi .sl-sa-kpi-icon {
-  border-radius: 50%;
-  flex: 0 0 48px;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  display: grid;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi .sl-sa-kpi-icon svg {
-  width: 24px;
-  height: 24px;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi > div {
-  gap: 1px;
-  min-width: 0;
-  display: grid;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi > div > span {
-  color: var(--sl-muted);
-  font-size: .72rem;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi > div > strong {
-  color: var(--sl-text);
-  font-size: 1.55rem;
-  line-height: 1.05;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi > div > small {
-  color: var(--sl-muted);
-  font-size: .68rem;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=brand] {
-  border-color: #d7eee4;
-  border-top-color: var(--sl-brand);
-  background: linear-gradient(110deg,#f7fffb,#fff);
-}
+/* Super Admin's ancestor-scoped tone colors are bridged without recreating its shared KPI geometry. */
 .sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=brand] .sl-sa-kpi-icon {
-  color: #08764f;
-  background: #e3f7ee;
+  color: var(--sl-brand);
+  background: var(--sl-brand-subtle);
 }
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=info] {
-  border-color: #0c5797 #dceaf7 #dceaf7;
-  background: linear-gradient(110deg,#f6fbff,#fff);
+.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=brand] strong {
+  color: var(--sl-brand);
 }
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=info] .sl-sa-kpi-icon {
-  color: #0c5797;
-  background: #e4f2ff;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=attention] {
-  border-color: #f3e6c7;
-  border-top-color: var(--sl-attention);
-  background: linear-gradient(110deg,#fffaf0,#fff);
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=attention] .sl-sa-kpi-icon {
-  color: #b97900;
-  background: #fff1cf;
-}
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=critical] {
-  border-color: #f5d8dc;
-  border-top-color: var(--sl-critical);
-  background: linear-gradient(110deg,#fff6f7,#fff);
+.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=attention] strong {
+  color: var(--sl-attention);
 }
 .sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=critical] .sl-sa-kpi-icon {
-  color: #d92943;
-  background: #ffe4e8;
+  color: var(--sl-critical);
+  background: var(--sl-critical-bg);
 }
-@media (width<=1100px){
-  .sl-admin-view .sl-dashboard-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
-}
-@media (width<=600px){
-  .sl-admin-view .sl-dashboard-kpis { grid-template-columns: 1fr; }
+.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=critical] strong {
+  color: var(--sl-critical);
 }
 .sl-dashboard-source-layout .sl-card {
   border: 1px solid var(--sl-border);

@@ -591,11 +591,11 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
   return <>
     <PageHeader title="Ingredients" description="Manage ingredient master data used across your establishment." />
     <div className="sl-admin-view sl-admin-ingredients-reference">
-      <section className="sl-admin-ingredient-kpis sl-kpi-reference-v201 sl-dashboard-kpis" aria-label="Ingredient summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-admin-ingredient-kpi-icon sl-sa-kpi-icon"><Leaf /></span><div><span>Total Ingredients</span><strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong><small>{data ? 'Live ingredient catalogue' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-admin-ingredient-kpi-icon sl-sa-kpi-icon"><Grid2X2 /></span><div><span>Categories</span><strong>{data ? loadedCategories : '—'}</strong><small>{data ? 'Across loaded records' : 'Live data pending'}</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-admin-ingredient-kpi-icon sl-sa-kpi-icon"><Tag /></span><div><span>Common Units</span><strong>{data ? loadedUnits : '—'}</strong><small>{data ? 'Across loaded records' : 'Live data pending'}</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-admin-ingredient-kpi-icon sl-sa-kpi-icon"><AlertTriangle /></span><div><span>For Review</span><strong>—</strong><small>Requires inventory batch data</small></div></article>
+      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Ingredient summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Total Ingredients</span><strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong><small>{data ? 'Live ingredient catalogue' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Grid2X2 /></span><div><span>Categories</span><strong>{data ? loadedCategories : '—'}</strong><small>{data ? 'Across loaded records' : 'Live data pending'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Tag /></span><div><span>Common Units</span><strong>{data ? loadedUnits : '—'}</strong><small>{data ? 'Across loaded records' : 'Live data pending'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>For Review</span><strong>—</strong><small>Requires inventory batch data</small></div></article>
       </section>
 
       <section className="sl-admin-ingredient-filter-card" aria-label="Ingredient filters">
@@ -618,7 +618,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
           : !data.items.length ? <tr><td colSpan={8} className="sl-empty-cell"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} action={<Status>Preview · data pending</Status>} /></td></tr>
           : data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><Status>Active</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button><button type="button" className="sl-icon-button" aria-label={`Remove ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button></div></td></tr>)}
         </tbody></table></div>
-        {data && <div className="sl-admin-ingredient-pagination"><label>Rows per page <select value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} /></div>}
+        <div className="sl-admin-ingredient-pagination"><label>Rows per page <select value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="ingredients" onPageChange={setPage} /></div>
       </section>
     </div>
     <Dialog
@@ -1744,15 +1744,15 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
     return <>
       <PageHeader eyebrow={adminUsers ? undefined : 'Administration'} title={adminUsers ? 'Users' : 'User Management'} description={adminUsers ? 'Manage establishment users, their roles, and access within ShelfLife AI.' : 'Control access, manage permissions, and monitor system participants.'} />
       <div className={`sl-admin-view sl-user-management-view${adminUsers ? ' sl-admin-users-reference' : ''}`}>
-        {adminUsers ? <div className="sl-admin-users-kpis sl-kpi-reference-v201 sl-dashboard-kpis" aria-label="User summary">
+        {adminUsers ? <div className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="User summary">
           {[
             { label:'Total Users', value:liveValue(accountTotals?.totalUsers), detail:accountTotals ? `↑ ${accountTotals.totalUsers} live` : 'Awaiting account summary', tone:'brand', Icon:Users },
             { label:'Admin', value:liveValue(roleCount('Admin')), detail:accountTotals ? pct(roleCount('Admin')) : 'Awaiting role summary', tone:'info', Icon:User },
             { label:'Managers', value:liveValue(roleCount('Manager')), detail:accountTotals ? pct(roleCount('Manager')) : 'Awaiting role summary', tone:'attention', Icon:Users },
             { label:'Inventory Staff', value:liveValue(roleCount('Inventory Staff')), detail:accountTotals ? pct(roleCount('Inventory Staff')) : 'Awaiting role summary', tone:'critical', Icon:Users },
-          ].map(({label,value,detail,tone,Icon}) => <section key={label} className="sl-admin-users-kpi sl-sa-kpi" data-tone={tone}>
-            <span className="sl-admin-users-kpi-icon sl-sa-kpi-icon" aria-hidden="true"><Icon size={24}/></span>
-            <div className="sl-admin-users-kpi-copy"><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>
+          ].map(({label,value,detail,tone,Icon}) => <section key={label} className="sl-sa-kpi sl-inventory-staff-kpi" data-tone={tone}>
+            <span className="sl-sa-kpi-icon" aria-hidden="true"><Icon /></span>
+            <div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>
           </section>)}
         </div> : <SummaryCards items={[
           { label: 'Total users', value: liveValue(accountTotals?.totalUsers), detail: 'Directory total from live account data', tone: 'brand', trend: 'line' },
@@ -1785,11 +1785,11 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'InventoryBatches' && user.role === 'Admin') return <>
     <PageHeader eyebrow="Inventory" title="Inventory" description="View and monitor current stock levels, expiration status, and inventory distribution for your establishment." />
     <div className="sl-admin-view sl-admin-inventory-v111">
-      <div className="sl-sa-kpis sl-admin-reference-kpis sl-admin-inventory-kpis sl-kpi-reference-v201 sl-dashboard-kpis" aria-label="Inventory summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>Expired Items</span><strong>—</strong><small>Data unavailable</small></div></article>
+      <div className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Inventory summary">
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>Expired Items</span><strong>—</strong><small>Data unavailable</small></div></article>
       </div>
       <section className="sl-admin-inventory-directory sl-reference-records" aria-label="Inventory batches">
         <div className="sl-admin-inventory-filterbar">
