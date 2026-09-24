@@ -18,13 +18,7 @@ const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', '
 const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
 const INVENTORY_STAFF_DATE_RANGES = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom'] as const;
 const INVENTORY_STAFF_WASTE_REASONS = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'] as const;
-const INVENTORY_STAFF_USAGE_PURPOSES = [
-  { value: 'Menu Preparation', analyticsGroup: 'Menu' },
-  { value: 'Staff Meal', analyticsGroup: 'Staff' },
-  { value: 'Testing / R&D', analyticsGroup: 'Other' },
-  { value: 'Others', analyticsGroup: 'Other' },
-] as const;
-const INVENTORY_STAFF_USAGE_PURPOSE_GROUPS = Array.from(new Set(INVENTORY_STAFF_USAGE_PURPOSES.map(option => option.analyticsGroup)));
+const INVENTORY_STAFF_USAGE_PURPOSES = ['Menu Preparation', 'Staff Meal', 'Testing / R&D'] as const;
 type IngredientDraft = { name: string; brand: string; category: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
 const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
 type IngredientField = keyof IngredientDraft;
@@ -232,7 +226,7 @@ function InventoryStaffUsagePage() {
             </header>
             <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-usage-toolbar">
               <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or menu..." aria-label="Search usage records" /></div></label>
-              <label><span>Purpose</span><select value={purpose} onChange={e=>setPurpose(e.target.value)} aria-label="Filter by purpose"><option>All Purposes</option>{INVENTORY_STAFF_USAGE_PURPOSES.map(option=><option key={option.value}>{option.value}</option>)}</select></label>
+              <label><span>Purpose</span><select value={purpose} onChange={e=>setPurpose(e.target.value)} aria-label="Filter by purpose"><option>All Purposes</option>{INVENTORY_STAFF_USAGE_PURPOSES.map(value=><option key={value}>{value}</option>)}</select></label>
               <label><span>Date range</span><select value={range} onChange={e=>setRange(e.target.value)} aria-label="Filter by date range">{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
               {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => setUsageDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => setUsageDateTo(event.target.value)} /></label></div>}
               <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setPurpose('All Purposes');setRange('Last 7 Days');setUsageDateFrom('');setUsageDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addUsageButton} label="Add Usage" onClick={()=>setAddUsageOpen(true)} /></div>
@@ -264,7 +258,7 @@ function InventoryStaffUsagePage() {
             ariaLabel="Usage by purpose values unavailable"
             centerLabel="Usage"
             Icon={FileInput}
-            items={INVENTORY_STAFF_USAGE_PURPOSE_GROUPS.map((label, index) => ({ label, series: index + 1 }))}
+            items={INVENTORY_STAFF_USAGE_PURPOSES.map((label, index) => ({ label, series: index + 1 }))}
             title="Today's Usage by Purpose"
             unavailableMessage="Usage data unavailable"
           />
