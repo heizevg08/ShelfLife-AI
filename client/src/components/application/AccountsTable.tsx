@@ -1,9 +1,11 @@
-import { Ban, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus, Users, UserCheck, Clock3, Trash2, FileText } from 'lucide-react';
+import { Ban, Eye, EyeOff, Pencil, Search, User, UserPlus, Users, UserCheck, Clock3, Trash2, FileText } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { dashboardSummary, createAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
+import { ApplicationModal } from './ApplicationModal';
+import { APPLICATION_RECORD_PAGE_SIZES } from './ApplicationPatterns';
 import { DataState, Pagination, Status, SummaryCards } from './primitives';
 
 const blank = { firstName: '', lastName: '', email: '', password: '' };
@@ -31,7 +33,7 @@ export function AccountsTable() {
   const [page, setPage] = useState(1), [pageSize, setPageSize] = useState(10), [sort, setSort] = useState('createdAt'), [refresh, setRefresh] = useState(0);
   const [directorySearch, setDirectorySearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All Roles');
-  const [statusFilter, setStatusFilter] = useState('Active');
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [data, setData] = useState<Page<Account> | null>(null), [loadError, setLoadError] = useState(false);
   const [mode, setMode] = useState<'create' | 'view' | 'edit' | 'lifecycle' | null>(null), [selected, setSelected] = useState<Account | null>(null);
@@ -68,7 +70,9 @@ export function AccountsTable() {
     const filtered = data.items.filter(account => {
       const matchesSearch = !query || [account.name, account.email, account.role, account.isActive ? 'active' : 'inactive'].some(value => value.toLowerCase().includes(query));
       const matchesRole = roleFilter === 'All Roles' || account.role === roleFilter;
-      const matchesStatus = statusFilter === 'Active' ? account.isActive : false;
+      const matchesStatus = statusFilter === 'All Statuses'
+        || (statusFilter === 'Active' && account.isActive)
+        || (statusFilter === 'Deactivated' && !account.isActive);
       return matchesSearch && matchesRole && matchesStatus;
     });
 
@@ -174,7 +178,6 @@ export function AccountsTable() {
   const totalUsers = summary?.totalUsers ?? data?.total ?? 0;
   const activeUsers = summary?.activeUsers ?? 0;
   const activePercent = totalUsers ? Math.round((activeUsers / totalUsers) * 100) : 0;
-
   return <>
     {superAdmin && <section className="sl-sa-kpis sl-inventory-staff-kpis" aria-label="User management summary">
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Total Users</span><strong>{summary ? totalUsers : '—'}</strong><small>{summary ? 'System-wide accounts' : 'Preview · data pending'}</small></div></article>
@@ -184,91 +187,84 @@ export function AccountsTable() {
     </section>}
 
     <div className={superAdmin ? 'sl-v56-main-grid' : undefined}>
-      <section className={superAdmin ? 'sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-user-accounts-table-card' : undefined}>
-        {superAdmin && <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>User Accounts</h2></header>}
-        <div className={superAdmin ? 'sl-user-accounts-table-body' : undefined}>
-        <div className={superAdmin ? 'sl-sa-ingredients-table-filters' : undefined}>
-        <div className={superAdmin ? 'sl-sa-ingredients-filter-card sl-user-accounts-filter-card' : 'sl-v56-filter-row'}>
-          <label className={superAdmin ? 'sl-sa-ingredients-search' : 'sl-v56-filter sl-v56-search-field'}><span>Search users</span>
-            <div className={superAdmin ? undefined : 'sl-directory-search sl-v56-search'} role="search">
+      <section className={superAdmin ? 'sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-user-accounts-table-card' : 'sl-application-records sl-user-accounts-table-card sl-admin-user-records'}>
+        <header className={superAdmin ? 'sl-staff-usage-card-head sl-staff-usage-records-head' : 'sl-application-records-header'}><span className={superAdmin ? 'sl-staff-usage-head-icon' : 'sl-application-records-icon'}><FileText aria-hidden="true" /></span><h2>User Accounts</h2></header>
+        <div className="sl-user-accounts-table-body">
+        <div className={superAdmin ? 'sl-sa-ingredients-table-filters' : 'sl-application-records-filters'}>
+        <div className={superAdmin ? 'sl-sa-ingredients-filter-card sl-user-accounts-filter-card' : 'sl-application-records-toolbar sl-user-accounts-filter-card'} data-layout={superAdmin ? undefined : 'users'}>
+          <label className={superAdmin ? 'sl-sa-ingredients-search' : 'sl-application-records-search'}><span>Search users</span>
+            <div role="search">
               <Search size={17} aria-hidden="true" />
-              <input type="search" value={directorySearch} placeholder="Search by name, email, or username…" aria-label="Search users"
+              <input type="search" value={directorySearch} placeholder="Search by name, email, or role..." aria-label="Search users"
                 onChange={event => { setDirectorySearch(event.target.value); setPage(1); }} />
             </div>
           </label>
-          <label className={superAdmin ? undefined : "sl-v56-filter"}><span>Role</span>
-            <select className={superAdmin ? undefined : "sl-admin-input"} value={roleFilter} onChange={event => { setRoleFilter(event.target.value); setPage(1); }}>
+          <label><span>Role</span>
+            <select value={roleFilter} onChange={event => { setRoleFilter(event.target.value); setPage(1); }}>
               <option>All Roles</option>{superAdmin && <option>Super Admin</option>}<option>Admin</option><option>Manager</option><option>Inventory Staff</option>
             </select>
           </label>
-          <label className={superAdmin ? undefined : "sl-v56-filter"}><span>Status</span>
-            <select className={superAdmin ? undefined : "sl-admin-input"} value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(1); }}>
-              <option>Active</option><option>Idle</option><option>Suspended</option><option>Logged Out</option>
+          <label><span>Status</span>
+            <select value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(1); }}>
+              <option>All Statuses</option><option>Active</option><option>Idle</option><option>Logged Out</option><option>Deactivated</option>
             </select>
           </label>
-          {!superAdmin && <span className="sl-admin-clear-filters">Clear Filters</span>}
           {superAdmin ? <div className="sl-sa-ingredients-filter-actions">
             <button className="sl-button" onClick={() => {
-              setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('Active'); setPage(1);
+              setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
             }}>Reset</button>
             <button className="sl-button sl-button-primary" disabled={busy} onClick={() => {
               setMode('create'); setAssignedRole('Admin'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage('');
             }}><UserPlus size={16} aria-hidden="true" /> Add User</button>
-          </div> : <>
-            <button className="sl-button sl-v56-reset" onClick={() => {
-              setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('Active'); setPage(1);
+          </div> : <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions">
+            <button className="sl-button" onClick={() => {
+              setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
             }}>Reset</button>
-            <button className="sl-button sl-button-primary sl-admin-users-apply" type="button" onClick={() => setPage(1)}>Apply Filters</button>
-          </>}
+            <button className="sl-button sl-button-primary" disabled={busy} onClick={() => {
+              setMode('create'); setAssignedRole('Manager'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage('');
+            }}><UserPlus size={16} aria-hidden="true" /> Add User</button>
+          </div>}
         </div>
         </div>
 
         {message && <p className="sl-section-note" role="status">{message}</p>}
 
-        {!superAdmin && <div className="sl-admin-users-table-toolbar">
-          <strong>{data ? `Showing ${data.total ? ((data.page - 1) * data.pageSize) + 1 : 0}–${Math.min(data.page * data.pageSize, data.total)} of ${data.total} users` : 'Loading users…'}</strong>
-          <button type="button" className="sl-admin-users-export" onClick={() => {
-            if (!visibleAccounts.length) return;
-            const rows = [['Name','Email','Role','Status'], ...visibleAccounts.map(a => [a.name,a.email,a.role,a.isActive ? 'Active' : 'Inactive'])];
-            const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
-            const url = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
-            const link = document.createElement('a'); link.href=url; link.download='shelflife-users.csv'; link.click(); URL.revokeObjectURL(url);
-          }}><Download size={16} aria-hidden="true"/> Export <span aria-hidden="true">⌄</span></button>
-        </div>}
-
-        <div className={superAdmin ? 'sl-sa-ingredients-table-scroll sl-staff-usage-table-shell' : 'sl-v56-table-wrap'} role="region" aria-label="User account directory" tabIndex={0}>
-          <table className={superAdmin ? 'sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-user-accounts-table' : 'sl-data-table sl-v56-table'}>
+        <div className={superAdmin ? 'sl-sa-ingredients-table-scroll sl-staff-usage-table-shell' : 'sl-application-records-table-shell'} role="region" aria-label="User account directory" tabIndex={0}>
+          <table className={superAdmin ? 'sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-user-accounts-table' : 'sl-application-records-table sl-user-accounts-table'} data-layout={superAdmin ? undefined : 'users'}>
             <thead><tr>
-              {superAdmin ? <th scope="col">#</th> : <th scope="col" className="sl-admin-users-check"><input type="checkbox" aria-label="Select all visible users" /></th>}
-              <th scope="col">Name {!superAdmin && <span className="sl-admin-sort">↕</span>}</th><th scope="col">Email {!superAdmin && <span className="sl-admin-sort">↕</span>}</th><th scope="col">Role {!superAdmin && <span className="sl-admin-sort">↕</span>}</th><th scope="col">Status {!superAdmin && <span className="sl-admin-sort">↕</span>}</th>
-              <th scope="col">Last Login {!superAdmin && <span className="sl-admin-sort">↕</span>}</th>
+              <th scope="col">#</th>
+              <th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Status</th>
+              <th scope="col">Last Login</th>
               {superAdmin && <th scope="col">Created At</th>}
               <th scope="col">Actions</th>
             </tr></thead>
             <tbody>
-              {loadError ? <tr><td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell"><DataState kind="error" title="Accounts could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
-              : !data ? <tr><td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell"><DataState kind="loading" title="Loading accounts" description="" /></td></tr>
-              : !visibleAccounts.length ? <tr><td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell"><DataState kind="empty" title="No matching accounts" description="Try another search or filter." /></td></tr>
+              {loadError ? <tr><td colSpan={superAdmin ? 8 : 7} className="sl-empty-cell"><DataState kind="error" title="Accounts could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
+              : !data ? <tr><td colSpan={superAdmin ? 8 : 7} className="sl-empty-cell"><DataState kind="loading" title="Loading accounts" description="" /></td></tr>
+              : !visibleAccounts.length ? <tr><td colSpan={superAdmin ? 8 : 7} className="sl-empty-cell"><DataState kind="empty" title="No matching accounts" description="Try another search or filter." /></td></tr>
               : visibleAccounts.map((account, index) => <tr key={account.id}>
-                {superAdmin ? <td>{(data.page - 1) * data.pageSize + index + 1}</td> : <td className="sl-admin-users-check"><input type="checkbox" aria-label={`Select ${account.name}`} /></td>}
-                <td className="sl-v56-name">{account.name}</td>
+                <td>{(data.page - 1) * data.pageSize + index + 1}</td>
+                <td className={superAdmin ? 'sl-v56-name' : 'sl-application-record-name'}>{account.name}</td>
                 <td>{account.email}</td>
-                <td><span className="sl-v56-role-pill" data-role={account.role}>{account.role}</span></td>
-                <td><Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status></td>
-                <td><span className="sl-v56-unavailable" title="Last-login data pending">—</span></td>
+                <td><span className={superAdmin ? 'sl-v56-role-pill' : 'sl-application-role-pill'} data-role={account.role}>{account.role}</span></td>
+                <td>{superAdmin ? <Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status> : <span className="sl-status sl-application-status" data-tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Deactivated'}</span>}</td>
+                <td><span className={superAdmin ? 'sl-v56-unavailable' : 'sl-application-unavailable'} title="Last-login data pending">—</span></td>
                 {superAdmin && <td>{new Date(account.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</td>}
-                <td><div className={superAdmin ? "sl-staff-waste-row-actions" : "sl-row-actions sl-v56-actions"}>
+                <td><div className={superAdmin ? "sl-staff-waste-row-actions" : "sl-application-row-actions"}>
                   {superAdmin ? <>
                     <button type="button" className="sl-icon-button" disabled={busy} aria-label={`View ${account.name}`} title="View" onClick={() => open(account, 'view')}><Eye size={16} aria-hidden="true" /></button>
                     <button type="button" className="sl-icon-button" disabled={busy} aria-label={`Edit ${account.name}`} title="Edit" onClick={() => open(account, 'edit')}><Pencil size={16} aria-hidden="true" /></button>
                     <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled={busy} aria-label={`${account.isActive ? 'Deactivate' : 'Reactivate'} ${account.name}`} title={account.isActive ? 'Deactivate' : 'Reactivate'} onClick={() => open(account, 'lifecycle')}><Trash2 size={16} aria-hidden="true" /></button>
-                  </> : <button className="sl-v56-more" disabled={busy} aria-label={`View actions for ${account.name}`} onClick={() => open(account, 'view')}>•••</button>}
+                  </> : <>
+                    <button type="button" className="sl-icon-button" disabled={busy} aria-label={`View ${account.name}`} title="View" onClick={() => open(account, 'view')}><Eye size={16} aria-hidden="true" /></button>
+                    <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled={busy || !mayManage(account)} aria-label={`${account.isActive ? 'Deactivate' : 'Reactivate'} ${account.name}`} title={account.isActive ? 'Deactivate' : 'Reactivate'} onClick={() => open(account, 'lifecycle')}><Trash2 size={16} aria-hidden="true" /></button>
+                  </>}
                 </div></td>
               </tr>)}
             </tbody>
           </table>
         </div>
-        {superAdmin ? <div className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={pageSize} aria-label="Rows per page" onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={10}>10</option><option value={15}>15</option><option value={50}>50</option><option value={100}>100</option><option value={150}>150</option></select></label><Pagination compact page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="users" onPageChange={setPage} /></div> : <div className="sl-admin-users-footer"><label>Rows per page <select value={pageSize} aria-label="Rows per page" onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select></label><Pagination compact page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="users" onPageChange={setPage} /></div>}
+        <div className={superAdmin ? 'sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer' : 'sl-application-records-footer'}><label><span>Rows per page</span><select value={pageSize} aria-label="Rows per page" onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{APPLICATION_RECORD_PAGE_SIZES.map(value => <option key={value} value={value}>{value}</option>)}</select></label><Pagination compact page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="users" onPageChange={setPage} /></div>
         </div>
       </section>
 
@@ -318,9 +314,11 @@ export function AccountsTable() {
       </form>
     </Dialog>
 
-    <Dialog open={mode === 'view'} title="Account details" onDismiss={close}>
+    {superAdmin ? <Dialog open={mode === 'view'} title="Account details" onDismiss={close}>
       {selected && <dl className="sl-identity-details">{[['Name', selected.name], ['Email', selected.email], ['Role', selected.role], ['Status', selected.isActive ? 'Active' : 'Inactive'], ['Created', new Date(selected.createdAt).toLocaleString(undefined, { hour12: true })]].map(([label, value]) => <div key={label}><dt className="sl-supporting">{label}</dt><dd>{value}</dd></div>)}</dl>}
-    </Dialog>
+    </Dialog> : <ApplicationModal open={mode === 'view'} title="Account details" subtitle="Review the selected account identity and access status." Icon={User} onDismiss={close}>
+      {selected && <dl className="sl-identity-details">{[['Name', selected.name], ['Email', selected.email], ['Role', selected.role], ['Status', selected.isActive ? 'Active' : 'Inactive'], ['Created', new Date(selected.createdAt).toLocaleString(undefined, { hour12: true })]].map(([label, value]) => <div key={label}><dt className="sl-supporting">{label}</dt><dd>{value}</dd></div>)}</dl>}
+    </ApplicationModal>}
     <Dialog open={mode === 'lifecycle'} title={`${selected?.isActive ? 'Deactivate' : 'Reactivate'} account?`} onDismiss={close} busy={busy} actions={<><button className="sl-button" data-initial-focus disabled={busy} onClick={close}>Cancel</button><button className="sl-button sl-button-primary" disabled={busy} onClick={lifecycle}>{busy ? 'Saving…' : selected?.isActive ? 'Deactivate account' : 'Reactivate account'}</button></>}>
       <p>{selected?.isActive ? 'This account will lose access to ShelfLife AI. Historical records will be preserved.' : 'This account will be able to sign in to ShelfLife AI again.'}</p><p className="sl-supporting">{selected?.email}</p>{errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
     </Dialog>

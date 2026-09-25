@@ -1,12 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Activity, ArrowRight, Box, Boxes, CalendarClock, ClipboardList, ListChecks, ListOrdered, PhilippinePeso, TrendingUp, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Box, Boxes, CalendarClock, ClipboardList, FileText, ListChecks, ListOrdered, PhilippinePeso, TrendingUp, TriangleAlert, UsersRound, type LucideIcon } from 'lucide-react';
 import { Link } from 'expo-router';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
+import { ApplicationDonutChart, ApplicationPendingState } from '../application/ApplicationPatterns';
 import { Card, DataState, PageHeader, PlaceholderSummaryCards, PlaceholderTable, Status } from '../application/primitives';
 import { ForecastFlow, WorkflowLink, WorkspaceLink } from '../application/ModulePage';
 import { AccountsTable } from '../application/AccountsTable';
-import { accountSummary } from '../../services/administration';
-import { listIngredients } from '../../services/ingredients';
+import { accountSummary, type DashboardSummary } from '../../services/administration';
+import { listIngredientCategories, listIngredients } from '../../services/ingredients';
 import { AuditTable } from '../application/AuditTable';
 import { sessionDisplayName } from '../../services/auth';
 
@@ -20,16 +21,31 @@ function DashboardHeading({ userName, description, source = false }: { userName:
 }
 
 function DashboardCardTitle({ Icon, children }: { Icon: LucideIcon; children: ReactNode }) {
-  return <span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><Icon aria-hidden="true" /></span><span>{children}</span></span>;
+  return <span className="sl-dashboard-card-heading"><span className="sl-application-card-icon"><Icon aria-hidden="true" /></span><span>{children}</span></span>;
 }
 
-function DashboardRecordTable({ label, columns }: { label: string; columns: string[] }) {
-  return <div className="sl-dashboard-reference-table" role="region" aria-label={label} tabIndex={0}><table className="sl-data-table sl-reference-records-table"><thead><tr>{columns.map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr aria-label={`${label} unavailable`}>{columns.map(column => <td key={column}>—</td>)}</tr></tbody></table></div>;
+function DashboardRecordTable({ label, columns, emptyDescription }: { label: string; columns: string[]; emptyDescription?: string }) {
+  return <div className="sl-dashboard-reference-table" role="region" aria-label={label} tabIndex={0}><table className="sl-data-table sl-reference-records-table"><thead><tr>{columns.map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{emptyDescription ? <tr><td colSpan={columns.length} className="sl-empty-cell"><ApplicationPendingState description={emptyDescription} /></td></tr> : <tr aria-label={`${label} unavailable`}>{columns.map(column => <td key={column}>—</td>)}</tr>}</tbody></table></div>;
+}
+
+function AdminDashboardTableSection({ id, title, Icon, href, children }: { id: string; title: string; Icon: LucideIcon; href: '/ExpirationMonitoring' | '/AdministrativeAudit'; children: ReactNode }) {
+  return <section id={id} className="sl-staff-usage-card sl-admin-dashboard-records" aria-labelledby={`${id}-title`}>
+    <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
+      <span className="sl-staff-usage-head-icon"><Icon aria-hidden="true" /></span>
+      <h2 id={`${id}-title`}>{title}</h2>
+      <div className="sl-staff-usage-head-actions"><Link href={href} className="sl-text-link">View all <ArrowRight size={14} aria-hidden="true" /></Link></div>
+    </header>
+    <div className="sl-staff-usage-table-shell">{children}</div>
+  </section>;
 }
 
 function AdminDashboardContent({ userName }: { userName: string }) {
   const [ingredientTotal, setIngredientTotal] = useState<number | null>(null);
   const [ingredientFailed, setIngredientFailed] = useState(false);
+  const [ingredientCategories, setIngredientCategories] = useState<{ label: string; value: number }[] | null>(null);
+  const [ingredientCategoriesFailed, setIngredientCategoriesFailed] = useState(false);
+  const [userSummary, setUserSummary] = useState<DashboardSummary | null>(null);
+  const [userSummaryFailed, setUserSummaryFailed] = useState(false);
   useEffect(() => {
     const abort = new AbortController();
     setIngredientFailed(false);
@@ -38,35 +54,60 @@ function AdminDashboardContent({ userName }: { userName: string }) {
       .catch(() => { if (!abort.signal.aborted) setIngredientFailed(true); });
     return () => abort.abort();
   }, []);
+  useEffect(() => {
+    const abort = new AbortController();
+    setIngredientCategoriesFailed(false);
+    listIngredientCategories(abort.signal)
+      .then(async ({ categories }) => {
+        const totals = await Promise.all(categories.map(async label => ({ label, value: (await listIngredients(1, 1, '', label, abort.signal)).total })));
+        if (!abort.signal.aborted) setIngredientCategories(totals);
+      })
+      .catch(() => { if (!abort.signal.aborted) setIngredientCategoriesFailed(true); });
+    return () => abort.abort();
+  }, []);
+  useEffect(() => {
+    const abort = new AbortController();
+    setUserSummaryFailed(false);
+    accountSummary(abort.signal)
+      .then(value => { if (!abort.signal.aborted) setUserSummary(value); })
+      .catch(() => { if (!abort.signal.aborted) setUserSummaryFailed(true); });
+    return () => abort.abort();
+  }, []);
 
-  const ingredientValue = ingredientFailed ? 'Unavailable' : ingredientTotal === null ? 'Loading…' : ingredientTotal.toLocaleString();
-  const pendingState = (description: string) => <div className="sl-admin-reference-state"><DataState kind="empty" title={`${description} unavailable`} description="The supporting backend service is not connected yet." /></div>;
+  const ingredientValue = ingredientTotal === null ? '—' : ingredientTotal.toLocaleString();
+  const userValue = userSummary?.totalUsers.toLocaleString() ?? '—';
+  const userOverview = [
+    { label: 'Admin', value: 1 },
+    { label: 'Manager', value: userSummary?.roleCounts?.Manager },
+    { label: 'Inventory Staff', value: userSummary?.roleCounts?.['Inventory Staff'] },
+  ];
+  const categoryStatus = ingredientCategoriesFailed ? 'Ingredient category data unavailable' : ingredientCategories === null ? 'Loading ingredient category data' : ingredientCategories.length ? undefined : 'No ingredient categories available';
+  const accountStatus = userSummaryFailed ? 'User overview unavailable' : userSummary === null ? 'Loading user overview' : undefined;
 
   return <>
     <DashboardHeading userName={userName} />
     <p className="sl-dashboard-description">Here&apos;s an overview of your establishment&apos;s inventory and ingredient status.</p>
     <div className="sl-admin-view sl-admin-dashboard-v103">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Establishment inventory overview">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Total Ingredients</span><strong>{ingredientValue}</strong><small>{ingredientFailed ? 'Ingredient service unavailable' : ingredientTotal === null ? 'Loading ingredient records' : 'Live ingredient records'}</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Low Stock Items</span><strong>—</strong><small>Inventory summary pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Expiring Soon</span><strong>—</strong><small>Expiration summary pending</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ListChecks /></span><div><span>Total Waste (This Month)</span><strong>—</strong><small>Waste summary pending</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound aria-hidden="true" /></span><div><span>Total Users</span><strong>{userValue}</strong>{(userSummaryFailed || userSummary === null) && <small>{userSummaryFailed ? 'Account summary unavailable' : 'Loading account records'}</small>}</div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Box aria-hidden="true" /></span><div><span>Total Ingredients</span><strong>{ingredientValue}</strong>{(ingredientFailed || ingredientTotal === null) && <small>{ingredientFailed ? 'Ingredient service unavailable' : 'Loading ingredient records'}</small>}</div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Inventory Batches</span><strong>—</strong><small>Inventory batch service unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TriangleAlert aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>—</strong><small>Expiration service unavailable</small></div></article>
       </section>
 
       <section className="sl-admin-reference-analytics" aria-label="Inventory analytics">
-        <Card id="admin-inventory-value" title={<DashboardCardTitle Icon={TrendingUp}>Inventory Value Trend</DashboardCardTitle>} action={<Status>Last 30 days</Status>}>{pendingState('Inventory value trend')}</Card>
-        <Card id="admin-stock-status" title={<DashboardCardTitle Icon={Boxes}>Ingredient Stock Status</DashboardCardTitle>}>{pendingState('Ingredient stock status')}</Card>
-        <Card id="admin-waste-breakdown" title={<DashboardCardTitle Icon={ListChecks}>Waste Breakdown (This Month)</DashboardCardTitle>}>{pendingState('Waste breakdown')}</Card>
+        <Card id="admin-ingredient-overview" title={<DashboardCardTitle Icon={Box}>Ingredient Overview</DashboardCardTitle>}><ApplicationDonutChart ariaLabel="Ingredient category overview" centerLabel="Ingredients" items={ingredientCategories ?? []} unavailableMessage={categoryStatus} /></Card>
+        <Card id="admin-user-overview" title={<DashboardCardTitle Icon={UsersRound}>User Overview</DashboardCardTitle>}><ApplicationDonutChart ariaLabel="Current Admin, Manager, and Inventory Staff account totals" centerLabel="Users" items={userOverview} unavailableMessage={accountStatus} /></Card>
+        <Card id="admin-inventory-overview" title={<DashboardCardTitle Icon={Boxes}>Inventory Overview</DashboardCardTitle>}><ApplicationDonutChart ariaLabel="Inventory stock status; live values unavailable" centerLabel="Batches" items={['In Stock', 'Low Stock', 'Near Expiry', 'Expired']} unavailableMessage="Inventory overview unavailable" /></Card>
       </section>
 
-      <section className="sl-admin-reference-pairs">
-        <Card id="admin-upcoming-expirations" title={<DashboardCardTitle Icon={CalendarClock}>Upcoming Expirations</DashboardCardTitle>} action={<Link href="/ExpirationMonitoring" className="sl-text-link">View all <ArrowRight size={14}/></Link>}><DashboardRecordTable label="Upcoming expirations" columns={['Ingredient','Batch ID','Expiry Date','Days Left']} /></Card>
-        <Card id="admin-low-stock" title={<DashboardCardTitle Icon={TriangleAlert}>Low Stock Items</DashboardCardTitle>} action={<Link href="/InventoryBatches" className="sl-text-link">View all <ArrowRight size={14}/></Link>}><DashboardRecordTable label="Low stock items" columns={['Ingredient','Current Stock','Unit','Status']} /></Card>
-      </section>
-
-      <section className="sl-admin-reference-pairs">
-        <Card id="admin-recent-activity" title={<DashboardCardTitle Icon={Activity}>Recent User Activity</DashboardCardTitle>} action={<Link href="/AdministrativeAudit" className="sl-text-link">View all <ArrowRight size={14}/></Link>}><AuditTable recent /></Card>
-        <Card id="admin-inventory-overview" title={<DashboardCardTitle Icon={Boxes}>Inventory Overview</DashboardCardTitle>} action={<Link href="/InventoryBatches" className="sl-text-link">View all <ArrowRight size={14}/></Link>}>{pendingState('Inventory category overview')}</Card>
+      <section className="sl-admin-dashboard-record-grid" aria-label="Admin dashboard records">
+        <AdminDashboardTableSection id="admin-upcoming-expirations" title="Upcoming Expirations" Icon={CalendarClock} href="/ExpirationMonitoring">
+          <DashboardRecordTable label="Upcoming expirations" columns={['Ingredient','Batch ID','Expiry Date','Days Left','Status']} emptyDescription="Upcoming expiration records will appear when inventory batch data is available. Status will identify Near Expiry or Expired batches." />
+        </AdminDashboardTableSection>
+        <AdminDashboardTableSection id="admin-recent-activity" title="Recent User Activity" Icon={FileText} href="/AdministrativeAudit">
+          <AuditTable recent adminDashboard />
+        </AdminDashboardTableSection>
       </section>
 
     </div>

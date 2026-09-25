@@ -1,7 +1,7 @@
 import type { FormEvent, ReactNode, RefObject } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Plus } from 'lucide-react';
-import { Dialog } from './Dialog';
+import { ApplicationModal, ApplicationModalForm } from './ApplicationModal';
 
 export function InventoryStaffAddButton({
   buttonRef,
@@ -38,16 +38,18 @@ export function InventoryStaffModal({
   children: ReactNode;
   busy?: boolean;
 }) {
-  return <Dialog
+  return <ApplicationModal
     open={open}
     onDismiss={onDismiss}
     returnFocus={returnFocus}
     busy={busy}
     className="sl-staff-usage-dialog sl-staff-usage-dialog-exact sl-inventory-staff-modal"
-    title={<span className="sl-staff-usage-dialog-title"><span className="sl-staff-usage-head-icon"><Icon aria-hidden="true" /></span><span><strong>{title}</strong><small>{subtitle}</small></span></span>}
+    title={title}
+    subtitle={subtitle}
+    Icon={Icon}
   >
-    <section className="sl-staff-usage-card sl-staff-usage-form-card sl-staff-usage-modal-card">{children}</section>
-  </Dialog>;
+    {children}
+  </ApplicationModal>;
 }
 
 export function InventoryStaffModalForm({
@@ -71,12 +73,15 @@ export function InventoryStaffModalForm({
   PrimaryIcon: LucideIcon;
   busy?: boolean;
 }) {
-  return <form ref={formRef} className="sl-staff-usage-form sl-inventory-staff-modal-form" noValidate onSubmit={onSubmit}>
-    {children}
-    {message && <p className="sl-inline-notice sl-staff-modal-message" role="status">{message}</p>}
-    <div className="sl-staff-usage-form-actions">
-      <button type="button" className="sl-button" disabled={busy} onClick={onSecondary}>{secondaryLabel}</button>
-      <button type="submit" className="sl-button sl-button-primary" disabled={busy}><PrimaryIcon size={16} aria-hidden="true" />{primaryLabel}</button>
-    </div>
-  </form>;
+  return <ApplicationModalForm
+    formRef={formRef}
+    onSubmit={onSubmit}
+    message={message}
+    secondaryLabel={secondaryLabel}
+    onSecondary={onSecondary}
+    primaryLabel={primaryLabel}
+    PrimaryIcon={PrimaryIcon}
+    busy={busy}
+    className="sl-staff-usage-form sl-inventory-staff-modal-form"
+  >{children}</ApplicationModalForm>;
 }

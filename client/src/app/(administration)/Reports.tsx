@@ -1,7 +1,8 @@
-import { AlertTriangle, BarChart3, CalendarDays, ChevronDown, ClipboardList, Download, FileBarChart2, Leaf, Package, PieChart, RotateCcw, SlidersHorizontal, Trash2, TrendingUp } from 'lucide-react';
+import { AlertTriangle, BarChart3, CalendarDays, ChevronDown, ClipboardList, Download, FileBarChart2, Leaf, Package, PieChart, RotateCcw, Trash2, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { reportExportFormats } from '../../components/application/module-content';
-import { Card, DataState, ExportControl, PageHeader, Status } from '../../components/application/primitives';
+import { ApplicationDonutChart, ApplicationLineChart } from '../../components/application/ApplicationPatterns';
+import { Card, DataState, ExportControl, PageHeader } from '../../components/application/primitives';
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 
 function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
@@ -44,7 +45,7 @@ function AdminReports() {
         <label><span>Category</span><select value={category} onChange={event => setCategory(event.target.value)}><option>All Categories</option><option>Inventory</option><option>Expiration</option><option>Waste</option><option>Usage</option><option>Master Data</option></select></label>
         <label><span>Group By</span><select value={groupBy} onChange={event => setGroupBy(event.target.value)}><option>None</option><option>Category</option><option>Day</option><option>Week</option><option>Month</option></select></label>
         <button className="sl-button sl-admin-reports-reset" type="button" onClick={reset}><RotateCcw size={14}/> Reset</button>
-        <button className="sl-button sl-button-primary" type="button" title="Filters will apply when reporting endpoints are connected"><SlidersHorizontal size={14}/> Apply Filters</button>
+        <div className="sl-download-control"><button type="button" className="sl-button sl-button-primary sl-download-trigger" aria-expanded={downloadOpen} onClick={()=>setDownloadOpen(value=>!value)}><Download size={16}/> Export <ChevronDown size={15}/></button>{downloadOpen && <div className="sl-download-menu" role="menu">{reportExportFormats.map(format=><button key={format.id} type="button" disabled className="sl-download-option">{format.label}</button>)}</div>}</div>
       </section>
 
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Report summary">
@@ -54,25 +55,15 @@ function AdminReports() {
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList/></span><div><span>Total Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>
 
-      <section className="sl-admin-reports-charts">
-        <Card id="sl-admin-inventory-value-trend" title="Inventory Value Trend"><PendingPanel label="Inventory value trend" compact /></Card>
-        <Card id="sl-admin-waste-cost-trend" title="Waste Cost Trend"><PendingPanel label="Waste cost trend" compact /></Card>
-        <Card id="sl-admin-stock-status-distribution" title="Stock Status Distribution"><PendingPanel label="Stock status distribution" compact /></Card>
+      <section className="sl-application-records sl-application-records-overflow sl-admin-report-records" aria-labelledby="sl-admin-available-reports">
+        <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileBarChart2 aria-hidden="true" /></span><h2 id="sl-admin-available-reports">Available Reports</h2></header>
+        <div className="sl-application-records-table-shell">
+          <table className="sl-application-records-table" data-layout="reports" aria-label="Available reports">
+            <thead><tr><th scope="col">Report Name</th><th scope="col">Description</th><th scope="col">Category</th><th scope="col">Last Generated</th><th scope="col">Actions</th></tr></thead>
+            <tbody>{reports.map(([name, description, reportCategory]) => <tr key={name}><td><span className="sl-admin-report-name"><i><FileBarChart2 size={15}/></i>{name}</span></td><td>{description}</td><td><b data-category={reportCategory}>{reportCategory}</b></td><td>—</td><td><button type="button" className="sl-button" disabled>Generate</button></td></tr>)}</tbody>
+          </table>
+        </div>
       </section>
-
-      <div className="sl-admin-reports-available"><Card id="sl-admin-available-reports" title={<span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><FileBarChart2 aria-hidden="true" /></span><span>Available Reports</span></span>}>
-        <div className="sl-admin-reports-table-scroll">
-          <div className="sl-admin-reports-table" role="table" aria-label="Available reports">
-            <div className="sl-admin-reports-row sl-admin-reports-head" role="row"><span>Report Name</span><span>Description</span><span>Category</span><span>Last Generated</span><span>Actions</span></div>
-            {reports.map(([name,desc,category]) => <div className="sl-admin-reports-row" role="row" key={name}>
-              <span className="sl-admin-report-name"><i><FileBarChart2 size={15}/></i>{name}</span><span>{desc}</span><span><b data-category={category}>{category}</b></span><span className="sl-admin-report-pending">—</span><span><button type="button" disabled>Generate</button></span>
-            </div>)}
-          </div>
-        </div>
-        <div className="sl-admin-reports-export">
-          <div className="sl-download-control"><button type="button" className="sl-button sl-download-trigger" aria-expanded={downloadOpen} onClick={()=>setDownloadOpen(v=>!v)}><Download size={16}/> Export Reports <ChevronDown size={15}/></button>{downloadOpen && <div className="sl-download-menu" role="menu">{reportExportFormats.map(f=><button key={f.id} disabled className="sl-download-option">{f.label}</button>)}</div>}</div>
-        </div>
-      </Card></div>
     </div>
   </>;
 }

@@ -1,9 +1,10 @@
-import { AlertTriangle, ChevronDown, Download, FileText, Filter, ListChecks, Search, UsersRound, X } from 'lucide-react';
+import { ChevronDown, Clock3, Download, FileText, Filter, ListChecks, Search, UsersRound, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { listAuditRecords, type AuditFilters, type AuditRecord, type Page } from '../../services/administration';
 import { administrationFilterCatalog } from './administration';
+import { APPLICATION_RECORD_PAGE_SIZES, ApplicationPendingState } from './ApplicationPatterns';
 import { reportExportFormats } from './module-content';
-import { DataState, ExportControl, Pagination } from './primitives';
+import { DataState, ExportControl, Pagination, Status } from './primitives';
 
 const AUTO_REFRESH_MS = 15000;
 const auditActionByLabel: Record<string, AuditFilters['action']> = {
@@ -13,7 +14,7 @@ const auditActionByLabel: Record<string, AuditFilters['action']> = {
   'Account reactivated': 'REACTIVATE',
 };
 
-export function AuditTable({ recent = false, adminOverview = false }: { recent?: boolean; adminOverview?: boolean }) {
+export function AuditTable({ recent = false, adminOverview = false, adminDashboard = false }: { recent?: boolean; adminOverview?: boolean; adminDashboard?: boolean }) {
   const [page, setPage] = useState(1);
   const [refresh, setRefresh] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -24,7 +25,6 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
   const [periodFilter, setPeriodFilter] = useState<string>(administrationFilterCatalog.audit.period[0]);
   const [data, setData] = useState<Page<AuditRecord> | null>(null);
   const [error, setError] = useState(false);
-  const [filtersCommitted, setFiltersCommitted] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [moduleFilter, setModuleFilter] = useState('');
   const [specificFrom, setSpecificFrom] = useState('');
@@ -79,13 +79,6 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
     setSpecificFrom('');
     setSpecificTo('');
     setSearchTerm('');
-    setFiltersCommitted(false);
-    setRefresh(value => value + 1);
-  };
-
-  const applyAdminFilters = () => {
-    setPage(1);
-    setFiltersCommitted(true);
     setRefresh(value => value + 1);
   };
 
@@ -101,29 +94,31 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
   const commonAction = Object.entries(actionCounts).sort((a, b) => b[1] - a[1])[0];
 
   return <>
-    {adminOverview && <div className="sl-audit-overview" aria-label="Audit log overview and filters">
+    {adminOverview && <div className="sl-audit-overview" aria-label="Audit log overview">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Audit log summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileText aria-hidden="true" /></span><div><span>Total Logs</span><strong>{data?.total?.toLocaleString() ?? '—'}</strong><small>{data ? 'Live audit records' : 'Awaiting audit data'}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UsersRound aria-hidden="true" /></span><div><span>Unique Users</span><strong>{data ? uniqueUsers.toLocaleString() : '—'}</strong><small>{data ? `Across ${rows.length} loaded records` : 'Awaiting audit data'}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ListChecks aria-hidden="true" /></span><div><span>Most Common Action</span><strong>{commonAction?.[0] ?? '—'}</strong><small>{commonAction ? `${commonAction[1]} loaded records` : 'Audit summary unavailable'}</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>Critical Activities</span><strong>—</strong><small>Classification service unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Recent Administrative Changes</span><strong>{data ? rows.length.toLocaleString() : '—'}</strong><small>{data ? 'Loaded audit records' : 'Awaiting audit data'}</small></div></article>
       </section>
-      <div className="sl-audit-filter-strip">
-        <label>Date Range<select className="sl-admin-input" value={periodFilter} onChange={event => { setPage(1); setPeriodFilter(event.target.value); setFiltersCommitted(false); }}>{administrationFilterCatalog.audit.period.map(period => <option key={period}>{period}</option>)}</select></label>
-        {periodFilter === 'Custom' && <div className="sl-audit-specific-dates" aria-label="Custom date range"><label>From<input className="sl-admin-input" type="date" value={specificFrom} max={specificTo || undefined} onChange={event => { setSpecificFrom(event.target.value); setFiltersCommitted(false); }} /></label><label>To<input className="sl-admin-input" type="date" value={specificTo} min={specificFrom || undefined} onChange={event => { setSpecificTo(event.target.value); setFiltersCommitted(false); }} /></label></div>}
-        <label>User<select className="sl-admin-input" value={actorFilter || actorOptions[0]} onChange={event => { setPage(1); setActorFilter(event.target.value === actorOptions[0] ? '' : event.target.value); setFiltersCommitted(false); }}>{actorOptions.map(actor => <option key={actor}>{actor}</option>)}</select></label>
-        <label>Action<select className="sl-admin-input" value={actionFilter || actionOptions[0]} onChange={event => { setPage(1); setActionFilter(event.target.value === actionOptions[0] ? '' : event.target.value); setFiltersCommitted(false); }}>{actionOptions.map(action => <option key={action}>{action}</option>)}</select></label>
-        <label>Module<select className="sl-admin-input" value={moduleFilter || moduleOptions[0]} onChange={event => { setPage(1); setModuleFilter(event.target.value === moduleOptions[0] ? '' : event.target.value); setFiltersCommitted(false); }}>{moduleOptions.map(module => <option key={module}>{module}</option>)}</select></label>
-        <label>Status<select className="sl-admin-input" value={statusFilter || administrationFilterCatalog.audit.status[0]} onChange={event => { setStatusFilter(event.target.value === administrationFilterCatalog.audit.status[0] ? '' : event.target.value); setFiltersCommitted(false); }}>{administrationFilterCatalog.audit.status.map(status => <option key={status}>{status}</option>)}</select></label>
-        <button type="button" className={`sl-button sl-audit-apply ${filtersCommitted ? 'sl-button-secondary' : 'sl-button-primary'}`} onClick={filtersCommitted ? resetAdminFilters : applyAdminFilters}>{filtersCommitted ? 'Reset Filters' : 'Apply Filters'}</button>
-      </div>
     </div>}
     <div className={adminOverview ? "sl-audit-results-layout" : undefined}>
-    <section className={recent ? "sl-audit-fragment" : adminOverview ? "sl-sa-account-pattern-records sl-admin-audit-account-pattern" : "sl-card"} aria-labelledby={recent ? undefined : "sl-system-audit-log"}>
+    <section className={recent ? "sl-audit-fragment" : adminOverview ? "sl-application-records sl-application-records-overflow sl-admin-audit-records" : "sl-card"} aria-labelledby={recent ? undefined : "sl-system-audit-log"}>
       {!recent && (adminOverview ? <>
-        <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2 id="sl-system-audit-log">System Audit Logs</h2><div className="sl-admin-audit-account-actions sl-sa-ingredients-filter-actions"><label className="sl-admin-audit-compact-search"><span className="sl-sr-only">Search audit logs</span><span><Search size={17} aria-hidden="true" /><input type="search" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="Search logs..." aria-label="Search audit logs" /></span></label><ExportControl label="Export Logs" menuId="sl-admin-audit-export-menu" /></div></header>
+        <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileText aria-hidden="true" /></span><h2 id="sl-system-audit-log">Audit Logs</h2></header>
       </> : <div className="sl-card-header sl-audit-table-heading"><h2 className="sl-section-title" id="sl-system-audit-log">System Audit Logs</h2></div>)}
-      <div className={recent ? "sl-audit-fragment-body" : adminOverview ? "sl-admin-audit-account-body" : "sl-card-body"}>
+      <div className={recent ? "sl-audit-fragment-body" : adminOverview ? "sl-application-records-body" : "sl-card-body"}>
+    {adminOverview && <div className="sl-audit-filter-strip">
+      <label className="sl-application-records-compact-search"><span>Search</span><span><Search size={17} aria-hidden="true" /><input type="search" value={searchTerm} onChange={event => { setSearchTerm(event.target.value); setPage(1); }} placeholder="Search logs..." aria-label="Search audit logs" /></span></label>
+      <label>Date Range<select className="sl-admin-input" value={periodFilter} onChange={event => { setPage(1); setPeriodFilter(event.target.value); }}>{administrationFilterCatalog.audit.period.map(period => <option key={period}>{period}</option>)}</select></label>
+      {periodFilter === 'Custom' && <div className="sl-audit-specific-dates" aria-label="Custom date range"><label>From<input className="sl-admin-input" type="date" value={specificFrom} max={specificTo || undefined} onChange={event => setSpecificFrom(event.target.value)} /></label><label>To<input className="sl-admin-input" type="date" value={specificTo} min={specificFrom || undefined} onChange={event => setSpecificTo(event.target.value)} /></label></div>}
+      <label>User<select className="sl-admin-input" value={actorFilter || actorOptions[0]} onChange={event => { setPage(1); setActorFilter(event.target.value === actorOptions[0] ? '' : event.target.value); }}>{actorOptions.map(actor => <option key={actor}>{actor}</option>)}</select></label>
+      <label>Action<select className="sl-admin-input" value={actionFilter || actionOptions[0]} onChange={event => { setPage(1); setActionFilter(event.target.value === actionOptions[0] ? '' : event.target.value); }}>{actionOptions.map(action => <option key={action}>{action}</option>)}</select></label>
+      <label>Module<select className="sl-admin-input" value={moduleFilter || moduleOptions[0]} onChange={event => { setPage(1); setModuleFilter(event.target.value === moduleOptions[0] ? '' : event.target.value); }}>{moduleOptions.map(module => <option key={module}>{module}</option>)}</select></label>
+      <label>Status<select className="sl-admin-input" value={statusFilter || administrationFilterCatalog.audit.status[0]} onChange={event => { setPage(1); setStatusFilter(event.target.value === administrationFilterCatalog.audit.status[0] ? '' : event.target.value); }}>{administrationFilterCatalog.audit.status.map(status => <option key={status}>{status}</option>)}</select></label>
+      <button type="button" className="sl-button" onClick={resetAdminFilters}>Reset</button>
+      <ExportControl label="Export" menuId="sl-admin-audit-export-menu" />
+    </div>}
     {!recent && !adminOverview && <div className="sl-table-toolbar sl-audit-toolbar">
       <div className="sl-audit-toolbar-right">
         <span className="sl-supporting sl-auto-update-note" aria-live="polite">{lastUpdatedLabel}</span>
@@ -166,29 +161,38 @@ export function AuditTable({ recent = false, adminOverview = false }: { recent?:
       </div>
     </div>}
 
-    <div className={adminOverview ? "sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" : "sl-table-scroll"} role="region" aria-label="Administrative audit records" tabIndex={0}>
-        <table className={adminOverview ? "sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-admin-audit-records-table" : "sl-data-table"}>
-          <thead><tr><th scope="col">Date &amp; Time</th><th scope="col">User</th><th scope="col">Action</th>{adminOverview && <th scope="col">Module</th>}<th scope="col">Details</th><th scope="col">Status</th></tr></thead>
+    <div className={adminOverview ? "sl-application-records-table-shell" : "sl-table-scroll"} role="region" aria-label="Administrative audit records" tabIndex={0}>
+        <table className={adminOverview ? "sl-application-records-table" : "sl-data-table"} data-layout={adminOverview ? 'audit' : adminDashboard ? 'admin-dashboard-audit' : undefined}>
+          <thead><tr>{adminDashboard ? <><th scope="col">User</th><th scope="col">Action</th><th scope="col">Date &amp; Time</th><th scope="col">Status</th></> : <><th scope="col">Date &amp; Time</th><th scope="col">User</th><th scope="col">Action</th>{adminOverview && <th scope="col">Module</th>}<th scope="col">Details</th><th scope="col">Status</th></>}</tr></thead>
           <tbody>
-            {adminOverview && (error || !data || !visibleRows.length) ? <tr className="sl-admin-audit-fallback-row sl-sa-records-dash-row" aria-label={error ? 'Audit activity could not be loaded' : !data ? 'Audit activity loading' : filtersApplied ? 'No audit records match the selected filters' : 'No audit records available'}>{Array.from({ length: 6 }, (_, index) => <td key={index}>—</td>)}</tr>
-            : recent && (error || !data || !visibleRows.length) ? <tr className="sl-dashboard-audit-fallback-row" aria-label={error ? 'Recent activity could not be loaded' : !data ? 'Recent activity loading' : 'No recent activity available'}>{Array.from({ length: 5 }, (_, index) => <td key={index}>—</td>)}</tr>
+            {adminOverview && error ? <tr><td colSpan={6} className="sl-empty-cell"><DataState kind="error" title="Activity could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
+            : adminOverview && !data ? <tr><td colSpan={6} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="Retrieving live audit records." /></td></tr>
+            : adminOverview && !visibleRows.length ? <tr><td colSpan={6} className="sl-empty-cell"><ApplicationPendingState className="sl-application-records-state" description={filtersApplied ? 'No audit records match the selected filters.' : 'Administrative activity will appear here when audit records are available.'} /></td></tr>
+            : recent && (error || !data || !visibleRows.length) ? adminDashboard
+              ? <tr><td colSpan={4} className="sl-empty-cell"><ApplicationPendingState description={error ? 'Recent user activity could not be loaded.' : !data ? 'Recent user activity is loading.' : 'Recent user activity will appear when audit records are available.'} /></td></tr>
+              : <tr className="sl-dashboard-audit-fallback-row" aria-label={error ? 'Recent activity could not be loaded' : !data ? 'Recent activity loading' : 'No recent activity available'}>{Array.from({ length: 5 }, (_, index) => <td key={index}>—</td>)}</tr>
             : error ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="error" title="Activity could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(x => x + 1)}>Retry</button>} /></td></tr>
             : !data ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="" /></td></tr>
             : !visibleRows.length ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="empty" title={filtersApplied ? 'No records match these filters' : 'No administrative activity yet'} description={filtersApplied ? 'Change or clear the current filters.' : "You're all caught up — successful account changes will show up here automatically."} /></td></tr>
-            : visibleRows.map(row => <tr key={row.id}>
-              <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
+            : visibleRows.map(row => adminDashboard ? <tr key={row.id}>
               <td className="sl-record-id">{row.actor.name} · {row.actor.role}</td>
               <td>{row.action}</td>
-              {adminOverview && <td>{row.targetType}</td>}
-              <td><span>{row.targetType}</span><div className="sl-record-id">{row.targetId}</div></td>
+              <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
               <td><span className="sl-status" data-tone="success">Success</span></td>
-            </tr>)}
+            </tr> : <tr key={row.id}>
+                <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
+                <td className="sl-record-id">{row.actor.name} · {row.actor.role}</td>
+                <td>{row.action}</td>
+                {adminOverview && <td>{row.targetType}</td>}
+                <td><span>{row.targetType}</span><div className="sl-record-id">{row.targetId}</div></td>
+                <td><span className="sl-status" data-tone="success">Success</span></td>
+              </tr>)}
           </tbody>
         </table>
       </div>
 
     {!recent && <>
-      {adminOverview ? <div className="sl-records-footer sl-staff-usage-footer sl-admin-audit-records-footer"><label className="sl-audit-page-size-footer"><span>Rows per page</span><select className="sl-admin-input" value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{[10, 15, 50, 100, 150].map(size => <option key={size} value={size}>{size}</option>)}</select></label><Pagination page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="audit records" onPageChange={setPage} compact /></div> : <><div className="sl-audit-export-row"><div className="sl-download-control"><button type="button" className="sl-button sl-download-trigger" aria-expanded={downloadOpen} aria-controls="sl-audit-download-menu" onClick={() => setDownloadOpen(value => !value)}><Download size={17} aria-hidden="true" />Export<ChevronDown size={16} aria-hidden="true" /></button>{downloadOpen && <div id="sl-audit-download-menu" className="sl-download-menu" role="menu" aria-label="Audit export formats">{reportExportFormats.map(format => <button key={format.id} type="button" role="menuitem" disabled className="sl-download-option"><span>{format.label}</span></button>)}<p className="sl-supporting">Exports activate when the audit export service and permissions are available.</p></div>}</div></div><Pagination page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="records" onPageChange={setPage} /></>}
+      {adminOverview ? <div className="sl-application-records-footer"><label className="sl-audit-page-size-footer"><span>Rows per page</span><select value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{APPLICATION_RECORD_PAGE_SIZES.map(size => <option key={size} value={size}>{size}</option>)}</select></label><Pagination page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="audit records" onPageChange={setPage} compact /></div> : <><div className="sl-audit-export-row"><div className="sl-download-control"><button type="button" className="sl-button sl-download-trigger" aria-expanded={downloadOpen} aria-controls="sl-audit-download-menu" onClick={() => setDownloadOpen(value => !value)}><Download size={17} aria-hidden="true" />Export<ChevronDown size={16} aria-hidden="true" /></button>{downloadOpen && <div id="sl-audit-download-menu" className="sl-download-menu" role="menu" aria-label="Audit export formats">{reportExportFormats.map(format => <button key={format.id} type="button" role="menuitem" disabled className="sl-download-option"><span>{format.label}</span></button>)}<p className="sl-supporting">Exports activate when the audit export service and permissions are available.</p></div>}</div></div><Pagination page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="records" onPageChange={setPage} /></>}
     </>}
       </div>
     </section>
