@@ -34,7 +34,11 @@ export function createIngredientStore(_driver: Mongoose, ingredients: ReturnType
     async list(query: IngredientPageQuery) {
       const filter: Record<string, unknown> = {};
       if (query.category) filter.category = query.category;
-      if (query.search) filter.$or = [{ name: { $regex: escape(query.search), $options: 'i' } }, { brand: { $regex: escape(query.search), $options: 'i' } }];
+      if (query.search) filter.$or = [
+        { name: { $regex: escape(query.search), $options: 'i' } },
+        { brand: { $regex: escape(query.search), $options: 'i' } },
+        { category: { $regex: escape(query.search), $options: 'i' } },
+      ];
       const [rows, total] = await Promise.all([
         ingredients.find(filter).sort({ createdAt: -1, _id: -1 }).skip((query.page - 1) * query.pageSize).limit(query.pageSize).lean().exec() as Promise<Row[]>,
         ingredients.countDocuments(filter).exec(),

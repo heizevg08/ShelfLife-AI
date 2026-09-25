@@ -116,6 +116,7 @@ if (require.main === module) {
     const userStore = {
       byEmail: (email: string) => users.findOne({ email }).select('+passwordHash').lean().exec(),
       byId: (id: string) => users.findById(id).lean().exec(),
+      recordLogin: async (id: string, at: Date) => { await users.updateOne({ _id: id, isActive: true }, { $set: { lastLoginAt: at } }).exec(); },
     };
     const auth = createAuth(userStore, secret);
     const sessions = persistentSessionModel(driver);

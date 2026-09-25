@@ -5,12 +5,12 @@ import type { auditRecordModel } from '../models/audit-record';
 import type { Account, AdministrationStore } from './administration';
 import type { AuditPageQuery, PageQuery } from '../validators/administration';
 
-const publicFields = '_id firstName lastName email role isActive createdAt updatedAt';
-type PublicDocument = { _id: { toString(): string }; firstName: string; lastName: string; email: string; role: string; isActive: boolean; createdAt: Date; updatedAt: Date };
+const publicFields = '_id firstName lastName email role isActive lastLoginAt createdAt updatedAt';
+type PublicDocument = { _id: { toString(): string }; firstName: string; lastName: string; email: string; role: string; isActive: boolean; lastLoginAt?: Date | null; createdAt: Date; updatedAt: Date };
 function account(user: PublicDocument): Account {
   return { id: user._id.toString(), firstName: user.firstName, lastName: user.lastName,
     name: `${user.firstName} ${user.lastName}`, email: user.email, role: normalizeUserRole(user.role) ?? user.role, isActive: user.isActive,
-    createdAt: user.createdAt.toISOString(), updatedAt: user.updatedAt.toISOString() };
+    ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}), createdAt: user.createdAt.toISOString(), updatedAt: user.updatedAt.toISOString() };
 }
 const sorting = (query: PageQuery): Record<string, 1 | -1> => ({ [query.sortBy]: query.sortOrder === 'asc' ? 1 : -1, _id: query.sortOrder === 'asc' ? 1 : -1 });
 export function createAdministrationStore(driver: Mongoose, users: ReturnType<typeof userModel>, audits: ReturnType<typeof auditRecordModel>): AdministrationStore {
@@ -63,9 +63,13 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
       const actorIds = [...new Set(rows.map(row => row.userId.toString()))];
       const actorRows = await users.find({ _id: { $in: actorIds } }).select('_id firstName lastName role').lean().exec();
       const actorById = new Map(actorRows.map(actor => [actor._id.toString(), { id: actor._id.toString(), name: `${actor.firstName} ${actor.lastName}`, role: normalizeUserRole(actor.role) ?? actor.role }]));
+      const userTargetIds = [...new Set(rows.filter(row => row.targetType === 'User').map(row => row.targetId.toString()))];
+      const targetRows = userTargetIds.length ? await users.find({ _id: { $in: userTargetIds } }).select('_id firstName lastName').lean().exec() : [];
+      const targetNameById = new Map(targetRows.map(target => [target._id.toString(), `${target.firstName} ${target.lastName}`.trim()]));
       return { items: rows.map(row => {
         const userId = row.userId.toString();
-        return { id: row._id.toString(), userId, actor: actorById.get(userId) ?? { id: userId, name: 'Unknown account', role: 'Unavailable' }, action: row.action, targetType: row.targetType, targetId: row.targetId.toString(), timestamp: row.timestamp.toISOString() };
+        const targetId = row.targetId.toString();
+        return { id: row._id.toString(), userId, actor: actorById.get(userId) ?? { id: userId, name: 'Unknown account', role: 'Unavailable' }, action: row.action, targetType: row.targetType, targetId, ...(targetNameById.get(targetId) ? { targetName: targetNameById.get(targetId) } : {}), timestamp: row.timestamp.toISOString() };
       }), page: query.page, pageSize: query.pageSize, total };
     },
     async transaction(work) {

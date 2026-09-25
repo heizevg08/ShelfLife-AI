@@ -8,7 +8,7 @@ export interface Account {
 }
 export interface Actor { id: string; role: string }
 export type AuditAction = 'CREATE' | 'UPDATE' | 'DEACTIVATE' | 'REACTIVATE';
-export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: AuditAction; targetType: string; targetId: string; timestamp: string }
+export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: AuditAction; targetType: string; targetId: string; targetName?: string; timestamp: string }
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface AccountTransaction {
   get(id: string): Promise<Account | null>;

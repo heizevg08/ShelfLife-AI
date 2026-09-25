@@ -60,7 +60,8 @@ test('seed creates once, hashes password, preserves existing inactive accounts a
 
 test('HTTP login/me verify tokens and current user state, with safe responses', async t => {
   let row = { _id:'0123456789abcdef01234567', email:seedInput.email, firstName:'Test', lastName:'Admin', role:'Super Admin', isActive:true, passwordHash:await hashPassword(seedInput.password) };
-  const auth=createAuth({byEmail:async email=>row?.email===email?row:null,byId:async id=>row?._id===id?row:null},secret);
+  let recordedLoginAt;
+  const auth=createAuth({byEmail:async email=>row?.email===email?row:null,byId:async id=>row?._id===id?row:null,recordLogin:async(id,at)=>{assert.equal(id,row._id);recordedLoginAt=at}},secret);
   const server=createServer(createApp(['http://localhost:8081'],()=>true,auth));
   server.listen(0,'127.0.0.1');await once(server,'listening');
   t.after(()=>new Promise(resolve=>{server.close(resolve);server.closeAllConnections()}));
@@ -68,7 +69,9 @@ test('HTTP login/me verify tokens and current user state, with safe responses', 
   async function login(body){return fetch(base+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
   const valid=await login({email:' ADMIN@SHELFLIFE.COM ',password:seedInput.password});assert.equal(valid.status,200);
   assert.equal(valid.headers.get('cache-control'),'no-store');
-  const result=await valid.json();assert.equal(result.message,'Login successful');assert.deepEqual(Object.keys(result.user).sort(),['email','id','isActive','name','role']);
+  const result=await valid.json();assert.equal(result.message,'Login successful');assert.deepEqual(Object.keys(result.user).sort(),['email','id','isActive','lastLoginAt','name','role']);
+  assert.equal(Number.isNaN(Date.parse(result.user.lastLoginAt)),false);
+  assert.equal(recordedLoginAt.toISOString(),result.user.lastLoginAt);
   assert.equal(JSON.stringify(result).includes('password'),false);assert.equal(JSON.stringify(result).includes(row.passwordHash),false);
   const claims=jwt.verify(result.accessToken,secret,{algorithms:['HS256'],issuer:'shelflifeai',audience:'shelflifeai-client'});
   assert.equal(claims.exp-claims.iat,900);assert.equal(claims.sub,row._id);assert.equal(claims.role,undefined);

@@ -62,7 +62,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
   const rowStatus = (_row: AuditRecord) => 'Success';
   const moduleOptions = ['All modules', ...Array.from(new Set(rows.map(row => row.targetType).filter(Boolean))).sort()];
   const visibleRows = rows.filter(row => {
-    const matchesSearch = !normalizedSearch || [row.actor.name, row.actor.role, row.action, row.targetType, row.targetId].some(value => value.toLowerCase().includes(normalizedSearch));
+    const matchesSearch = !normalizedSearch || [row.actor.name, row.actor.role, row.action, row.targetType, row.targetName ?? ''].some(value => value.toLowerCase().includes(normalizedSearch));
     const matchesStatus = !statusFilter || rowStatus(row) === statusFilter;
     const matchesModule = !moduleFilter || row.targetType === moduleFilter;
     return matchesSearch && matchesStatus && matchesModule;
@@ -92,6 +92,8 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
     return counts;
   }, {});
   const commonAction = Object.entries(actionCounts).sort((a, b) => b[1] - a[1])[0];
+  const actionLabel = (action: string) => ({ CREATE: 'Created', UPDATE: 'Updated', DEACTIVATE: 'Deactivated', REACTIVATE: 'Reactivated' }[action] ?? action);
+  const auditDetails = (row: AuditRecord) => `${actionLabel(row.action)} ${row.targetType.toLowerCase()}${row.targetName ? ` ${row.targetName}` : ''}`;
 
   return <>
     {adminOverview && <div className="sl-audit-overview" aria-label="Audit log overview">
@@ -163,11 +165,11 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
 
     <div className={adminOverview ? "sl-application-records-table-shell" : "sl-table-scroll"} role="region" aria-label="Administrative audit records" tabIndex={0}>
         <table className={adminOverview ? "sl-application-records-table" : "sl-data-table"} data-layout={adminOverview ? 'audit' : adminDashboard ? 'admin-dashboard-audit' : undefined}>
-          <thead><tr>{adminDashboard ? <><th scope="col">User</th><th scope="col">Action</th><th scope="col">Date &amp; Time</th><th scope="col">Status</th></> : <><th scope="col">Date &amp; Time</th><th scope="col">User</th><th scope="col">Action</th>{adminOverview && <th scope="col">Module</th>}<th scope="col">Details</th><th scope="col">Status</th></>}</tr></thead>
+          <thead><tr>{adminDashboard ? <><th scope="col">User</th><th scope="col">Action</th><th scope="col">Date &amp; Time</th><th scope="col">Status</th></> : <>{adminOverview && <th scope="col">#</th>}<th scope="col">Date &amp; Time</th><th scope="col">User</th><th scope="col">Action</th>{adminOverview && <th scope="col">Module</th>}<th scope="col">Details</th><th scope="col">Status</th></>}</tr></thead>
           <tbody>
-            {adminOverview && error ? <tr><td colSpan={6} className="sl-empty-cell"><DataState kind="error" title="Activity could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
-            : adminOverview && !data ? <tr><td colSpan={6} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="Retrieving live audit records." /></td></tr>
-            : adminOverview && !visibleRows.length ? <tr><td colSpan={6} className="sl-empty-cell"><ApplicationPendingState className="sl-application-records-state" description={filtersApplied ? 'No audit records match the selected filters.' : 'Administrative activity will appear here when audit records are available.'} /></td></tr>
+            {adminOverview && error ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="error" title="Activity could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
+            : adminOverview && !data ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="Retrieving live audit records." /></td></tr>
+            : adminOverview && !visibleRows.length ? <tr><td colSpan={7} className="sl-empty-cell"><ApplicationPendingState className="sl-application-records-state" description={filtersApplied ? 'No audit records match the selected filters.' : 'Administrative activity will appear here when audit records are available.'} /></td></tr>
             : recent && (error || !data || !visibleRows.length) ? adminDashboard
               ? <tr><td colSpan={4} className="sl-empty-cell"><ApplicationPendingState description={error ? 'Recent user activity could not be loaded.' : !data ? 'Recent user activity is loading.' : 'Recent user activity will appear when audit records are available.'} /></td></tr>
               : <tr className="sl-dashboard-audit-fallback-row" aria-label={error ? 'Recent activity could not be loaded' : !data ? 'Recent activity loading' : 'No recent activity available'}>{Array.from({ length: 5 }, (_, index) => <td key={index}>—</td>)}</tr>
@@ -175,16 +177,17 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
             : !data ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="" /></td></tr>
             : !visibleRows.length ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="empty" title={filtersApplied ? 'No records match these filters' : 'No administrative activity yet'} description={filtersApplied ? 'Change or clear the current filters.' : "You're all caught up — successful account changes will show up here automatically."} /></td></tr>
             : visibleRows.map(row => adminDashboard ? <tr key={row.id}>
-              <td className="sl-record-id">{row.actor.name} · {row.actor.role}</td>
-              <td>{row.action}</td>
+              <td className="sl-record-id">{row.actor.name || '—'}</td>
+              <td className="sl-emphasized-value">{row.action}</td>
               <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
               <td><span className="sl-status" data-tone="success">Success</span></td>
             </tr> : <tr key={row.id}>
                 <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
-                <td className="sl-record-id">{row.actor.name} · {row.actor.role}</td>
-                <td>{row.action}</td>
+                {adminOverview && <td>{(data.page - 1) * data.pageSize + visibleRows.indexOf(row) + 1}</td>}
+                <td className="sl-record-id">{adminOverview ? row.actor.name || '—' : `${row.actor.name} · ${row.actor.role}`}</td>
+                <td className={adminOverview ? 'sl-emphasized-value' : undefined}>{row.action}</td>
                 {adminOverview && <td>{row.targetType}</td>}
-                <td><span>{row.targetType}</span><div className="sl-record-id">{row.targetId}</div></td>
+                <td>{adminOverview ? auditDetails(row) : <><span>{row.targetType}</span><div className="sl-record-id">{row.targetId}</div></>}</td>
                 <td><span className="sl-status" data-tone="success">Success</span></td>
               </tr>)}
           </tbody>

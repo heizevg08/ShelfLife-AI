@@ -476,13 +476,13 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
 
           <div className="sl-topbar-right">
             <time className="sl-topbar-datetime" dateTime={topbarClock.toISOString()}>{topbarDateTime}</time>
-            <div className="sl-global-health" aria-label={`System status: ${systemHealth}`}>
+            {user?.role === 'Super Admin' && <div className="sl-global-health" aria-label={`System status: ${systemHealth}`}>
               <span className="sl-global-health-label">System status</span>
               <span className="sl-global-health-value" data-state={systemHealth}>
                 <span className="sl-status-dot" aria-hidden="true" />
                 {systemHealth === 'checking' ? 'Checking' : systemHealth === 'healthy' ? 'Healthy' : systemHealth === 'attention' ? 'Needs attention' : 'Unavailable'}
               </span>
-            </div>
+            </div>}
             <Notifications open={notificationsOpen} onChange={changeNotifications} />
 
             <div

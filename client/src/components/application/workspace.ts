@@ -53,7 +53,7 @@ export const canonicalWorkspaceAccess = {
 export type CanonicalWorkspacePath = keyof typeof canonicalWorkspaceAccess;
 const navigation: Record<WorkspaceRole, ModuleId[]> = {
   'Super Admin': ['UserManagement', 'Alerts', 'ChangeRequests', 'AdministrativeAudit', 'Reports'],
-  Admin: ['UserManagement', 'Ingredients', 'InventoryBatches', 'AdministrativeAudit', 'Reports'],
+  Admin: ['UserManagement', 'Ingredients', 'InventoryBatches', 'Reports', 'AdministrativeAudit'],
   Manager: ['InventoryBatches', 'UsageWaste', 'ChangeRequests', 'Forecasting', 'Alerts', 'Reports'],
   'Inventory Staff': ['InventoryBatches', 'StockIn', 'Usage', 'Waste', 'ChangeRequests'],
 };
@@ -61,7 +61,7 @@ export function workspaceNavigation(role: WorkspaceRole) {
   return navigation[role].map(id => ({
     ...modules[id],
     path: role === 'Manager' && id === 'InventoryBatches' ? '/Inventory' : role === 'Manager' && id === 'Reports' ? '/ReportsAnalytics' : role === 'Inventory Staff' && id === 'Usage' ? '/UsageRecording' : role === 'Inventory Staff' && id === 'Waste' ? '/WasteRecording' : role === 'Inventory Staff' && id === 'ChangeRequests' ? '/MyRequests' : `/${id}`,
-    label: role === 'Admin' && id === 'UserManagement' ? 'Users' : (role === 'Admin' || role === 'Manager') && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : role === 'Inventory Staff' && id === 'Usage' ? 'Usage Recording' : role === 'Inventory Staff' && id === 'Waste' ? 'Waste Recording' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
+    label: role === 'Admin' && id === 'UserManagement' ? 'Users' : role === 'Admin' && id === 'InventoryBatches' ? 'Inventory Batches' : role === 'Manager' && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : role === 'Inventory Staff' && id === 'Usage' ? 'Usage Recording' : role === 'Inventory Staff' && id === 'Waste' ? 'Waste Recording' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
   }));
 }
 export function canOpenWorkspacePath(role: WorkspaceRole, pathname: string) {

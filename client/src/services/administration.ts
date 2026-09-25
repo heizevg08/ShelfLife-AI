@@ -1,8 +1,8 @@
 import { apiClient } from './apiClient';
 import type { SessionUser } from './auth';
 
-export interface Account extends SessionUser { firstName: string; lastName: string; createdAt: string; updatedAt: string }
-export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: string; targetType: string; targetId: string; timestamp: string }
+export interface Account extends SessionUser { firstName: string; lastName: string; lastLoginAt?: string; createdAt: string; updatedAt: string }
+export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: string; targetType: string; targetId: string; targetName?: string; timestamp: string }
 export interface AuditFilters { actorRole?: SessionUser['role']; action?: 'CREATE' | 'UPDATE' | 'DEACTIVATE' | 'REACTIVATE'; from?: string; to?: string }
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface DashboardSummary { totalUsers: number; activeUsers: number; inactiveUsers: number; roleCounts?: Partial<Record<SessionUser['role'], number>> }

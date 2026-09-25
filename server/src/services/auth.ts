@@ -8,6 +8,7 @@ import { normalizeEmail, validPassword } from '../validators/auth';
 export interface UserStore {
   byEmail(email: string): Promise<UserRecord | null>;
   byId(id: string): Promise<UserRecord | null>;
+  recordLogin?(id: string, at: Date): Promise<void>;
 }
 const options = { algorithm: 'HS256' as const, issuer: 'shelflifeai', audience: 'shelflifeai-client', expiresIn: 900 };
 const denied = () => new HttpError(401, 'Invalid email or password');
@@ -27,6 +28,9 @@ export function createAuth(store: UserStore, secret: string) {
       const hash = user?.passwordHash || await (dummyHash ??= hashPassword('unused-dummy-password'));
       const matches = await verifyPassword(input.password, hash);
       if (!matches || !eligible(user)) throw denied();
+      const lastLoginAt = new Date();
+      await store.recordLogin?.(user._id.toString(), lastLoginAt);
+      user.lastLoginAt = lastLoginAt;
       return issue(user);
     },
     async authenticate(header: string | undefined) {

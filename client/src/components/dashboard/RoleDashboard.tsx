@@ -101,10 +101,7 @@ function AdminDashboardContent({ userName }: { userName: string }) {
         <Card id="admin-inventory-overview" title={<DashboardCardTitle Icon={Boxes}>Inventory Overview</DashboardCardTitle>}><ApplicationDonutChart ariaLabel="Inventory stock status; live values unavailable" centerLabel="Batches" items={['In Stock', 'Low Stock', 'Near Expiry', 'Expired']} unavailableMessage="Inventory overview unavailable" /></Card>
       </section>
 
-      <section className="sl-admin-dashboard-record-grid" aria-label="Admin dashboard records">
-        <AdminDashboardTableSection id="admin-upcoming-expirations" title="Upcoming Expirations" Icon={CalendarClock} href="/ExpirationMonitoring">
-          <DashboardRecordTable label="Upcoming expirations" columns={['Ingredient','Batch ID','Expiry Date','Days Left','Status']} emptyDescription="Upcoming expiration records will appear when inventory batch data is available. Status will identify Near Expiry or Expired batches." />
-        </AdminDashboardTableSection>
+      <section className="sl-admin-dashboard-record-grid sl-admin-dashboard-record-grid-single" aria-label="Admin dashboard records">
         <AdminDashboardTableSection id="admin-recent-activity" title="Recent User Activity" Icon={FileText} href="/AdministrativeAudit">
           <AuditTable recent adminDashboard />
         </AdminDashboardTableSection>

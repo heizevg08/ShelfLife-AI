@@ -33,7 +33,7 @@ export function AccountsTable() {
   const [page, setPage] = useState(1), [pageSize, setPageSize] = useState(10), [sort, setSort] = useState('createdAt'), [refresh, setRefresh] = useState(0);
   const [directorySearch, setDirectorySearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All Roles');
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [statusFilter, setStatusFilter] = useState(superAdmin ? 'Active' : 'All Statuses');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [data, setData] = useState<Page<Account> | null>(null), [loadError, setLoadError] = useState(false);
   const [mode, setMode] = useState<'create' | 'view' | 'edit' | 'lifecycle' | null>(null), [selected, setSelected] = useState<Account | null>(null);
@@ -68,7 +68,7 @@ export function AccountsTable() {
     if (!data) return [];
     const query = directorySearch.trim().toLowerCase();
     const filtered = data.items.filter(account => {
-      const matchesSearch = !query || [account.name, account.email, account.role, account.isActive ? 'active' : 'inactive'].some(value => value.toLowerCase().includes(query));
+      const matchesSearch = !query || [account.name, account.email, account.role, account.isActive ? 'active' : superAdmin ? 'inactive' : 'deactivated'].some(value => value.toLowerCase().includes(query));
       const matchesRole = roleFilter === 'All Roles' || account.role === roleFilter;
       const matchesStatus = statusFilter === 'All Statuses'
         || (statusFilter === 'Active' && account.isActive)
@@ -201,17 +201,17 @@ export function AccountsTable() {
           </label>
           <label><span>Role</span>
             <select value={roleFilter} onChange={event => { setRoleFilter(event.target.value); setPage(1); }}>
-              <option>All Roles</option>{superAdmin && <option>Super Admin</option>}<option>Admin</option><option>Manager</option><option>Inventory Staff</option>
+              <option>All Roles</option>{superAdmin && <option>Super Admin</option>}{assignableRoles.map(role => <option key={role}>{role}</option>)}
             </select>
           </label>
           <label><span>Status</span>
             <select value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(1); }}>
-              <option>All Statuses</option><option>Active</option><option>Idle</option><option>Logged Out</option><option>Deactivated</option>
+              {superAdmin ? <><option>Active</option><option>Idle</option><option>Suspended</option><option>Logged Out</option></> : <><option>All Statuses</option><option>Active</option><option>Deactivated</option></>}
             </select>
           </label>
           {superAdmin ? <div className="sl-sa-ingredients-filter-actions">
             <button className="sl-button" onClick={() => {
-              setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
+              setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('Active'); setPage(1);
             }}>Reset</button>
             <button className="sl-button sl-button-primary" disabled={busy} onClick={() => {
               setMode('create'); setAssignedRole('Admin'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage('');
@@ -248,7 +248,7 @@ export function AccountsTable() {
                 <td>{account.email}</td>
                 <td><span className={superAdmin ? 'sl-v56-role-pill' : 'sl-application-role-pill'} data-role={account.role}>{account.role}</span></td>
                 <td>{superAdmin ? <Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status> : <span className="sl-status sl-application-status" data-tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Deactivated'}</span>}</td>
-                <td><span className={superAdmin ? 'sl-v56-unavailable' : 'sl-application-unavailable'} title="Last-login data pending">—</span></td>
+                <td>{!superAdmin && account.lastLoginAt ? <time dateTime={account.lastLoginAt}>{new Date(account.lastLoginAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time> : <span className={superAdmin ? 'sl-v56-unavailable' : 'sl-application-unavailable'} title="No recorded login">—</span>}</td>
                 {superAdmin && <td>{new Date(account.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</td>}
                 <td><div className={superAdmin ? "sl-staff-waste-row-actions" : "sl-application-row-actions"}>
                   {superAdmin ? <>
