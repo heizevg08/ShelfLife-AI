@@ -13,8 +13,9 @@ Comments exist primarily to explain **why** something is implemented in a way th
 - Non-obvious business rules
 - Architectural, security, or compatibility constraints
 - Unusual browser or platform behavior
-- Backend or API assumptions that types do not make clear
+- External API quirks and backend assumptions that types do not make clear
 - Intentional exceptions to normal patterns
+- Invariants that future developers could accidentally violate
 - Performance trade-offs
 - Accessibility constraints when the reason is non-obvious
 - Temporary limitations with a specific, actionable TODO
@@ -22,6 +23,16 @@ Comments exist primarily to explain **why** something is implemented in a way th
 ```ts
 // Keep FEFO as the default because Inventory Staff must consume
 // the earliest-expiring eligible batch before later batches.
+```
+
+```tsx
+// Keep the chart shell mounted so the axes and card dimensions remain stable while data loads.
+return <InventoryValueChart points={points ?? []} />;
+```
+
+```ts
+// The authenticated actor must come from the session; accepting it from the body would allow audit spoofing.
+const actorId = request.auth.userId;
 ```
 
 ## Comments should not narrate obvious code
