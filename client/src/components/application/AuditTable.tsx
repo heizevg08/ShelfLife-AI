@@ -93,7 +93,9 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
   }, {});
   const commonAction = Object.entries(actionCounts).sort((a, b) => b[1] - a[1])[0];
   const actionLabel = (action: string) => ({ CREATE: 'Created', UPDATE: 'Updated', DEACTIVATE: 'Deactivated', REACTIVATE: 'Reactivated' }[action] ?? action);
-  const auditDetails = (row: AuditRecord) => `${actionLabel(row.action)} ${row.targetType.toLowerCase()}${row.targetName ? ` ${row.targetName}` : ''}`;
+  const auditDetails = (row: AuditRecord) => row.targetName
+    ? `${actionLabel(row.action)} ${row.targetName}`
+    : `${actionLabel(row.action)} ${row.targetType.toLowerCase()} record`;
 
   return <>
     {adminOverview && <div className="sl-audit-overview" aria-label="Audit log overview">
@@ -111,7 +113,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
       </> : <div className="sl-card-header sl-audit-table-heading"><h2 className="sl-section-title" id="sl-system-audit-log">System Audit Logs</h2></div>)}
       <div className={recent ? "sl-audit-fragment-body" : adminOverview ? "sl-application-records-body" : "sl-card-body"}>
     {adminOverview && <div className="sl-application-records-filters"><div className="sl-application-records-toolbar sl-audit-filter-strip" data-layout="audit">
-      <label className="sl-application-records-compact-search"><span>Search</span><span><Search size={17} aria-hidden="true" /><input type="search" value={searchTerm} onChange={event => { setSearchTerm(event.target.value); setPage(1); }} placeholder="Search logs..." aria-label="Search audit logs" /></span></label>
+      <label className="sl-application-records-search"><span>Search</span><div><Search size={17} aria-hidden="true" /><input type="search" value={searchTerm} onChange={event => { setSearchTerm(event.target.value); setPage(1); }} placeholder="Search logs..." aria-label="Search audit logs" /></div></label>
       <label>Date Range<select className="sl-admin-input" value={periodFilter} onChange={event => { setPage(1); setPeriodFilter(event.target.value); }}>{administrationFilterCatalog.audit.period.map(period => <option key={period}>{period}</option>)}</select></label>
       {periodFilter === 'Custom' && <div className="sl-audit-specific-dates" aria-label="Custom date range"><label>From<input className="sl-admin-input" type="date" value={specificFrom} max={specificTo || undefined} onChange={event => setSpecificFrom(event.target.value)} /></label><label>To<input className="sl-admin-input" type="date" value={specificTo} min={specificFrom || undefined} onChange={event => setSpecificTo(event.target.value)} /></label></div>}
       <label>User<select className="sl-admin-input" value={actorFilter || actorOptions[0]} onChange={event => { setPage(1); setActorFilter(event.target.value === actorOptions[0] ? '' : event.target.value); }}>{actorOptions.map(actor => <option key={actor}>{actor}</option>)}</select></label>
@@ -179,7 +181,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
             : visibleRows.map((row, rowIndex) => adminDashboard ? <tr key={row.id}>
               <td>{(data.page - 1) * data.pageSize + rowIndex + 1}</td>
               <td className="sl-record-id">{row.actor.name || '—'}</td>
-              <td className="sl-emphasized-value">{row.action}</td>
+              <td>{row.action}</td>
               <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
               <td><span className="sl-status" data-tone="success">Success</span></td>
             </tr> : <tr key={row.id}>

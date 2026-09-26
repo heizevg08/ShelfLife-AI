@@ -4,6 +4,7 @@ import { reportExportFormats } from '../../components/application/module-content
 import { ApplicationDonutChart, ApplicationLineChart } from '../../components/application/ApplicationPatterns';
 import { Card, DataState, ExportControl, PageHeader, Pagination } from '../../components/application/primitives';
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
+import { workspaceNavigation } from '../../components/application/workspace';
 import { listIngredients } from '../../services/ingredients';
 
 function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
@@ -38,12 +39,9 @@ function AdminReports() {
       .catch(() => { if (!abort.signal.aborted) setIngredientTotalFailed(true); });
     return () => abort.abort();
   }, []);
-  const reports = [
-    { name: 'User Accounts', type: 'Administration', path: '/UserManagement' },
-    { name: 'Ingredient Master Data', type: 'Master Data', path: '/Ingredients' },
-    { name: 'Inventory Batches', type: 'Inventory', path: '/InventoryBatches' },
-    { name: 'Administrative Audit', type: 'Security', path: '/AdministrativeAudit' },
-  ];
+  const reports = workspaceNavigation('Admin')
+    .filter(item => item.path !== '/Reports')
+    .map(item => ({ name: `${item.label} Report`, type: item.label, path: item.path }));
   const reportTypes = [...new Set(reports.map(report => report.type))];
   const visibleReports = reports.filter(report => (reportType === 'All Reports' || report.type === reportType) && (category === 'All Categories' || report.type === category));
   return <div className="sl-admin-reports-page">
@@ -59,8 +57,10 @@ function AdminReports() {
       <section className="sl-application-records sl-application-records-overflow sl-admin-report-records" aria-labelledby="sl-admin-available-reports">
         <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileBarChart2 aria-hidden="true" /></span><h2 id="sl-admin-available-reports">Available Reports</h2></header>
         <div className="sl-application-records-filters"><div className="sl-application-records-toolbar sl-admin-reports-filters" data-layout="reports" aria-label="Report filters">
-          <label><span>Date Range</span><div className="sl-admin-reports-date"><CalendarDays size={16}/><select value={dateRange} onChange={event => { setDateRange(event.target.value); setReportPage(1); }}><option value="any">Any date</option><option value="week">Last 7 Days</option><option value="month">Last 30 Days</option><option value="custom">Custom</option></select></div></label>
-          {dateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom report date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => setDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => setDateTo(event.target.value)} /></label></div>}
+          <div className="sl-admin-reports-date-group" data-custom={dateRange === 'custom'}>
+            <label><span>Date Range</span><div className="sl-admin-reports-date"><CalendarDays size={16}/><select value={dateRange} onChange={event => { setDateRange(event.target.value); setReportPage(1); }}><option value="any">Any date</option><option value="week">Last 7 Days</option><option value="month">Last 30 Days</option><option value="custom">Custom</option></select></div></label>
+            {dateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom report date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => setDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => setDateTo(event.target.value)} /></label></div>}
+          </div>
           <label><span>Report Type</span><select value={reportType} onChange={event => { setReportType(event.target.value); setReportPage(1); }}><option>All Reports</option>{reportTypes.map(value => <option key={value}>{value}</option>)}</select></label>
           <label><span>Category</span><select value={category} onChange={event => { setCategory(event.target.value); setReportPage(1); }}><option>All Categories</option>{reportTypes.map(value => <option key={value}>{value}</option>)}</select></label>
           <label><span>Group By</span><select value={groupBy} onChange={event => setGroupBy(event.target.value)}><option>None</option><option>Category</option></select></label>

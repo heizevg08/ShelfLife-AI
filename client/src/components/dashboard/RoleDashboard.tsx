@@ -77,9 +77,9 @@ function AdminDashboardContent({ userName }: { userName: string }) {
   const ingredientValue = ingredientTotal === null ? '—' : ingredientTotal.toLocaleString();
   const userValue = userSummary?.totalUsers.toLocaleString() ?? '—';
   const userOverview = [
-    { label: 'Admin', value: userSummary?.roleCounts?.Admin },
-    { label: 'Manager', value: userSummary?.roleCounts?.Manager },
-    { label: 'Inventory Staff', value: userSummary?.roleCounts?.['Inventory Staff'] },
+    { label: 'Admin', value: userSummary ? (userSummary.roleCounts?.Admin ?? 0) : undefined },
+    { label: 'Manager', value: userSummary ? (userSummary.roleCounts?.Manager ?? 0) : undefined },
+    { label: 'Inventory Staff', value: userSummary ? (userSummary.roleCounts?.['Inventory Staff'] ?? 0) : undefined },
   ];
   const categoryStatus = ingredientCategoriesFailed ? 'Ingredient category data unavailable' : ingredientCategories === null ? 'Loading ingredient category data' : ingredientCategories.length ? undefined : 'No ingredient categories available';
   const accountStatus = userSummaryFailed ? 'User overview unavailable' : userSummary === null ? 'Loading user overview' : undefined;
