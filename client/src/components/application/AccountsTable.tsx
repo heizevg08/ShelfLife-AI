@@ -291,7 +291,11 @@ export function AccountsTable() {
           : 'Create account'}
       onDismiss={close}
       busy={busy}
-      className={mode === 'create' || mode === 'edit' ? 'sl-add-user-dialog sl-account-reference-dialog' : ''}
+      className={mode === 'create'
+        ? 'sl-add-user-dialog sl-account-reference-dialog'
+        : mode === 'edit'
+          ? 'sl-add-user-dialog sl-edit-user-dialog sl-account-reference-dialog'
+          : ''}
     >
       <form className="sl-admin-form sl-account-form" onSubmit={save} noValidate>
         <div className="sl-form-grid">
