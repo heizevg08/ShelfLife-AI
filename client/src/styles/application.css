@@ -33028,7 +33028,12 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-account-details-dialog .sl-account-details-information { min-width: 0; padding: 20px 24px 24px; }
 .sl-account-details-dialog .sl-account-details-information > h3 { margin-bottom: 14px; }
 .sl-account-details-dialog .sl-account-details-grid > div { min-height: 88px; padding: 16px; }
-.sl-account-details-dialog .sl-account-details-grid .sl-status { gap: 0; }
+.sl-account-details-dialog .sl-account-details-grid .sl-status {
+  gap: 0;
+  padding: .35rem .75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
 .sl-account-details-dialog .sl-account-details-grid .sl-status-dot { display: none; }
 .sl-account-details-dialog .sl-account-details-grid dd time { overflow-wrap: anywhere; }
 .sl-account-details-dialog > .sl-dialog-actions { flex-wrap: nowrap; min-height: 78px; padding: 18px 24px!important; }
