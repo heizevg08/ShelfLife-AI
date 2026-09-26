@@ -27,6 +27,7 @@ export function InventoryStaffModal({
   onDismiss,
   returnFocus,
   children,
+  actions,
   busy = false,
 }: {
   open: boolean;
@@ -36,6 +37,7 @@ export function InventoryStaffModal({
   onDismiss: () => void;
   returnFocus: RefObject<HTMLElement | null>;
   children: ReactNode;
+  actions?: ReactNode;
   busy?: boolean;
 }) {
   return <ApplicationModal
@@ -44,6 +46,7 @@ export function InventoryStaffModal({
     returnFocus={returnFocus}
     busy={busy}
     className="sl-staff-usage-dialog sl-staff-usage-dialog-exact sl-inventory-staff-modal"
+    actions={actions}
     title={title}
     subtitle={subtitle}
     Icon={Icon}
@@ -53,6 +56,7 @@ export function InventoryStaffModal({
 }
 
 export function InventoryStaffModalForm({
+  formId,
   formRef,
   onSubmit,
   children,
@@ -63,6 +67,7 @@ export function InventoryStaffModalForm({
   PrimaryIcon,
   busy = false,
 }: {
+  formId?: string;
   formRef?: RefObject<HTMLFormElement | null>;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
@@ -74,6 +79,7 @@ export function InventoryStaffModalForm({
   busy?: boolean;
 }) {
   return <ApplicationModalForm
+    formId={formId}
     formRef={formRef}
     onSubmit={onSubmit}
     message={message}

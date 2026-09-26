@@ -39,6 +39,7 @@ export function ApplicationModal({
 }
 
 export function ApplicationModalForm({
+  formId,
   formRef,
   onSubmit,
   children,
@@ -50,6 +51,7 @@ export function ApplicationModalForm({
   busy = false,
   className = '',
 }: {
+  formId?: string;
   formRef?: RefObject<HTMLFormElement | null>;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
@@ -61,7 +63,7 @@ export function ApplicationModalForm({
   busy?: boolean;
   className?: string;
 }) {
-  return <form ref={formRef} className={`sl-application-modal-form${className ? ` ${className}` : ''}`} noValidate onSubmit={onSubmit}>
+  return <form id={formId} ref={formRef} className={`sl-application-modal-form${className ? ` ${className}` : ''}`} noValidate onSubmit={onSubmit}>
     {children}
     {message && <p className="sl-inline-notice sl-application-modal-message" role="status">{message}</p>}
     <div className="sl-application-modal-actions">

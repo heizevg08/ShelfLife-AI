@@ -62,7 +62,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
   const rowStatus = (_row: AuditRecord) => 'Success';
   const moduleOptions = ['All modules', ...Array.from(new Set(rows.map(row => row.targetType).filter(Boolean))).sort()];
   const visibleRows = rows.filter(row => {
-    const matchesSearch = !normalizedSearch || [row.actor.name, row.actor.role, row.action, row.targetType, row.targetName ?? ''].some(value => value.toLowerCase().includes(normalizedSearch));
+    const matchesSearch = !normalizedSearch || [row.timestamp, row.actor.name, row.actor.role, row.action, row.targetType, row.targetId, row.targetName ?? '', rowStatus(row)].some(value => value.toLowerCase().includes(normalizedSearch));
     const matchesStatus = !statusFilter || rowStatus(row) === statusFilter;
     const matchesModule = !moduleFilter || row.targetType === moduleFilter;
     return matchesSearch && matchesStatus && matchesModule;
@@ -93,9 +93,20 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
   }, {});
   const commonAction = Object.entries(actionCounts).sort((a, b) => b[1] - a[1])[0];
   const actionLabel = (action: string) => ({ CREATE: 'Created', UPDATE: 'Updated', DEACTIVATE: 'Deactivated', REACTIVATE: 'Reactivated' }[action] ?? action);
-  const auditDetails = (row: AuditRecord) => row.targetName
-    ? `${actionLabel(row.action)} ${row.targetName}`
-    : `${actionLabel(row.action)} ${row.targetType.toLowerCase()} record`;
+  const actorName = (row: AuditRecord) => {
+    const name = row.actor.name.trim();
+    const roleToken = row.actor.role.replace(/\s+/g, '').toLowerCase();
+    const nameParts = name.split(/\s+/);
+    const roleComposedSeedName = nameParts[0]?.toLowerCase() === 'development' && nameParts.at(-1)?.replace(/\s+/g, '').toLowerCase() === roleToken;
+    return name && !roleComposedSeedName ? name : 'Unknown account';
+  };
+  const auditDetails = (row: AuditRecord) => {
+    const entity = row.targetType.trim().toLowerCase() || 'target';
+    const targetName = row.targetName?.trim() ?? '';
+    const nameParts = targetName.split(/\s+/).filter(Boolean);
+    const meaningfulName = nameParts.length >= 2 && nameParts.every(part => /\p{L}/u.test(part)) && nameParts.some(part => part.replace(/[^\p{L}]/gu, '').length > 1);
+    return meaningfulName ? `${actionLabel(row.action)} ${entity} ${targetName}` : `${actionLabel(row.action)} ${entity} record`;
+  };
 
   return <>
     {adminOverview && <div className="sl-audit-overview" aria-label="Audit log overview">
@@ -106,7 +117,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Recent Administrative Changes</span><strong>{data ? rows.length.toLocaleString() : '—'}</strong><small>{data ? 'Loaded audit records' : 'Awaiting audit data'}</small></div></article>
       </section>
     </div>}
-    <div className={adminOverview ? "sl-audit-results-layout" : undefined}>
+    <div className={adminOverview ? "sl-admin-audit-layout" : undefined}>
     <section className={recent ? "sl-audit-fragment" : adminOverview ? "sl-application-records sl-application-records-overflow sl-admin-audit-records" : "sl-card"} aria-labelledby={recent ? undefined : "sl-system-audit-log"}>
       {!recent && (adminOverview ? <>
         <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileText aria-hidden="true" /></span><h2 id="sl-system-audit-log">Audit Logs</h2></header>
@@ -114,14 +125,13 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
       <div className={recent ? "sl-audit-fragment-body" : adminOverview ? "sl-application-records-body" : "sl-card-body"}>
     {adminOverview && <div className="sl-application-records-filters"><div className="sl-application-records-toolbar sl-audit-filter-strip" data-layout="audit">
       <label className="sl-application-records-search"><span>Search</span><div><Search size={17} aria-hidden="true" /><input type="search" value={searchTerm} onChange={event => { setSearchTerm(event.target.value); setPage(1); }} placeholder="Search logs..." aria-label="Search audit logs" /></div></label>
-      <label>Date Range<select className="sl-admin-input" value={periodFilter} onChange={event => { setPage(1); setPeriodFilter(event.target.value); }}>{administrationFilterCatalog.audit.period.map(period => <option key={period}>{period}</option>)}</select></label>
-      {periodFilter === 'Custom' && <div className="sl-audit-specific-dates" aria-label="Custom date range"><label>From<input className="sl-admin-input" type="date" value={specificFrom} max={specificTo || undefined} onChange={event => setSpecificFrom(event.target.value)} /></label><label>To<input className="sl-admin-input" type="date" value={specificTo} min={specificFrom || undefined} onChange={event => setSpecificTo(event.target.value)} /></label></div>}
-      <label>User<select className="sl-admin-input" value={actorFilter || actorOptions[0]} onChange={event => { setPage(1); setActorFilter(event.target.value === actorOptions[0] ? '' : event.target.value); }}>{actorOptions.map(actor => <option key={actor}>{actor}</option>)}</select></label>
-      <label>Action<select className="sl-admin-input" value={actionFilter || actionOptions[0]} onChange={event => { setPage(1); setActionFilter(event.target.value === actionOptions[0] ? '' : event.target.value); }}>{actionOptions.map(action => <option key={action}>{action}</option>)}</select></label>
-      <label>Module<select className="sl-admin-input" value={moduleFilter || moduleOptions[0]} onChange={event => { setPage(1); setModuleFilter(event.target.value === moduleOptions[0] ? '' : event.target.value); }}>{moduleOptions.map(module => <option key={module}>{module}</option>)}</select></label>
-      <label>Status<select className="sl-admin-input" value={statusFilter || administrationFilterCatalog.audit.status[0]} onChange={event => { setPage(1); setStatusFilter(event.target.value === administrationFilterCatalog.audit.status[0] ? '' : event.target.value); }}>{administrationFilterCatalog.audit.status.map(status => <option key={status}>{status}</option>)}</select></label>
-      <button type="button" className="sl-button" onClick={resetAdminFilters}>Reset</button>
-      <ExportControl label="Export" menuId="sl-admin-audit-export-menu" />
+      <label><span>Date Range</span><select value={periodFilter} onChange={event => { setPage(1); setPeriodFilter(event.target.value); }}>{administrationFilterCatalog.audit.period.map(period => <option key={period}>{period}</option>)}</select></label>
+      {periodFilter === 'Custom' && <div className="sl-audit-specific-dates" aria-label="Custom date range"><label><span>From</span><input type="date" value={specificFrom} max={specificTo || undefined} onChange={event => setSpecificFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={specificTo} min={specificFrom || undefined} onChange={event => setSpecificTo(event.target.value)} /></label></div>}
+      <label><span>User</span><select value={actorFilter || actorOptions[0]} onChange={event => { setPage(1); setActorFilter(event.target.value === actorOptions[0] ? '' : event.target.value); }}>{actorOptions.map(actor => <option key={actor}>{actor}</option>)}</select></label>
+      <label><span>Action</span><select value={actionFilter || actionOptions[0]} onChange={event => { setPage(1); setActionFilter(event.target.value === actionOptions[0] ? '' : event.target.value); }}>{actionOptions.map(action => <option key={action}>{action}</option>)}</select></label>
+      <label><span>Module</span><select value={moduleFilter || moduleOptions[0]} onChange={event => { setPage(1); setModuleFilter(event.target.value === moduleOptions[0] ? '' : event.target.value); }}>{moduleOptions.map(module => <option key={module}>{module}</option>)}</select></label>
+      <label><span>Status</span><select value={statusFilter || administrationFilterCatalog.audit.status[0]} onChange={event => { setPage(1); setStatusFilter(event.target.value === administrationFilterCatalog.audit.status[0] ? '' : event.target.value); }}>{administrationFilterCatalog.audit.status.map(status => <option key={status}>{status}</option>)}</select></label>
+      <div className="sl-application-records-filter-actions"><button type="button" className="sl-button" onClick={resetAdminFilters}>Reset</button><ExportControl label="Export" menuId="sl-admin-audit-export-menu" /></div>
     </div></div>}
     {!recent && !adminOverview && <div className="sl-table-toolbar sl-audit-toolbar">
       <div className="sl-audit-toolbar-right">
@@ -180,14 +190,14 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
             : !visibleRows.length ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="empty" title={filtersApplied ? 'No records match these filters' : 'No administrative activity yet'} description={filtersApplied ? 'Change or clear the current filters.' : "You're all caught up — successful account changes will show up here automatically."} /></td></tr>
             : visibleRows.map((row, rowIndex) => adminDashboard ? <tr key={row.id}>
               <td>{(data.page - 1) * data.pageSize + rowIndex + 1}</td>
-              <td className="sl-record-id">{row.actor.name || '—'}</td>
+              <td className="sl-record-id">{actorName(row)}</td>
               <td>{row.action}</td>
               <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
               <td><span className="sl-status" data-tone="success">Success</span></td>
             </tr> : <tr key={row.id}>
                 {adminOverview && <td>{(data.page - 1) * data.pageSize + rowIndex + 1}</td>}
                 <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
-                <td className="sl-record-id">{adminOverview ? row.actor.name || '—' : `${row.actor.name} · ${row.actor.role}`}</td>
+                <td className="sl-record-id">{adminOverview ? <span className="sl-emphasized-value">{actorName(row)}</span> : `${row.actor.name} · ${row.actor.role}`}</td>
                 <td className={adminOverview ? 'sl-emphasized-value' : undefined}>{row.action}</td>
                 {adminOverview && <td>{row.targetType}</td>}
                 <td>{adminOverview ? auditDetails(row) : <><span>{row.targetType}</span><div className="sl-record-id">{row.targetId}</div></>}</td>

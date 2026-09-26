@@ -64,13 +64,12 @@ function AdminReports() {
           <label><span>Report Type</span><select value={reportType} onChange={event => { setReportType(event.target.value); setReportPage(1); }}><option>All Reports</option>{reportTypes.map(value => <option key={value}>{value}</option>)}</select></label>
           <label><span>Category</span><select value={category} onChange={event => { setCategory(event.target.value); setReportPage(1); }}><option>All Categories</option>{reportTypes.map(value => <option key={value}>{value}</option>)}</select></label>
           <label><span>Group By</span><select value={groupBy} onChange={event => setGroupBy(event.target.value)}><option>None</option><option>Category</option></select></label>
-          <button className="sl-button sl-admin-reports-reset" type="button" onClick={() => { reset(); setReportPage(1); }}><RotateCcw size={14}/> Reset</button>
-          <ExportControl label="Export" menuId="sl-admin-reports-export-menu" />
+          <div className="sl-application-records-filter-actions"><button className="sl-button sl-admin-reports-reset" type="button" onClick={() => { reset(); setReportPage(1); }}><RotateCcw size={14}/> Reset</button><ExportControl label="Export" menuId="sl-admin-reports-export-menu" /></div>
         </div></div>
         <div className="sl-application-records-table-shell">
           <table className="sl-application-records-table" data-layout="reports" aria-label="Available reports">
             <thead><tr><th scope="col">#</th><th scope="col">Report</th><th scope="col">Type</th><th scope="col">Last Generated</th></tr></thead>
-            <tbody>{visibleReports.map((report, index) => <tr key={report.path}><td>{index + 1}</td><td><span className="sl-v56-name sl-admin-report-name">{report.name}</span></td><td><b data-category={report.type}>{report.type}</b></td><td>—</td></tr>)}</tbody>
+            <tbody>{visibleReports.map((report, index) => <tr key={report.path}><td>{index + 1}</td><td><span className="sl-emphasized-value sl-admin-report-name">{report.name}</span></td><td><span className="sl-emphasized-value" data-category={report.type}>{report.type}</span></td><td>—</td></tr>)}</tbody>
           </table>
         </div>
         <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={reportPageSize} onChange={event => { setReportPageSize(Number(event.target.value)); setReportPage(1); }}><option>10</option><option>25</option><option>50</option></select></label><Pagination compact page={reportPage} pageSize={reportPageSize} total={visibleReports.length} itemLabel="reports" onPageChange={setReportPage} /></footer>

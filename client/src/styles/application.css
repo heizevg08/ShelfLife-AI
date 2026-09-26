@@ -31464,6 +31464,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   box-shadow: none;
   overflow: hidden;
 }
+.sl-application-modal-content { padding: var(--sl-application-modal-padding); }
 :is(.sl-application-modal,.sl-inventory-staff-modal) :is(.sl-application-modal-form,.sl-staff-usage-form) {
   gap: clamp(.75rem,1.2vw,1rem);
   padding: var(--sl-application-modal-padding);
@@ -32197,19 +32198,45 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   display: grid;
 }
 .sl-admin-dashboard-v103 .sl-application-donut-chart {
-  min-height: clamp(11.5rem,13vw,14rem);
+  grid-template-rows: minmax(0,1fr) auto;
+  align-content: stretch;
+  min-height: clamp(14rem,20vw,17rem);
 }
-.sl-admin-dashboard-v103 .sl-application-donut-visual,
-.sl-admin-reports-v114 .sl-application-donut-visual {
-  justify-content: space-between;
-  gap: clamp(1rem,.82rem + .45vw,1.35rem);
-  width: min(100%,24rem);
+.sl-admin-dashboard-v103 .sl-application-donut-visual {
+  grid-template-columns: minmax(7rem,.9fr) minmax(0,1.1fr);
+  justify-content: stretch;
+  align-items: center;
+  gap: clamp(.7rem,1vw,1.1rem);
+  width: min(100%,31rem);
+  display: grid;
+  margin-inline: auto;
 }
-.sl-admin-dashboard-v103 .sl-application-donut-legend,
-.sl-admin-reports-v114 .sl-application-donut-legend {
+.sl-admin-dashboard-v103 .sl-application-donut {
+  justify-self: center;
+  width: clamp(7.25rem,9vw,9rem);
+}
+.sl-admin-dashboard-v103 .sl-application-donut strong {
+  max-width: 100%;
+}
+.sl-admin-dashboard-v103 .sl-application-donut span {
+  max-width: 100%;
+  font-size: clamp(.58rem,.54rem + .12vw,.68rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.sl-admin-dashboard-v103 .sl-application-donut-legend {
   grid-template-columns: .66rem minmax(0,1fr) max-content;
-  width: min(100%,13rem);
+  align-content: center;
+  width: 100%;
+  min-width: 0;
   padding-inline: 0;
+}
+.sl-admin-dashboard-v103 .sl-application-donut-note {
+  justify-content: center;
+  min-height: 2rem;
+  margin: 0;
+  padding: .35rem .5rem;
+  text-align: center;
 }
 .sl-admin-dashboard-record-grid {
   grid-template-columns: repeat(2,minmax(0,1fr));
@@ -32384,16 +32411,28 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   white-space: nowrap;
 }
 .sl-admin-audit-records .sl-audit-filter-strip {
-  border-bottom: 1px solid var(--sl-border);
-  grid-template-columns: minmax(13rem,1.4fr) repeat(5,minmax(7rem,1fr)) auto auto;
+  grid-template-columns: minmax(13rem,1.4fr) repeat(5,minmax(7rem,1fr)) auto;
+  gap: .65rem;
   align-items: end;
+  padding: .65rem .8rem;
+  box-shadow: none;
+}
+.sl-admin-audit-layout {
+  min-width: 0;
+  width: 100%;
+}
+.sl-admin-audit-records .sl-audit-filter-strip > .sl-application-records-filter-actions,
+.sl-admin-report-records .sl-application-records-toolbar > .sl-application-records-filter-actions {
+  align-self: end;
+  flex-wrap: wrap;
 }
 .sl-admin-report-records .sl-admin-report-name {
   white-space: normal;
 }
-.sl-admin-reports-page > .sl-page-header .sl-description { white-space: nowrap; }
+.sl-admin-reports-page > .sl-page-header .sl-description { white-space: normal; }
 .sl-admin-report-records .sl-application-records-toolbar[data-layout="reports"] {
-  grid-template-columns: minmax(0,2fr) repeat(3,minmax(8rem,1fr)) auto auto;
+  grid-template-columns: minmax(11rem,1.3fr) repeat(3,minmax(8rem,1fr)) minmax(max-content,auto);
+  align-items: end;
 }
 .sl-admin-reports-date-group {
   grid-template-columns: minmax(0,1fr);
@@ -32408,22 +32447,30 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-admin-reports-date-group > :is(label,.sl-v219-custom-date-range) {
   min-width: 0;
 }
-.sl-admin-user-records .sl-v56-name,
-.sl-admin-report-records .sl-v56-name {
+.sl-admin-user-records .sl-v56-name {
   color: var(--sl-text);
   font: var(--sl-font-body);
-  font-weight: 600;
   line-height: 1.45;
 }
 .sl-admin-ingredient-records .sl-admin-ingredient-name {
-  justify-content: flex-start;
-  width: 100%;
-  font: inherit;
-  line-height: inherit;
-}
-.sl-admin-ingredient-records .sl-admin-ingredient-name strong {
+  display: inline-block;
+  border: 0;
+  background: none;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
   font-size: inherit;
   line-height: inherit;
+  text-align: left;
+  vertical-align: middle;
+  cursor: pointer;
+}
+.sl-admin-ingredient-records .sl-application-records-table :is(th,td):nth-child(2) {
+  text-align: left;
+  vertical-align: middle;
 }
 .sl-account-details-dialog .sl-account-details-grid {
   grid-template-columns: repeat(2,minmax(0,1fr));
@@ -32481,7 +32528,14 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-admin-user-records th:nth-child(3) { width: 24%; }
   .sl-admin-user-records th:last-child { width: 7rem; }
   .sl-admin-ingredient-records th:nth-child(2) { width: 27%; }
-  .sl-admin-inventory-records th:first-child { width: 18%; }
+  .sl-admin-inventory-records th:first-child { width: 3rem; }
+  .sl-admin-inventory-records th:nth-child(2) { width: 19%; }
+  .sl-admin-inventory-records th:nth-child(3) { width: 12%; }
+  .sl-admin-inventory-records th:nth-child(4) { width: 13%; }
+  .sl-admin-inventory-records th:nth-child(5) { width: 12%; }
+  .sl-admin-inventory-records th:nth-child(6) { width: 8%; }
+  .sl-admin-inventory-records th:nth-child(7) { width: 15%; }
+  .sl-admin-inventory-records th:nth-child(8) { width: 11%; }
   .sl-admin-inventory-records th:last-child { width: 7rem; }
   .sl-admin-audit-records th:nth-child(2) { width: 16%; }
   .sl-admin-audit-records th:nth-child(3) { width: 17%; }
@@ -32501,7 +32555,37 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-admin-audit-records .sl-audit-filter-strip { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .sl-admin-reports-date-group[data-custom="true"] { grid-template-columns: minmax(0,1fr); }
 }
+@media (max-width: 1180px) {
+  .sl-admin-dashboard-v103 .sl-application-donut-visual {
+    grid-template-columns: minmax(6.75rem,.9fr) minmax(0,1.1fr);
+    gap: clamp(.55rem,.8vw,.8rem);
+  }
+  .sl-admin-dashboard-v103 .sl-application-donut {
+    width: clamp(6.75rem,10vw,8.25rem);
+  }
+}
+@media (max-width: 760px) {
+  .sl-admin-dashboard-v103 .sl-application-donut-visual {
+    grid-template-columns: minmax(7.25rem,.9fr) minmax(0,1.1fr);
+    width: min(100%,32rem);
+  }
+  .sl-admin-dashboard-v103 .sl-application-donut {
+    width: clamp(7.25rem,24vw,9rem);
+  }
+}
+@media (max-width: 520px) {
+  .sl-admin-dashboard-v103 .sl-application-donut-visual {
+    grid-template-columns: minmax(0,1fr);
+    justify-items: center;
+    gap: .75rem;
+  }
+  .sl-admin-dashboard-v103 .sl-application-donut-legend {
+    width: min(100%,19rem);
+  }
+}
 @media (width <= 620px) {
   .sl-admin-report-records .sl-application-records-toolbar[data-layout="reports"] { grid-template-columns: minmax(0,1fr); }
+  .sl-admin-audit-records .sl-audit-filter-strip,
+  .sl-admin-audit-records .sl-audit-specific-dates { grid-template-columns: minmax(0,1fr); }
   .sl-account-details-dialog .sl-account-details-grid { grid-template-columns: 1fr; }
 }

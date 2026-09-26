@@ -1,5 +1,5 @@
 import { Link, type Href } from 'expo-router';
-import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, FileText, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical, Truck, ClipboardCheck, PackageCheck } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, FileText, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, Truck, ClipboardCheck, PackageCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { APPLICATION_RECORD_PAGE_SIZES, ApplicationPendingState } from './ApplicationPatterns';
@@ -25,8 +25,8 @@ const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', unit:
 type IngredientField = keyof IngredientDraft;
 const ingredientApiField: Record<string, IngredientField | undefined> = { name: 'name', brand: 'brand', category: 'category', unitOfMeasure: 'unit', minimumStock: 'minStock', standardUnitCost: 'unitCost', defaultShelfLifeDays: 'shelfLife', description: 'description' };
 
-function IngredientFields({ form, errors, busy, formError, set, setError }: { form: IngredientDraft; errors: Partial<Record<IngredientField, string>>; busy: boolean; formError: string; set: (key: IngredientField, value: string) => void; setError: (key: IngredientField, value?: string) => void }) {
-  const field = (key: IngredientField, label: string, control: React.ReactNode, required = true) => <label data-field={key}>{label}{required && <span className="sl-required-mark"> *</span>}{control}{errors[key] && <span id={`ingredient-${key}-error`} className="sl-field-error">{errors[key]}</span>}</label>;
+function IngredientFields({ form, errors, busy, formError, set, setError, canonicalModal = false }: { form: IngredientDraft; errors: Partial<Record<IngredientField, string>>; busy: boolean; formError: string; set: (key: IngredientField, value: string) => void; setError: (key: IngredientField, value?: string) => void; canonicalModal?: boolean }) {
+  const field = (key: IngredientField, label: string, control: React.ReactNode, required = true) => <label data-field={key} className={canonicalModal && key === 'description' ? 'sl-staff-modal-wide' : undefined}>{canonicalModal ? <span>{label}{required && <> <b>*</b></>}</span> : <>{label}{required && <span className="sl-required-mark"> *</span>}</>}{control}{errors[key] && <span id={`ingredient-${key}-error`} className="sl-field-error">{errors[key]}</span>}</label>;
   const validation = (key: IngredientField) => ({ 'aria-invalid': errors[key] ? true as const : undefined, 'aria-describedby': errors[key] ? `ingredient-${key}-error` : undefined });
   const numericChange = (key: 'minStock' | 'unitCost' | 'shelfLife', label: string, whole = false) => (value: string) => {
     set(key, value);
@@ -34,18 +34,19 @@ function IngredientFields({ form, errors, busy, formError, set, setError }: { fo
     const valid = whole ? /^\d+$/.test(value) : /^\d*(?:\.\d*)?$/.test(value);
     setError(key, valid ? undefined : whole ? `${label} accepts whole numbers only.` : `${label} accepts numbers only.`);
   };
+  const fields = <>
+      {field('name', 'Name', <input autoFocus disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} placeholder="e.g. Chicken Breast" value={form.name} onChange={e => set('name', e.target.value)} {...validation('name')} />)}
+      {field('brand', 'Brand', <input disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} placeholder="e.g. FreshFarm" value={form.brand} onChange={e => set('brand', e.target.value)} {...validation('brand')} />)}
+      {field('category', 'Category', <select disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} value={form.category} onChange={e => set('category', e.target.value)} {...validation('category')}><option value="">Select category</option>{INGREDIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select>)}
+      {field('unit', 'Unit of measure', <select disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} value={form.unit} onChange={e => set('unit', e.target.value)} {...validation('unit')}><option value="">Select unit</option>{INGREDIENT_UNITS.map(value => <option key={value} value={value}>{value}</option>)}</select>)}
+      {field('minStock', 'Minimum stock', <input id="ingredient-minStock-input" disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} type="text" inputMode="decimal" value={form.minStock} onChange={e => numericChange('minStock', 'Minimum stock')(e.target.value)} {...validation('minStock')} />)}
+      {field('unitCost', 'Standard unit cost', <span className="sl-currency-input"><span aria-hidden="true">₱</span><input id="ingredient-unitCost-input" disabled={busy} className={`${canonicalModal ? '' : 'sl-admin-input '}sl-currency-value`} type="text" inputMode="decimal" value={form.unitCost === '' ? '' : (/^\d+(?:\.\d{0,2})?$/.test(form.unitCost) ? Number(form.unitCost).toFixed(2) : form.unitCost)} onFocus={e => { if (/^\d+(?:\.\d{1,2})?$/.test(form.unitCost)) e.currentTarget.select(); }} onChange={e => { const raw=e.target.value.replace(/^₱\s*/, ''); const stripped=raw.replace(/,/g,''); set('unitCost', stripped); if (!stripped) setError('unitCost'); else setError('unitCost', /^\d*(?:\.\d{0,2})?$/.test(stripped) ? undefined : 'Standard unit cost accepts numbers only.'); }} {...validation('unitCost')} /></span>)}
+      {field('shelfLife', 'Default shelf life (days)', <input id="ingredient-shelfLife-input" disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} type="text" inputMode="numeric" value={form.shelfLife} onChange={e => numericChange('shelfLife', 'Shelf life', true)(e.target.value)} {...validation('shelfLife')} />)}
+      {field('description', 'Description', <textarea disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} rows={3} placeholder="e.g. Boneless, skinless chicken breast" value={form.description} onChange={e => set('description', e.target.value)} {...validation('description')} />)}
+  </>;
   return <>
-    {formError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{formError}</p>}
-    <div className="sl-form-grid">
-      {field('name', 'Name', <input autoFocus disabled={busy} className="sl-admin-input" placeholder="e.g. Chicken Breast" value={form.name} onChange={e => set('name', e.target.value)} {...validation('name')} />)}
-      {field('brand', 'Brand', <input disabled={busy} className="sl-admin-input" placeholder="e.g. FreshFarm" value={form.brand} onChange={e => set('brand', e.target.value)} {...validation('brand')} />)}
-      {field('category', 'Category', <select disabled={busy} className="sl-admin-input" value={form.category} onChange={e => set('category', e.target.value)} {...validation('category')}><option value="">Select category</option>{INGREDIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select>)}
-      {field('unit', 'Unit of measure', <select disabled={busy} className="sl-admin-input" value={form.unit} onChange={e => set('unit', e.target.value)} {...validation('unit')}><option value="">Select unit</option>{INGREDIENT_UNITS.map(value => <option key={value} value={value}>{value}</option>)}</select>)}
-      {field('minStock', 'Minimum stock', <input id="ingredient-minStock-input" disabled={busy} className="sl-admin-input" type="text" inputMode="decimal" value={form.minStock} onChange={e => numericChange('minStock', 'Minimum stock')(e.target.value)} {...validation('minStock')} />)}
-      {field('unitCost', 'Standard unit cost', <span className="sl-currency-input"><span aria-hidden="true">₱</span><input id="ingredient-unitCost-input" disabled={busy} className="sl-admin-input sl-currency-value" type="text" inputMode="decimal" value={form.unitCost === '' ? '' : (/^\d+(?:\.\d{0,2})?$/.test(form.unitCost) ? Number(form.unitCost).toFixed(2) : form.unitCost)} onFocus={e => { if (/^\d+(?:\.\d{1,2})?$/.test(form.unitCost)) e.currentTarget.select(); }} onChange={e => { const raw=e.target.value.replace(/^₱\s*/, ''); const stripped=raw.replace(/,/g,''); set('unitCost', stripped); if (!stripped) setError('unitCost'); else setError('unitCost', /^\d*(?:\.\d{0,2})?$/.test(stripped) ? undefined : 'Standard unit cost accepts numbers only.'); }} {...validation('unitCost')} /></span>)}
-      {field('shelfLife', 'Default shelf life (days)', <input id="ingredient-shelfLife-input" disabled={busy} className="sl-admin-input" type="text" inputMode="numeric" value={form.shelfLife} onChange={e => numericChange('shelfLife', 'Shelf life', true)(e.target.value)} {...validation('shelfLife')} />)}
-      {field('description', 'Description', <textarea disabled={busy} className="sl-admin-input" rows={3} placeholder="e.g. Boneless, skinless chicken breast" value={form.description} onChange={e => set('description', e.target.value)} {...validation('description')} />)}
-    </div>
+    {formError && <p className={`sl-inline-notice sl-inline-notice-error${canonicalModal ? ' sl-staff-modal-message' : ''}`} role="alert">{formError}</p>}
+    {canonicalModal ? fields : <div className="sl-form-grid">{fields}</div>}
   </>;
 }
 
@@ -372,6 +373,14 @@ function UnavailableInventoryBatchActions() {
   </div>;
 }
 
+function AdminUnavailableInventoryBatchActions() {
+  return <div className="sl-staff-waste-row-actions" aria-label="Inventory batch actions unavailable">
+    <button type="button" className="sl-icon-button" disabled aria-label="View inventory batch unavailable" title="View unavailable"><Eye size={16} aria-hidden="true" /></button>
+    <button type="button" className="sl-icon-button" disabled aria-label="Edit inventory batch unavailable" title="Edit unavailable"><Pencil size={16} aria-hidden="true" /></button>
+    <button type="button" className="sl-icon-button sl-staff-waste-delete" disabled aria-label="Delete inventory batch unavailable" title="Delete unavailable"><Trash2 size={16} aria-hidden="true" /></button>
+  </div>;
+}
+
 function InventoryStaffInventoryBatchesPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
@@ -620,7 +629,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
           {loadError ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
           : !data ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></td></tr>
           : !filteredIngredientItems.length ? <tr><td colSpan={7} className="sl-empty-cell"><ApplicationPendingState className="sl-application-records-state" description={search || category !== 'All' || unitFilter !== 'All Units' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} /></td></tr>
-          : filteredIngredientItems.map((item, index) => <tr key={item.id}><td>{(data.page - 1) * data.pageSize + index + 1}</td><td><button className="sl-sa-ingredient-name sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</time></td><td><span className="sl-status sl-application-status" data-tone="success">Active</span></td></tr>)}
+          : filteredIngredientItems.map((item, index) => <tr key={item.id}><td>{(data.page - 1) * data.pageSize + index + 1}</td><td><button className="sl-admin-ingredient-name sl-emphasized-value" type="button" onClick={() => setViewIngredient(item)}>{item.name}</button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</time></td><td><span className="sl-status sl-application-status" data-tone="success">Active</span></td></tr>)}
         </tbody></table></div>
         <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{APPLICATION_RECORD_PAGE_SIZES.map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="ingredients" onPageChange={setPage} /></footer>
       </section>
@@ -633,8 +642,8 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
       onDismiss={dismiss}
       returnFocus={addButtonRef}
       busy={busy}
-    ><InventoryStaffModalForm onSubmit={save} secondaryLabel="Cancel" onSecondary={dismiss} primaryLabel={editIngredient ? 'Update Ingredient' : 'Save Ingredient'} PrimaryIcon={CheckCircle2} busy={busy}>
-      <div className="sl-staff-modal-wide"><IngredientFields form={form} errors={errors} busy={busy} formError={formError} set={setField} setError={setFieldError} /></div>
+    ><InventoryStaffModalForm formId="sl-ingredient-form" onSubmit={save} secondaryLabel="Cancel" onSecondary={dismiss} primaryLabel={editIngredient ? 'Update Ingredient' : 'Save Ingredient'} PrimaryIcon={CheckCircle2} busy={busy}>
+      <IngredientFields canonicalModal form={form} errors={errors} busy={busy} formError={formError} set={setField} setError={setFieldError} />
     </InventoryStaffModalForm></InventoryStaffModal>
     <Dialog open={!!successIngredient} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon sl-success-dialog-icon">✓</span><span><span className="sl-account-dialog-title">Ingredient saved successfully</span><small>The ingredient record is now up to date in the registered ingredient list.</small></span></span>} onDismiss={() => setSuccessIngredient(null)} className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-success-dialog" actions={<button className="sl-button sl-button-primary" type="button" onClick={() => setSuccessIngredient(null)}>Done</button>}>
       {successIngredient && <div className="sl-success-summary"><strong>{successIngredient.name}</strong><span>{successIngredient.category} · {successIngredient.unitOfMeasure}</span></div>}
@@ -642,11 +651,10 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
     <Dialog open={!!deleteTarget} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon sl-delete-warning-icon">!</span><span><span className="sl-account-dialog-title">Remove this ingredient?</span></span></span>} onDismiss={() => { if (!actionBusy) setDeleteTarget(null); }} busy={actionBusy} className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-delete-dialog" actions={<><button className="sl-button sl-delete-keep-button" type="button" disabled={actionBusy} onClick={() => setDeleteTarget(null)}>Keep this ingredient</button><button className="sl-button sl-button-danger sl-delete-confirm-button" type="button" disabled={actionBusy} onClick={removeIngredient}><Trash2 size={15} aria-hidden="true" />{actionBusy ? 'Removing…' : 'Yes, remove it'}</button></>}>
       {deleteTarget && <div className="sl-delete-reference-body">{deleteError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{deleteError}</p>}<div className="sl-delete-ingredient-card"><span className="sl-delete-ingredient-avatar">{deleteTarget.name.trim().charAt(0).toUpperCase()}</span><span><strong>{deleteTarget.name}</strong><small>{deleteTarget.category} · {deleteTarget.unitOfMeasure}</small></span></div></div>}
     </Dialog>
-    <InventoryStaffModal open={!!viewIngredient} title="Ingredient Details" subtitle="Review the ingredient master-data record." Icon={Leaf} onDismiss={() => setViewIngredient(null)} returnFocus={addButtonRef}>
-      {viewIngredient && <div className="sl-ingredient-detail-reference">
+    <InventoryStaffModal open={!!viewIngredient} title="Ingredient Details" subtitle="Review the ingredient master-data record." Icon={Leaf} onDismiss={() => setViewIngredient(null)} returnFocus={addButtonRef} actions={<><button type="button" className="sl-button" onClick={() => setViewIngredient(null)}>Close</button><button type="button" className="sl-button sl-button-primary" disabled={!viewIngredient} onClick={() => { if (viewIngredient) { const item = viewIngredient; setViewIngredient(null); openEdit(item); } }}><Pencil size={15} aria-hidden="true" /> Edit Ingredient</button></>}>
+      {viewIngredient && <div className="sl-application-modal-content sl-ingredient-detail-reference">
         <div className="sl-ingredient-detail-hero sl-ingredient-detail-no-photo">
           <span className="sl-ingredient-detail-copy"><span className="sl-ingredient-name-row"><strong>{viewIngredient.name}</strong><Status>Active</Status></span><small>{viewIngredient.category} · {viewIngredient.brand || 'No brand specified'}</small>{viewIngredient.description && <small>{viewIngredient.description}</small>}</span>
-          <div className="sl-ingredient-detail-actions"><button type="button" className="sl-button" onClick={() => { const item=viewIngredient; setViewIngredient(null); openEdit(item); }}><Pencil size={15} aria-hidden="true" /> Edit</button><button type="button" className="sl-icon-button" aria-label="More ingredient actions"><MoreVertical size={18} aria-hidden="true" /></button></div>
         </div>
         <div className="sl-detail-grid"><span><small>Unit of Measure</small><strong>{viewIngredient.unitOfMeasure}</strong></span><span><small>Minimum Stock Level</small><strong>{viewIngredient.minimumStock ?? '—'} {viewIngredient.unitOfMeasure}</strong></span><span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `₱${viewIngredient.standardUnitCost.toFixed(2)} / ${viewIngredient.unitOfMeasure}`}</strong></span><span><small>Default Shelf Life</small><strong>{viewIngredient.defaultShelfLifeDays ? `${viewIngredient.defaultShelfLifeDays} days` : '—'}</strong></span></div>
         <section className="sl-ingredient-statistics"><h4>Statistics</h4><div className="sl-ingredient-stat-grid"><span><small>Total Batches</small><strong>—</strong></span><span><small>Current Stock</small><strong>—</strong></span><span><small>Total Used (This Month)</small><strong>—</strong></span><span><small>Total Waste (This Month)</small><strong>—</strong></span></div><p className="sl-sr-only">Statistics will populate when inventory usage and waste summary data is available.</p></section>
@@ -1731,6 +1739,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   const [accountTotalsError, setAccountTotalsError] = useState(false);
   const [adminInventorySearch, setAdminInventorySearch] = useState('');
   const [adminInventoryCategory, setAdminInventoryCategory] = useState('All Categories');
+  const [adminInventoryCategories, setAdminInventoryCategories] = useState<string[]>([]);
   const [adminInventoryStatus, setAdminInventoryStatus] = useState('All Statuses');
   const [adminInventoryRows, setAdminInventoryRows] = useState(10);
   const [adminInventoryPage, setAdminInventoryPage] = useState(1);
@@ -1740,6 +1749,16 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
     accountSummary(abort.signal).then(setAccountTotals).catch(() => { if (!abort.signal.aborted) setAccountTotalsError(true); });
     return () => abort.abort();
   }, [moduleId]);
+  useEffect(() => {
+    if (moduleId !== 'InventoryBatches' || user.role !== 'Admin') return;
+    const abort = new AbortController();
+    listIngredientCategories(abort.signal).then(result => {
+      if (!abort.signal.aborted) setAdminInventoryCategories(result.categories);
+    }).catch(() => {
+      if (!abort.signal.aborted) setAdminInventoryCategories([]);
+    });
+    return () => abort.abort();
+  }, [moduleId, user.role]);
   const staff = user.role === 'Inventory Staff';
   if (moduleId === 'UserManagement') {
     const adminUsers = user.role === 'Admin';
@@ -1799,12 +1818,12 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
         <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileText aria-hidden="true" /></span><h2 id="admin-inventory-records-title">Inventory Batches Records</h2></header>
         <div className="sl-application-records-filters"><div className="sl-application-records-toolbar" data-layout="inventory-admin">
           <label className="sl-application-records-search"><span>Search ingredients</span><div><Search size={17} aria-hidden="true" /><input type="search" placeholder="Search by ingredient or Batch ID..." aria-label="Search ingredients or Batch ID" value={adminInventorySearch} onChange={event => { setAdminInventorySearch(event.target.value); setAdminInventoryPage(1); }} /></div></label>
-          <label><span>Category</span><select value={adminInventoryCategory} onChange={event => { setAdminInventoryCategory(event.target.value); setAdminInventoryPage(1); }}><option>All Categories</option></select></label>
+          <label><span>Category</span><select value={adminInventoryCategory} onChange={event => { setAdminInventoryCategory(event.target.value); setAdminInventoryPage(1); }}><option>All Categories</option>{adminInventoryCategories.map(category => <option key={category}>{category}</option>)}</select></label>
           <label><span>Status</span><select value={adminInventoryStatus} onChange={event => { setAdminInventoryStatus(event.target.value); setAdminInventoryPage(1); }}><option>All Statuses</option><option>In Stock</option><option>Low Stock</option><option>Near Expiry</option><option>Expired</option></select></label>
           <div className="sl-application-records-filter-actions"><button type="button" className="sl-button" onClick={() => { setAdminInventorySearch(''); setAdminInventoryCategory('All Categories'); setAdminInventoryStatus('All Statuses'); setAdminInventoryPage(1); }}>Reset</button></div>
         </div></div>
         <div className="sl-application-records-table-shell">
-          <table className="sl-application-records-table" data-layout="inventory-admin" aria-label="Inventory batches"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Unit','Expiration Date','Status','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody><tr><td colSpan={8} className="sl-empty-cell"><DataState kind="empty" title="No inventory batches available" description="Inventory batch records will appear here when the inventory service is connected." /></td></tr></tbody></table>
+          <table className="sl-application-records-table" data-layout="inventory-admin" aria-label="Inventory batches"><thead><tr>{['#','Ingredient','Batch ID','Category','Current Stock','Unit','Expiration Date','Status','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody><tr className="sl-sa-records-dash-row" aria-label="Inventory batch values unavailable">{Array.from({ length: 8 }, (_, index) => <td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><AdminUnavailableInventoryBatchActions /></td></tr></tbody></table>
         </div>
         <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={adminInventoryRows} onChange={event => { setAdminInventoryRows(Number(event.target.value)); setAdminInventoryPage(1); }}>{APPLICATION_RECORD_PAGE_SIZES.map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={adminInventoryPage} pageSize={adminInventoryRows} total={0} itemLabel="inventory records" onPageChange={setAdminInventoryPage} /></footer>
       </section>

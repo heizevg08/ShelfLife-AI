@@ -244,7 +244,7 @@ export function AccountsTable() {
               : !visibleAccounts.length ? <tr><td colSpan={superAdmin ? 8 : 7} className="sl-empty-cell"><DataState kind="empty" title="No matching accounts" description="Try another search or filter." /></td></tr>
               : visibleAccounts.map((account, index) => <tr key={account.id}>
                 <td>{(data.page - 1) * data.pageSize + index + 1}</td>
-                <td className={superAdmin ? 'sl-v56-name' : 'sl-v56-name sl-application-record-name'}>{`${account.firstName} ${account.lastName}`.trim()}</td>
+                <td className={superAdmin ? 'sl-v56-name' : 'sl-v56-name sl-application-record-name'}>{superAdmin ? `${account.firstName} ${account.lastName}`.trim() : <span className="sl-emphasized-value">{`${account.firstName} ${account.lastName}`.trim()}</span>}</td>
                 <td>{account.email}</td>
                 <td><span className={superAdmin ? 'sl-v56-role-pill' : 'sl-application-role-pill'} data-role={account.role}>{account.role}</span></td>
                 <td>{superAdmin ? <Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status> : <span className="sl-status sl-application-status" data-tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Deactivated'}</span>}</td>
