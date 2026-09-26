@@ -32505,11 +32505,9 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-account-details-information { border-top: 1px solid var(--sl-border-subtle); padding: 1.25rem 1.5rem 1.5rem; }
 .sl-account-details-information > h3 { margin: 0 0 .75rem; font: var(--sl-font-card-title); }
 .sl-account-details-dialog .sl-account-details-grid { border: 1px solid var(--sl-border-subtle); border-radius: var(--sl-radius); grid-template-columns: repeat(2,minmax(0,1fr)); overflow: hidden; display: grid; }
-.sl-account-details-dialog .sl-account-details-grid > div { grid-template-columns: auto minmax(0,1fr); align-items: center; gap: .65rem; min-width: 0; padding: .85rem; display: grid; }
+.sl-account-details-dialog .sl-account-details-grid > div { min-width: 0; padding: .85rem; }
 .sl-account-details-dialog .sl-account-details-grid > div:nth-child(odd) { border-right: 1px solid var(--sl-border-subtle); }
 .sl-account-details-dialog .sl-account-details-grid > div:nth-child(n+3) { border-top: 1px solid var(--sl-border-subtle); }
-.sl-account-details-field-icon { color: var(--sl-brand); background: var(--sl-brand-subtle); border-radius: var(--sl-radius); place-items: center; width: 2.15rem; height: 2.15rem; display: grid; }
-.sl-account-details-field-icon svg { width: .95rem; height: .95rem; }
 .sl-account-details-grid dt { color: var(--sl-muted); font: var(--sl-font-supporting); }
 .sl-account-details-grid dd { margin-top: .15rem; overflow-wrap: anywhere; font: var(--sl-font-body); font-weight: 600; }
 .sl-account-details-dialog > .sl-dialog-actions {
@@ -33006,6 +33004,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   min-height: 88px!important;
   padding: 0 24px!important;
 }
+.sl-account-details-dialog .sl-account-dialog-heading { grid-template-columns: minmax(0,1fr); column-gap: 0; }
 .sl-account-details-dialog .sl-account-details-identity { min-width: 0; padding: 24px; }
 .sl-account-details-dialog .sl-account-details-avatar {
   width: 4.5rem;
@@ -33017,8 +33016,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   align-items: center;
   width: fit-content;
   color: var(--sl-brand);
-  background: transparent;
-  border: 1px solid color-mix(in oklab,var(--sl-brand) 35%,var(--sl-border));
+  background: var(--sl-brand-subtle);
+  border: 1px solid color-mix(in oklab,var(--sl-brand) 45%,var(--sl-border));
   border-radius: var(--sl-radius-full);
   padding: .25rem .65rem;
   box-shadow: none;
@@ -33029,6 +33028,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-account-details-dialog .sl-account-details-information { min-width: 0; padding: 20px 24px 24px; }
 .sl-account-details-dialog .sl-account-details-information > h3 { margin-bottom: 14px; }
 .sl-account-details-dialog .sl-account-details-grid > div { min-height: 88px; padding: 16px; }
+.sl-account-details-dialog .sl-account-details-grid .sl-status { gap: 0; }
+.sl-account-details-dialog .sl-account-details-grid .sl-status-dot { display: none; }
 .sl-account-details-dialog .sl-account-details-grid dd time { overflow-wrap: anywhere; }
 .sl-account-details-dialog > .sl-dialog-actions { flex-wrap: nowrap; min-height: 78px; padding: 18px 24px!important; }
 @media (width <= 620px) {
