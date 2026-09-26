@@ -186,7 +186,7 @@ export function AccountsTable() {
   const activePercent = totalUsers ? Math.round((activeUsers / totalUsers) * 100) : 0;
   return <>
     {!superAdmin && <section className="sl-sa-kpis sl-inventory-staff-kpis sl-admin-user-kpis" aria-label="Active user management summary">
-      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Total Users</span><strong>{summary ? totalUsers.toLocaleString() : '—'}</strong><small>{summary ? 'Active authorized accounts' : 'Active account totals unavailable'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Active Users</span><strong>{summary ? totalUsers.toLocaleString() : '—'}</strong><small>{summary ? 'Active authorized accounts' : 'Active account totals unavailable'}</small></div></article>
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UserCheck aria-hidden="true" /></span><div><span>Admin</span><strong>{summary ? (summary.roleCounts?.Admin ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Active Admin accounts' : 'Active account totals unavailable'}</small></div></article>
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Managers</span><strong>{summary ? (summary.roleCounts?.Manager ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Active Manager accounts' : 'Active account totals unavailable'}</small></div></article>
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Inventory Staff</span><strong>{summary ? (summary.roleCounts?.['Inventory Staff'] ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Active Inventory Staff accounts' : 'Active account totals unavailable'}</small></div></article>
@@ -260,7 +260,7 @@ export function AccountsTable() {
                 <td>{account.email}</td>
                 <td><span className={superAdmin ? 'sl-v56-role-pill' : 'sl-application-role-pill'} data-role={account.role}>{account.role}</span></td>
                 <td>{superAdmin ? <Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status> : <span className="sl-status sl-application-status" data-tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Deactivated'}</span>}</td>
-                <td>{!superAdmin && account.lastLoginAt ? <time dateTime={account.lastLoginAt}>{new Date(account.lastLoginAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time> : <span className={superAdmin ? 'sl-v56-unavailable' : 'sl-application-unavailable'} title="No recorded login">—</span>}</td>
+                <td>{account.lastLoginAt ? <time dateTime={account.lastLoginAt}>{new Date(account.lastLoginAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time> : <span className={superAdmin ? 'sl-v56-unavailable' : 'sl-application-unavailable'} title="No recorded login">—</span>}</td>
                 {superAdmin && <td>{new Date(account.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</td>}
                 <td><div className="sl-staff-waste-row-actions">
                   {superAdmin ? <>

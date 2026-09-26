@@ -25,7 +25,7 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
       const clauses: Record<string, unknown>[] = [];
       const includeActorObjectId = includeActorId ? new driver.Types.ObjectId(includeActorId) : undefined;
       if (roles) clauses.push(includeActorObjectId ? { $or: [{ role: { $in: storedUserRoles(roles) } }, { _id: includeActorObjectId }] } : { role: { $in: storedUserRoles(roles) } });
-      if (query.role) clauses.push(includeActorId && query.role === 'Admin' ? { _id: includeActorId } : { role: { $in: storedUserRoles([query.role]) } });
+      if (query.role) clauses.push(includeActorObjectId && query.role === 'Admin' ? { _id: includeActorObjectId } : { role: { $in: storedUserRoles([query.role]) } });
       if (query.status) clauses.push({ isActive: query.status === 'Active' });
       if (query.search) {
         const regex = new RegExp(escaped(query.search), 'i');
@@ -44,7 +44,8 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
     },
     async summary(roles = null, activeOnly = false, includeActorId?: string) {
       const clauses: Record<string, unknown>[] = [];
-      if (roles) clauses.push(includeActorId ? { $or: [{ role: { $in: storedUserRoles(roles) } }, { _id: includeActorId }] } : { role: { $in: storedUserRoles(roles) } });
+      const includeActorObjectId = includeActorId ? new driver.Types.ObjectId(includeActorId) : undefined;
+      if (roles) clauses.push(includeActorObjectId ? { $or: [{ role: { $in: storedUserRoles(roles) } }, { _id: includeActorObjectId }] } : { role: { $in: storedUserRoles(roles) } });
       if (activeOnly) clauses.push({ isActive: true });
       const roleFilter = clauses.length === 0 ? {} : clauses.length === 1 ? clauses[0] : { $and: clauses };
       const [counts, roleRows] = await Promise.all([
