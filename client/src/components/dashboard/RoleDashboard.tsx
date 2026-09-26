@@ -11,13 +11,13 @@ import { listIngredientCategories, listIngredients } from '../../services/ingred
 import { AuditTable } from '../application/AuditTable';
 import { sessionDisplayName } from '../../services/auth';
 
-function DashboardHeading({ userName, description, source = false }: { userName: string; description?: string; source?: boolean }) {
+function DashboardHeading({ userName, description, source = false, descriptionInHeader = false }: { userName: string; description?: string; source?: boolean; descriptionInHeader?: boolean }) {
   const [greeting, setGreeting] = useState('Welcome');
   useEffect(() => {
     const update = () => { const hour = new Date().getHours(); setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'); };
     update(); const interval = window.setInterval(update, 30000); return () => window.clearInterval(interval);
   }, []);
-  return <div className={`sl-dashboard-heading sl-dashboard-heading-v8${source ? ' sl-dashboard-source-heading' : ''}`}><PageHeader eyebrow="Dashboard" title={`${greeting}, ${userName}.`} />{description && <p className="sl-dashboard-description">{description}</p>}</div>;
+  return <div className={`sl-dashboard-heading sl-dashboard-heading-v8${source ? ' sl-dashboard-source-heading' : ''}`}><PageHeader eyebrow={descriptionInHeader ? 'Overview' : 'Dashboard'} title={`${greeting}, ${userName}.`} description={descriptionInHeader ? description : undefined} />{description && !descriptionInHeader && <p className="sl-dashboard-description">{description}</p>}</div>;
 }
 
 function DashboardCardTitle({ Icon, children }: { Icon: LucideIcon; children: ReactNode }) {
@@ -77,7 +77,7 @@ function AdminDashboardContent({ userName }: { userName: string }) {
   const ingredientValue = ingredientTotal === null ? '—' : ingredientTotal.toLocaleString();
   const userValue = userSummary?.totalUsers.toLocaleString() ?? '—';
   const userOverview = [
-    { label: 'Admin', value: 1 },
+    { label: 'Admin', value: userSummary?.roleCounts?.Admin },
     { label: 'Manager', value: userSummary?.roleCounts?.Manager },
     { label: 'Inventory Staff', value: userSummary?.roleCounts?.['Inventory Staff'] },
   ];
@@ -85,8 +85,7 @@ function AdminDashboardContent({ userName }: { userName: string }) {
   const accountStatus = userSummaryFailed ? 'User overview unavailable' : userSummary === null ? 'Loading user overview' : undefined;
 
   return <>
-    <DashboardHeading userName={userName} />
-    <p className="sl-dashboard-description">Here&apos;s an overview of your establishment&apos;s inventory and ingredient status.</p>
+    <DashboardHeading userName={userName} description="Here's an overview of your establishment's inventory and ingredient status." descriptionInHeader />
     <div className="sl-admin-view sl-admin-dashboard-v103">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Establishment inventory overview">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound aria-hidden="true" /></span><div><span>Total Users</span><strong>{userValue}</strong>{(userSummaryFailed || userSummary === null) && <small>{userSummaryFailed ? 'Account summary unavailable' : 'Loading account records'}</small>}</div></article>

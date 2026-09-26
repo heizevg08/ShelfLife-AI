@@ -32072,6 +32072,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-application-records-toolbar[data-layout="users"] { grid-template-columns: minmax(14rem,1.6fr) repeat(2,minmax(9rem,.75fr)) auto; }
 .sl-application-records-toolbar[data-layout="ingredients"] { grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8rem,.8fr)) auto; }
 .sl-application-records-toolbar[data-layout="inventory-admin"] { grid-template-columns: minmax(14rem,1.5fr) repeat(2,minmax(9rem,.8fr)) auto; }
+.sl-application-records-toolbar[data-layout="reports"] { grid-template-columns: minmax(11rem,1.3fr) repeat(3,minmax(8rem,1fr)) auto auto; }
 .sl-application-records-table[data-layout="users"] :is(th,td) { width: auto; }
 .sl-application-records-table[data-layout="users"] :is(th,td):first-child { width: 3rem; }
 .sl-application-records-table:is([data-layout="users"],[data-layout="ingredients"],[data-layout="reports"]) { min-width: 58rem; }
@@ -32118,10 +32119,12 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   border-color: var(--sl-focus);
   box-shadow: 0 0 0 2px color-mix(in oklab,var(--sl-focus) 18%,transparent);
 }
-.sl-application-records-table[data-layout="audit"] :is(th,td):first-child { width: 17%; }
-.sl-application-records-table[data-layout="audit"] :is(th,td):nth-child(2) { width: 18%; }
-.sl-application-records-table[data-layout="audit"] :is(th,td):is(:nth-child(3),:nth-child(4),:nth-child(6)) { width: 14%; }
-.sl-application-records-table[data-layout="audit"] :is(th,td):nth-child(5) { width: 23%; }
+.sl-application-records-table[data-layout="audit"] :is(th,td):first-child { width: 3rem; }
+.sl-application-records-table[data-layout="audit"] :is(th,td):nth-child(2) { width: 16%; }
+.sl-application-records-table[data-layout="audit"] :is(th,td):nth-child(3) { width: 17%; }
+.sl-application-records-table[data-layout="audit"] :is(th,td):is(:nth-child(4),:nth-child(5)) { width: 12%; }
+.sl-application-records-table[data-layout="audit"] :is(th,td):nth-child(6) { width: 29%; }
+.sl-application-records-table[data-layout="audit"] :is(th,td):nth-child(7) { width: 10%; }
 .sl-application-records-state { min-height: 100%; }
 .sl-application-record-name { font-weight: 600; }
 .sl-application-role-pill { white-space: nowrap; }
@@ -32165,8 +32168,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-application-pending-state .sl-supporting { font-size: clamp(.82rem,.76rem + .16vw,.94rem); line-height: 1.45; }
 .sl-application-pending-state .sl-status { font-size: clamp(.72rem,.68rem + .12vw,.82rem); }
 @media (width<=1100px) {
-  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"]) { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"]) :is(.sl-application-records-search,.sl-application-records-filter-actions) { grid-column: 1/-1; }
+  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"],[data-layout="reports"]) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"],[data-layout="reports"]) :is(.sl-application-records-search,.sl-application-records-filter-actions) { grid-column: 1/-1; }
 }
 @media (width<=760px) {
   .sl-application-records-header { align-items: flex-start; flex-wrap: wrap; }
@@ -32176,7 +32179,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-application-analytics-grid { grid-template-columns: 1fr; }
 }
 @media (width<=680px) {
-  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"]) { grid-template-columns: minmax(0,1fr); }
+  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"],[data-layout="reports"]) { grid-template-columns: minmax(0,1fr); }
   .sl-application-records-toolbar :is(.sl-application-records-search,.sl-application-records-filter-actions) { grid-column: auto; }
 }
 
@@ -32371,11 +32374,15 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 
 /* Admin record surfaces share the established table scale without forcing desktop scroll tracks. */
-.sl-admin-dashboard-records [data-layout="admin-dashboard-audit"] tbody td:nth-child(2) {
+.sl-admin-dashboard-records [data-layout="admin-dashboard-audit"] tbody td:nth-child(3) {
   font-weight: 600;
 }
 .sl-emphasized-value { font-weight: 600; }
 .sl-admin-dashboard-record-grid-single { grid-template-columns: minmax(0,1fr); }
+.sl-shell[data-role="Admin"] :is(.sl-admin-inventory-page,.sl-admin-reports-page) {
+  gap: var(--sl-space-4);
+  display: grid;
+}
 .sl-admin-inventory-page > .sl-page-header .sl-description {
   white-space: nowrap;
 }
@@ -32411,7 +32418,61 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-admin-ingredient-details-modal .sl-application-modal-card { padding: clamp(1rem,2vw,1.4rem); }
 .sl-admin-ingredient-details-modal .sl-ingredient-detail-reference { gap: clamp(.85rem,1.5vw,1.2rem); }
-.sl-admin-inventory-unavailable-row td { vertical-align: middle; }
+.sl-admin-user-records .sl-v56-name,
+.sl-admin-report-records .sl-v56-name {
+  color: var(--sl-text);
+  font: var(--sl-font-body);
+  font-weight: 600;
+  line-height: 1.45;
+}
+.sl-admin-ingredient-records .sl-admin-ingredient-name {
+  justify-content: flex-start;
+  width: 100%;
+  font: inherit;
+  line-height: inherit;
+}
+.sl-admin-ingredient-records .sl-admin-ingredient-name strong {
+  font-size: inherit;
+  line-height: inherit;
+}
+.sl-account-lifecycle-action.sl-account-deactivate-action {
+  color: var(--sl-critical);
+  border-color: color-mix(in srgb,var(--sl-critical) 35%,var(--sl-border));
+}
+.sl-account-lifecycle-action.sl-account-reactivate-action {
+  color: var(--sl-success);
+  border-color: color-mix(in srgb,var(--sl-success) 35%,var(--sl-border));
+}
+.sl-account-details-dialog .sl-account-details-grid {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: .85rem 1rem;
+  display: grid;
+}
+.sl-account-details-dialog .sl-account-details-grid > div { min-width: 0; }
+.sl-account-details-dialog > .sl-dialog-actions {
+  border-top: 1px solid var(--sl-border-subtle);
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding: 1rem 1.5rem;
+}
+.sl-add-user-dialog > .sl-dialog-actions {
+  background: var(--sl-surface);
+  gap: 10px;
+  padding: 20px 24px;
+}
+.sl-add-user-dialog > .sl-dialog-actions .sl-button {
+  min-height: 42px;
+  padding-inline: 18px;
+}
+.sl-admin-report-records .sl-download-trigger {
+  color: var(--sl-on-brand);
+  background: var(--sl-brand);
+  border-color: var(--sl-brand);
+}
+.sl-account-lifecycle-dialog.is-positive .sl-logout-icon {
+  color: var(--sl-success);
+  background: var(--sl-success-subtle);
+}
 @media (width >= 1000px) {
   .sl-admin-dashboard-records > .sl-staff-usage-table-shell,
   :is(.sl-admin-user-records,.sl-admin-ingredient-records,.sl-admin-inventory-records,.sl-admin-audit-records,.sl-admin-report-records) > .sl-application-records-table-shell,
@@ -32463,4 +32524,5 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-admin-ingredient-modal { width: min(100vw - 1rem,46rem); }
   .sl-admin-ingredient-modal .sl-application-modal-form[data-form="ingredient"] .sl-form-grid { grid-template-columns: 1fr; }
   .sl-admin-ingredient-modal .sl-application-modal-form[data-form="ingredient"] .sl-form-grid > label { grid-column: auto; }
+  .sl-account-details-dialog .sl-account-details-grid { grid-template-columns: 1fr; }
 }

@@ -35,7 +35,7 @@ function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit
     const valid = whole ? /^\d+$/.test(value) : /^\d*(?:\.\d*)?$/.test(value);
     setError(key, valid ? undefined : whole ? `${label} accepts whole numbers only.` : `${label} accepts numbers only.`);
   };
-  return <form id="sl-ingredient-form" className="sl-preview sl-live-ingredient-form sl-application-modal-form" data-form="ingredient" noValidate onSubmit={onSubmit}>
+  return <form id="sl-ingredient-form" className="sl-preview sl-live-ingredient-form sl-application-modal-form sl-account-form" data-form="ingredient" noValidate onSubmit={onSubmit}>
     {formError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{formError}</p>}
     <div className="sl-form-grid">
       {field('name', 'Name', <input autoFocus disabled={busy} className="sl-admin-input" placeholder="e.g. Chicken Breast" value={form.name} onChange={e => set('name', e.target.value)} {...validation('name')} />)}
@@ -595,7 +595,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
   const ingredientUnitOptions = summaryItems ? [...new Set(summaryItems.map(item => item.unitOfMeasure).filter(Boolean))].sort() : [];
   const filteredIngredientItems = data?.items.filter(item => unitFilter === 'All Units' || item.unitOfMeasure === unitFilter) ?? [];
   return <>
-    <PageHeader title="Ingredients" description="Manage ingredient master data used across your establishment." />
+    <PageHeader eyebrow="Core data" title="Ingredients" description="Manage ingredient master data used across your establishment." />
     <div className="sl-admin-view">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Ingredient summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Total Ingredients</span><strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong><small>{data ? 'Live ingredient catalogue' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</small></div></article>
@@ -617,22 +617,20 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
           {loadError ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
           : !data ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></td></tr>
           : !filteredIngredientItems.length ? <tr><td colSpan={7} className="sl-empty-cell"><ApplicationPendingState className="sl-application-records-state" description={search || category !== 'All' || unitFilter !== 'All Units' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} /></td></tr>
-          : filteredIngredientItems.map((item, index) => <tr key={item.id}><td>{(data.page - 1) * data.pageSize + index + 1}</td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</time></td><td><span className="sl-status sl-application-status" data-tone="success">Active</span></td></tr>)}
+          : filteredIngredientItems.map((item, index) => <tr key={item.id}><td>{(data.page - 1) * data.pageSize + index + 1}</td><td><button className="sl-sa-ingredient-name sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</time></td><td><span className="sl-status sl-application-status" data-tone="success">Active</span></td></tr>)}
         </tbody></table></div>
         <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{APPLICATION_RECORD_PAGE_SIZES.map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={data?.page ?? page} pageSize={data?.pageSize ?? pageSize} total={data?.total ?? 0} itemLabel="ingredients" onPageChange={setPage} /></footer>
       </section>
     </div>
-    <ApplicationModal
+    <Dialog
       open={preview === 'Ingredients'}
-      title={editIngredient ? 'Edit Ingredient' : 'Add New Ingredient'}
-      subtitle="Enter the ingredient details used across inventory workflows."
-      Icon={Leaf}
+      title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Leaf size={20} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">{editIngredient ? 'Edit Ingredient' : 'Add New Ingredient'}</span><small>Enter the ingredient details used across inventory workflows.</small></span></span>}
       onDismiss={dismiss}
       returnFocus={addButtonRef}
       busy={busy}
-      className="sl-admin-ingredient-modal"
+      className="sl-add-user-dialog sl-account-reference-dialog sl-admin-ingredient-modal"
       actions={<><button className="sl-button" type="button" disabled={busy} onClick={dismiss}>Cancel</button><button className="sl-button sl-button-primary" type="submit" form="sl-ingredient-form" disabled={busy}>{busy ? 'Saving…' : editIngredient ? 'Update Ingredient' : 'Save Ingredient'}</button></>}
-    ><IngredientForm form={form} errors={errors} busy={busy} formError={formError} set={setField} setError={setFieldError} onSubmit={save} /></ApplicationModal>
+    ><IngredientForm form={form} errors={errors} busy={busy} formError={formError} set={setField} setError={setFieldError} onSubmit={save} /></Dialog>
     <Dialog open={!!successIngredient} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon sl-success-dialog-icon">✓</span><span><span className="sl-account-dialog-title">Ingredient saved successfully</span><small>The ingredient record is now up to date in the registered ingredient list.</small></span></span>} onDismiss={() => setSuccessIngredient(null)} className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-success-dialog" actions={<button className="sl-button sl-button-primary" type="button" onClick={() => setSuccessIngredient(null)}>Done</button>}>
       {successIngredient && <div className="sl-success-summary"><strong>{successIngredient.name}</strong><span>{successIngredient.category} · {successIngredient.unitOfMeasure}</span></div>}
     </Dialog>
@@ -1745,7 +1743,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
     const roleCount = (role: 'Admin' | 'Manager' | 'Inventory Staff') => accountTotals?.roleCounts?.[role] ?? 0;
     const pct = (value: number) => total ? `${Math.round((value / total) * 100)}%` : '0%';
     return <>
-      <PageHeader eyebrow={adminUsers ? undefined : 'Administration'} title={adminUsers ? 'Users' : 'User Management'} description={adminUsers ? 'Manage establishment users, their roles, and access within ShelfLife AI.' : 'Control access, manage permissions, and monitor system participants.'} />
+      <PageHeader eyebrow={adminUsers ? 'User management' : 'Administration'} title={adminUsers ? 'Users' : 'User Management'} description={adminUsers ? 'Manage establishment users, their roles, and access within ShelfLife AI.' : 'Control access, manage permissions, and monitor system participants.'} />
       <div className="sl-admin-view sl-user-management-view">
         {adminUsers ? <div className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="User summary">
           {[
@@ -1784,7 +1782,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'Forecasting' && user.role === 'Super Admin') return <SuperAdminForecastingPage />;
 
   if (moduleId === 'InventoryBatches' && user.role === 'Admin') return <div className="sl-admin-inventory-page">
-    <PageHeader title="Inventory Batches" description="View and monitor current stock levels, expiration status, and inventory distribution for your establishment." />
+    <PageHeader eyebrow="Core data" title="Inventory Batches" description="View and monitor current stock levels, expiration status, and inventory distribution for your establishment." />
     <div className="sl-admin-view">
       <div className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Inventory summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
@@ -1795,13 +1793,13 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
       <section className="sl-application-records sl-admin-inventory-records" aria-labelledby="admin-inventory-records-title">
         <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileText aria-hidden="true" /></span><h2 id="admin-inventory-records-title">Inventory Batches Records</h2></header>
         <div className="sl-application-records-filters"><div className="sl-application-records-toolbar" data-layout="inventory-admin">
-          <label className="sl-application-records-search"><span>Search inventory</span><div><Search size={17} aria-hidden="true" /><input type="search" placeholder="Search ingredient or batch code..." aria-label="Search inventory" value={adminInventorySearch} onChange={event => { setAdminInventorySearch(event.target.value); setAdminInventoryPage(1); }} /></div></label>
+          <label className="sl-application-records-search"><span>Search ingredients</span><div><Search size={17} aria-hidden="true" /><input type="search" placeholder="Search by ingredient or Batch ID..." aria-label="Search ingredients or Batch ID" value={adminInventorySearch} onChange={event => { setAdminInventorySearch(event.target.value); setAdminInventoryPage(1); }} /></div></label>
           <label><span>Category</span><select value={adminInventoryCategory} onChange={event => { setAdminInventoryCategory(event.target.value); setAdminInventoryPage(1); }}><option>All Categories</option></select></label>
           <label><span>Status</span><select value={adminInventoryStatus} onChange={event => { setAdminInventoryStatus(event.target.value); setAdminInventoryPage(1); }}><option>All Statuses</option><option>In Stock</option><option>Low Stock</option><option>Near Expiry</option><option>Expired</option></select></label>
           <div className="sl-application-records-filter-actions"><button type="button" className="sl-button" onClick={() => { setAdminInventorySearch(''); setAdminInventoryCategory('All Categories'); setAdminInventoryStatus('All Statuses'); setAdminInventoryPage(1); }}>Reset</button></div>
         </div></div>
         <div className="sl-application-records-table-shell">
-          <table className="sl-application-records-table" data-layout="inventory-admin" aria-label="Inventory batches"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Unit','Expiration Date','Status','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody><tr className="sl-admin-inventory-unavailable-row" aria-label="Inventory batch values unavailable">{Array.from({ length: 7 }, (_, index) => <td key={index}>—</td>)}<td><UnavailableInventoryBatchActions /></td></tr></tbody></table>
+          <table className="sl-application-records-table" data-layout="inventory-admin" aria-label="Inventory batches"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Unit','Expiration Date','Status','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody><tr><td colSpan={8} className="sl-empty-cell"><DataState kind="empty" title="No inventory batches available" description="Inventory batch records will appear here when the inventory service is connected." action={<UnavailableInventoryBatchActions />} /></td></tr></tbody></table>
         </div>
         <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={adminInventoryRows} onChange={event => { setAdminInventoryRows(Number(event.target.value)); setAdminInventoryPage(1); }}>{APPLICATION_RECORD_PAGE_SIZES.map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={adminInventoryPage} pageSize={adminInventoryRows} total={0} itemLabel="inventory records" onPageChange={setAdminInventoryPage} /></footer>
       </section>

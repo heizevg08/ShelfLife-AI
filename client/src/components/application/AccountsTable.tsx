@@ -1,10 +1,9 @@
-import { Ban, Eye, EyeOff, Pencil, Search, User, UserPlus, Users, UserCheck, Clock3, Trash2, FileText } from 'lucide-react';
+import { Ban, Eye, EyeOff, Pencil, Search, User, UserPlus, UserX, Users, UserCheck, Clock3, Trash2, FileText } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { dashboardSummary, createAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
-import { ApplicationModal } from './ApplicationModal';
 import { APPLICATION_RECORD_PAGE_SIZES } from './ApplicationPatterns';
 import { DataState, Pagination, Status, SummaryCards } from './primitives';
 
@@ -244,7 +243,7 @@ export function AccountsTable() {
               : !visibleAccounts.length ? <tr><td colSpan={superAdmin ? 8 : 7} className="sl-empty-cell"><DataState kind="empty" title="No matching accounts" description="Try another search or filter." /></td></tr>
               : visibleAccounts.map((account, index) => <tr key={account.id}>
                 <td>{(data.page - 1) * data.pageSize + index + 1}</td>
-                <td className={superAdmin ? 'sl-v56-name' : 'sl-application-record-name'}>{account.name}</td>
+                <td className={superAdmin ? 'sl-v56-name' : 'sl-v56-name sl-application-record-name'}>{account.name}</td>
                 <td>{account.email}</td>
                 <td><span className={superAdmin ? 'sl-v56-role-pill' : 'sl-application-role-pill'} data-role={account.role}>{account.role}</span></td>
                 <td>{superAdmin ? <Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status> : <span className="sl-status sl-application-status" data-tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Deactivated'}</span>}</td>
@@ -257,7 +256,7 @@ export function AccountsTable() {
                     <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled={busy} aria-label={`${account.isActive ? 'Deactivate' : 'Reactivate'} ${account.name}`} title={account.isActive ? 'Deactivate' : 'Reactivate'} onClick={() => open(account, 'lifecycle')}><Trash2 size={16} aria-hidden="true" /></button>
                   </> : <>
                     <button type="button" className="sl-icon-button" disabled={busy} aria-label={`View ${account.name}`} title="View" onClick={() => open(account, 'view')}><Eye size={16} aria-hidden="true" /></button>
-                    <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled={busy || !mayManage(account)} aria-label={`${account.isActive ? 'Deactivate' : 'Reactivate'} ${account.name}`} title={account.isActive ? 'Deactivate' : 'Reactivate'} onClick={() => open(account, 'lifecycle')}><Trash2 size={16} aria-hidden="true" /></button>
+                    <button type="button" className={`sl-icon-button sl-account-lifecycle-action ${account.isActive ? 'sl-account-deactivate-action' : 'sl-account-reactivate-action'}`} disabled={busy || !mayManage(account)} aria-label={`${account.isActive ? 'Deactivate' : 'Reactivate'} ${account.name}`} title={account.isActive ? 'Deactivate' : 'Reactivate'} onClick={() => open(account, 'lifecycle')}>{account.isActive ? <UserX size={16} aria-hidden="true" /> : <UserCheck size={16} aria-hidden="true" />}</button>
                   </>}
                 </div></td>
               </tr>)}
@@ -316,11 +315,11 @@ export function AccountsTable() {
 
     {superAdmin ? <Dialog open={mode === 'view'} title="Account details" onDismiss={close}>
       {selected && <dl className="sl-identity-details">{[['Name', selected.name], ['Email', selected.email], ['Role', selected.role], ['Status', selected.isActive ? 'Active' : 'Inactive'], ['Created', new Date(selected.createdAt).toLocaleString(undefined, { hour12: true })]].map(([label, value]) => <div key={label}><dt className="sl-supporting">{label}</dt><dd>{value}</dd></div>)}</dl>}
-    </Dialog> : <ApplicationModal open={mode === 'view'} title="Account details" subtitle="Review the selected account identity and access status." Icon={User} onDismiss={close}>
-      {selected && <dl className="sl-identity-details">{[['Name', selected.name], ['Email', selected.email], ['Role', selected.role], ['Status', selected.isActive ? 'Active' : 'Inactive'], ['Created', new Date(selected.createdAt).toLocaleString(undefined, { hour12: true })]].map(([label, value]) => <div key={label}><dt className="sl-supporting">{label}</dt><dd>{value}</dd></div>)}</dl>}
-    </ApplicationModal>}
-    <Dialog open={mode === 'lifecycle'} title={`${selected?.isActive ? 'Deactivate' : 'Reactivate'} account?`} onDismiss={close} busy={busy} actions={<><button className="sl-button" data-initial-focus disabled={busy} onClick={close}>Cancel</button><button className="sl-button sl-button-primary" disabled={busy} onClick={lifecycle}>{busy ? 'Saving…' : selected?.isActive ? 'Deactivate account' : 'Reactivate account'}</button></>}>
-      <p>{selected?.isActive ? 'This account will lose access to ShelfLife AI. Historical records will be preserved.' : 'This account will be able to sign in to ShelfLife AI again.'}</p><p className="sl-supporting">{selected?.email}</p>{errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
+    </Dialog> : <Dialog open={mode === 'view'} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><User size={20} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Account Details</span><small>Review the selected account identity and access status.</small></span></span>} onDismiss={close} className="sl-add-user-dialog sl-account-reference-dialog sl-account-details-dialog" actions={<button className="sl-button" type="button" onClick={close}>Close</button>}>
+      {selected && <dl className="sl-identity-details sl-account-details-grid">{[['Name', selected.name], ['Email', selected.email], ['Role', selected.role], ['Status', selected.isActive ? 'Active' : 'Deactivated'], ['Created', new Date(selected.createdAt).toLocaleString(undefined, { hour12: true })], ['Last Login', selected.lastLoginAt ? new Date(selected.lastLoginAt).toLocaleString(undefined, { hour12: true }) : '—']].map(([label, value]) => <div key={label}><dt className="sl-supporting">{label}</dt><dd>{value}</dd></div>)}</dl>}
+    </Dialog>}
+    <Dialog open={mode === 'lifecycle'} showClose={false} className={`sl-logout-dialog sl-account-lifecycle-dialog${selected?.isActive ? ' is-destructive' : ' is-positive'}`} title={<><span className="sl-logout-icon" aria-hidden="true">{selected?.isActive ? <UserX size={20} /> : <UserCheck size={20} />}</span><span>{selected?.isActive ? 'Deactivate account?' : 'Reactivate account?'}</span></>} onDismiss={close} busy={busy} actions={<><button className="sl-button sl-logout-stay" data-initial-focus disabled={busy} onClick={close}>Cancel</button><button className={`sl-button ${selected?.isActive ? 'sl-button-logout' : 'sl-button-primary'}`} disabled={busy} onClick={lifecycle}>{busy ? 'Saving…' : selected?.isActive ? 'Deactivate account' : 'Reactivate account'}</button></>}>
+      <p className="sl-description">{selected?.isActive ? 'This account will lose access to ShelfLife AI. Historical records will be preserved.' : 'This account will be able to sign in to ShelfLife AI again.'}</p><p className="sl-supporting">{selected?.email}</p>{errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
     </Dialog>
   </>;
 }

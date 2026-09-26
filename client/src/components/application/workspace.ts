@@ -53,7 +53,7 @@ export const canonicalWorkspaceAccess = {
 export type CanonicalWorkspacePath = keyof typeof canonicalWorkspaceAccess;
 const navigation: Record<WorkspaceRole, ModuleId[]> = {
   'Super Admin': ['UserManagement', 'Alerts', 'ChangeRequests', 'AdministrativeAudit', 'Reports'],
-  Admin: ['UserManagement', 'Ingredients', 'InventoryBatches', 'Reports', 'AdministrativeAudit'],
+  Admin: ['UserManagement', 'Ingredients', 'InventoryBatches', 'AdministrativeAudit', 'Reports'],
   Manager: ['InventoryBatches', 'UsageWaste', 'ChangeRequests', 'Forecasting', 'Alerts', 'Reports'],
   'Inventory Staff': ['InventoryBatches', 'StockIn', 'Usage', 'Waste', 'ChangeRequests'],
 };

@@ -4,7 +4,6 @@ import { reportExportFormats } from '../../components/application/module-content
 import { ApplicationDonutChart, ApplicationLineChart } from '../../components/application/ApplicationPatterns';
 import { Card, DataState, ExportControl, PageHeader, Pagination } from '../../components/application/primitives';
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
-import { workspaceNavigation } from '../../components/application/workspace';
 import { listIngredients } from '../../services/ingredients';
 
 function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
@@ -20,7 +19,6 @@ function PendingPanel({ label, compact = false }: { label: string; compact?: boo
 }
 
 function AdminReports() {
-  const [downloadOpen, setDownloadOpen] = useState(false);
   const [dateRange, setDateRange] = useState('any');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -40,18 +38,16 @@ function AdminReports() {
       .catch(() => { if (!abort.signal.aborted) setIngredientTotalFailed(true); });
     return () => abort.abort();
   }, []);
-  const reportTypeByPath: Record<string, string> = {
-    '/UserManagement': 'Administration', '/Ingredients': 'Master Data', '/InventoryBatches': 'Inventory', '/Reports': 'Reporting', '/AdministrativeAudit': 'Security',
-  };
-  const reports = workspaceNavigation('Admin').map(item => ({
-    name: item.path === '/Reports' ? 'Administrative Reports' : item.label,
-    type: reportTypeByPath[item.path] ?? 'Administration',
-    path: item.path,
-  }));
+  const reports = [
+    { name: 'User Accounts', type: 'Administration', path: '/UserManagement' },
+    { name: 'Ingredient Master Data', type: 'Master Data', path: '/Ingredients' },
+    { name: 'Inventory Batches', type: 'Inventory', path: '/InventoryBatches' },
+    { name: 'Administrative Audit', type: 'Security', path: '/AdministrativeAudit' },
+  ];
   const reportTypes = [...new Set(reports.map(report => report.type))];
   const visibleReports = reports.filter(report => (reportType === 'All Reports' || report.type === reportType) && (category === 'All Categories' || report.type === category));
   return <div className="sl-admin-reports-page">
-    <PageHeader title="Reports" description="Generate and view reports on inventory, usage, waste, and ingredient data for your establishment." />
+    <PageHeader eyebrow="Oversight" title="Reports" description="Generate and view reports on inventory, usage, waste, and ingredient data for your establishment." />
     <div className="sl-admin-view sl-admin-reports-v114">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Report summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Package/></span><div><span>Total Inventory Value</span><strong>—</strong><small>Data unavailable</small></div></article>
@@ -62,19 +58,19 @@ function AdminReports() {
 
       <section className="sl-application-records sl-application-records-overflow sl-admin-report-records" aria-labelledby="sl-admin-available-reports">
         <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileBarChart2 aria-hidden="true" /></span><h2 id="sl-admin-available-reports">Available Reports</h2></header>
-        <div className="sl-admin-reports-filters" aria-label="Report filters">
+        <div className="sl-application-records-filters"><div className="sl-application-records-toolbar sl-admin-reports-filters" data-layout="reports" aria-label="Report filters">
           <label><span>Date Range</span><div className="sl-admin-reports-date"><CalendarDays size={16}/><select value={dateRange} onChange={event => { setDateRange(event.target.value); setReportPage(1); }}><option value="any">Any date</option><option value="week">Last 7 Days</option><option value="month">Last 30 Days</option><option value="custom">Custom</option></select></div></label>
           {dateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom report date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => setDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => setDateTo(event.target.value)} /></label></div>}
           <label><span>Report Type</span><select value={reportType} onChange={event => { setReportType(event.target.value); setReportPage(1); }}><option>All Reports</option>{reportTypes.map(value => <option key={value}>{value}</option>)}</select></label>
           <label><span>Category</span><select value={category} onChange={event => { setCategory(event.target.value); setReportPage(1); }}><option>All Categories</option>{reportTypes.map(value => <option key={value}>{value}</option>)}</select></label>
           <label><span>Group By</span><select value={groupBy} onChange={event => setGroupBy(event.target.value)}><option>None</option><option>Category</option></select></label>
           <button className="sl-button sl-admin-reports-reset" type="button" onClick={() => { reset(); setReportPage(1); }}><RotateCcw size={14}/> Reset</button>
-          <div className="sl-download-control"><button type="button" className="sl-button sl-button-primary sl-download-trigger" aria-expanded={downloadOpen} onClick={()=>setDownloadOpen(value=>!value)}><Download size={16}/> Export <ChevronDown size={15}/></button>{downloadOpen && <div className="sl-download-menu" role="menu">{reportExportFormats.map(format=><button key={format.id} type="button" disabled className="sl-download-option">{format.label}</button>)}</div>}</div>
-        </div>
+          <ExportControl label="Export" menuId="sl-admin-reports-export-menu" />
+        </div></div>
         <div className="sl-application-records-table-shell">
           <table className="sl-application-records-table" data-layout="reports" aria-label="Available reports">
             <thead><tr><th scope="col">#</th><th scope="col">Report</th><th scope="col">Type</th><th scope="col">Last Generated</th></tr></thead>
-            <tbody>{visibleReports.map((report, index) => <tr key={report.path}><td>{index + 1}</td><td><span className="sl-admin-report-name"><i><FileBarChart2 size={15}/></i>{report.name}</span></td><td><b data-category={report.type}>{report.type}</b></td><td>—</td></tr>)}</tbody>
+            <tbody>{visibleReports.map((report, index) => <tr key={report.path}><td>{index + 1}</td><td><span className="sl-v56-name sl-admin-report-name">{report.name}</span></td><td><b data-category={report.type}>{report.type}</b></td><td>—</td></tr>)}</tbody>
           </table>
         </div>
         <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={reportPageSize} onChange={event => { setReportPageSize(Number(event.target.value)); setReportPage(1); }}><option>10</option><option>25</option><option>50</option></select></label><Pagination compact page={reportPage} pageSize={reportPageSize} total={visibleReports.length} itemLabel="reports" onPageChange={setReportPage} /></footer>

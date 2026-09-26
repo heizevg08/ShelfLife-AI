@@ -110,7 +110,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
         <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileText aria-hidden="true" /></span><h2 id="sl-system-audit-log">Audit Logs</h2></header>
       </> : <div className="sl-card-header sl-audit-table-heading"><h2 className="sl-section-title" id="sl-system-audit-log">System Audit Logs</h2></div>)}
       <div className={recent ? "sl-audit-fragment-body" : adminOverview ? "sl-application-records-body" : "sl-card-body"}>
-    {adminOverview && <div className="sl-audit-filter-strip">
+    {adminOverview && <div className="sl-application-records-filters"><div className="sl-application-records-toolbar sl-audit-filter-strip" data-layout="audit">
       <label className="sl-application-records-compact-search"><span>Search</span><span><Search size={17} aria-hidden="true" /><input type="search" value={searchTerm} onChange={event => { setSearchTerm(event.target.value); setPage(1); }} placeholder="Search logs..." aria-label="Search audit logs" /></span></label>
       <label>Date Range<select className="sl-admin-input" value={periodFilter} onChange={event => { setPage(1); setPeriodFilter(event.target.value); }}>{administrationFilterCatalog.audit.period.map(period => <option key={period}>{period}</option>)}</select></label>
       {periodFilter === 'Custom' && <div className="sl-audit-specific-dates" aria-label="Custom date range"><label>From<input className="sl-admin-input" type="date" value={specificFrom} max={specificTo || undefined} onChange={event => setSpecificFrom(event.target.value)} /></label><label>To<input className="sl-admin-input" type="date" value={specificTo} min={specificFrom || undefined} onChange={event => setSpecificTo(event.target.value)} /></label></div>}
@@ -120,7 +120,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
       <label>Status<select className="sl-admin-input" value={statusFilter || administrationFilterCatalog.audit.status[0]} onChange={event => { setPage(1); setStatusFilter(event.target.value === administrationFilterCatalog.audit.status[0] ? '' : event.target.value); }}>{administrationFilterCatalog.audit.status.map(status => <option key={status}>{status}</option>)}</select></label>
       <button type="button" className="sl-button" onClick={resetAdminFilters}>Reset</button>
       <ExportControl label="Export" menuId="sl-admin-audit-export-menu" />
-    </div>}
+    </div></div>}
     {!recent && !adminOverview && <div className="sl-table-toolbar sl-audit-toolbar">
       <div className="sl-audit-toolbar-right">
         <span className="sl-supporting sl-auto-update-note" aria-live="polite">{lastUpdatedLabel}</span>
@@ -165,25 +165,26 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
 
     <div className={adminOverview ? "sl-application-records-table-shell" : "sl-table-scroll"} role="region" aria-label="Administrative audit records" tabIndex={0}>
         <table className={adminOverview ? "sl-application-records-table" : "sl-data-table"} data-layout={adminOverview ? 'audit' : adminDashboard ? 'admin-dashboard-audit' : undefined}>
-          <thead><tr>{adminDashboard ? <><th scope="col">User</th><th scope="col">Action</th><th scope="col">Date &amp; Time</th><th scope="col">Status</th></> : <>{adminOverview && <th scope="col">#</th>}<th scope="col">Date &amp; Time</th><th scope="col">User</th><th scope="col">Action</th>{adminOverview && <th scope="col">Module</th>}<th scope="col">Details</th><th scope="col">Status</th></>}</tr></thead>
+          <thead><tr>{adminDashboard ? <><th scope="col">#</th><th scope="col">User</th><th scope="col">Action</th><th scope="col">Date &amp; Time</th><th scope="col">Status</th></> : <>{adminOverview && <th scope="col">#</th>}<th scope="col">Date &amp; Time</th><th scope="col">User</th><th scope="col">Action</th>{adminOverview && <th scope="col">Module</th>}<th scope="col">Details</th><th scope="col">Status</th></>}</tr></thead>
           <tbody>
             {adminOverview && error ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="error" title="Activity could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
             : adminOverview && !data ? <tr><td colSpan={7} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="Retrieving live audit records." /></td></tr>
             : adminOverview && !visibleRows.length ? <tr><td colSpan={7} className="sl-empty-cell"><ApplicationPendingState className="sl-application-records-state" description={filtersApplied ? 'No audit records match the selected filters.' : 'Administrative activity will appear here when audit records are available.'} /></td></tr>
             : recent && (error || !data || !visibleRows.length) ? adminDashboard
-              ? <tr><td colSpan={4} className="sl-empty-cell"><ApplicationPendingState description={error ? 'Recent user activity could not be loaded.' : !data ? 'Recent user activity is loading.' : 'Recent user activity will appear when audit records are available.'} /></td></tr>
+              ? <tr><td colSpan={5} className="sl-empty-cell"><ApplicationPendingState description={error ? 'Recent user activity could not be loaded.' : !data ? 'Recent user activity is loading.' : 'Recent user activity will appear when audit records are available.'} /></td></tr>
               : <tr className="sl-dashboard-audit-fallback-row" aria-label={error ? 'Recent activity could not be loaded' : !data ? 'Recent activity loading' : 'No recent activity available'}>{Array.from({ length: 5 }, (_, index) => <td key={index}>—</td>)}</tr>
             : error ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="error" title="Activity could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(x => x + 1)}>Retry</button>} /></td></tr>
             : !data ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="loading" title="Loading activity" description="" /></td></tr>
             : !visibleRows.length ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="empty" title={filtersApplied ? 'No records match these filters' : 'No administrative activity yet'} description={filtersApplied ? 'Change or clear the current filters.' : "You're all caught up — successful account changes will show up here automatically."} /></td></tr>
-            : visibleRows.map(row => adminDashboard ? <tr key={row.id}>
+            : visibleRows.map((row, rowIndex) => adminDashboard ? <tr key={row.id}>
+              <td>{(data.page - 1) * data.pageSize + rowIndex + 1}</td>
               <td className="sl-record-id">{row.actor.name || '—'}</td>
               <td className="sl-emphasized-value">{row.action}</td>
               <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
               <td><span className="sl-status" data-tone="success">Success</span></td>
             </tr> : <tr key={row.id}>
+                {adminOverview && <td>{(data.page - 1) * data.pageSize + rowIndex + 1}</td>}
                 <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
-                {adminOverview && <td>{(data.page - 1) * data.pageSize + visibleRows.indexOf(row) + 1}</td>}
                 <td className="sl-record-id">{adminOverview ? row.actor.name || '—' : `${row.actor.name} · ${row.actor.role}`}</td>
                 <td className={adminOverview ? 'sl-emphasized-value' : undefined}>{row.action}</td>
                 {adminOverview && <td>{row.targetType}</td>}
