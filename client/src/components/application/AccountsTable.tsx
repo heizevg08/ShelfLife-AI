@@ -291,11 +291,7 @@ export function AccountsTable() {
           : 'Create account'}
       onDismiss={close}
       busy={busy}
-      className={mode === 'create'
-        ? 'sl-add-user-dialog sl-account-reference-dialog'
-        : mode === 'edit'
-          ? 'sl-add-user-dialog sl-edit-user-dialog sl-account-reference-dialog'
-          : ''}
+      className={mode === 'create' || mode === 'edit' ? 'sl-add-user-dialog sl-account-reference-dialog' : ''}
     >
       <form className="sl-admin-form sl-account-form" onSubmit={save} noValidate>
         <div className="sl-form-grid">
@@ -326,7 +322,7 @@ export function AccountsTable() {
           </label>)}{touched.role && errors.role && <p id="admin-role-error" className="sl-admin-error">{errors.role}</p>}</fieldset>
         </div>
         {errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
-        <div className="sl-dialog-form-actions"><button className="sl-button" type="button" disabled={busy} onClick={close}>Cancel</button><button className={`sl-button sl-button-primary ${mode === 'edit' ? 'sl-save-changes-ui' : ''}`} disabled={busy}>{busy ? 'Saving…' : mode === 'create' ? 'Create account' : 'Save changes'}</button></div>
+        <div className="sl-dialog-form-actions"><button className="sl-button" type="button" disabled={busy} onClick={close}>Cancel</button><button className="sl-button sl-button-primary" disabled={busy}>{busy ? 'Saving…' : mode === 'create' ? 'Create account' : 'Save changes'}</button></div>
       </form>
     </Dialog>
 
