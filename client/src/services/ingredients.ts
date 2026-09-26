@@ -25,10 +25,11 @@ export interface IngredientInput {
   standardUnitCost?: number;
   defaultShelfLifeDays?: number;
 }
-export function listIngredients(page = 1, pageSize = 25, search = '', category = '', signal?: AbortSignal) {
+export function listIngredients(page = 1, pageSize = 25, search = '', category = '', signal?: AbortSignal, unit = '') {
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
   if (search) query.set('search', search);
   if (category) query.set('category', category);
+  if (unit) query.set('unit', unit);
   return apiClient<Page<Ingredient>>(`/ingredients?${query}`, { signal });
 }
 export const listIngredientCategories = (signal?: AbortSignal) => apiClient<{ categories: string[] }>('/ingredients/categories', { signal });

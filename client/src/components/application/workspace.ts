@@ -5,6 +5,9 @@ export type WorkspaceRole = SessionUser['role'];
 export const dashboardPaths: Record<WorkspaceRole, string> = {
   'Super Admin': '/SuperAdminDashboard', Admin: '/AdminDashboard', Manager: '/ManagerDashboard', 'Inventory Staff': '/InventoryStaffDashboard',
 };
+export const profilePaths: Record<WorkspaceRole, string> = {
+  'Super Admin': '/SuperAdminProfile', Admin: '/AdminProfile', Manager: '/ManagerProfile', 'Inventory Staff': '/InventoryStaffProfile',
+};
 const operational: WorkspaceRole[] = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'];
 export const modules = {
   UserManagement: { label: 'User Management', Icon: Users, roles: ['Super Admin', 'Admin'] },
@@ -25,9 +28,13 @@ export const modules = {
 export type ModuleId = keyof typeof modules;
 export const canonicalWorkspaceAccess = {
   '/SuperAdminDashboard': ['Super Admin'],
+  '/SuperAdminProfile': ['Super Admin'],
   '/AdminDashboard': ['Admin'],
+  '/AdminProfile': ['Admin'],
   '/ManagerDashboard': ['Manager'],
+  '/ManagerProfile': ['Manager'],
   '/InventoryStaffDashboard': ['Inventory Staff'],
+  '/InventoryStaffProfile': ['Inventory Staff'],
   '/SystemSettings': ['Super Admin'],
   '/SecurityActivity': ['Super Admin'],
   '/UserManagement': ['Super Admin', 'Admin'],

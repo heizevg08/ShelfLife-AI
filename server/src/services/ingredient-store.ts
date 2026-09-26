@@ -34,6 +34,7 @@ export function createIngredientStore(_driver: Mongoose, ingredients: ReturnType
     async list(query: IngredientPageQuery) {
       const filter: Record<string, unknown> = {};
       if (query.category) filter.category = query.category;
+      if (query.unit) filter.unitOfMeasure = query.unit;
       if (query.search) filter.$or = [
         { name: { $regex: escape(query.search), $options: 'i' } },
         { brand: { $regex: escape(query.search), $options: 'i' } },

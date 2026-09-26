@@ -43,6 +43,14 @@ export type UserRecord = InferSchemaType<typeof schema> & { _id: { toString(): s
 export function userModel(driver: Mongoose) {
   return driver.model('User', schema);
 }
+function isoTimestamp(value: unknown): string | undefined {
+  if (value instanceof Date && Number.isFinite(value.getTime())) return value.toISOString();
+  if (typeof value === 'string') {
+    const date = new Date(value);
+    if (Number.isFinite(date.getTime())) return date.toISOString();
+  }
+  return undefined;
+}
 export function safeUser(user: UserRecord) {
   const role = normalizeUserRole(user.role) ?? user.role;
   const storedName = typeof user.name === 'string' ? user.name.trim() : '';
@@ -52,6 +60,9 @@ export function safeUser(user: UserRecord) {
   // "Super Admin" label leak into an account whose authoritative role is Admin.
   if (role === 'Admin' && displayName === 'Super Admin') displayName = 'Admin';
   if (role === 'Super Admin' && displayName === 'Admin') displayName = 'Super Admin';
+  const createdAt = isoTimestamp(user.createdAt);
+  const updatedAt = isoTimestamp(user.updatedAt);
   return { id: user._id.toString(), name: displayName, email: user.email,
-    role, isActive: user.isActive, ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}) };
+    role, isActive: user.isActive, ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}),
+    ...(createdAt ? { createdAt } : {}), ...(updatedAt ? { updatedAt } : {}) };
 }

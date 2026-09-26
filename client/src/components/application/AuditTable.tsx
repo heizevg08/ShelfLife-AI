@@ -1,10 +1,13 @@
 import { ChevronDown, Clock3, Download, FileText, Filter, ListChecks, Search, UsersRound, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { listAuditRecords, type AuditFilters, type AuditRecord, type Page } from '../../services/administration';
+import { downloadAuditCsv, listAuditRecords, type AuditFilters, type AuditRecord, type Page } from '../../services/administration';
 import { administrationFilterCatalog } from './administration';
 import { APPLICATION_RECORD_PAGE_SIZES, ApplicationPendingState } from './ApplicationPatterns';
 import { reportExportFormats } from './module-content';
 import { DataState, ExportControl, Pagination, Status } from './primitives';
+import { DateRangeFilter, type DateRangeValue } from './DateRangeFilter';
+import { modules, workspaceNavigation, type WorkspaceRole } from './workspace';
+import { publishActionFeedback } from '../../services/actionFeedback';
 
 const AUTO_REFRESH_MS = 15000;
 const auditActionByLabel: Record<string, AuditFilters['action']> = {
@@ -12,6 +15,7 @@ const auditActionByLabel: Record<string, AuditFilters['action']> = {
   'Account updated': 'UPDATE',
   'Account deactivated': 'DEACTIVATE',
   'Account reactivated': 'REACTIVATE',
+  'Data exported': 'EXPORT',
 };
 
 export function AuditTable({ recent = false, adminOverview = false, adminDashboard = false }: { recent?: boolean; adminOverview?: boolean; adminDashboard?: boolean }) {
@@ -22,7 +26,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [actorFilter, setActorFilter] = useState('');
   const [actionFilter, setActionFilter] = useState('');
-  const [periodFilter, setPeriodFilter] = useState<string>(administrationFilterCatalog.audit.period[0]);
+  const [periodFilter, setPeriodFilter] = useState<DateRangeValue>('any');
   const [data, setData] = useState<Page<AuditRecord> | null>(null);
   const [error, setError] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
@@ -35,12 +39,15 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
   useEffect(() => {
     const abort = new AbortController();
     if (!data) setError(false);
-    const cutoffDays = periodFilter === 'Last week' ? 7 : periodFilter === 'Last month' ? 30 : periodFilter === 'Last year' ? 365 : 0;
-    const specificStart = periodFilter === 'Custom' && specificFrom ? new Date(`${specificFrom}T00:00:00`).toISOString() : undefined;
-    const specificEnd = periodFilter === 'Custom' && specificTo ? new Date(`${specificTo}T23:59:59.999`).toISOString() : undefined;
+    const cutoffDays = periodFilter === 'week' ? 7 : periodFilter === 'month' ? 30 : periodFilter === 'year' ? 365 : 0;
+    const specificStart = periodFilter === 'custom' && specificFrom ? new Date(`${specificFrom}T00:00:00`).toISOString() : undefined;
+    const specificEnd = periodFilter === 'custom' && specificTo ? new Date(`${specificTo}T23:59:59.999`).toISOString() : undefined;
     const filters: AuditFilters = recent ? {} : {
       actorRole: actorFilter ? actorFilter as AuditFilters['actorRole'] : undefined,
       action: actionFilter ? auditActionByLabel[actionFilter] : undefined,
+      module: moduleFilter || undefined,
+      status: statusFilter ? statusFilter as AuditFilters['status'] : undefined,
+      search: searchTerm.trim() || undefined,
       from: specificStart ?? (cutoffDays ? new Date(Date.now() - cutoffDays * 86400000).toISOString() : undefined),
       to: specificEnd,
     };
@@ -48,38 +55,60 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
       .then(value => { if (!abort.signal.aborted) { setData(value); setLastUpdatedAt(new Date()); } })
       .catch(() => { if (!abort.signal.aborted) setError(true); });
     return () => abort.abort();
-  }, [page, pageSize, refresh, recent, actorFilter, actionFilter, periodFilter, specificFrom, specificTo]);
+  }, [page, pageSize, refresh, recent, actorFilter, actionFilter, periodFilter, specificFrom, specificTo, statusFilter, moduleFilter, searchTerm]);
 
   useEffect(() => {
     const interval = window.setInterval(() => setRefresh(value => value + 1), AUTO_REFRESH_MS);
     return () => window.clearInterval(interval);
   }, []);
 
-  const actorOptions = [...administrationFilterCatalog.audit.actor];
-  const actionOptions = [...administrationFilterCatalog.audit.action];
+  const actorOptions = adminOverview ? ['All users', 'Admin', 'Manager', 'Inventory Staff'] : [...administrationFilterCatalog.audit.actor];
+  const actionOptions = adminOverview ? ['All actions', 'Account created', 'Account updated', 'Account deactivated', 'Account reactivated', 'Data exported'] : [...administrationFilterCatalog.audit.action];
   const rows = data?.items ?? [];
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const rowStatus = (_row: AuditRecord) => 'Success';
-  const moduleOptions = ['All modules', ...Array.from(new Set(rows.map(row => row.targetType).filter(Boolean))).sort()];
-  const visibleRows = rows.filter(row => {
-    const matchesSearch = !normalizedSearch || [row.timestamp, row.actor.name, row.actor.role, row.action, row.targetType, row.targetId, row.targetName ?? '', rowStatus(row)].some(value => value.toLowerCase().includes(normalizedSearch));
+  const rowStatus = (row: AuditRecord) => row.status ?? 'Success';
+  const adminModuleOptions = [...new Set((['Admin', 'Manager', 'Inventory Staff'] as WorkspaceRole[]).flatMap(role => workspaceNavigation(role).map(item => {
+    const moduleId = item.path.replace(/^\//, '') as keyof typeof modules;
+    return modules[moduleId]?.label ?? item.label;
+  })))].sort();
+  const moduleOptions = adminOverview ? ['All modules', ...adminModuleOptions] : ['All modules', ...Array.from(new Set(rows.map(row => row.module ?? row.targetType).filter(Boolean))).sort()];
+  const visibleRows = adminOverview ? rows : rows.filter(row => {
+    const matchesSearch = !normalizedSearch || [row.timestamp, row.actor.name, row.actor.role, row.action, row.targetType, row.targetId ?? '', row.targetName ?? '', rowStatus(row)].some(value => String(value ?? '').toLowerCase().includes(normalizedSearch));
     const matchesStatus = !statusFilter || rowStatus(row) === statusFilter;
-    const matchesModule = !moduleFilter || row.targetType === moduleFilter;
+    const matchesModule = !moduleFilter || (row.module ?? row.targetType) === moduleFilter;
     return matchesSearch && matchesStatus && matchesModule;
   });
-  const filtersApplied = !!actorFilter || !!actionFilter || !!moduleFilter || !!statusFilter || periodFilter !== administrationFilterCatalog.audit.period[0] || !!normalizedSearch;
+  const filtersApplied = !!actorFilter || !!actionFilter || !!moduleFilter || !!statusFilter || periodFilter !== 'any' || !!normalizedSearch;
 
   const resetAdminFilters = () => {
     setActorFilter('');
     setActionFilter('');
-    setPeriodFilter(administrationFilterCatalog.audit.period[0]);
+    setPeriodFilter('any');
     setPage(1);
     setStatusFilter('');
     setModuleFilter('');
     setSpecificFrom('');
     setSpecificTo('');
     setSearchTerm('');
-    setRefresh(value => value + 1);
+  };
+
+  const exportFilters: AuditFilters = {
+    actorRole: actorFilter ? actorFilter as AuditFilters['actorRole'] : undefined,
+    action: actionFilter ? auditActionByLabel[actionFilter] : undefined,
+    module: moduleFilter || undefined,
+    status: statusFilter ? statusFilter as AuditFilters['status'] : undefined,
+    search: searchTerm.trim() || undefined,
+    from: periodFilter === 'custom' && specificFrom ? new Date(`${specificFrom}T00:00:00`).toISOString() : periodFilter === 'week' || periodFilter === 'month' || periodFilter === 'year' ? new Date(Date.now() - (periodFilter === 'week' ? 7 : periodFilter === 'month' ? 30 : 365) * 86400000).toISOString() : undefined,
+    to: periodFilter === 'custom' && specificTo ? new Date(`${specificTo}T23:59:59.999`).toISOString() : undefined,
+  };
+  const exportAudit = async (format: (typeof reportExportFormats)[number]['id']) => {
+    if (format !== 'csv') return;
+    try {
+      await downloadAuditCsv(exportFilters);
+      publishActionFeedback({ kind: 'success', message: 'Audit records CSV downloaded.' });
+    } catch {
+      publishActionFeedback({ kind: 'error', message: 'Audit records could not be exported.' });
+    }
   };
 
   const lastUpdatedLabel = lastUpdatedAt
@@ -94,11 +123,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
   const commonAction = Object.entries(actionCounts).sort((a, b) => b[1] - a[1])[0];
   const actionLabel = (action: string) => ({ CREATE: 'Created', UPDATE: 'Updated', DEACTIVATE: 'Deactivated', REACTIVATE: 'Reactivated' }[action] ?? action);
   const actorName = (row: AuditRecord) => {
-    const name = row.actor.name.trim();
-    const roleToken = row.actor.role.replace(/\s+/g, '').toLowerCase();
-    const nameParts = name.split(/\s+/);
-    const roleComposedSeedName = nameParts[0]?.toLowerCase() === 'development' && nameParts.at(-1)?.replace(/\s+/g, '').toLowerCase() === roleToken;
-    return name && !roleComposedSeedName ? name : 'Unknown account';
+    return row.actor.name.trim() || 'Unknown account';
   };
   const auditDetails = (row: AuditRecord) => {
     const entity = row.targetType.trim().toLowerCase() || 'target';
@@ -125,13 +150,12 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
       <div className={recent ? "sl-audit-fragment-body" : adminOverview ? "sl-application-records-body" : "sl-card-body"}>
     {adminOverview && <div className="sl-application-records-filters"><div className="sl-application-records-toolbar sl-audit-filter-strip" data-layout="audit">
       <label className="sl-application-records-search"><span>Search</span><div><Search size={17} aria-hidden="true" /><input type="search" value={searchTerm} onChange={event => { setSearchTerm(event.target.value); setPage(1); }} placeholder="Search logs..." aria-label="Search audit logs" /></div></label>
-      <label><span>Date Range</span><select value={periodFilter} onChange={event => { setPage(1); setPeriodFilter(event.target.value); }}>{administrationFilterCatalog.audit.period.map(period => <option key={period}>{period}</option>)}</select></label>
-      {periodFilter === 'Custom' && <div className="sl-audit-specific-dates" aria-label="Custom date range"><label><span>From</span><input type="date" value={specificFrom} max={specificTo || undefined} onChange={event => setSpecificFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={specificTo} min={specificFrom || undefined} onChange={event => setSpecificTo(event.target.value)} /></label></div>}
+      <DateRangeFilter className="sl-admin-audit-date-range" value={periodFilter} from={specificFrom} to={specificTo} onChange={value => { setPage(1); setPeriodFilter(value); }} onFromChange={value => { setPage(1); setSpecificFrom(value); }} onToChange={value => { setPage(1); setSpecificTo(value); }} />
       <label><span>User</span><select value={actorFilter || actorOptions[0]} onChange={event => { setPage(1); setActorFilter(event.target.value === actorOptions[0] ? '' : event.target.value); }}>{actorOptions.map(actor => <option key={actor}>{actor}</option>)}</select></label>
       <label><span>Action</span><select value={actionFilter || actionOptions[0]} onChange={event => { setPage(1); setActionFilter(event.target.value === actionOptions[0] ? '' : event.target.value); }}>{actionOptions.map(action => <option key={action}>{action}</option>)}</select></label>
       <label><span>Module</span><select value={moduleFilter || moduleOptions[0]} onChange={event => { setPage(1); setModuleFilter(event.target.value === moduleOptions[0] ? '' : event.target.value); }}>{moduleOptions.map(module => <option key={module}>{module}</option>)}</select></label>
       <label><span>Status</span><select value={statusFilter || administrationFilterCatalog.audit.status[0]} onChange={event => { setPage(1); setStatusFilter(event.target.value === administrationFilterCatalog.audit.status[0] ? '' : event.target.value); }}>{administrationFilterCatalog.audit.status.map(status => <option key={status}>{status}</option>)}</select></label>
-      <div className="sl-application-records-filter-actions"><button type="button" className="sl-button" onClick={resetAdminFilters}>Reset</button><ExportControl label="Export" menuId="sl-admin-audit-export-menu" /></div>
+      <div className="sl-application-records-filter-actions"><button type="button" className="sl-button" onClick={resetAdminFilters}>Reset</button><ExportControl label="Export" menuId="sl-admin-audit-export-menu" availableFormats={['csv']} onExport={exportAudit} /></div>
     </div></div>}
     {!recent && !adminOverview && <div className="sl-table-toolbar sl-audit-toolbar">
       <div className="sl-audit-toolbar-right">
@@ -163,12 +187,8 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
                   {actionOptions.map(action => <option key={action}>{action}</option>)}
                 </select>
               </label>
-              <label>Date range
-                <select className="sl-admin-input" value={periodFilter} onChange={event => { setPage(1); setPeriodFilter(event.target.value); }}>
-                  {administrationFilterCatalog.audit.period.map(period => <option key={period}>{period}</option>)}
-                </select>
-              </label>
-              <button type="button" className="sl-button sl-filter-clear" onClick={() => { setActorFilter(''); setActionFilter(''); setPeriodFilter(administrationFilterCatalog.audit.period[0]); setPage(1); }}>Clear filters</button>
+              <DateRangeFilter value={periodFilter} from={specificFrom} to={specificTo} onChange={setPeriodFilter} onFromChange={setSpecificFrom} onToChange={setSpecificTo} label="Date range" />
+              <button type="button" className="sl-button sl-filter-clear" onClick={() => { setActorFilter(''); setActionFilter(''); setPeriodFilter('any'); setSpecificFrom(''); setSpecificTo(''); setPage(1); }}>Clear filters</button>
             </div>
           </div>}
         </div>
@@ -190,7 +210,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
             : !visibleRows.length ? <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="empty" title={filtersApplied ? 'No records match these filters' : 'No administrative activity yet'} description={filtersApplied ? 'Change or clear the current filters.' : "You're all caught up — successful account changes will show up here automatically."} /></td></tr>
             : visibleRows.map((row, rowIndex) => adminDashboard ? <tr key={row.id}>
               <td>{(data.page - 1) * data.pageSize + rowIndex + 1}</td>
-              <td className="sl-record-id">{actorName(row)}</td>
+              <td className="sl-record-id"><span className="sl-emphasized-value">{actorName(row)}</span></td>
               <td>{row.action}</td>
               <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
               <td><span className="sl-status" data-tone="success">Success</span></td>
@@ -199,9 +219,9 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
                 <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
                 <td className="sl-record-id">{adminOverview ? <span className="sl-emphasized-value">{actorName(row)}</span> : `${row.actor.name} · ${row.actor.role}`}</td>
                 <td className={adminOverview ? 'sl-emphasized-value' : undefined}>{row.action}</td>
-                {adminOverview && <td>{row.targetType}</td>}
+                {adminOverview && <td>{row.module ?? row.targetType}</td>}
                 <td>{adminOverview ? auditDetails(row) : <><span>{row.targetType}</span><div className="sl-record-id">{row.targetId}</div></>}</td>
-                <td><span className="sl-status" data-tone="success">Success</span></td>
+                <td><Status tone={rowStatus(row) === 'Success' ? 'success' : rowStatus(row) === 'Warning' ? 'attention' : 'critical'}>{rowStatus(row)}</Status></td>
               </tr>)}
           </tbody>
         </table>

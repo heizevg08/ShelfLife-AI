@@ -1,11 +1,12 @@
-import { Ban, Eye, EyeOff, Pencil, Search, User, UserPlus, UserX, Users, UserCheck, Clock3, Trash2, FileText } from 'lucide-react';
+import { Activity, Ban, CalendarDays, Clock3, Eye, EyeOff, FileText, Pencil, RefreshCw, Search, Trash2, User, UserCheck, UserPlus, Users, UserX } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { dashboardSummary, createAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type DashboardSummary, type Page } from '../../services/administration';
+import { accountSummary, dashboardSummary, createAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
 import { APPLICATION_RECORD_PAGE_SIZES } from './ApplicationPatterns';
 import { DataState, Pagination, Status, SummaryCards } from './primitives';
+import { sessionInitials } from '../../services/auth';
 
 const blank = { firstName: '', lastName: '', email: '', password: '' };
 type ManagedRole = 'Admin' | 'Manager' | 'Inventory Staff';
@@ -43,29 +44,34 @@ export function AccountsTable() {
   useEffect(() => {
     const abort = new AbortController();
     setLoadError(false);
-    listAccounts(page, sort, sort === 'createdAt' ? 'desc' : 'asc', abort.signal, pageSize)
+    const timer = window.setTimeout(() => listAccounts(page, sort, sort === 'createdAt' ? 'desc' : 'asc', abort.signal, pageSize, superAdmin ? {} : {
+      search: directorySearch.trim(),
+      role: roleFilter === 'All Roles' ? undefined : roleFilter as Account['role'],
+      status: statusFilter === 'All Statuses' ? undefined : statusFilter as 'Active' | 'Deactivated',
+    })
       .then(value => { if (!abort.signal.aborted) setData(value); })
-      .catch(() => { if (!abort.signal.aborted) setLoadError(true); });
-    return () => abort.abort();
-  }, [page, pageSize, sort, refresh]);
+      .catch(() => { if (!abort.signal.aborted) setLoadError(true); }), 250);
+    return () => { window.clearTimeout(timer); abort.abort(); };
+  }, [page, pageSize, sort, refresh, superAdmin, directorySearch, roleFilter, statusFilter]);
 
   useEffect(() => {
     const abort = new AbortController();
-    dashboardSummary(abort.signal).then(setSummary).catch(() => setSummary(null));
+    (superAdmin ? dashboardSummary(abort.signal) : accountSummary(abort.signal)).then(setSummary).catch(() => setSummary(null));
     return () => abort.abort();
-  }, [refresh]);
+  }, [refresh, superAdmin]);
 
   // Keep the account summary current while this administrative workspace remains open.
   useEffect(() => {
-    if (!superAdmin) return;
+    if (!superAdmin && user.role !== 'Admin') return;
     const interval = window.setInterval(() => setRefresh(value => value + 1), SUMMARY_AUTO_REFRESH_MS);
     return () => window.clearInterval(interval);
-  }, [superAdmin]);
+  }, [superAdmin, user.role]);
 
   const mayManage = (account: Account) => account.id !== user.id && (superAdmin ? ['Admin', 'Manager', 'Inventory Staff'].includes(account.role) : user.role === 'Admin' && (account.role === 'Manager' || account.role === 'Inventory Staff'));
   const visibleAccounts = useMemo(() => {
     if (!data) return [];
     const query = directorySearch.trim().toLowerCase();
+    if (!superAdmin) return data.items;
     const filtered = data.items.filter(account => {
       const displayName = `${account.firstName} ${account.lastName}`.trim();
       const matchesSearch = !query || [displayName, account.email, account.role, account.isActive ? 'active' : superAdmin ? 'inactive' : 'deactivated'].some(value => value.toLowerCase().includes(query));
@@ -83,7 +89,7 @@ export function AccountsTable() {
       const right = sort === 'createdAt' ? new Date(b.createdAt).getTime() : String(b[sort as keyof Account] ?? '').toLowerCase();
       return left < right ? -1 * direction : left > right ? 1 * direction : 0;
     });
-  }, [data, directorySearch, roleFilter, statusFilter, sort]);
+  }, [data, directorySearch, roleFilter, statusFilter, sort, superAdmin]);
 
   async function open(account: Account, next: 'view' | 'edit' | 'lifecycle') {
     setBusy(true); setMessage(''); setErrors({});
@@ -179,6 +185,12 @@ export function AccountsTable() {
   const activeUsers = summary?.activeUsers ?? 0;
   const activePercent = totalUsers ? Math.round((activeUsers / totalUsers) * 100) : 0;
   return <>
+    {!superAdmin && <section className="sl-sa-kpis sl-inventory-staff-kpis sl-admin-user-kpis" aria-label="Active user management summary">
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Total Users</span><strong>{summary ? totalUsers.toLocaleString() : '—'}</strong><small>{summary ? 'Active authorized accounts' : 'Active account totals unavailable'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UserCheck aria-hidden="true" /></span><div><span>Admin</span><strong>{summary ? (summary.roleCounts?.Admin ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Active Admin accounts' : 'Active account totals unavailable'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Managers</span><strong>{summary ? (summary.roleCounts?.Manager ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Active Manager accounts' : 'Active account totals unavailable'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Inventory Staff</span><strong>{summary ? (summary.roleCounts?.['Inventory Staff'] ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Active Inventory Staff accounts' : 'Active account totals unavailable'}</small></div></article>
+    </section>}
     {superAdmin && <section className="sl-sa-kpis sl-inventory-staff-kpis" aria-label="User management summary">
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Total Users</span><strong>{summary ? totalUsers : '—'}</strong><small>{summary ? 'System-wide accounts' : 'Preview · data pending'}</small></div></article>
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UserCheck aria-hidden="true" /></span><div><span>Active Accounts</span><strong>{summary ? activeUsers : '—'}</strong><small>{summary ? `▲ ${activePercent}% active` : 'Preview · data pending'}</small></div></article>
@@ -201,7 +213,7 @@ export function AccountsTable() {
           </label>
           <label><span>Role</span>
             <select value={roleFilter} onChange={event => { setRoleFilter(event.target.value); setPage(1); }}>
-              <option>All Roles</option>{superAdmin && <option>Super Admin</option>}{assignableRoles.map(role => <option key={role}>{role}</option>)}
+              <option>All Roles</option>{(superAdmin ? ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] : ['Admin', 'Manager', 'Inventory Staff']).map(role => <option key={role}>{role}</option>)}
             </select>
           </label>
           <label><span>Status</span>
@@ -244,7 +256,7 @@ export function AccountsTable() {
               : !visibleAccounts.length ? <tr><td colSpan={superAdmin ? 8 : 7} className="sl-empty-cell"><DataState kind="empty" title="No matching accounts" description="Try another search or filter." /></td></tr>
               : visibleAccounts.map((account, index) => <tr key={account.id}>
                 <td>{(data.page - 1) * data.pageSize + index + 1}</td>
-                <td className={superAdmin ? 'sl-v56-name' : 'sl-v56-name sl-application-record-name'}>{superAdmin ? `${account.firstName} ${account.lastName}`.trim() : <span className="sl-emphasized-value">{`${account.firstName} ${account.lastName}`.trim()}</span>}</td>
+                <td className={superAdmin ? 'sl-v56-name' : 'sl-v56-name sl-application-record-name'}>{superAdmin ? account.name : <span className="sl-emphasized-value">{account.name}</span>}</td>
                 <td>{account.email}</td>
                 <td><span className={superAdmin ? 'sl-v56-role-pill' : 'sl-application-role-pill'} data-role={account.role}>{account.role}</span></td>
                 <td>{superAdmin ? <Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status> : <span className="sl-status sl-application-status" data-tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Deactivated'}</span>}</td>
@@ -314,11 +326,9 @@ export function AccountsTable() {
       </form>
     </Dialog>
 
-    {superAdmin ? <Dialog open={mode === 'view'} title="Account details" onDismiss={close}>
-      {selected && <dl className="sl-identity-details">{[['Name', selected.name], ['Email', selected.email], ['Role', selected.role], ['Status', selected.isActive ? 'Active' : 'Inactive'], ['Created', new Date(selected.createdAt).toLocaleString(undefined, { hour12: true })]].map(([label, value]) => <div key={label}><dt className="sl-supporting">{label}</dt><dd>{value}</dd></div>)}</dl>}
-    </Dialog> : <Dialog open={mode === 'view'} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><User size={20} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Account Details</span><small>Review the selected account identity and access status.</small></span></span>} onDismiss={close} className="sl-add-user-dialog sl-account-reference-dialog sl-account-details-dialog" actions={<button className="sl-button" type="button" onClick={close}>Close</button>}>
-      {selected && <dl className="sl-identity-details sl-account-details-grid">{[['Name', `${selected.firstName} ${selected.lastName}`.trim()], ['Email', selected.email], ['Role', selected.role], ['Status', selected.isActive ? 'Active' : 'Deactivated'], ['Created', new Date(selected.createdAt).toLocaleString(undefined, { hour12: true })], ['Last Login', selected.lastLoginAt ? new Date(selected.lastLoginAt).toLocaleString(undefined, { hour12: true }) : '—']].map(([label, value]) => <div key={label}><dt className="sl-supporting">{label}</dt><dd>{value}</dd></div>)}</dl>}
-    </Dialog>}
+    <Dialog open={mode === 'view'} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><User size={20} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Account Details</span><small>View account information and status.</small></span></span>} onDismiss={close} className="sl-add-user-dialog sl-account-reference-dialog sl-account-details-dialog" actions={selected && mayManage(selected) ? <><button className="sl-button" type="button" disabled={busy} onClick={() => void open(selected, 'edit')}><Pencil size={16} aria-hidden="true" />Edit account</button><button className={`sl-button ${selected.isActive ? 'sl-button-logout' : 'sl-button-primary'}`} type="button" disabled={busy} onClick={() => setMode('lifecycle')}>{selected.isActive ? <UserX size={16} aria-hidden="true" /> : <UserCheck size={16} aria-hidden="true" />}{selected.isActive ? 'Deactivate account' : 'Reactivate account'}</button></> : undefined}>
+      {selected && <><section className="sl-account-details-identity" aria-labelledby="sl-account-details-name"><span className="sl-avatar sl-account-details-avatar" aria-hidden="true">{sessionInitials(selected)}</span><div><div className="sl-account-details-name-row"><h3 id="sl-account-details-name">{selected.name}</h3><span className="sl-application-role-pill sl-account-details-role" data-role={selected.role}>{selected.role}</span></div><p>{selected.email}</p></div></section><section className="sl-account-details-information" aria-labelledby="sl-account-information-title"><h3 id="sl-account-information-title">Account information</h3><dl className="sl-account-details-grid"><div><span className="sl-account-details-field-icon" aria-hidden="true"><Activity /></span><div><dt>Status</dt><dd><Status tone={selected.isActive ? 'success' : 'critical'}>{selected.isActive ? 'Active' : 'Deactivated'}</Status></dd></div></div><div><span className="sl-account-details-field-icon" aria-hidden="true"><Clock3 /></span><div><dt>Last Login</dt><dd>{selected.lastLoginAt ? <time dateTime={selected.lastLoginAt}>{new Date(selected.lastLoginAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time> : '—'}</dd></div></div><div><span className="sl-account-details-field-icon" aria-hidden="true"><CalendarDays /></span><div><dt>Created</dt><dd><time dateTime={selected.createdAt}>{new Date(selected.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></dd></div></div><div><span className="sl-account-details-field-icon" aria-hidden="true"><RefreshCw /></span><div><dt>Last Updated</dt><dd><time dateTime={selected.updatedAt}>{new Date(selected.updatedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></dd></div></div></dl></section></>}
+    </Dialog>
     <Dialog open={mode === 'lifecycle'} showClose={false} className={`sl-logout-dialog sl-account-lifecycle-dialog${selected?.isActive ? ' is-destructive' : ' is-positive'}`} title={<><span className="sl-logout-icon" aria-hidden="true">{selected?.isActive ? <UserX size={20} /> : <UserCheck size={20} />}</span><span>{selected?.isActive ? 'Deactivate account?' : 'Reactivate account?'}</span></>} onDismiss={close} busy={busy} actions={<><button className="sl-button sl-logout-stay" data-initial-focus disabled={busy} onClick={close}>Cancel</button><button className={`sl-button ${selected?.isActive ? 'sl-button-logout' : 'sl-button-primary'}`} disabled={busy} onClick={lifecycle}>{busy ? 'Saving…' : selected?.isActive ? 'Deactivate account' : 'Reactivate account'}</button></>}>
       <p className="sl-description">{selected?.isActive ? 'This account will lose access to ShelfLife AI. Historical records will be preserved.' : 'This account will be able to sign in to ShelfLife AI again.'}</p><p className="sl-supporting">{selected?.email}</p>{errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
     </Dialog>

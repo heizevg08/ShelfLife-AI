@@ -16,6 +16,9 @@ export interface SessionUser {
   email: string;
   role: 'Super Admin' | 'Admin' | 'Manager' | 'Inventory Staff';
   isActive: boolean;
+  lastLoginAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Normalize only known legacy role-label identities. Real personal names remain untouched.

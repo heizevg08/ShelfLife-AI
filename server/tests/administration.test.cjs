@@ -18,13 +18,31 @@ function fixture() {
   let records = [], failAudit = false, hash, lastUpdate;
   const store = {
     get: async id => rows.find(row => row.id === id) ?? null,
-    list: async (roles, query) => { const found = rows.filter(row => !roles || roles.includes(row.role)); return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), total: found.length, page: query.page, pageSize: query.pageSize }; },
-    summary: async () => ({ totalUsers: rows.length, activeUsers: rows.filter(x => x.isActive).length, inactiveUsers: rows.filter(x => !x.isActive).length }),
-    audits: async query => {
-      const found = records.filter(record => (!query.actorRole || record.actor.role === query.actorRole)
-        && (!query.action || record.action === query.action)
-        && (!query.from || new Date(record.timestamp) >= query.from));
+    list: async (roles, query, includeActorId) => {
+      const found = rows.filter(row => (!roles || roles.includes(row.role) || row.id === includeActorId)
+        && (!query.role || (row.id === includeActorId && query.role === 'Admin') || row.role === query.role)
+        && (!query.status || row.isActive === (query.status === 'Active'))
+        && (!query.search || `${row.firstName} ${row.lastName} ${row.email} ${row.role}`.toLowerCase().includes(query.search.toLowerCase())));
       return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), total: found.length, page: query.page, pageSize: query.pageSize };
+    },
+    summary: async (roles = null, activeOnly = false, includeActorId) => {
+      const found = rows.filter(row => (!roles || roles.includes(row.role) || row.id === includeActorId) && (!activeOnly || row.isActive));
+      return { totalUsers: found.length, activeUsers: found.filter(row => row.isActive).length, inactiveUsers: activeOnly ? 0 : found.filter(row => !row.isActive).length, roleCounts: found.reduce((counts, row) => ({ ...counts, [row.role]: (counts[row.role] ?? 0) + 1 }), {}) };
+    },
+    audits: async (query, allowedActorRoles) => {
+      const found = records.filter(record => (!query.actorRole || record.actor.role === query.actorRole)
+        && (!allowedActorRoles || allowedActorRoles.includes(record.actor.role))
+        && (!query.action || record.action === query.action)
+        && (!query.module || record.module === query.module)
+        && (!query.status || record.status === query.status)
+        && (!query.search || `${record.actor.name} ${record.actor.role} ${record.action} ${record.module} ${record.details}`.toLowerCase().includes(query.search.toLowerCase()))
+        && (!query.from || new Date(record.timestamp) >= query.from)
+        && (!query.to || new Date(record.timestamp) <= query.to));
+      return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), total: found.length, page: query.page, pageSize: query.pageSize };
+    },
+    recordAudit: async (actor, record) => {
+      if (failAudit) throw new Error('Audit unavailable');
+      records.push({ id: (records.length + 1).toString(16).padStart(24, 'a'), userId: actor.id, actor: { id: actor.id, name: actor.name, role: actor.role }, timestamp: new Date().toISOString(), ...record });
     },
     async transaction(work) {
       const original = structuredClone(rows), originalRecords = structuredClone(records);
@@ -32,15 +50,14 @@ function fixture() {
         get: store.get,
         create: async input => { hash = input.passwordHash; const { passwordHash, ...fields } = input; const row = { ...rows[1], ...fields, id: 'f'.repeat(24) }; rows.push(row); return row; },
         update: async (id, input) => { lastUpdate = input; const row = rows.find(x => x.id === id); Object.assign(row, input); return row; },
-        audit: async (userId, action, targetId) => {
+        audit: async (actor, action, targetId) => {
           if (failAudit) throw new Error('Audit unavailable');
-          const actor = rows.find(row => row.id === userId);
-          records.push({ id: (records.length + 1).toString(16).padStart(24, 'a'), userId, actor: { id: userId, name: actor.name, role: actor.role }, action, targetId, targetType: 'User', timestamp: new Date().toISOString() });
+          records.push({ id: (records.length + 1).toString(16).padStart(24, 'a'), userId: actor.id, actor: { id: actor.id, name: actor.name, role: actor.role }, action, targetId, targetType: 'User', module: 'User Management', status: 'Success', timestamp: new Date().toISOString() });
         },
       }); } catch (error) { rows = original; records = originalRecords; throw error; }
     },
   };
-  const auth = createAuth({ byId: async id => { const row = await store.get(id); return row ? { ...row, _id: row.id, authVersion: 0 } : null; }, byEmail: async () => null }, randomBytes(48).toString('hex'));
+  const auth = createAuth({ byId: async id => { const row = await store.get(id); return row ? { ...row, _id: row.id, authVersion: 0, createdAt: new Date(row.createdAt), updatedAt: new Date(row.updatedAt) } : null; }, byEmail: async () => null }, randomBytes(48).toString('hex'));
   return { store, auth, service: createAdministration(store), rows: () => rows, records: () => records, failAudit: () => { failAudit = true; }, hash: () => hash, lastUpdate: () => lastUpdate };
 }
 
@@ -109,14 +126,21 @@ test('real HTTP administration checks authentication before authorization and va
     assert.equal((await call('/api/users', f.rows()[2], { method: 'POST', body: '{' })).status, 403);
     const malformed = await call('/api/users', f.rows()[0], { method: 'POST', body: '{' });
     assert.equal(malformed.status, 400); assert.equal((await malformed.json()).error.code, 'VALIDATION_ERROR');
-    const all = await (await call('/api/users', f.rows()[0])).json(); assert.equal(all.total, 4); assert.ok(all.items.every(x => x.role !== 'Super Admin'));
-    const scoped = await (await call('/api/users', f.rows()[1])).json(); assert.deepEqual(scoped.items.map(x => x.role), ['Manager', 'Inventory Staff']);
-    assert.equal((await call('/api/users/' + f.rows()[0].id, f.rows()[1])).status, 404);
+    const all = await (await call('/api/users', f.rows()[0])).json(); assert.equal(all.total, 6); assert.equal(all.items.filter(x => x.role === 'Super Admin').length, 2);
+    const scoped = await (await call('/api/users', f.rows()[1])).json(); assert.deepEqual(scoped.items.map(x => x.role), ['Admin', 'Manager', 'Inventory Staff']);
+    assert.equal(scoped.items[0].id, f.rows()[1].id);
+    assert.equal(scoped.items[0].name, f.rows()[1].name);
+    const ownRoleResponse = await call('/api/users?role=Admin', f.rows()[1]);
+    assert.equal((await ownRoleResponse.json()).items.length, 1);
+    assert.equal((await call('/api/users?role=Super%20Admin', f.rows()[1])).status, 403);
+    assert.equal((await call('/api/users/' + f.rows()[1].id, f.rows()[1])).status, 200);
+    assert.equal((await call('/api/users/' + f.rows()[5].id, f.rows()[1])).status, 404);
     assert.equal((await call('/api/users/' + f.rows()[1].id, f.rows()[0], { method: 'DELETE' })).status, 404);
     assert.equal((await call('/api/audit-records', f.rows()[1])).status, 200);
     assert.equal((await call('/api/audit-records?action=DELETE', f.rows()[0])).status, 400);
     assert.equal((await call('/api/audit-records', f.rows()[0], { method: 'POST', body: '{}' })).status, 404);
-    assert.deepEqual(await (await call('/api/dashboard/summary', f.rows()[0])).json(), { totalUsers: 6, activeUsers: 6, inactiveUsers: 0 });
+    assert.deepEqual(await (await call('/api/dashboard/summary', f.rows()[0])).json(), { totalUsers: 6, activeUsers: 6, inactiveUsers: 0, roleCounts: { 'Super Admin': 2, Admin: 2, Manager: 1, 'Inventory Staff': 1 } });
+    assert.deepEqual(await (await call('/api/users/summary', f.rows()[1])).json(), { totalUsers: 3, activeUsers: 3, inactiveUsers: 0, roleCounts: { Admin: 1, Manager: 1, 'Inventory Staff': 1 } });
     assert.equal((await call('/api/dashboard/summary', f.rows()[1])).status, 403);
     const old = token(f.rows()[0]); f.rows()[0].role = 'Manager';
     assert.equal((await call('/api/users', old)).status, 403);
@@ -130,8 +154,8 @@ test('real HTTP administration checks authentication before authorization and va
 test('HTTP lifecycle records the authenticated actor and rejects mass assignment', async () => {
   const f = fixture(), http = createServer(createApp([], () => true, f.auth, undefined, f.service));
   http.listen(0, '127.0.0.1'); await once(http, 'listening');
-  const token = f.auth.issue({ ...f.rows()[0], _id: f.rows()[0].id }).accessToken;
-  const request = (path, method, body) => fetch(`http://127.0.0.1:${http.address().port}/api${path}`, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const rootToken = f.auth.issue({ ...f.rows()[0], _id: f.rows()[0].id }).accessToken;
+  const request = (path, method, body) => fetch(`http://127.0.0.1:${http.address().port}/api${path}`, { method, headers: { Authorization: `Bearer ${rootToken}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
   try {
     const fields = { firstName: 'New', lastName: 'Admin', email: 'new@shelflife.com', role: 'Admin', password: 'isolated-test-password' };
     assert.equal((await request('/users', 'POST', { ...fields, userId: f.rows()[2].id })).status, 400);
@@ -145,11 +169,43 @@ test('HTTP lifecycle records the authenticated actor and rejects mass assignment
     assert.deepEqual(f.records().map(x => x.action), ['CREATE', 'UPDATE', 'DEACTIVATE', 'REACTIVATE']);
     assert.ok(f.records().every(x => x.userId === f.rows()[0].id && x.targetId === user.id));
     const adminToken = f.auth.issue({ ...f.rows()[1], _id: f.rows()[1].id }).accessToken;
-    const audit = await fetch(`http://127.0.0.1:${http.address().port}/api/audit-records?page=1&pageSize=1&actorRole=Super%20Admin&action=REACTIVATE&from=2020-01-01T00%3A00%3A00.000Z`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const deniedAudit = await fetch(`http://127.0.0.1:${http.address().port}/api/audit-records?page=1&pageSize=1&actorRole=Super%20Admin&action=REACTIVATE&from=2020-01-01T00%3A00%3A00.000Z`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    assert.equal(deniedAudit.status, 403);
+    const audit = await fetch(`http://127.0.0.1:${http.address().port}/api/audit-records?page=1&pageSize=1&actorRole=Super%20Admin&action=REACTIVATE&from=2020-01-01T00%3A00%3A00.000Z`, { headers: { Authorization: `Bearer ${rootToken}` } });
     assert.equal(audit.status, 200);
     const filtered = await audit.json();
     assert.equal(filtered.total, 1); assert.equal(filtered.items.length, 1);
     assert.deepEqual(filtered.items[0].actor, { id: f.rows()[0].id, name: f.rows()[0].name, role: 'Super Admin' });
     assert.equal(filtered.items[0].action, 'REACTIVATE');
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
+});
+
+test('Admin active summary excludes deactivated accounts while keeping them inspectable in the table', async () => {
+  const f = fixture();
+  f.rows()[2].isActive = false;
+  f.rows()[3].isActive = false;
+  const http = createServer(createApp([], () => true, f.auth, undefined, f.service));
+  http.listen(0, '127.0.0.1'); await once(http, 'listening');
+  const actor = f.rows()[1], token = f.auth.issue({ ...actor, _id: actor.id }).accessToken;
+  const request = path => fetch(`http://127.0.0.1:${http.address().port}/api${path}`, { headers: { Authorization: `Bearer ${token}` } });
+  try {
+    const summary = await (await request('/users/summary')).json();
+    assert.deepEqual(summary, { totalUsers: 1, activeUsers: 1, inactiveUsers: 0, roleCounts: { Admin: 1 } });
+    const table = await (await request('/users?status=Deactivated')).json();
+    assert.deepEqual(table.items.map(row => row.role), ['Manager', 'Inventory Staff']);
+  } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
+});
+
+test('Admin audit filters are server-side and CSV exports record the authenticated actor', async () => {
+  const f = fixture(), actor = f.rows()[1];
+  f.rows()[2].name = 'Manager Actor';
+  await f.service.exportAudits(actor, { page: 1, pageSize: 25, sortBy: 'timestamp', sortOrder: 'desc' });
+  assert.equal(f.records().length, 1);
+  assert.equal(f.records()[0].userId, actor.id);
+  assert.equal(f.records()[0].actor.role, 'Admin');
+  assert.equal(f.records()[0].status, 'Success');
+  assert.equal(f.records()[0].action, 'EXPORT');
+  const result = await f.service.audits(actor, { page: 1, pageSize: 25, sortBy: 'timestamp', sortOrder: 'desc' });
+  assert.equal(result.total, 1);
+  assert.equal(result.items[0].actor.role, 'Admin');
 });

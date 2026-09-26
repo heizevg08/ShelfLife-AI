@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LoaderCircle,
   LogOut,
+  UserRound,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -21,8 +22,9 @@ import { Notifications } from './Notifications';
 import { administrationAreas, type AdministrationAreaId } from './administration';
 import { DataState } from './primitives';
 import { useHoverIntent } from './useHoverIntent';
+import { actionFeedbackEventName, type ActionFeedback } from '../../services/actionFeedback';
 
-import { canOpenWorkspacePath, dashboardPaths, workspaceNavigation } from './workspace';
+import { canOpenWorkspacePath, dashboardPaths, profilePaths, workspaceNavigation } from './workspace';
 
 export default function ApplicationShell({ children }: { children: (user: SessionUser, openArea: (id: AdministrationAreaId) => void) => ReactNode }) {
   const router = useRouter();
@@ -71,14 +73,30 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const loggingOut = useRef(false);
   const logoutButton = useRef<HTMLButtonElement>(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [actionToast, setActionToast] = useState<ActionFeedback | null>(null);
   const [focusedNavigation, setFocusedNavigation] = useState<{ label: string; top: number } | null>(null);
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const accountRef = useRef<HTMLDivElement>(null);
   const accountButton = useRef<HTMLButtonElement>(null);
+  const toastTimer = useRef<number | null>(null);
   const drawer = useRef<HTMLDialogElement>(null);
   const mobileButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const receive = (event: Event) => {
+      const { detail } = event as CustomEvent<ActionFeedback>;
+      setActionToast(detail);
+      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+      toastTimer.current = window.setTimeout(() => setActionToast(null), 4500);
+    };
+    window.addEventListener(actionFeedbackEventName(), receive);
+    return () => {
+      window.removeEventListener(actionFeedbackEventName(), receive);
+      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setTopbarClock(new Date()), 30000);
@@ -521,6 +539,10 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
                   </div>
 
                   <div className="sl-account-panel-footer">
+                    <button className="sl-button sl-account-profile-link" type="button" onClick={() => { accountHover.cancel(); setAccountOpen(false); router.push(profilePaths[user.role] as Href); }}>
+                      <UserRound size={15} aria-hidden="true" />
+                      My Profile
+                    </button>
                     <button ref={logoutButton} className="sl-button sl-button-logout" onClick={() => { accountHover.cancel(); setConfirmLogout(true); }}>
                       <LogOut size={15} aria-hidden="true" />
                       Log out
@@ -547,6 +569,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
           </button>
         )}
       </div>
+      {actionToast && <div className="sl-action-toast" data-kind={actionToast.kind} role={actionToast.kind === 'error' ? 'alert' : 'status'} aria-live={actionToast.kind === 'error' ? 'assertive' : 'polite'}>{actionToast.message}<button type="button" className="sl-action-toast-dismiss" aria-label="Dismiss notification" onClick={() => setActionToast(null)}>×</button></div>}
     </div>
   );
 }

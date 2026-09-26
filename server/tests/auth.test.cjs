@@ -59,7 +59,7 @@ test('seed creates once, hashes password, preserves existing inactive accounts a
 });
 
 test('HTTP login/me verify tokens and current user state, with safe responses', async t => {
-  let row = { _id:'0123456789abcdef01234567', email:seedInput.email, firstName:'Test', lastName:'Admin', role:'Super Admin', isActive:true, passwordHash:await hashPassword(seedInput.password) };
+  let row = { _id:'0123456789abcdef01234567', email:seedInput.email, firstName:'Test', lastName:'Admin', role:'Super Admin', isActive:true, passwordHash:await hashPassword(seedInput.password), createdAt:new Date('2026-01-01T00:00:00.000Z'), updatedAt:new Date('2026-01-02T00:00:00.000Z') };
   let recordedLoginAt;
   const auth=createAuth({byEmail:async email=>row?.email===email?row:null,byId:async id=>row?._id===id?row:null,recordLogin:async(id,at)=>{assert.equal(id,row._id);recordedLoginAt=at}},secret);
   const server=createServer(createApp(['http://localhost:8081'],()=>true,auth));
@@ -69,7 +69,7 @@ test('HTTP login/me verify tokens and current user state, with safe responses', 
   async function login(body){return fetch(base+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
   const valid=await login({email:' ADMIN@SHELFLIFE.COM ',password:seedInput.password});assert.equal(valid.status,200);
   assert.equal(valid.headers.get('cache-control'),'no-store');
-  const result=await valid.json();assert.equal(result.message,'Login successful');assert.deepEqual(Object.keys(result.user).sort(),['email','id','isActive','lastLoginAt','name','role']);
+  const result=await valid.json();assert.equal(result.message,'Login successful');assert.deepEqual(Object.keys(result.user).sort(),['createdAt','email','id','isActive','lastLoginAt','name','role','updatedAt']);
   assert.equal(Number.isNaN(Date.parse(result.user.lastLoginAt)),false);
   assert.equal(recordedLoginAt.toISOString(),result.user.lastLoginAt);
   assert.equal(JSON.stringify(result).includes('password'),false);assert.equal(JSON.stringify(result).includes(row.passwordHash),false);
@@ -84,4 +84,23 @@ test('HTTP login/me verify tokens and current user state, with safe responses', 
   row.role='Manager';assert.equal((await (await me(result.accessToken)).json()).user.role,'Manager');
   row.isActive=false;assert.equal((await me(result.accessToken)).status,401);assert.equal((await login({email:seedInput.email,password:seedInput.password})).status,401);
   row=null;assert.equal((await me(result.accessToken)).status,401);
+});
+
+test('successful login persists Last Login for each canonical role', async () => {
+  const roles = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'];
+  const row = { _id: '0123456789abcdef01234567', email: seedInput.email, firstName: 'Test', lastName: 'Account', role: roles[0], isActive: true, passwordHash: await hashPassword(seedInput.password), createdAt: new Date('2026-01-01T00:00:00.000Z'), updatedAt: new Date('2026-01-02T00:00:00.000Z') };
+  const writes = [];
+  const auth = createAuth({
+    byEmail: async email => row.email === email ? row : null,
+    byId: async id => row._id === id ? row : null,
+    recordLogin: async (id, at) => { writes.push({ id, at }); row.lastLoginAt = at; },
+  }, secret);
+  for (const role of roles) {
+    row.role = role;
+    const result = await auth.login({ email: seedInput.email, password: seedInput.password });
+    assert.equal(result.user.role, role);
+    assert.equal(result.user.lastLoginAt, writes.at(-1).at.toISOString());
+  }
+  assert.equal(writes.length, roles.length);
+  assert.ok(writes.every(write => write.id === row._id));
 });

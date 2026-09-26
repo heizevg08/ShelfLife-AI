@@ -24,14 +24,14 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
     { ...valid, defaultShelfLifeDays: 1.5 },
     { ...valid, category: 'Unknown' },
   ]) assert.throws(() => ingredientInput(body));
-  assert.deepEqual(ingredientPagination({ page: '2', pageSize: '10', search: 'milk', category: 'Dairy' }), { page: 2, pageSize: 10, sortBy: 'createdAt', sortOrder: 'desc', search: 'milk', category: 'Dairy' });
+  assert.deepEqual(ingredientPagination({ page: '2', pageSize: '10', search: 'milk', category: 'Dairy' }), { page: 2, pageSize: 10, sortBy: 'createdAt', sortOrder: 'desc', search: 'milk', category: 'Dairy', unit: '' });
 });
 
 test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and returns real writes', async () => {
   const rows = [];
   const store = {
     async list(query) {
-      const found = rows.filter(row => (!query.category || row.category === query.category) && (!query.search || `${row.name} ${row.brand}`.toLowerCase().includes(query.search.toLowerCase())));
+      const found = rows.filter(row => (!query.category || row.category === query.category) && (!query.unit || row.unitOfMeasure === query.unit) && (!query.search || `${row.name} ${row.brand}`.toLowerCase().includes(query.search.toLowerCase())));
       return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), page: query.page, pageSize: query.pageSize, total: found.length };
     },
     async create(actorId, input) {
@@ -60,7 +60,7 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
     assert.equal((await request(admin, 'POST', { ...input, expirationDate: '2030-01-01' })).status, 400);
     const created = await request(admin, 'POST', input); assert.equal(created.status, 201);
     const body = await created.json(); assert.equal(body.ingredient.name, 'Whole Milk'); assert.equal(body.ingredient.createdBy.id, admin.id);
-    const listed = await (await request(admin, 'GET', undefined, '?page=1&pageSize=10&search=milk&category=Dairy')).json();
+    const listed = await (await request(admin, 'GET', undefined, '?page=1&pageSize=10&search=milk&category=Dairy&unit=liter')).json();
     assert.equal(listed.total, 1); assert.equal(listed.items[0].id, body.ingredient.id);
     const duplicate = await request(admin, 'POST', input); assert.equal(duplicate.status, 409); assert.equal((await duplicate.json()).error.code, 'CONFLICT');
     const id = body.ingredient.id;

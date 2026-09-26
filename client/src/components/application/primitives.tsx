@@ -2,15 +2,17 @@ import { ChevronDown, CircleDashed, Download, Inbox, LoaderCircle, LockKeyhole, 
 import { useState, type ReactNode } from 'react';
 import { reportExportFormats } from './module-content';
 
-export function ExportControl({ label = 'Export', menuId, available = false, onExport }: { label?: string; menuId: string; available?: boolean; onExport?: (format: (typeof reportExportFormats)[number]['id']) => void }) {
+export function ExportControl({ label = 'Export', menuId, available = false, availableFormats, unavailableMessage, onExport }: { label?: string; menuId: string; available?: boolean; availableFormats?: readonly (typeof reportExportFormats)[number]['id'][]; unavailableMessage?: string; onExport?: (format: (typeof reportExportFormats)[number]['id']) => void }) {
   const [open, setOpen] = useState(false);
+  const formats = availableFormats ? reportExportFormats.filter(format => availableFormats.includes(format.id)) : reportExportFormats;
+  const canExport = (format: (typeof reportExportFormats)[number]['id']) => available || !!availableFormats?.includes(format);
   return <div className={`sl-download-control${open ? ' is-open' : ''}`} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} onFocusCapture={() => setOpen(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false); }}>
     <button type="button" className="sl-button sl-download-trigger" aria-haspopup="menu" aria-expanded={open} aria-controls={menuId} onClick={() => setOpen(value => !value)}>
       <Download size={16} aria-hidden="true" />{label}<ChevronDown size={15} aria-hidden="true" />
     </button>
     <div id={menuId} className="sl-download-menu" role="menu" aria-label={`${label} formats`} aria-hidden={!open}>
-      {reportExportFormats.map(format => <button key={format.id} type="button" role="menuitem" disabled={!available} className="sl-download-option" onClick={() => { if (available && onExport) onExport(format.id); setOpen(false); }}><span>{format.label}</span></button>)}
-      {!available && <p className="sl-supporting">Exports activate when the export service and permissions are available.</p>}
+      {formats.map(format => <button key={format.id} type="button" role="menuitem" disabled={!canExport(format.id) || !onExport} className="sl-download-option" onClick={() => { if (canExport(format.id) && onExport) onExport(format.id); setOpen(false); }}><span>{format.label}</span></button>)}
+      {!available && !availableFormats?.length && <p className="sl-supporting">{unavailableMessage ?? 'Exports activate when the export service and permissions are available.'}</p>}
     </div>
   </div>;
 }

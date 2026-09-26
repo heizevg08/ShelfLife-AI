@@ -97,7 +97,7 @@ function AdminDashboardContent({ userName }: { userName: string }) {
       <section className="sl-admin-reference-analytics" aria-label="Inventory analytics">
         <Card id="admin-ingredient-overview" title={<DashboardCardTitle Icon={Box}>Ingredient Overview</DashboardCardTitle>}><ApplicationDonutChart ariaLabel="Ingredient category overview" centerLabel="Ingredients" items={ingredientCategories ?? []} unavailableMessage={categoryStatus} /></Card>
         <Card id="admin-user-overview" title={<DashboardCardTitle Icon={UsersRound}>User Overview</DashboardCardTitle>}><ApplicationDonutChart ariaLabel="Current Admin, Manager, and Inventory Staff account totals" centerLabel="Users" items={userOverview} unavailableMessage={accountStatus} /></Card>
-        <Card id="admin-inventory-overview" title={<DashboardCardTitle Icon={Boxes}>Inventory Overview</DashboardCardTitle>}><ApplicationDonutChart ariaLabel="Inventory stock status; live values unavailable" centerLabel="Batches" items={['In Stock', 'Low Stock', 'Near Expiry', 'Expired']} unavailableMessage="Inventory overview unavailable" /></Card>
+        <Card id="admin-inventory-overview" title={<DashboardCardTitle Icon={Boxes}>Inventory Overview</DashboardCardTitle>}><ApplicationPendingState description="Inventory status records will appear when the inventory batch service is connected." /></Card>
       </section>
 
       <section className="sl-admin-dashboard-record-grid sl-admin-dashboard-record-grid-single" aria-label="Admin dashboard records">

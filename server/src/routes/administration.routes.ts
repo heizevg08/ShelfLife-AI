@@ -21,6 +21,7 @@ export function administrationRoutes(auth: AuthService, service: AdministrationS
   router.post('/users/:id/deactivate', actions.deactivate);
   router.post('/users/:id/reactivate', actions.reactivate);
   router.get('/dashboard/summary', authorizeAdministration(['Super Admin']), actions.summary);
+  router.get('/audit-records/export.csv', authorizeAdministration(['Super Admin', 'Admin']), actions.exportAudit);
   router.get('/audit-records', authorizeAdministration(['Super Admin', 'Admin']), actions.audit);
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });
   // Keep the richer error envelope local to these APIs, preserving the auth contract.

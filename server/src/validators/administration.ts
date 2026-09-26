@@ -5,6 +5,13 @@ import { normalizeEmail, validPassword } from './auth';
 export function invalid(field: string, message = 'Invalid value'): never {
   throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field, message }]);
 }
+function cleanText(field: string, value: unknown, required: boolean, max: number): string {
+  if (value === undefined && !required) return '';
+  if (typeof value !== 'string') invalid(field);
+  const clean = value.trim().replace(/\s+/g, ' ');
+  if ((required && !clean) || clean.length > max) invalid(field);
+  return clean;
+}
 export function objectId(value: unknown): string {
   if (typeof value !== 'string' || !/^[a-f0-9]{24}$/i.test(value)) invalid('id');
   return value;
@@ -24,12 +31,29 @@ export function pagination(query: Record<string, unknown>, sorts: string[], fall
   return { page, pageSize, sortBy, sortOrder: sortOrder as 'asc' | 'desc' };
 }
 export type PageQuery = ReturnType<typeof pagination>;
-const auditActions = ['CREATE', 'UPDATE', 'DEACTIVATE', 'REACTIVATE'] as const;
+export type AccountPageQuery = PageQuery & { search?: string; role?: typeof ROLES[number]; status?: 'Active' | 'Deactivated' };
+export function accountPagination(query: Record<string, unknown>): AccountPageQuery {
+  const pageKeys = ['page', 'pageSize', 'sortBy', 'sortOrder'];
+  for (const key of Object.keys(query)) if (![...pageKeys, 'search', 'role', 'status'].includes(key)) invalid(key);
+  const page = pagination(Object.fromEntries(pageKeys.filter(key => query[key] !== undefined).map(key => [key, query[key]])), ['createdAt', 'updatedAt', 'email', 'firstName', 'lastName', 'role', 'isActive', 'lastLoginAt'], 'createdAt');
+  const result: AccountPageQuery = { ...page };
+  if (query.search !== undefined) result.search = cleanText('search', query.search, false, 100);
+  if (query.role !== undefined) {
+    if (typeof query.role !== 'string' || !ROLES.includes(query.role as typeof ROLES[number])) invalid('role');
+    result.role = query.role as typeof ROLES[number];
+  }
+  if (query.status !== undefined) {
+    if (query.status !== 'Active' && query.status !== 'Deactivated') invalid('status');
+    result.status = query.status;
+  }
+  return result;
+}
+const auditActions = ['CREATE', 'UPDATE', 'DEACTIVATE', 'REACTIVATE', 'EXPORT'] as const;
 export type AuditActionFilter = typeof auditActions[number];
-export type AuditPageQuery = PageQuery & { actorRole?: typeof ROLES[number]; action?: AuditActionFilter; from?: Date; to?: Date };
+export type AuditPageQuery = PageQuery & { actorRole?: typeof ROLES[number]; action?: AuditActionFilter; module?: string; status?: 'Success' | 'Failed' | 'Warning'; search?: string; from?: Date; to?: Date };
 export function auditPagination(query: Record<string, unknown>): AuditPageQuery {
   const pageKeys = ['page', 'pageSize', 'sortBy', 'sortOrder'];
-  for (const key of Object.keys(query)) if (![...pageKeys, 'actorRole', 'action', 'from', 'to'].includes(key)) invalid(key);
+  for (const key of Object.keys(query)) if (![...pageKeys, 'actorRole', 'action', 'module', 'status', 'search', 'from', 'to'].includes(key)) invalid(key);
   const page = pagination(Object.fromEntries(pageKeys.filter(key => query[key] !== undefined).map(key => [key, query[key]])), ['timestamp', 'action', 'targetType'], 'timestamp');
   const result: AuditPageQuery = { ...page };
   if (query.actorRole !== undefined) {
@@ -40,6 +64,12 @@ export function auditPagination(query: Record<string, unknown>): AuditPageQuery 
     if (typeof query.action !== 'string' || !auditActions.includes(query.action as AuditActionFilter)) invalid('action');
     result.action = query.action as AuditActionFilter;
   }
+  if (query.module !== undefined) result.module = cleanText('module', query.module, false, 100);
+  if (query.status !== undefined) {
+    if (!['Success', 'Failed', 'Warning'].includes(String(query.status))) invalid('status');
+    result.status = query.status as AuditPageQuery['status'];
+  }
+  if (query.search !== undefined) result.search = cleanText('search', query.search, false, 100);
   if (query.from !== undefined) {
     if (typeof query.from !== 'string' || !Number.isFinite(Date.parse(query.from))) invalid('from');
     result.from = new Date(query.from);

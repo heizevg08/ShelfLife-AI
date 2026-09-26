@@ -6,6 +6,7 @@ import { Card, DataState, ExportControl, PageHeader, Pagination } from '../../co
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 import { workspaceNavigation } from '../../components/application/workspace';
 import { listIngredients } from '../../services/ingredients';
+import { DateRangeFilter, type DateRangeValue } from '../../components/application/DateRangeFilter';
 
 function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
   return (
@@ -20,17 +21,15 @@ function PendingPanel({ label, compact = false }: { label: string; compact?: boo
 }
 
 function AdminReports() {
-  const [dateRange, setDateRange] = useState('any');
+  const [dateRange, setDateRange] = useState<DateRangeValue>('any');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [reportType, setReportType] = useState('All Reports');
-  const [category, setCategory] = useState('All Categories');
-  const [groupBy, setGroupBy] = useState('None');
   const [ingredientTotal, setIngredientTotal] = useState<number | null>(null);
   const [ingredientTotalFailed, setIngredientTotalFailed] = useState(false);
   const [reportPage, setReportPage] = useState(1);
   const [reportPageSize, setReportPageSize] = useState(10);
-  const reset = () => { setDateRange('any'); setDateFrom(''); setDateTo(''); setReportType('All Reports'); setCategory('All Categories'); setGroupBy('None'); };
+  const reset = () => { setDateRange('any'); setDateFrom(''); setDateTo(''); setReportType('All Reports'); };
   useEffect(() => {
     const abort = new AbortController();
     setIngredientTotalFailed(false);
@@ -43,7 +42,7 @@ function AdminReports() {
     .filter(item => item.path !== '/Reports')
     .map(item => ({ name: `${item.label} Report`, type: item.label, path: item.path }));
   const reportTypes = [...new Set(reports.map(report => report.type))];
-  const visibleReports = reports.filter(report => (reportType === 'All Reports' || report.type === reportType) && (category === 'All Categories' || report.type === category));
+  const visibleReports = reports.filter(report => reportType === 'All Reports' || report.type === reportType);
   return <div className="sl-admin-reports-page">
     <PageHeader eyebrow="Oversight" title="Reports" description="Generate and view reports on inventory, usage, waste, and ingredient data for your establishment." />
     <div className="sl-admin-view sl-admin-reports-v114">
@@ -57,13 +56,8 @@ function AdminReports() {
       <section className="sl-application-records sl-application-records-overflow sl-admin-report-records" aria-labelledby="sl-admin-available-reports">
         <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileBarChart2 aria-hidden="true" /></span><h2 id="sl-admin-available-reports">Available Reports</h2></header>
         <div className="sl-application-records-filters"><div className="sl-application-records-toolbar sl-admin-reports-filters" data-layout="reports" aria-label="Report filters">
-          <div className="sl-admin-reports-date-group" data-custom={dateRange === 'custom'}>
-            <label><span>Date Range</span><div className="sl-admin-reports-date"><CalendarDays size={16}/><select value={dateRange} onChange={event => { setDateRange(event.target.value); setReportPage(1); }}><option value="any">Any date</option><option value="week">Last 7 Days</option><option value="month">Last 30 Days</option><option value="custom">Custom</option></select></div></label>
-            {dateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom report date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => setDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => setDateTo(event.target.value)} /></label></div>}
-          </div>
+          <DateRangeFilter value={dateRange} from={dateFrom} to={dateTo} onChange={value => { setDateRange(value); setReportPage(1); }} onFromChange={setDateFrom} onToChange={setDateTo} />
           <label><span>Report Type</span><select value={reportType} onChange={event => { setReportType(event.target.value); setReportPage(1); }}><option>All Reports</option>{reportTypes.map(value => <option key={value}>{value}</option>)}</select></label>
-          <label><span>Category</span><select value={category} onChange={event => { setCategory(event.target.value); setReportPage(1); }}><option>All Categories</option>{reportTypes.map(value => <option key={value}>{value}</option>)}</select></label>
-          <label><span>Group By</span><select value={groupBy} onChange={event => setGroupBy(event.target.value)}><option>None</option><option>Category</option></select></label>
           <div className="sl-application-records-filter-actions"><button className="sl-button sl-admin-reports-reset" type="button" onClick={() => { reset(); setReportPage(1); }}><RotateCcw size={14}/> Reset</button><ExportControl label="Export" menuId="sl-admin-reports-export-menu" /></div>
         </div></div>
         <div className="sl-application-records-table-shell">
