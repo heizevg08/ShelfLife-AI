@@ -13,7 +13,8 @@ import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSumm
 import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
-import { createIngredient, deleteIngredient, getIngredientSummary, listIngredientCategories, listIngredients, updateIngredient, type Ingredient, type IngredientInput } from '../../services/ingredients';
+import { createIngredient, deleteIngredient, getIngredientSummary, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type Ingredient, type IngredientInput, type StockInIngredient } from '../../services/ingredients';
+import { createStockIn, getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
 
 
 const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
@@ -305,78 +306,78 @@ function InventoryStaffStockInPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [stockSearch, setStockSearch] = useState('');
   const [stockIngredient, setStockIngredient] = useState('All Ingredients');
-  const [stockIngredients, setStockIngredients] = useState<Ingredient[]>([]);
-  const [stockSupplier, setStockSupplier] = useState('All Suppliers');
+  const [stockIngredients, setStockIngredients] = useState<StockInIngredient[]>([]);
   const [stockDateRange, setStockDateRange] = useState('Last 7 Days');
   const [stockDateFrom, setStockDateFrom] = useState('');
   const [stockDateTo, setStockDateTo] = useState('');
-  const [stockFormMessage, setStockFormMessage] = useState('');
   const [stockRows, setStockRows] = useState(10);
   const [stockPage, setStockPage] = useState(1);
+  const [stockData, setStockData] = useState<{items:InventoryBatch[];total:number}|null>(null);
+  const [stockSummary, setStockSummary] = useState<StockInSummary|null>(null);
+  const [stockLoading, setStockLoading] = useState(true);
+  const [stockError, setStockError] = useState(false);
+  const [stockFormMessage, setStockFormMessage] = useState('');
+  const [stockBusy, setStockBusy] = useState(false);
+  const [dateReceived, setDateReceived] = useState('');
+  const [ingredientId, setIngredientId] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [expirationDate, setExpirationDate] = useState('');
+  const [unitCost, setUnitCost] = useState('');
+  const [viewBatch, setViewBatch] = useState<InventoryBatch|null>(null);
   const addStockInButton = useRef<HTMLButtonElement>(null);
   const stockForm = useRef<HTMLFormElement>(null);
+  const selectedIngredient = stockIngredients.find(item => item.id === ingredientId);
+  const dateValue = (date: Date) => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  const minimumExpiryDate = dateReceived ? (() => { const value=new Date(`${dateReceived}T00:00:00`);value.setDate(value.getDate()+1);return dateValue(value); })() : undefined;
+  const range = (() => { if(stockDateRange==='Custom') return {from:stockDateFrom,to:stockDateTo}; const days=stockDateRange==='Last 30 Days'?30:stockDateRange==='Last 90 Days'?90:7; const to=new Date(),from=new Date();from.setDate(from.getDate()-(days-1));return {from:dateValue(from),to:dateValue(to)}; })();
+  const clearForm=()=>{setDateReceived('');setIngredientId('');setQuantity('');setExpirationDate('');setUnitCost('');setStockFormMessage('')};
+  useEffect(() => { const controller=new AbortController(); listStockInIngredients(controller.signal).then(result=>setStockIngredients(result.ingredients)).catch(()=>{if(!controller.signal.aborted)setStockIngredients([])}); return()=>controller.abort(); }, []);
   useEffect(() => {
-    const controller = new AbortController();
-    listIngredients(1, 100, '', '', controller.signal).then(result => setStockIngredients(result.items)).catch(error => {
-      if (!(error instanceof Error && error.name === 'AbortError')) setStockIngredients([]);
-    });
-    return () => controller.abort();
-  }, []);
-  const submitStockIn = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const complete = ['supplier','dateReceived','ingredient','batchId','expirationDate','quantityReceived'].every(field => String(data.get(field) ?? '').trim());
-    setStockFormMessage(complete ? 'Stock-in recording is not connected to the backend yet.' : 'Complete all required fields before saving.');
-  };
-  const StockInFormPreview = () => <InventoryStaffModalForm formRef={stockForm} onSubmit={submitStockIn} message={stockFormMessage} secondaryLabel="Clear" onSecondary={()=>{stockForm.current?.reset();setStockFormMessage('')}} primaryLabel="Save Stock-In" PrimaryIcon={PackagePlus}>
-    <label><span>Supplier <b>*</b></span><select name="supplier" defaultValue=""><option value="">Select supplier...</option></select></label>
-    <label><span>Date Received <b>*</b></span><input name="dateReceived" type="date" /></label>
-    <label><span>Ingredient <b>*</b></span><select name="ingredient" defaultValue=""><option value="">Search or select ingredient...</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
-    <label><span>Batch ID <b>*</b></span><input name="batchId" placeholder="Auto-generate or enter batch ID..." /></label>
-    <label><span>Expiry Date <b>*</b></span><input name="expirationDate" type="date" /></label>
-    <label><span>Quantity Received <b>*</b></span><input name="quantityReceived" inputMode="decimal" placeholder="Enter quantity" /></label>
-    <label><span>Unit</span><input className="sl-staff-derived-unit" value="—" readOnly aria-label="Derived unit unavailable" /></label>
-    <label><span>Unit Cost (Optional)</span><input name="unitCost" inputMode="decimal" placeholder="₱ 0.00" /></label>
-    <label className="sl-staff-stockin-notes"><span>Notes (Optional)</span><input name="notes" placeholder="e.g., delivery condition, remarks, invoice reference..." /></label>
-  </InventoryStaffModalForm>;
-
+    const controller=new AbortController();setStockLoading(true);setStockError(false);
+    Promise.all([listInventoryBatches({page:stockPage,pageSize:stockRows,...(stockSearch.trim()?{search:stockSearch.trim()}:{}),...(stockIngredient!=='All Ingredients'?{ingredientId:stockIngredient}:{}),...(range.from?{from:range.from}:{}),...(range.to?{to:range.to}:{})},controller.signal),getStockInSummary(controller.signal)])
+      .then(([data,summary])=>{setStockData(data);setStockSummary(summary)}).catch(()=>{if(!controller.signal.aborted)setStockError(true)}).finally(()=>{if(!controller.signal.aborted)setStockLoading(false)});
+    return()=>controller.abort();
+  },[stockSearch,stockIngredient,stockDateRange,stockDateFrom,stockDateTo,stockRows,stockPage]);
+  useEffect(()=>{ if(!dateReceived||!selectedIngredient?.defaultShelfLifeDays)return; const suggested=new Date(`${dateReceived}T00:00:00`);suggested.setDate(suggested.getDate()+selectedIngredient.defaultShelfLifeDays);setExpirationDate(dateValue(suggested)); },[dateReceived,ingredientId]);
+  useEffect(()=>{setUnitCost(selectedIngredient?.standardUnitCost===undefined?'':String(selectedIngredient.standardUnitCost))},[ingredientId]);
+  const submitStockIn=async(event:FormEvent<HTMLFormElement>)=>{event.preventDefault();setStockFormMessage('');if(!dateReceived||!ingredientId||!quantity||!expirationDate){setStockFormMessage('Complete all required fields before saving.');return}const numericQuantity=Number(quantity),numericCost=unitCost===''?undefined:Number(unitCost);if(!Number.isFinite(numericQuantity)||numericQuantity<=0){setStockFormMessage('Quantity received must be greater than zero.');return}if(numericCost!==undefined&&(!Number.isFinite(numericCost)||numericCost<0)){setStockFormMessage('Enter a valid unit cost.');return}setStockBusy(true);try{const batch=await createStockIn({ingredientId,dateReceived,quantity:numericQuantity,expirationDate,...(numericCost===undefined?{}:{unitCost:numericCost})});setStockFormMessage(`Stock-In saved. Batch ID: ${batch.batchID}`);clearForm();setAddModalOpen(false);const [data,summary]=await Promise.all([listInventoryBatches({page:1,pageSize:stockRows,from:range.from,to:range.to}),getStockInSummary()]);setStockPage(1);setStockData(data);setStockSummary(summary)}catch(error){setStockFormMessage(error instanceof ApiError?error.message:'Unable to save Stock-In. Try again.')}finally{setStockBusy(false)}};
+  const metric=(value:number|undefined)=>stockError&&!stockSummary?'Unavailable':stockLoading&&!stockSummary?'Loading?':(value??0).toLocaleString();
+  const reset=()=>{setStockSearch('');setStockIngredient('All Ingredients');setStockDateRange('Last 7 Days');setStockDateFrom('');setStockDateTo('');setStockPage(1)};
   return <>
-    <PageHeader
-      title="Stock-In"
-      description="Record newly received ingredients into inventory. Make sure all details are accurate."
-    />
-
+    <PageHeader title="Stock-In" description="Record newly received ingredients into inventory. Make sure all details are accurate." />
     <div className="sl-admin-view sl-staff-stockin-v145">
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-stockin-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Stock-in summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Total Stock-In Today</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Quantity Received</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Active Deliveries</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Suppliers This Month</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Stock-In Today</span><strong>{metric(stockSummary?.stockInToday)}</strong><small>Batches received today</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Ingredients Received Today</span><strong>{metric(stockSummary?.ingredientsReceivedToday)}</strong><small>Distinct ingredients received today</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Batches Received This Month</span><strong>{metric(stockSummary?.batchesReceivedThisMonth)}</strong><small>Receipts in the server calendar month</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Expiring Soon Batches</span><strong>{metric(stockSummary?.expiringSoonBatches)}</strong><small>Non-expired batches within seven days</small></div></article>
       </section></div>
-
-      <div className="sl-staff-stockin-layout">
-        <main className="sl-staff-stockin-main">
-          <section className="sl-application-records sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-stockin-history" aria-labelledby="staff-stockin-history-title">
-            <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><Clock3 aria-hidden="true" /></span><h2 id="staff-stockin-history-title">Stock History</h2></header>
-            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-stockin-history-filters">
-              <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input value={stockSearch} onChange={event => setStockSearch(event.target.value)} placeholder="Search by ingredient, batch ID, or supplier..." /></div></label>
-              <label><span>Ingredient</span><select value={stockIngredient} onChange={event => setStockIngredient(event.target.value)}><option>All Ingredients</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
-              <label><span>Supplier</span><select value={stockSupplier} onChange={event => setStockSupplier(event.target.value)}><option>All Suppliers</option></select></label>
-              <label><span>Date range</span><select value={stockDateRange} onChange={event => setStockDateRange(event.target.value)}>{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
-              {stockDateRange==='Custom'&&<div className="sl-v219-custom-date-range" aria-label="Custom stock-in date range"><label><span>From</span><input type="date" value={stockDateFrom} max={stockDateTo||undefined} onChange={event=>setStockDateFrom(event.target.value)}/></label><label><span>To</span><input type="date" value={stockDateTo} min={stockDateFrom||undefined} onChange={event=>setStockDateTo(event.target.value)}/></label></div>}
-              <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setStockSearch('');setStockIngredient('All Ingredients');setStockSupplier('All Suppliers');setStockDateRange('Last 7 Days');setStockDateFrom('');setStockDateTo('');setStockPage(1)}}>Reset</button><InventoryStaffAddButton buttonRef={addStockInButton} label="Add Stock-In" onClick={() => setAddModalOpen(true)} /></div>
-            </div></div>
-            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell">
-              <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-stockin-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Supplier','Quantity','Unit','Expiry Date','Recorded By','Actions'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:8}).map((_,index)=><td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Stock-in transaction actions unavailable"><button type="button" className="sl-icon-button" disabled aria-label="View stock-in transaction unavailable" title="View unavailable"><Eye size={16}/></button></div></td></tr></tbody></table>
-            </div>
-            <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={stockRows} onChange={event => { setStockRows(Number(event.target.value)); setStockPage(1); }}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label><Pagination compact page={stockPage} pageSize={stockRows} total={0} itemLabel="stock-in records" onPageChange={setStockPage} /></footer>
-          </section>
-        </main>
-
-      </div>
+      <div className="sl-staff-stockin-layout"><main className="sl-staff-stockin-main"><section className="sl-application-records sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-stockin-history" aria-labelledby="staff-stockin-history-title">
+        <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><Clock3 aria-hidden="true" /></span><h2 id="staff-stockin-history-title">Stock History</h2></header>
+        <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-stockin-history-filters">
+          <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input value={stockSearch} onChange={event=>{setStockSearch(event.target.value);setStockPage(1)}} placeholder="Search by ingredient or Batch ID..." /></div></label>
+          <label><span>Ingredient</span><select value={stockIngredient} onChange={event=>{setStockIngredient(event.target.value);setStockPage(1)}}><option>All Ingredients</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
+          <label><span>Date range</span><select value={stockDateRange} onChange={event=>{setStockDateRange(event.target.value);setStockPage(1)}}>{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
+          {stockDateRange==='Custom'&&<div className="sl-v219-custom-date-range" aria-label="Custom stock-in date range"><label><span>From</span><input type="date" value={stockDateFrom} max={stockDateTo||undefined} onChange={event=>{setStockDateFrom(event.target.value);setStockPage(1)}}/></label><label><span>To</span><input type="date" value={stockDateTo} min={stockDateFrom||undefined} onChange={event=>{setStockDateTo(event.target.value);setStockPage(1)}}/></label></div>}
+          <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={reset}>Reset</button><InventoryStaffAddButton buttonRef={addStockInButton} label="Add Stock-In" onClick={()=>setAddModalOpen(true)} /></div>
+        </div></div>
+        <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell"><table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-stockin-table"><thead><tr>{['Recorded At','Date Received','Ingredient','Batch ID','Quantity','Unit','Expiry Date','Recorded By','Actions'].map(column=><th key={column}>{column}</th>)}</tr></thead><tbody>
+          {stockLoading&&!stockData?<tr><td colSpan={9} className="sl-empty-cell"><DataState kind="loading" title="Loading stock history" description="Retrieving received inventory batches."/></td></tr>:stockError?<tr><td colSpan={9} className="sl-empty-cell"><DataState kind="error" title="Stock history unavailable" description="The inventory service could not be reached."/></td></tr>:!stockData?.items.length?<tr><td colSpan={9} className="sl-empty-cell"><DataState kind="empty" title={stockSummary?.totalBatches?'No matching records':'No live records yet'} description={stockSummary?.totalBatches?'No Stock-In records match the current search and filters.':'Stock-In records will appear here after inventory is received.'}/></td></tr>:stockData.items.map(batch=><tr key={batch.id}><td>{new Date(batch.createdAt).toLocaleString()}</td><td>{new Date(batch.dateReceived).toLocaleDateString()}</td><td>{batch.ingredient.name}</td><td>{batch.batchID}</td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td>{new Date(batch.expirationDate).toLocaleDateString()}</td><td>{batch.createdBy.name}</td><td><button type="button" className="sl-account-action sl-account-action-view" aria-label={`View ${batch.batchID}`} onClick={()=>setViewBatch(batch)}><Eye size={16} aria-hidden="true"/></button></td></tr>)}
+        </tbody></table></div>
+        <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={stockRows} onChange={event=>{setStockRows(Number(event.target.value));setStockPage(1)}}>{[10,15,50,100,150].map(value=><option key={value}>{value}</option>)}</select></label><Pagination compact page={stockPage} pageSize={stockRows} total={stockData?.total??0} itemLabel="stock-in records" onPageChange={setStockPage}/></footer>
+      </section></main></div>
     </div>
-
-    <InventoryStaffModal open={addModalOpen} title="Add Stock-In" subtitle="Fill in the details of the received ingredients." Icon={PackagePlus} onDismiss={() => setAddModalOpen(false)} returnFocus={addStockInButton}><StockInFormPreview /></InventoryStaffModal>
+    <InventoryStaffModal open={addModalOpen} title="Add Stock-In" subtitle="Record a received inventory batch." Icon={PackagePlus} busy={stockBusy} className="sl-stockin-entry-modal" onDismiss={()=>{if(!stockBusy)setAddModalOpen(false)}} returnFocus={addStockInButton}>
+      <InventoryStaffModalForm formRef={stockForm} onSubmit={submitStockIn} message={stockFormMessage} secondaryLabel="Clear" onSecondary={clearForm} primaryLabel="Save Stock-In" PrimaryIcon={PackagePlus} busy={stockBusy}>
+        <label><span>Date Received <b>*</b></span><input type="date" value={dateReceived} onChange={event=>setDateReceived(event.target.value)} /></label>
+        <label><span>Ingredient <b>*</b></span><select value={ingredientId} onChange={event=>setIngredientId(event.target.value)}><option value="">Search or select ingredient...</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
+        <label><span>Quantity Received <b>*</b></span><input inputMode="decimal" value={quantity} onChange={event=>setQuantity(event.target.value)} placeholder="Enter quantity" /></label>
+        <label><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedIngredient?'Unit derived from selected ingredient':'Unit will be derived from the selected ingredient'}>{selectedIngredient?.unitOfMeasure??'—'}</output></label>
+        <label><span>Expiry Date <b>*</b></span><input type="date" min={minimumExpiryDate} value={expirationDate} onChange={event=>setExpirationDate(event.target.value)} /></label>
+        <label><span>Unit Cost (Optional)</span><span className="sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" value={unitCost} onChange={event=>setUnitCost(event.target.value)} placeholder="0.00" aria-label="Unit Cost in Philippine pesos" /></span></label>
+      </InventoryStaffModalForm>
+    </InventoryStaffModal>
+    <Dialog open={Boolean(viewBatch)} title="Inventory Batch Details" onDismiss={()=>setViewBatch(null)} actions={<button type="button" className="sl-button" onClick={()=>setViewBatch(null)}>Close</button>}>{viewBatch&&<dl className="sl-guidance-list"><div><dt>Batch ID</dt><dd>{viewBatch.batchID}</dd></div><div><dt>Ingredient</dt><dd>{viewBatch.ingredient.name}</dd></div><div><dt>Date Received</dt><dd>{new Date(viewBatch.dateReceived).toLocaleDateString()}</dd></div><div><dt>Quantity</dt><dd>{viewBatch.quantity} {viewBatch.unit}</dd></div><div><dt>Expiry Date</dt><dd>{new Date(viewBatch.expirationDate).toLocaleDateString()}</dd></div><div><dt>Recorded By</dt><dd>{viewBatch.createdBy.name}</dd></div></dl>}</Dialog>
   </>;
 }
 
@@ -1732,10 +1733,15 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   const [accountTotalsError, setAccountTotalsError] = useState(false);
   const [adminInventorySearch, setAdminInventorySearch] = useState('');
   const [adminInventoryCategory, setAdminInventoryCategory] = useState('All Categories');
-  const [adminInventoryCategories, setAdminInventoryCategories] = useState<string[]>([]);
   const [adminInventoryStatus, setAdminInventoryStatus] = useState('All Statuses');
   const [adminInventoryRows, setAdminInventoryRows] = useState(10);
   const [adminInventoryPage, setAdminInventoryPage] = useState(1);
+  const [adminInventoryData, setAdminInventoryData] = useState<{ items: InventoryBatch[]; total: number } | null>(null);
+  const [adminInventorySummary, setAdminInventorySummary] = useState<InventoryBatchSummary | null>(null);
+  const [adminInventoryLoading, setAdminInventoryLoading] = useState(false);
+  const [adminInventoryError, setAdminInventoryError] = useState(false);
+  const [adminInventoryDetail, setAdminInventoryDetail] = useState<InventoryBatch | null>(null);
+  const [adminInventoryDetailError, setAdminInventoryDetailError] = useState('');
   useEffect(() => {
     if (moduleId !== 'UserManagement') return;
     const abort = new AbortController(); setAccountTotalsError(false);
@@ -1745,13 +1751,19 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   useEffect(() => {
     if (moduleId !== 'InventoryBatches' || user.role !== 'Admin') return;
     const abort = new AbortController();
-    listIngredientCategories(abort.signal).then(result => {
-      if (!abort.signal.aborted) setAdminInventoryCategories(result.categories);
-    }).catch(() => {
-      if (!abort.signal.aborted) setAdminInventoryCategories([]);
-    });
+    setAdminInventoryLoading(true); setAdminInventoryError(false);
+    const query = {
+      page: adminInventoryPage, pageSize: adminInventoryRows,
+      ...(adminInventorySearch.trim() ? { search: adminInventorySearch.trim() } : {}),
+      ...(adminInventoryCategory !== 'All Categories' ? { category: adminInventoryCategory } : {}),
+      ...(adminInventoryStatus !== 'All Statuses' ? { status: adminInventoryStatus as InventoryBatchDisplayStatus } : {}),
+    };
+    Promise.all([listInventoryBatches(query, abort.signal), getInventoryBatchSummary(abort.signal)])
+      .then(([data, summary]) => { setAdminInventoryData(data); setAdminInventorySummary(summary); })
+      .catch(() => { if (!abort.signal.aborted) setAdminInventoryError(true); })
+      .finally(() => { if (!abort.signal.aborted) setAdminInventoryLoading(false); });
     return () => abort.abort();
-  }, [moduleId, user.role]);
+  }, [moduleId, user.role, adminInventoryPage, adminInventoryRows, adminInventorySearch, adminInventoryCategory, adminInventoryStatus]);
   const staff = user.role === 'Inventory Staff';
   if (moduleId === 'UserManagement') {
     const adminUsers = user.role === 'Admin';
@@ -1785,30 +1797,54 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'Forecasting' && user.role === 'Manager') return <ManagerForecastingPage />;
   if (moduleId === 'Forecasting' && user.role === 'Super Admin') return <SuperAdminForecastingPage />;
 
-  if (moduleId === 'InventoryBatches' && user.role === 'Admin') return <div className="sl-admin-inventory-page">
+  if (moduleId === 'InventoryBatches' && user.role === 'Admin') {
+    const kpi = (value: number | undefined) => adminInventoryLoading && !adminInventorySummary ? 'Loading…' : adminInventoryError && !adminInventorySummary ? 'Unavailable' : (value ?? 0).toLocaleString();
+    const statusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired' ? 'critical' : status === 'Near Expiry' || status === 'Low Stock' ? 'attention' : 'success';
+    const date = (value: string) => new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+    const openBatch = async (id: string) => {
+      setAdminInventoryDetailError('');
+      try { setAdminInventoryDetail(await getInventoryBatch(id)); }
+      catch { setAdminInventoryDetailError('Unable to load this inventory batch.'); }
+    };
+    return <><div className="sl-admin-inventory-page">
     <PageHeader eyebrow="Core data" title="Inventory Batches" description="View and monitor current stock levels, expiration status, and inventory distribution for your establishment." />
     <div className="sl-admin-view">
       <div className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Inventory summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>Expired Items</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Ingredients</span><strong>{kpi(adminInventorySummary?.totalIngredients)}</strong><small>Distinct ingredients with inventory batches</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>{kpi(adminInventorySummary?.lowStockItems)}</strong><small>Ingredients at or below minimum stock</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Near Expiry (≤ 7 days)</span><strong>{kpi(adminInventorySummary?.nearExpiry)}</strong><small>Non-expired batches within seven days</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>Expired Items</span><strong>{kpi(adminInventorySummary?.expiredItems)}</strong><small>Batches past the server date</small></div></article>
       </div>
       <section className="sl-application-records sl-admin-inventory-records" aria-labelledby="admin-inventory-records-title">
         <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileText aria-hidden="true" /></span><h2 id="admin-inventory-records-title">Inventory Batches Records</h2></header>
         <div className="sl-application-records-filters"><div className="sl-application-records-toolbar" data-layout="inventory-admin">
           <label className="sl-application-records-search"><span>Search ingredients</span><div><Search size={17} aria-hidden="true" /><input type="search" placeholder="Search by ingredient or Batch ID..." aria-label="Search ingredients or Batch ID" value={adminInventorySearch} onChange={event => { setAdminInventorySearch(event.target.value); setAdminInventoryPage(1); }} /></div></label>
-          <label><span>Category</span><select value={adminInventoryCategory} onChange={event => { setAdminInventoryCategory(event.target.value); setAdminInventoryPage(1); }}><option>All Categories</option>{adminInventoryCategories.map(category => <option key={category}>{category}</option>)}</select></label>
+          <label><span>Category</span><select value={adminInventoryCategory} disabled={adminInventoryLoading || adminInventoryError} onChange={event => { setAdminInventoryCategory(event.target.value); setAdminInventoryPage(1); }}><option>All Categories</option>{adminInventorySummary?.categories.map(category => <option key={category}>{category}</option>)}</select></label>
           <label><span>Status</span><select value={adminInventoryStatus} onChange={event => { setAdminInventoryStatus(event.target.value); setAdminInventoryPage(1); }}><option>All Statuses</option><option>In Stock</option><option>Low Stock</option><option>Near Expiry</option><option>Expired</option></select></label>
           <div className="sl-application-records-filter-actions"><button type="button" className="sl-button" onClick={() => { setAdminInventorySearch(''); setAdminInventoryCategory('All Categories'); setAdminInventoryStatus('All Statuses'); setAdminInventoryPage(1); }}>Reset</button></div>
         </div></div>
         <div className="sl-application-records-table-shell">
-          <table className="sl-application-records-table" data-layout="inventory-admin" aria-label="Inventory batches"><thead><tr>{['#','Ingredient','Batch ID','Category','Current Stock','Unit','Expiration Date','Status','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody><tr><td colSpan={9} className="sl-empty-cell"><ApplicationPendingState className="sl-application-records-state" description="Inventory batch records will appear when the inventory batch service is connected." /></td></tr></tbody></table>
+          <table className="sl-application-records-table" data-layout="inventory-admin" aria-label="Inventory batches"><thead><tr>{['#','Ingredient','Batch ID','Category','Current Stock','Unit','Expiration Date','Status','Actions'].map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody>
+            {adminInventoryLoading && !adminInventoryData ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="loading" title="Loading inventory batches" description="Retrieving current inventory records." /></td></tr>
+              : adminInventoryError ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="error" title="Inventory batches unavailable" description="The inventory batch service could not be reached. Try again later." /></td></tr>
+              : !adminInventoryData?.items.length ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="empty" title={adminInventorySummary?.totalIngredients ? 'No matching records' : 'No live records yet'} description={adminInventorySummary?.totalIngredients ? 'No inventory batches match the current filters.' : 'Inventory batches will appear here once stock is received.'} /></td></tr>
+              : adminInventoryData.items.map((batch, index) => <tr key={batch.id}><td>{(adminInventoryPage - 1) * adminInventoryRows + index + 1}</td><td>{batch.ingredient.name}</td><td>{batch.batchID}</td><td>{batch.ingredient.category}</td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td><time dateTime={batch.expirationDate}>{date(batch.expirationDate)}</time></td><td><Status tone={statusTone(batch.displayStatus)}>{batch.displayStatus}</Status></td><td><button type="button" className="sl-account-action sl-account-action-view" aria-label={`View batch ${batch.batchID}`} title="View Batch" onClick={() => void openBatch(batch.id)}><Eye size={16} aria-hidden="true" /></button></td></tr>)}
+          </tbody></table>
         </div>
-        <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={adminInventoryRows} onChange={event => { setAdminInventoryRows(Number(event.target.value)); setAdminInventoryPage(1); }}>{APPLICATION_RECORD_PAGE_SIZES.map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={adminInventoryPage} pageSize={adminInventoryRows} total={0} itemLabel="inventory records" onPageChange={setAdminInventoryPage} /></footer>
+        <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={adminInventoryRows} onChange={event => { setAdminInventoryRows(Number(event.target.value)); setAdminInventoryPage(1); }}>{APPLICATION_RECORD_PAGE_SIZES.map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={adminInventoryPage} pageSize={adminInventoryRows} total={adminInventoryData?.total ?? 0} itemLabel="inventory records" onPageChange={setAdminInventoryPage} /></footer>
       </section>
     </div>
-  </div>;
+  </div>
+    <Dialog open={Boolean(adminInventoryDetail || adminInventoryDetailError)} title="Inventory Batch Details" onDismiss={() => { setAdminInventoryDetail(null); setAdminInventoryDetailError(''); }} actions={<button type="button" className="sl-button" onClick={() => { setAdminInventoryDetail(null); setAdminInventoryDetailError(''); }}>Close</button>}>
+      {adminInventoryDetailError ? <DataState kind="error" title="Batch details unavailable" description={adminInventoryDetailError} /> : adminInventoryDetail && <dl className="sl-guidance-list">
+        <div><dt>Ingredient</dt><dd>{adminInventoryDetail.ingredient.name}</dd></div><div><dt>Batch ID</dt><dd>{adminInventoryDetail.batchID}</dd></div>
+        <div><dt>Category</dt><dd>{adminInventoryDetail.ingredient.category}</dd></div><div><dt>Current Stock</dt><dd>{adminInventoryDetail.quantity.toLocaleString()} {adminInventoryDetail.unit}</dd></div>
+        <div><dt>Date Received</dt><dd>{date(adminInventoryDetail.dateReceived)}</dd></div><div><dt>Expiration Date</dt><dd>{date(adminInventoryDetail.expirationDate)}</dd></div>
+        <div><dt>Status</dt><dd><Status tone={statusTone(adminInventoryDetail.displayStatus)}>{adminInventoryDetail.displayStatus}</Status></dd></div><div><dt>Unit Cost</dt><dd>{adminInventoryDetail.unitCost === undefined ? '—' : `₱${adminInventoryDetail.unitCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</dd></div>
+      </dl>}
+    </Dialog>
+  </>;
+  }
   if (moduleId === 'Roles') return <>
     <PageHeader eyebrow="Administration" title="Role responsibilities" description="Four defined roles. Permissions are enforced by the application." />
     <div className="sl-admin-view"><Card id="role-responsibilities" title="Access boundaries"><dl className="sl-guidance-list">

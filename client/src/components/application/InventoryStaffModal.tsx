@@ -29,6 +29,7 @@ export function InventoryStaffModal({
   children,
   actions,
   busy = false,
+  className = '',
 }: {
   open: boolean;
   title: string;
@@ -39,13 +40,14 @@ export function InventoryStaffModal({
   children: ReactNode;
   actions?: ReactNode;
   busy?: boolean;
+  className?: string;
 }) {
   return <ApplicationModal
     open={open}
     onDismiss={onDismiss}
     returnFocus={returnFocus}
     busy={busy}
-    className="sl-staff-usage-dialog sl-staff-usage-dialog-exact sl-inventory-staff-modal"
+    className={`sl-staff-usage-dialog sl-staff-usage-dialog-exact sl-inventory-staff-modal${className ? ` ${className}` : ''}`}
     actions={actions}
     title={title}
     subtitle={subtitle}

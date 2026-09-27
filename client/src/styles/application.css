@@ -9557,6 +9557,7 @@ section.sl-card:has(.sl-filter-popover) {
     margin-inline: auto;
   }
 }
+
 .sl-superadmin-users-page-v59>.sl-overview-cards {
   margin: 0 0 clamp(.65rem,.55rem + .22vw,.9rem);
 }
@@ -31452,7 +31453,15 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   grid-column: span 2;
 }
 .sl-staff-stockin-v145 .sl-sa-account-pattern-records .sl-staff-stockin-history-filters {
-  grid-template-columns: minmax(14rem,1.6fr) repeat(3,minmax(8rem,.72fr)) auto;
+  grid-template-columns: minmax(14rem,1.6fr) repeat(2,minmax(8rem,.72fr)) auto;
+}
+@media (width>1180px){
+  .sl-staff-stockin-v145 .sl-sa-account-pattern-records .sl-staff-stockin-history-filters:has(.sl-v219-custom-date-range) {
+    grid-template-columns: minmax(14rem,1.45fr) repeat(2,minmax(8rem,.65fr)) minmax(17.5rem,1.3fr) auto;
+  }
+  .sl-staff-stockin-v145 .sl-sa-account-pattern-records .sl-staff-stockin-history-filters:has(.sl-v219-custom-date-range) .sl-v219-custom-date-range {
+    grid-column: auto;
+  }
 }
 .sl-staff-usage-v150 .sl-sa-account-pattern-records .sl-staff-usage-toolbar,
 .sl-staff-waste-v159 .sl-sa-account-pattern-records .sl-staff-waste-toolbar {
@@ -31627,6 +31636,58 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
     width: 100%;
     min-width: 0;
   }
+}
+
+/* Stock-In keeps its paired rows while its actions use the complete modal axis. */
+.sl-stockin-entry-modal .sl-inventory-staff-modal-form > .sl-application-modal-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  display: flex;
+}
+.sl-stockin-entry-modal .sl-stockin-currency-input {
+  border: 1px solid var(--sl-border);
+  border-radius: var(--sl-radius);
+  background: var(--sl-surface);
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  display: flex;
+  overflow: hidden;
+}
+.sl-stockin-entry-modal .sl-stockin-currency-input > span {
+  border-right: 1px solid var(--sl-border);
+  color: var(--sl-text);
+  flex: 0 0 40px;
+  place-items: center;
+  font-weight: 700;
+  display: grid;
+}
+.sl-stockin-entry-modal .sl-stockin-currency-input > input {
+  border: 0!important;
+  border-radius: 0!important;
+  height: 38px!important;
+  flex: 1;
+  min-width: 0;
+  outline: 0!important;
+}
+.sl-stockin-entry-modal .sl-stockin-currency-input:focus-within {
+  outline: 2px solid var(--sl-focus);
+  outline-offset: 1px;
+  border-color: var(--sl-focus);
+}
+.sl-stockin-entry-modal output.sl-staff-derived-unit {
+  border: 1px solid var(--sl-border);
+  border-radius: var(--sl-radius);
+  background: var(--sl-surface-muted);
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  color: var(--sl-muted);
+  font: var(--sl-font-supporting);
+  padding: 0 .75rem;
+  display: flex;
 }
 
 :is(.sl-manager-kpis,.sl-manager-inventory-kpis,.sl-manager-usage-kpis,.sl-mgr-forecast-kpis,.sl-mgr-cr-kpis,.sl-manager-alerts-kpis,.sl-manager-reports-kpis) {

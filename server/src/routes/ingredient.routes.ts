@@ -11,6 +11,7 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
   router.get('/categories', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.categories);
+  router.get('/stock-in-options', authorizeAdministration(['Inventory Staff']), actions.stockInOptions);
   router.use(authorizeAdministration(['Admin']));
   router.use(json({ limit: '100kb' }));
   router.get('/summary', actions.summary);

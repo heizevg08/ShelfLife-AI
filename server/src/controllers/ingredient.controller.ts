@@ -3,9 +3,10 @@ import type { IngredientService } from '../services/ingredients';
 import { ingredientInput, ingredientPagination } from '../validators/ingredient';
 import { objectId } from '../validators/administration';
 
-export function ingredientControllers(service: IngredientService): Record<'categories' | 'summary' | 'list' | 'create' | 'update' | 'remove', RequestHandler> {
+export function ingredientControllers(service: IngredientService): Record<'categories' | 'stockInOptions' | 'summary' | 'list' | 'create' | 'update' | 'remove', RequestHandler> {
   return {
     categories: async (_req, res) => { res.json({ categories: service.categories() }); },
+    stockInOptions: async (_req, res) => { res.json({ ingredients: await service.stockInOptions() }); },
     summary: async (_req, res) => { res.json(await service.summary()); },
     list: async (req, res) => { res.json(await service.list(ingredientPagination(req.query))); },
     create: async (req, res) => { res.status(201).json({ ingredient: await service.create(res.locals.user.id, ingredientInput(req.body)) }); },

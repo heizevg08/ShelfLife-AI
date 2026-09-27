@@ -18,6 +18,10 @@ import { createAdministrationStore } from './services/administration-store';
 import { ingredientModel } from './models/ingredient';
 import { createIngredients, type IngredientService } from './services/ingredients';
 import { createIngredientStore } from './services/ingredient-store';
+import { inventoryBatchModel } from './models/inventory-batch';
+import { createInventoryBatches, type InventoryBatchService } from './services/inventory-batches';
+import { createInventoryBatchStore } from './services/inventory-batch-store';
+import { inventoryBatchCounterModel } from './models/inventory-batch-counter';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
@@ -52,11 +56,11 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -78,6 +82,7 @@ export async function startServer(config: Config, database: Database, shutdownTi
   try {
     stage = 'database-connection'; onStage(stage);
     await database.connect(config.mongoUri);
+    await inventoryBatches?.ready();
     stage = 'http-listen'; onStage(stage);
     await new Promise<void>((resolve, reject) => {
       http.once('error', reject);
@@ -139,7 +144,8 @@ if (require.main === module) {
     }, createResetEmail(process.env));
     const administration = createAdministration(createAdministrationStore(driver, users, auditRecordModel(driver)));
     const ingredients = createIngredients(createIngredientStore(driver, ingredientModel(driver), users));
-    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients);
+    const inventoryBatches = createInventoryBatches(createInventoryBatchStore(driver, inventoryBatchModel(driver), inventoryBatchCounterModel(driver), ingredientModel(driver), users, auditRecordModel(driver)));
+    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

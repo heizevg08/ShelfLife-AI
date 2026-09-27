@@ -20,6 +20,7 @@ export interface IngredientStore {
   create(actorId: string, input: IngredientInput): Promise<Ingredient>;
   update(id: string, input: IngredientInput): Promise<Ingredient | null>;
   remove(id: string): Promise<boolean>;
+  stockInOptions(): Promise<{ id: string; name: string; unitOfMeasure: string; standardUnitCost?: number; defaultShelfLifeDays?: number }[]>;
 }
 export function createIngredients(store: IngredientStore) {
   return {
@@ -29,6 +30,7 @@ export function createIngredients(store: IngredientStore) {
     create: (actorId: string, input: IngredientInput) => store.create(actorId, input),
     update: (id: string, input: IngredientInput) => store.update(id, input),
     remove: (id: string) => store.remove(id),
+    stockInOptions: () => store.stockInOptions(),
   };
 }
 export type IngredientService = ReturnType<typeof createIngredients>;

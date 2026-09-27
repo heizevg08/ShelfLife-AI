@@ -34,6 +34,7 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
 test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and returns real writes', async () => {
   const rows = [];
   const store = {
+    async stockInOptions() { return rows.map(row => ({ id: row.id, name: row.name, unitOfMeasure: row.unitOfMeasure, ...(row.standardUnitCost === undefined ? {} : { standardUnitCost: row.standardUnitCost }), ...(row.defaultShelfLifeDays === undefined ? {} : { defaultShelfLifeDays: row.defaultShelfLifeDays }) })); },
     async summary() {
       return { total: rows.length, categories: [...new Set(rows.map(row => row.category))], units: [...new Set(rows.map(row => row.unitOfMeasure))], mostCommonIngredient: null };
     },
@@ -64,12 +65,18 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
     const categories = await request(staff, 'GET', undefined, '/categories');
     assert.equal(categories.status, 200);
     assert.deepEqual((await categories.json()).categories, ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other']);
+    const options = await request(staff, 'GET', undefined, '/stock-in-options');
+    assert.equal(options.status, 200); assert.deepEqual((await options.json()).ingredients, []);
+    assert.equal((await request(manager, 'GET', undefined, '/stock-in-options')).status, 403);
     const summary = await request(admin, 'GET', undefined, '/summary');
     assert.equal(summary.status, 200);
     assert.deepEqual(await summary.json(), { total: 0, categories: [], units: [], mostCommonIngredient: null });
     assert.equal((await request(admin, 'POST', { ...input, expirationDate: '2030-01-01' })).status, 400);
     const created = await request(admin, 'POST', input); assert.equal(created.status, 201);
     const body = await created.json(); assert.equal(body.ingredient.name, 'Whole Milk'); assert.equal(body.ingredient.createdBy.id, admin.id);
+    const populatedOptions = await request(staff, 'GET', undefined, '/stock-in-options');
+    assert.equal(populatedOptions.status, 200);
+    assert.deepEqual((await populatedOptions.json()).ingredients, [{ id: body.ingredient.id, name: 'Whole Milk', unitOfMeasure: 'liter', standardUnitCost: 82.5, defaultShelfLifeDays: 7 }]);
     const listed = await (await request(admin, 'GET', undefined, '?page=1&pageSize=10&search=milk&category=Dairy&unit=liter')).json();
     assert.equal(listed.total, 1); assert.equal(listed.items[0].id, body.ingredient.id);
     const duplicate = await request(admin, 'POST', input); assert.equal(duplicate.status, 409); assert.equal((await duplicate.json()).error.code, 'CONFLICT');

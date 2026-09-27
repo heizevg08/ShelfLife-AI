@@ -5,7 +5,7 @@ import { publishActionFeedback } from './actionFeedback';
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public details: { field: string; message: string }[] = []) { super(message); }
 }
-type ApiClientOptions = RequestInit & { successMessage?: string };
+type ApiClientOptions = RequestInit & { successMessage?: string | false };
 
 export async function apiClient<T>(path: string, options: ApiClientOptions = {}): Promise<T> {
   const { successMessage = 'Changes saved successfully.', ...requestOptions } = options;
@@ -23,7 +23,7 @@ export async function apiClient<T>(path: string, options: ApiClientOptions = {})
       if (isAction) publishActionFeedback({ kind: 'error', message });
       throw new ApiError(response.status, body?.error?.code || 'REQUEST_FAILED', message, body?.error?.details || []);
     }
-    if (isAction) publishActionFeedback({ kind: 'success', message: successMessage });
+    if (isAction && successMessage !== false) publishActionFeedback({ kind: 'success', message: successMessage });
     return body as T;
   } catch (error) {
     if (isAction && !(error instanceof ApiError)) publishActionFeedback({ kind: 'error', message: 'The action could not be completed. Check your connection and try again.' });
