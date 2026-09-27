@@ -20,8 +20,12 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
     { ...valid, expirationDate: '2030-01-01' },
     { ...valid, name: '' },
     { ...valid, minimumStock: -1 },
+    { ...valid, minimumStock: 1_000_000_001 },
+    { ...valid, standardUnitCost: Number.POSITIVE_INFINITY },
+    { ...valid, standardUnitCost: 12.345 },
     { ...valid, defaultShelfLifeDays: 0 },
     { ...valid, defaultShelfLifeDays: 1.5 },
+    { ...valid, defaultShelfLifeDays: 3651 },
     { ...valid, category: 'Unknown' },
   ]) assert.throws(() => ingredientInput(body));
   assert.deepEqual(ingredientPagination({ page: '2', pageSize: '10', search: 'milk', category: 'Dairy' }), { page: 2, pageSize: 10, sortBy: 'createdAt', sortOrder: 'desc', search: 'milk', category: 'Dairy', unit: '' });
@@ -30,6 +34,9 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
 test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and returns real writes', async () => {
   const rows = [];
   const store = {
+    async summary() {
+      return { total: rows.length, categories: [...new Set(rows.map(row => row.category))], units: [...new Set(rows.map(row => row.unitOfMeasure))], mostCommonIngredient: null };
+    },
     async list(query) {
       const found = rows.filter(row => (!query.category || row.category === query.category) && (!query.unit || row.unitOfMeasure === query.unit) && (!query.search || `${row.name} ${row.brand}`.toLowerCase().includes(query.search.toLowerCase())));
       return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), page: query.page, pageSize: query.pageSize, total: found.length };
@@ -57,6 +64,9 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
     const categories = await request(staff, 'GET', undefined, '/categories');
     assert.equal(categories.status, 200);
     assert.deepEqual((await categories.json()).categories, ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other']);
+    const summary = await request(admin, 'GET', undefined, '/summary');
+    assert.equal(summary.status, 200);
+    assert.deepEqual(await summary.json(), { total: 0, categories: [], units: [], mostCommonIngredient: null });
     assert.equal((await request(admin, 'POST', { ...input, expirationDate: '2030-01-01' })).status, 400);
     const created = await request(admin, 'POST', input); assert.equal(created.status, 201);
     const body = await created.json(); assert.equal(body.ingredient.name, 'Whole Milk'); assert.equal(body.ingredient.createdBy.id, admin.id);

@@ -1,7 +1,9 @@
 import { usePathname, useRouter, type Href } from 'expo-router';
 import {
   ArrowUp,
+  CheckCircle2,
   ChevronDown,
+  CircleAlert,
   LayoutDashboard,
   LoaderCircle,
   LogOut,
@@ -71,7 +73,6 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const [logoutError, setLogoutError] = useState(false);
   const [logoutPending, setLogoutPending] = useState(false);
   const loggingOut = useRef(false);
-  const logoutButton = useRef<HTMLButtonElement>(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const [actionToast, setActionToast] = useState<ActionFeedback | null>(null);
   const [focusedNavigation, setFocusedNavigation] = useState<{ label: string; top: number } | null>(null);
@@ -423,15 +424,15 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
         busy={logoutPending}
         showClose={false}
         className="sl-logout-dialog"
-        title={<><span className="sl-logout-icon" aria-hidden="true"><LogOut size={20} /></span><span>Log out of ShelfLife AI?</span></>}
+        title="Log out of your account?"
+        confirmation={{ icon: <LogOut />, description: 'You’ll need to sign in again to access your account and continue using ShelfLife AI.' }}
         onDismiss={() => setConfirmLogout(false)}
-        returnFocus={logoutButton}
+        returnFocus={accountButton}
         actions={<>
-          <button className="sl-button sl-logout-stay" disabled={logoutPending} data-initial-focus onClick={() => setConfirmLogout(false)}>Stay logged in</button>
+          <button className="sl-button sl-logout-stay" disabled={logoutPending} data-initial-focus onClick={() => setConfirmLogout(false)}>Cancel</button>
           <button className="sl-button sl-button-logout" disabled={logoutPending} onClick={logout}>{logoutPending ? 'Logging out...' : 'Log out'}</button>
         </>}
       >
-        <p className="sl-description">You’ll need to log in again to access your workspace.</p>
         {logoutError && <p role="alert" className="sl-field-error">Unable to end your session. Check your connection and try again.</p>}
       </Dialog>
 
@@ -543,7 +544,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
                       <UserRound size={15} aria-hidden="true" />
                       My Profile
                     </button>
-                    <button ref={logoutButton} className="sl-button sl-button-logout" onClick={() => { accountHover.cancel(); setConfirmLogout(true); }}>
+                    <button className="sl-button sl-account-logout" onClick={() => { accountHover.cancel(); setAccountOpen(false); setConfirmLogout(true); }}>
                       <LogOut size={15} aria-hidden="true" />
                       Log out
                     </button>
@@ -569,7 +570,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
           </button>
         )}
       </div>
-      {actionToast && <div className="sl-action-toast" data-kind={actionToast.kind} role={actionToast.kind === 'error' ? 'alert' : 'status'} aria-live={actionToast.kind === 'error' ? 'assertive' : 'polite'}>{actionToast.message}<button type="button" className="sl-action-toast-dismiss" aria-label="Dismiss notification" onClick={() => setActionToast(null)}>×</button></div>}
+      {actionToast && <div className="sl-action-toast" data-kind={actionToast.kind} role={actionToast.kind === 'error' ? 'alert' : 'status'} aria-live={actionToast.kind === 'error' ? 'assertive' : 'polite'}><span className="sl-action-toast-icon" aria-hidden="true">{actionToast.kind === 'error' ? <CircleAlert size={19} /> : <CheckCircle2 size={19} />}</span><strong>{actionToast.message}</strong><button type="button" className="sl-action-toast-dismiss" aria-label="Dismiss notification" onClick={() => setActionToast(null)}>×</button></div>}
     </div>
   );
 }

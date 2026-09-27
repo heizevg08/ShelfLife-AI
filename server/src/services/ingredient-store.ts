@@ -31,6 +31,19 @@ export function createIngredientStore(_driver: Mongoose, ingredients: ReturnType
     };
   };
   return {
+    async summary() {
+      const [total, categories, units] = await Promise.all([
+        ingredients.countDocuments({}).exec(),
+        ingredients.distinct('category').exec(),
+        ingredients.distinct('unitOfMeasure').exec(),
+      ]);
+      return {
+        total,
+        categories: categories.filter(Boolean).sort((a, b) => a.localeCompare(b)),
+        units: units.filter(Boolean).sort((a, b) => a.localeCompare(b)),
+        mostCommonIngredient: null,
+      };
+    },
     async list(query: IngredientPageQuery) {
       const filter: Record<string, unknown> = {};
       if (query.category) filter.category = query.category;

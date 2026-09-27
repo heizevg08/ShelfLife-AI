@@ -13,6 +13,7 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
   router.get('/categories', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.categories);
   router.use(authorizeAdministration(['Admin']));
   router.use(json({ limit: '100kb' }));
+  router.get('/summary', actions.summary);
   router.get('/', actions.list);
   router.post('/', actions.create);
   router.put('/:id', actions.update);

@@ -1,6 +1,11 @@
 import { invalid, pagination } from './administration';
 
 export const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
+export const INGREDIENT_LIMITS = {
+  minimumStock: 1_000_000_000,
+  standardUnitCost: 1_000_000_000,
+  defaultShelfLifeDays: 3_650,
+} as const;
 export type IngredientInput = {
   name: string;
   brand: string;
@@ -19,9 +24,9 @@ const cleanText = (field: string, value: unknown, required: boolean, max: number
   if ((required && !clean) || clean.length > max) invalid(field, required ? `Enter 1–${max} characters` : `Use at most ${max} characters`);
   return clean;
 };
-const number = (field: string, value: unknown, minimum: number, fallback?: number) => {
+const number = (field: string, value: unknown, minimum: number, maximum: number, fallback?: number) => {
   if ((value === undefined || value === '') && fallback !== undefined) return fallback;
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < minimum) invalid(field, `Enter a number of at least ${minimum}`);
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < minimum || value > maximum) invalid(field, `Enter a number from ${minimum} to ${maximum.toLocaleString()}`);
   return value;
 };
 
@@ -38,10 +43,14 @@ export function ingredientInput(body: unknown): IngredientInput {
     category: input.category as typeof INGREDIENT_CATEGORIES[number],
     unitOfMeasure: cleanText('unitOfMeasure', input.unitOfMeasure, true, 50),
   };
-  if (input.minimumStock !== undefined && input.minimumStock !== '') result.minimumStock = number('minimumStock', input.minimumStock, 0);
-  if (input.standardUnitCost !== undefined && input.standardUnitCost !== '') result.standardUnitCost = number('standardUnitCost', input.standardUnitCost, 0);
+  if (input.minimumStock !== undefined && input.minimumStock !== '') result.minimumStock = number('minimumStock', input.minimumStock, 0, INGREDIENT_LIMITS.minimumStock);
+  if (input.standardUnitCost !== undefined && input.standardUnitCost !== '') {
+    const cost = number('standardUnitCost', input.standardUnitCost, 0, INGREDIENT_LIMITS.standardUnitCost);
+    if (Math.round(cost * 100) !== cost * 100) invalid('standardUnitCost', 'Use no more than 2 decimal places');
+    result.standardUnitCost = cost;
+  }
   if (input.defaultShelfLifeDays !== undefined && input.defaultShelfLifeDays !== '') {
-    const days = number('defaultShelfLifeDays', input.defaultShelfLifeDays, 1);
+    const days = number('defaultShelfLifeDays', input.defaultShelfLifeDays, 1, INGREDIENT_LIMITS.defaultShelfLifeDays);
     if (!Number.isInteger(days)) invalid('defaultShelfLifeDays', 'Enter a whole number of at least 1');
     result.defaultShelfLifeDays = days;
   }

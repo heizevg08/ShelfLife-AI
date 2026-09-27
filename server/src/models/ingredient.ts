@@ -1,4 +1,5 @@
 import { Schema, type InferSchemaType, type Mongoose } from 'mongoose';
+import { INGREDIENT_LIMITS } from '../validators/ingredient';
 
 const schema = new Schema({
   name: { type: String, required: true, trim: true, maxlength: 100 },
@@ -6,9 +7,9 @@ const schema = new Schema({
   description: { type: String, trim: true, maxlength: 500, default: '' },
   category: { type: String, required: true, trim: true, maxlength: 50 },
   unitOfMeasure: { type: String, required: true, trim: true, maxlength: 50 },
-  minimumStock: { type: Number, min: 0 },
-  standardUnitCost: { type: Number, min: 0 },
-  defaultShelfLifeDays: { type: Number, min: 1 },
+  minimumStock: { type: Number, min: 0, max: INGREDIENT_LIMITS.minimumStock },
+  standardUnitCost: { type: Number, min: 0, max: INGREDIENT_LIMITS.standardUnitCost },
+  defaultShelfLifeDays: { type: Number, min: 1, max: INGREDIENT_LIMITS.defaultShelfLifeDays },
   createdBy: { type: Schema.Types.ObjectId, required: true, immutable: true, ref: 'User' },
 }, { timestamps: true, versionKey: false, collection: 'ingredients', strict: 'throw' });
 
