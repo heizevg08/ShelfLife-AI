@@ -31658,7 +31658,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-stockin-entry-modal output.sl-staff-derived-unit {
   border: 1px solid var(--sl-border);
   border-radius: var(--sl-radius);
-  background: var(--sl-surface-subtle);
+  background: var(--sl-surface-subtle)!important;
   align-items: center;
   width: 100%;
   min-width: 0;
@@ -31669,8 +31669,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   display: flex;
 }
 .sl-stockin-entry-form .sl-creation-form-row { align-items: stretch; }
-.sl-staff-stockin-kpis > .sl-inventory-staff-kpi > div > span { font-weight: 600; }
-.sl-staff-stockin-history-filters > label > span { font-weight: 600; }
 .sl-stockin-entry-message { margin: 0; }
 .sl-stockin-entry-modal > .sl-dialog-actions {
   flex-wrap: nowrap;
@@ -32526,6 +32524,10 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 
 /* Admin record surfaces share the established table scale without forcing desktop scroll tracks. */
 .sl-emphasized-value { font-weight: 600; }
+.sl-staff-stockin-history .sl-staff-stockin-table tbody td.sl-emphasized-value { font-weight: 600; }
+
+.sl-sa-kpi > div > span:not(.sl-sa-kpi-icon) { font-weight: 600; }
+:is(.sl-application-records-toolbar,.sl-sa-ingredients-filter-card) > label > span:not(.sl-sr-only) { font-weight: 600; }
 .sl-admin-dashboard-record-grid-single { grid-template-columns: minmax(0,1fr); }
 .sl-shell[data-role="Admin"] :is(.sl-admin-inventory-page,.sl-admin-reports-page) {
   gap: var(--sl-space-4);
