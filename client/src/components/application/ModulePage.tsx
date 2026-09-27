@@ -15,6 +15,7 @@ import { accountSummary, type DashboardSummary } from '../../services/administra
 import { ApiError } from '../../services/apiClient';
 import { createIngredient, deleteIngredient, getIngredientSummary, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type Ingredient, type IngredientInput, type StockInIngredient } from '../../services/ingredients';
 import { createStockIn, getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
+import { createUsageRecord, getUsageRecord, getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
 
 
 const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
@@ -190,13 +191,19 @@ function ManagerUsageWastePage() {
 function InventoryStaffUsagePage() {
   type UsageField = 'ingredientId' | 'batchId' | 'dateUsed' | 'quantity';
   const [rowsPerPage, setRowsPerPage] = useState('10');
+  const [usagePage, setUsagePage] = useState(1);
   const [search, setSearch] = useState('');
-  const [range, setRange] = useState('Last 7 Days');
+  const [range, setRange] = useState('All dates');
   const [usageDateFrom, setUsageDateFrom] = useState('');
   const [usageDateTo, setUsageDateTo] = useState('');
   const [ingredientFilter, setIngredientFilter] = useState('All Ingredients');
   const [usageIngredients, setUsageIngredients] = useState<StockInIngredient[]>([]);
   const [usageBatches, setUsageBatches] = useState<InventoryBatch[]>([]);
+  const [usageData, setUsageData] = useState<{ items: UsageRecord[]; total: number }>();
+  const [usageSummary, setUsageSummary] = useState<UsageSummary>();
+  const [usageLoading, setUsageLoading] = useState(true);
+  const [usageError, setUsageError] = useState(false);
+  const [viewUsage, setViewUsage] = useState<UsageRecord | null>(null);
   const [ingredientId, setIngredientId] = useState('');
   const [batchId, setBatchId] = useState('');
   const [dateUsed, setDateUsed] = useState('');
@@ -218,7 +225,24 @@ function InventoryStaffUsagePage() {
   });
   const renderUsageError = (field: UsageField) => usageErrors[field] ? <span id={`usage-${field}-error`} className="sl-field-error">{usageErrors[field]}</span> : null;
   const clearForm = () => { setIngredientId(''); setBatchId(''); setDateUsed(''); setQuantity(''); setUsageBatches([]); setUsageErrors({}); setUsageMessage(''); };
-  const submitUsage = (event: FormEvent<HTMLFormElement>) => {
+  const resolveUsageRange = () => {
+    const today = new Date();
+    const format = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    if (range === 'Today') { const value = format(today); return { from: value, to: value }; }
+    if (range === 'Last 7 Days') { const from = new Date(today); from.setDate(today.getDate() - 6); return { from: format(from), to: format(today) }; }
+    if (range === 'Last 30 Days') { const from = new Date(today); from.setDate(today.getDate() - 29); return { from: format(from), to: format(today) }; }
+    return { ...(usageDateFrom ? { from: usageDateFrom } : {}), ...(usageDateTo ? { to: usageDateTo } : {}) };
+  };
+  const loadUsage = async (signal?: AbortSignal) => {
+    const dateRange = resolveUsageRange();
+    const [data, summary] = await Promise.all([listUsageRecords({ page: usagePage, pageSize: Number(rowsPerPage), ...(search.trim() ? { search: search.trim() } : {}), ...(ingredientFilter !== 'All Ingredients' ? { ingredientId: ingredientFilter } : {}), ...dateRange }, signal), getUsageSummary(signal)]);
+    setUsageData(data); setUsageSummary(summary);
+  };
+  const openUsageRecord = async (record: UsageRecord) => {
+    const resolved = await getUsageRecord(record.id);
+    setViewUsage(resolved);
+  };
+  const submitUsage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const next: Partial<Record<UsageField, string>> = {};
     if (!ingredientId) next.ingredientId = 'Select an ingredient.';
@@ -234,7 +258,16 @@ function InventoryStaffUsagePage() {
       return;
     }
     setUsageErrors({});
-    setUsageMessage('Usage recording is unavailable because the Usage Records service is not connected yet.');
+    try {
+      await createUsageRecord({ ingredientId, batchId, dateUsed, quantityUsed: numericQuantity });
+      clearForm(); setAddUsageOpen(false); setUsagePage(1); await loadUsage();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        const fieldErrors: Partial<Record<UsageField, string>> = {};
+        for (const detail of error.details) if (['ingredientId', 'batchId', 'dateUsed', 'quantityUsed'].includes(detail.field)) fieldErrors[detail.field === 'quantityUsed' ? 'quantity' : detail.field as UsageField] = detail.message;
+        setUsageErrors(fieldErrors); setUsageMessage(Object.keys(fieldErrors).length ? '' : error.message);
+      } else setUsageMessage('Unable to save usage. Try again.');
+    }
   };
   useEffect(() => {
     const controller = new AbortController();
@@ -251,6 +284,12 @@ function InventoryStaffUsagePage() {
     });
     return () => controller.abort();
   }, [ingredientId]);
+  useEffect(() => {
+    const controller = new AbortController(); setUsageLoading(true); setUsageError(false);
+    loadUsage(controller.signal).catch(() => { if (!controller.signal.aborted) setUsageError(true); }).finally(() => { if (!controller.signal.aborted) setUsageLoading(false); });
+    return () => controller.abort();
+  }, [search, ingredientFilter, range, usageDateFrom, usageDateTo, rowsPerPage, usagePage]);
+  const usageMetric = (value: number | string | undefined) => usageError && !usageSummary ? 'Unavailable' : usageLoading && !usageSummary ? '—' : (value ?? '—');
 
   return <>
     <PageHeader
@@ -262,19 +301,19 @@ function InventoryStaffUsagePage() {
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Usage summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
-          <div><span>Total Usage Today</span><strong>—</strong><small>Usage quantity recorded today</small></div>
+          <div><span>Total Usage Today</span><strong>{usageMetric(usageSummary?.totalUsageToday ? `${usageSummary.totalUsageToday.quantity} ${usageSummary.totalUsageToday.unit}` : undefined)}</strong><small>Usage quantity recorded today</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info">
           <span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span>
-          <div><span>Usage Records Today</span><strong>—</strong><small>Usage transactions recorded today</small></div>
+          <div><span>Usage Records Today</span><strong>{usageMetric(usageSummary?.usageRecordsToday)}</strong><small>Usage transactions recorded today</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
-          <div><span>Most Used Ingredient</span><strong>—</strong><small>Based on recorded usage</small></div>
+          <div><span>Most Used Ingredient</span><strong>{usageMetric(usageSummary?.mostUsedIngredient ?? undefined)}</strong><small>Based on recorded usage</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
-          <div><span>Ingredients Used This Week</span><strong>—</strong><small>Distinct ingredients used this week</small></div>
+          <div><span>Ingredients Used This Week</span><strong>{usageMetric(usageSummary?.ingredientsUsedThisWeek)}</strong><small>Distinct ingredients used this week</small></div>
         </article>
       </section></div>
 
@@ -285,30 +324,26 @@ function InventoryStaffUsagePage() {
               <h2 id="recent-usage-title">Recent Usage Records</h2>
             </header>
             <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-usage-toolbar">
-              <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient or Batch ID..." aria-label="Search usage records" /></div></label>
-              <label><span>Ingredient</span><select value={ingredientFilter} onChange={e=>setIngredientFilter(e.target.value)} aria-label="Filter by ingredient"><option>All Ingredients</option>{usageIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
-              <label><span>Date range</span><select value={range} onChange={e=>setRange(e.target.value)} aria-label="Filter by date range">{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
-              {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => setUsageDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => setUsageDateTo(event.target.value)} /></label></div>}
-              <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setIngredientFilter('All Ingredients');setRange('Last 7 Days');setUsageDateFrom('');setUsageDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addUsageButton} label="Record Usage" onClick={()=>setAddUsageOpen(true)} /></div>
+              <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>{setSearch(e.target.value);setUsagePage(1)}} placeholder="Search by ingredient or Batch ID..." aria-label="Search usage records" /></div></label>
+              <label><span>Ingredient</span><select value={ingredientFilter} onChange={e=>{setIngredientFilter(e.target.value);setUsagePage(1)}} aria-label="Filter by ingredient"><option>All Ingredients</option>{usageIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
+              <label><span>Date range</span><select value={range} onChange={e=>{setRange(e.target.value);setUsagePage(1)}} aria-label="Filter by date range">{STOCK_IN_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
+              {range === 'Custom range' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => {setUsageDateFrom(event.target.value);setUsagePage(1)}} /></label><label><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => {setUsageDateTo(event.target.value);setUsagePage(1)}} /></label></div>}
+              <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setIngredientFilter('All Ingredients');setRange('All dates');setUsageDateFrom('');setUsageDateTo('');setUsagePage(1)}}>Reset</button><InventoryStaffAddButton buttonRef={addUsageButton} label="Record Usage" onClick={()=>setAddUsageOpen(true)} /></div>
             </div></div>
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell">
               <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table">
                 <thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Used','Unit','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead>
                 <tbody>
-                  <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">
-                    {Array.from({length:6}).map((_,index)=><td key={index}>—</td>)}
-                    <td className="sl-sa-ingredients-actions-cell">
-                      <div className="sl-staff-waste-row-actions" aria-label="Usage record actions unavailable">
-                        <button type="button" className="sl-icon-button" disabled aria-label="View usage record unavailable" title="View unavailable"><Eye size={16} aria-hidden="true" /></button>
-                      </div>
-                    </td>
-                  </tr>
+                  {usageData?.items.map(record => <tr key={record.id}><td>{new Date(record.dateUsed).toLocaleString()}</td><td title={record.ingredient.name}>{record.ingredient.name}</td><td>{record.batch.batchID}</td><td>{record.quantityUsed}</td><td>{record.unit}</td><td>{record.recordedBy.name}</td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions"><button type="button" className="sl-icon-button" onClick={() => void openUsageRecord(record)} aria-label={`View usage record for ${record.ingredient.name}`} title="View usage record"><Eye size={16} aria-hidden="true" /></button></div></td></tr>)}
+                  {!usageLoading && !usageError && (!usageData || usageData.items.length === 0) && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:6}).map((_,index)=><td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Usage record actions unavailable"><button type="button" className="sl-icon-button" disabled aria-label="View usage record unavailable" title="View unavailable"><Eye size={16} aria-hidden="true" /></button></div></td></tr>}
+                  {usageLoading && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:7}).map((_,index)=><td key={index}>Loading…</td>)}</tr>}
+                  {usageError && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:7}).map((_,index)=><td key={index}>Data unavailable</td>)}</tr>}
                 </tbody>
               </table>
             </div>
             <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
-              <label><span>Rows per page</span><select value={rowsPerPage} onChange={e=>setRowsPerPage(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label>
-              <Pagination compact page={1} pageSize={Number(rowsPerPage)} total={0} itemLabel="usage records" onPageChange={()=>{}} />
+              <label><span>Rows per page</span><select value={rowsPerPage} onChange={e=>{setRowsPerPage(e.target.value);setUsagePage(1)}}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label>
+              <Pagination compact page={usagePage} pageSize={Number(rowsPerPage)} total={usageData?.total ?? 0} itemLabel="usage records" onPageChange={setUsagePage} />
             </footer>
           </section>
       </div>
@@ -329,6 +364,9 @@ function InventoryStaffUsagePage() {
         </div>
         {usageMessage&&<p className="sl-inline-notice sl-usage-entry-message" role="status">{usageMessage}</p>}
       </form>
+    </Dialog>
+    <Dialog open={!!viewUsage} title="Usage Record Details" onDismiss={() => setViewUsage(null)} actions={<button type="button" className="sl-button" onClick={() => setViewUsage(null)}>Close</button>}>
+      {viewUsage && <dl className="sl-guidance-list"><div><dt>Date Used</dt><dd>{new Date(viewUsage.dateUsed).toLocaleString()}</dd></div><div><dt>Ingredient</dt><dd>{viewUsage.ingredient.name}</dd></div><div><dt>Batch ID</dt><dd>{viewUsage.batch.batchID}</dd></div><div><dt>Quantity Used</dt><dd>{viewUsage.quantityUsed} {viewUsage.unit}</dd></div><div><dt>Recorded By</dt><dd>{viewUsage.recordedBy.name}</dd></div></dl>}
     </Dialog>
 
   </>;
