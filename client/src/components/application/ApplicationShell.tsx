@@ -425,7 +425,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
         showClose={false}
         className="sl-logout-dialog"
         title="Log out of your account?"
-        confirmation={{ icon: <LogOut />, description: 'You’ll need to sign in again to access your account and continue using ShelfLife AI.' }}
+        confirmation={{ icon: <LogOut />, description: 'You’ll need to sign in again to continue using ShelfLife AI.' }}
         onDismiss={() => setConfirmLogout(false)}
         returnFocus={accountButton}
         actions={<>
