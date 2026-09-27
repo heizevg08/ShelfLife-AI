@@ -303,6 +303,7 @@ function InventoryStaffUsagePage() {
 
 
 function InventoryStaffStockInPage() {
+  type StockInField = 'dateReceived' | 'ingredientId' | 'quantity' | 'expirationDate' | 'unitCost';
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [stockSearch, setStockSearch] = useState('');
   const [stockIngredient, setStockIngredient] = useState('All Ingredients');
@@ -317,6 +318,7 @@ function InventoryStaffStockInPage() {
   const [stockLoading, setStockLoading] = useState(true);
   const [stockError, setStockError] = useState(false);
   const [stockFormMessage, setStockFormMessage] = useState('');
+  const [stockErrors, setStockErrors] = useState<Partial<Record<StockInField, string>>>({});
   const [stockBusy, setStockBusy] = useState(false);
   const [dateReceived, setDateReceived] = useState('');
   const [ingredientId, setIngredientId] = useState('');
@@ -330,7 +332,13 @@ function InventoryStaffStockInPage() {
   const dateValue = (date: Date) => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
   const minimumExpiryDate = dateReceived ? (() => { const value=new Date(`${dateReceived}T00:00:00`);value.setDate(value.getDate()+1);return dateValue(value); })() : undefined;
   const range = (() => { if(stockDateRange==='Custom') return {from:stockDateFrom,to:stockDateTo}; const days=stockDateRange==='Last 30 Days'?30:stockDateRange==='Last 90 Days'?90:7; const to=new Date(),from=new Date();from.setDate(from.getDate()-(days-1));return {from:dateValue(from),to:dateValue(to)}; })();
-  const clearForm=()=>{setDateReceived('');setIngredientId('');setQuantity('');setExpirationDate('');setUnitCost('');setStockFormMessage('')};
+  const clearForm=()=>{setDateReceived('');setIngredientId('');setQuantity('');setExpirationDate('');setUnitCost('');setStockErrors({});setStockFormMessage('')};
+  const clearStockError=(field:StockInField)=>{setStockErrors(current=>({...current,[field]:undefined}));setStockFormMessage('')};
+  const stockValidation=(field:StockInField)=>({
+    'aria-invalid':stockErrors[field]?true as const:undefined,
+    'aria-describedby':stockErrors[field]?`stockin-${field}-error`:undefined,
+  });
+  const renderStockError=(field:StockInField)=>stockErrors[field]?<span id={`stockin-${field}-error`} className="sl-field-error">{stockErrors[field]}</span>:null;
   useEffect(() => { const controller=new AbortController(); listStockInIngredients(controller.signal).then(result=>setStockIngredients(result.ingredients)).catch(()=>{if(!controller.signal.aborted)setStockIngredients([])}); return()=>controller.abort(); }, []);
   useEffect(() => {
     const controller=new AbortController();setStockLoading(true);setStockError(false);
@@ -338,9 +346,9 @@ function InventoryStaffStockInPage() {
       .then(([data,summary])=>{setStockData(data);setStockSummary(summary)}).catch(()=>{if(!controller.signal.aborted)setStockError(true)}).finally(()=>{if(!controller.signal.aborted)setStockLoading(false)});
     return()=>controller.abort();
   },[stockSearch,stockIngredient,stockDateRange,stockDateFrom,stockDateTo,stockRows,stockPage]);
-  useEffect(()=>{ if(!dateReceived||!selectedIngredient?.defaultShelfLifeDays)return; const suggested=new Date(`${dateReceived}T00:00:00`);suggested.setDate(suggested.getDate()+selectedIngredient.defaultShelfLifeDays);setExpirationDate(dateValue(suggested)); },[dateReceived,ingredientId]);
-  useEffect(()=>{setUnitCost(selectedIngredient?.standardUnitCost===undefined?'':String(selectedIngredient.standardUnitCost))},[ingredientId]);
-  const submitStockIn=async(event:FormEvent<HTMLFormElement>)=>{event.preventDefault();setStockFormMessage('');if(!dateReceived||!ingredientId||!quantity||!expirationDate){setStockFormMessage('Complete all required fields before saving.');return}const numericQuantity=Number(quantity),numericCost=unitCost===''?undefined:Number(unitCost);if(!Number.isFinite(numericQuantity)||numericQuantity<=0){setStockFormMessage('Quantity received must be greater than zero.');return}if(numericCost!==undefined&&(!Number.isFinite(numericCost)||numericCost<0)){setStockFormMessage('Enter a valid unit cost.');return}setStockBusy(true);try{const batch=await createStockIn({ingredientId,dateReceived,quantity:numericQuantity,expirationDate,...(numericCost===undefined?{}:{unitCost:numericCost})});setStockFormMessage(`Stock-In saved. Batch ID: ${batch.batchID}`);clearForm();setAddModalOpen(false);const [data,summary]=await Promise.all([listInventoryBatches({page:1,pageSize:stockRows,from:range.from,to:range.to}),getStockInSummary()]);setStockPage(1);setStockData(data);setStockSummary(summary)}catch(error){setStockFormMessage(error instanceof ApiError?error.message:'Unable to save Stock-In. Try again.')}finally{setStockBusy(false)}};
+  useEffect(()=>{ if(!dateReceived||!selectedIngredient?.defaultShelfLifeDays)return; const suggested=new Date(`${dateReceived}T00:00:00`);suggested.setDate(suggested.getDate()+selectedIngredient.defaultShelfLifeDays);setExpirationDate(dateValue(suggested));setStockErrors(current=>({...current,expirationDate:undefined})); },[dateReceived,ingredientId]);
+  useEffect(()=>{setUnitCost(selectedIngredient?.standardUnitCost===undefined?'':String(selectedIngredient.standardUnitCost));setStockErrors(current=>({...current,unitCost:undefined}))},[ingredientId]);
+  const submitStockIn=async(event:FormEvent<HTMLFormElement>)=>{event.preventDefault();setStockFormMessage('');const next:Partial<Record<StockInField,string>>={};if(!dateReceived)next.dateReceived='Select the date received.';if(!ingredientId)next.ingredientId='Select an ingredient.';if(!quantity)next.quantity='Enter the quantity received.';if(!expirationDate)next.expirationDate='Select the expiry date.';const numericQuantity=Number(quantity),numericCost=unitCost===''?undefined:Number(unitCost);if(quantity&&(!Number.isFinite(numericQuantity)||numericQuantity<=0))next.quantity='Enter a quantity greater than 0.';if(unitCost!==''&&!Number.isFinite(numericCost))next.unitCost='Enter a valid unit cost.';else if(numericCost!==undefined&&numericCost<0)next.unitCost='Enter a unit cost of 0 or more.';if(Object.keys(next).length){setStockErrors(next);requestAnimationFrame(()=>stockForm.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());return}setStockBusy(true);setStockErrors({});try{const batch=await createStockIn({ingredientId,dateReceived,quantity:numericQuantity,expirationDate,...(numericCost===undefined?{}:{unitCost:numericCost})});setStockFormMessage(`Stock-In saved. Batch ID: ${batch.batchID}`);clearForm();setAddModalOpen(false);const [data,summary]=await Promise.all([listInventoryBatches({page:1,pageSize:stockRows,from:range.from,to:range.to}),getStockInSummary()]);setStockPage(1);setStockData(data);setStockSummary(summary)}catch(error){if(error instanceof ApiError){const fieldErrors:Partial<Record<StockInField,string>>={};for(const detail of error.details){if(['dateReceived','ingredientId','quantity','expirationDate','unitCost'].includes(detail.field))fieldErrors[detail.field as StockInField]=detail.message}setStockErrors(fieldErrors);setStockFormMessage(Object.keys(fieldErrors).length?'':error.message)}else setStockFormMessage('Unable to save Stock-In. Try again.')}finally{setStockBusy(false)}};
   const metric=(value:number|undefined)=>stockError&&!stockSummary?'Unavailable':stockLoading&&!stockSummary?'Loading?':(value??0).toLocaleString();
   const reset=()=>{setStockSearch('');setStockIngredient('All Ingredients');setStockDateRange('Last 7 Days');setStockDateFrom('');setStockDateTo('');setStockPage(1)};
   return <>
@@ -371,16 +379,16 @@ function InventoryStaffStockInPage() {
       <form id="sl-stockin-entry-form" ref={stockForm} className="sl-stockin-entry-form sl-creation-form" noValidate onSubmit={submitStockIn}>
         <div className="sl-creation-form-grid">
           <div className="sl-creation-form-row">
-            <label className="sl-creation-form-field"><span>Date Received <b>*</b></span><input type="date" value={dateReceived} onChange={event=>setDateReceived(event.target.value)} /></label>
-            <label className="sl-creation-form-field"><span>Ingredient <b>*</b></span><select value={ingredientId} onChange={event=>setIngredientId(event.target.value)}><option value="">Search or select ingredient...</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
+            <label className="sl-creation-form-field"><span>Date Received</span><input type="date" value={dateReceived} onChange={event=>{setDateReceived(event.target.value);clearStockError('dateReceived')}} {...stockValidation('dateReceived')} />{renderStockError('dateReceived')}</label>
+            <label className="sl-creation-form-field"><span>Ingredient</span><select value={ingredientId} onChange={event=>{setIngredientId(event.target.value);clearStockError('ingredientId')}} {...stockValidation('ingredientId')}><option value="">Search or select ingredient...</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select>{renderStockError('ingredientId')}</label>
           </div>
           <div className="sl-creation-form-row">
-            <label className="sl-creation-form-field"><span>Quantity Received <b>*</b></span><input inputMode="decimal" value={quantity} onChange={event=>setQuantity(event.target.value)} placeholder="Enter quantity" /></label>
+            <label className="sl-creation-form-field"><span>Quantity Received</span><input inputMode="decimal" value={quantity} onChange={event=>{setQuantity(event.target.value);clearStockError('quantity')}} placeholder="Enter quantity" {...stockValidation('quantity')} />{renderStockError('quantity')}</label>
             <label className="sl-creation-form-field"><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedIngredient?'Unit derived from selected ingredient':'Unit will be derived from the selected ingredient'}>{selectedIngredient?.unitOfMeasure??'—'}</output></label>
           </div>
           <div className="sl-creation-form-row">
-            <label className="sl-creation-form-field"><span>Expiry Date <b>*</b></span><input type="date" min={minimumExpiryDate} value={expirationDate} onChange={event=>setExpirationDate(event.target.value)} /></label>
-            <label className="sl-creation-form-field"><span>Unit Cost (Optional)</span><span className="sl-currency-input sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" value={unitCost} onChange={event=>setUnitCost(event.target.value)} placeholder="0.00" aria-label="Unit Cost in Philippine pesos" /></span></label>
+            <label className="sl-creation-form-field"><span>Expiry Date</span><input type="date" min={minimumExpiryDate} value={expirationDate} onChange={event=>{setExpirationDate(event.target.value);clearStockError('expirationDate')}} {...stockValidation('expirationDate')} />{renderStockError('expirationDate')}</label>
+            <label className="sl-creation-form-field"><span>Unit Cost (Optional)</span><span className="sl-currency-input sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" value={unitCost} onChange={event=>{setUnitCost(event.target.value);clearStockError('unitCost')}} placeholder="0.00" aria-label="Unit Cost in Philippine pesos" {...stockValidation('unitCost')} /></span>{renderStockError('unitCost')}</label>
           </div>
         </div>
         {stockFormMessage&&<p className="sl-inline-notice sl-stockin-entry-message" role="status">{stockFormMessage}</p>}

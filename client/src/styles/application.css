@@ -32809,6 +32809,11 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 :is(.sl-admin-ingredient-dialog .sl-ingredient-field-group,.sl-creation-form-field) > span:first-child { font: var(--sl-font-label); }
 :is(.sl-admin-ingredient-dialog .sl-ingredient-field-group,.sl-creation-form-field) > span:first-child b { color: var(--sl-critical); }
+.sl-creation-form-field > .sl-field-error {
+  margin: -1px 0 0;
+  line-height: 1.35;
+  display: block;
+}
 .sl-admin-ingredient-dialog .sl-ingredient-field-group > .sl-ingredient-validation-slot {
   min-height: 1.35em;
   margin: -1px 0 0;
@@ -32845,6 +32850,11 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   outline: none;
   border-color: var(--sl-brand);
   box-shadow: 0 0 0 3px color-mix(in srgb,var(--sl-focus) 18%,transparent);
+}
+.sl-creation-form :is(input,select,textarea)[aria-invalid="true"],
+.sl-creation-form .sl-currency-input:has(input[aria-invalid="true"]) {
+  border-color: var(--sl-critical)!important;
+  outline-color: var(--sl-critical)!important;
 }
 :is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) .sl-currency-input {
   min-height: 48px;
