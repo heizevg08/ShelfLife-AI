@@ -8,6 +8,7 @@ import { DataState, ExportControl, Pagination, Status } from './primitives';
 import { DateRangeFilter, type DateRangeValue } from './DateRangeFilter';
 import { modules, workspaceNavigation, type WorkspaceRole } from './workspace';
 import { publishActionFeedback } from '../../services/actionFeedback';
+import { formatDateTime, formatTime } from '../../utils/date-time';
 
 const AUTO_REFRESH_MS = 15000;
 const auditActionByLabel: Record<string, AuditFilters['action']> = {
@@ -112,7 +113,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
   };
 
   const lastUpdatedLabel = lastUpdatedAt
-    ? `Last updated: ${lastUpdatedAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}`
+    ? `Last updated: ${formatTime(lastUpdatedAt)}`
     : 'Last updated: waiting for data';
 
   const uniqueUsers = new Set(rows.map(row => row.actor.id)).size;
@@ -212,11 +213,11 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
               <td>{(data.page - 1) * data.pageSize + rowIndex + 1}</td>
               <td className="sl-record-id"><span className="sl-emphasized-value">{actorName(row)}</span></td>
               <td>{row.action}</td>
-              <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
+              <td><time dateTime={row.timestamp}>{formatDateTime(row.timestamp)}</time></td>
               <td><span className="sl-status" data-tone="success">Success</span></td>
             </tr> : <tr key={row.id}>
                 {adminOverview && <td>{(data.page - 1) * data.pageSize + rowIndex + 1}</td>}
-                <td><time dateTime={row.timestamp}>{new Date(row.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
+                <td><time dateTime={row.timestamp}>{formatDateTime(row.timestamp)}</time></td>
                 <td className="sl-record-id">{adminOverview ? <span className="sl-emphasized-value">{actorName(row)}</span> : `${row.actor.name} · ${row.actor.role}`}</td>
                 <td className={adminOverview ? 'sl-emphasized-value' : undefined}>{row.action}</td>
                 {adminOverview && <td>{row.module ?? row.targetType}</td>}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bell, CheckCheck, X } from 'lucide-react';
+import { formatDateTime } from '../../utils/date-time';
 
 type NotificationItem = { id: string; title: string; message: string; timestamp: string; read: boolean };
 const STORAGE_KEY = 'shelflifeai.notifications';
@@ -54,7 +55,7 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
     </button>
     {open && <section id="sl-notifications-panel" className="sl-notification-panel" role="dialog" aria-labelledby="sl-notifications-title">
       <div className="sl-notification-header"><div><h2 id="sl-notifications-title">Notifications</h2><p>{unread ? `${unread} unread` : 'You’re up to date'}</p></div><button type="button" className="sl-button sl-icon-button sl-close-button" aria-label="Close notifications" onClick={() => onChange(false)}><X size={17}/></button></div>
-      {items.length ? <><div className="sl-notification-actions"><button type="button" className="sl-button" disabled={!unread} onClick={markAllRead}><CheckCheck size={16}/> Mark all as read</button></div><div className="sl-notification-list">{items.map(item => <article key={item.id} className="sl-notification-item" data-read={item.read}><div><strong>{item.title}</strong><p>{item.message}</p><time dateTime={item.timestamp}>{new Date(item.timestamp).toLocaleString(undefined, { hour12: true })}</time></div></article>)}</div></> : <div className="sl-notification-empty"><Bell size={24} aria-hidden="true"/><strong>No notifications yet</strong><p>System alerts, account activity, and change-request updates will appear here when they are generated.</p></div>}
+      {items.length ? <><div className="sl-notification-actions"><button type="button" className="sl-button" disabled={!unread} onClick={markAllRead}><CheckCheck size={16}/> Mark all as read</button></div><div className="sl-notification-list">{items.map(item => <article key={item.id} className="sl-notification-item" data-read={item.read}><div><strong>{item.title}</strong><p>{item.message}</p><time dateTime={item.timestamp}>{formatDateTime(item.timestamp)}</time></div></article>)}</div></> : <div className="sl-notification-empty"><Bell size={24} aria-hidden="true"/><strong>No notifications yet</strong><p>System alerts, account activity, and change-request updates will appear here when they are generated.</p></div>}
     </section>}
   </div>;
 }

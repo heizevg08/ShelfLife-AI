@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { ExportControl, PageHeader, Pagination } from '../../components/application/primitives';
 import { listAuditRecords, type AuditRecord, type Page } from '../../services/administration';
+import { formatDateTime } from '../../utils/date-time';
 
 const tabs = [
   'Overview',
@@ -130,7 +131,7 @@ function AuditLogsPanel() {
                   <td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td><td><span className="sl-security-audit-empty-value">—</span></td>
                 </tr>
                 : auditRows.map(record => <tr key={record.id}>
-                  <td><time dateTime={record.timestamp}>{new Date(record.timestamp).toLocaleString(undefined, { hour12: true })}</time></td>
+                  <td><time dateTime={record.timestamp}>{formatDateTime(record.timestamp)}</time></td>
                   <td>{record.actor.name}</td>
                   <td>{record.actor.role}</td>
                   <td>{record.action}</td>

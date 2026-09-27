@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { dashboardSummary, listAccounts, listAuditRecords, type Account, type AuditRecord, type DashboardSummary } from '../../services/administration';
 import { sessionDisplayName, type SessionUser } from '../../services/auth';
 import { Card, Status, PageHeader} from '../application/primitives';
+import { formatTime } from '../../utils/date-time';
 
 const AUTO_REFRESH_MS = 15000;
 const roleOrder = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
@@ -156,7 +157,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
           <div className="sl-staff-usage-head-actions"><Link href="/SecurityActivity" className="sl-staff-usage-viewall sl-v209-viewall-button">View All <ArrowRight size={14} aria-hidden="true" /></Link></div>
         </header>
         <div className="sl-staff-usage-table-shell">
-          <table className="sl-data-table sl-staff-usage-table sl-sa-expiring-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>{audit?.items.length ? audit.items.map(row => <tr key={row.id}><td>{new Date(row.timestamp).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',hour12:true})}</td><td>{row.actor.name}<small>{row.actor.role}</small></td><td>{row.action.replaceAll('_',' ')}</td><td>{row.targetType}<small>{row.targetId}</small></td></tr>) : <tr className="sl-sa-dashboard-empty-data-row" aria-label={auditError ? 'System activity unavailable' : !audit ? 'System activity loading' : 'No system activity recorded'}><td>—</td><td>—</td><td>—</td><td>—</td></tr>}</tbody></table>
+          <table className="sl-data-table sl-staff-usage-table sl-sa-expiring-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>{audit?.items.length ? audit.items.map(row => <tr key={row.id}><td>{formatTime(row.timestamp)}</td><td>{row.actor.name}<small>{row.actor.role}</small></td><td>{row.action.replaceAll('_',' ')}</td><td>{row.targetType}<small>{row.targetId}</small></td></tr>) : <tr className="sl-sa-dashboard-empty-data-row" aria-label={auditError ? 'System activity unavailable' : !audit ? 'System activity loading' : 'No system activity recorded'}><td>—</td><td>—</td><td>—</td><td>—</td></tr>}</tbody></table>
         </div>
       </section>
     </section>

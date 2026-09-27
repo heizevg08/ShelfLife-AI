@@ -5,6 +5,7 @@ import { sessionDisplayName, sessionInitials } from '../../services/auth';
 import { PageHeader, Status } from './primitives';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { dashboardPaths } from './workspace';
+import { formatDateTime } from '../../utils/date-time';
 
 type ProfileTab = 'profile' | 'settings' | 'security';
 
@@ -53,11 +54,11 @@ export function ProfilePage() {
     if (!value) return '—';
     const date = new Date(value);
     return Number.isFinite(date.getTime())
-      ? <time dateTime={value}>{date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time>
+      ? <time dateTime={value}>{formatDateTime(value)}</time>
       : '—';
   };
   const lastLoginLabel = lastLogin && Number.isFinite(lastLogin.getTime())
-    ? <time dateTime={user.lastLoginAt}>{lastLogin.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time>
+    ? <time dateTime={user.lastLoginAt}>{formatDateTime(lastLogin)}</time>
     : 'No recorded login';
   const details = [
     { label: 'Full Name', value: displayName || 'Unavailable', Icon: UserRound },
