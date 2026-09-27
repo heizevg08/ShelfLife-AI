@@ -367,14 +367,22 @@ function InventoryStaffStockInPage() {
         <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={stockRows} onChange={event=>{setStockRows(Number(event.target.value));setStockPage(1)}}>{[10,15,50,100,150].map(value=><option key={value}>{value}</option>)}</select></label><Pagination compact page={stockPage} pageSize={stockRows} total={stockData?.total??0} itemLabel="stock-in records" onPageChange={setStockPage}/></footer>
       </section></main></div>
     </div>
-    <Dialog open={addModalOpen} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><PackagePlus size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Add Stock-In</span><small>Record a received inventory batch.</small></span></span>} busy={stockBusy} className="sl-add-user-dialog sl-account-reference-dialog sl-stockin-entry-modal" onDismiss={()=>{if(!stockBusy){clearForm();setAddModalOpen(false)}}} returnFocus={addStockInButton} actions={<><button type="button" className="sl-button" disabled={stockBusy} onClick={()=>{clearForm();setAddModalOpen(false)}}>Cancel</button><button type="submit" form="sl-stockin-entry-form" className="sl-button sl-button-primary" disabled={stockBusy}><PackagePlus size={16} aria-hidden="true" />Save Stock-In</button></>}>
-      <form id="sl-stockin-entry-form" ref={stockForm} className="sl-stockin-entry-form" noValidate onSubmit={submitStockIn}>
-        <label><span>Date Received <b>*</b></span><input type="date" value={dateReceived} onChange={event=>setDateReceived(event.target.value)} /></label>
-        <label><span>Ingredient <b>*</b></span><select value={ingredientId} onChange={event=>setIngredientId(event.target.value)}><option value="">Search or select ingredient...</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
-        <label><span>Quantity Received <b>*</b></span><input inputMode="decimal" value={quantity} onChange={event=>setQuantity(event.target.value)} placeholder="Enter quantity" /></label>
-        <label><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedIngredient?'Unit derived from selected ingredient':'Unit will be derived from the selected ingredient'}>{selectedIngredient?.unitOfMeasure??'—'}</output></label>
-        <label><span>Expiry Date <b>*</b></span><input type="date" min={minimumExpiryDate} value={expirationDate} onChange={event=>setExpirationDate(event.target.value)} /></label>
-        <label><span>Unit Cost (Optional)</span><span className="sl-currency-input sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" value={unitCost} onChange={event=>setUnitCost(event.target.value)} placeholder="0.00" aria-label="Unit Cost in Philippine pesos" /></span></label>
+    <Dialog open={addModalOpen} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><PackagePlus size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Add Stock-In</span><small>Record a received inventory batch.</small></span></span>} busy={stockBusy} className="sl-add-user-dialog sl-account-reference-dialog sl-stockin-entry-modal" onDismiss={()=>{if(!stockBusy){clearForm();setAddModalOpen(false)}}} returnFocus={addStockInButton} actions={<span className="sl-creation-form-actions"><button type="button" className="sl-button" disabled={stockBusy} onClick={()=>{clearForm();setAddModalOpen(false)}}>Cancel</button><button type="submit" form="sl-stockin-entry-form" className="sl-button sl-button-primary" disabled={stockBusy}><PackagePlus size={16} aria-hidden="true" />Save Stock-In</button></span>}>
+      <form id="sl-stockin-entry-form" ref={stockForm} className="sl-stockin-entry-form sl-creation-form" noValidate onSubmit={submitStockIn}>
+        <div className="sl-creation-form-grid">
+          <div className="sl-creation-form-row">
+            <label className="sl-creation-form-field"><span>Date Received <b>*</b></span><input type="date" value={dateReceived} onChange={event=>setDateReceived(event.target.value)} /></label>
+            <label className="sl-creation-form-field"><span>Ingredient <b>*</b></span><select value={ingredientId} onChange={event=>setIngredientId(event.target.value)}><option value="">Search or select ingredient...</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
+          </div>
+          <div className="sl-creation-form-row">
+            <label className="sl-creation-form-field"><span>Quantity Received <b>*</b></span><input inputMode="decimal" value={quantity} onChange={event=>setQuantity(event.target.value)} placeholder="Enter quantity" /></label>
+            <label className="sl-creation-form-field"><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedIngredient?'Unit derived from selected ingredient':'Unit will be derived from the selected ingredient'}>{selectedIngredient?.unitOfMeasure??'—'}</output></label>
+          </div>
+          <div className="sl-creation-form-row">
+            <label className="sl-creation-form-field"><span>Expiry Date <b>*</b></span><input type="date" min={minimumExpiryDate} value={expirationDate} onChange={event=>setExpirationDate(event.target.value)} /></label>
+            <label className="sl-creation-form-field"><span>Unit Cost (Optional)</span><span className="sl-currency-input sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" value={unitCost} onChange={event=>setUnitCost(event.target.value)} placeholder="0.00" aria-label="Unit Cost in Philippine pesos" /></span></label>
+          </div>
+        </div>
         {stockFormMessage&&<p className="sl-inline-notice sl-stockin-entry-message" role="status">{stockFormMessage}</p>}
       </form>
     </Dialog>

@@ -31652,75 +31652,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-stockin-entry-modal > .sl-dialog-content {
   padding: 24px 24px 0!important;
 }
-.sl-stockin-entry-form {
-  grid-template-columns: repeat(2,minmax(0,1fr));
-  gap: 18px 20px;
-  display: grid;
-}
-.sl-stockin-entry-form label {
-  align-content: start;
-  gap: .45rem;
-  min-width: 0;
-  margin: 0;
-  font: var(--sl-font-label);
-  display: grid;
-}
-.sl-stockin-entry-form label > span:first-child b { color: var(--sl-critical); }
-.sl-stockin-entry-form :is(input,select) {
-  box-sizing: border-box;
-  border: 1px solid var(--sl-border);
-  border-radius: var(--sl-radius);
-  background: var(--sl-surface);
-  width: 100%;
-  min-width: 0;
-  min-height: 48px;
-  color: var(--sl-text);
-  font: var(--sl-font-body);
-  padding: 0 var(--sl-space-4);
-}
-.sl-stockin-entry-form select {
-  appearance: none;
-  padding-right: 42px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23616b66' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right var(--sl-space-4) center;
-  background-size: 16px;
-}
-.sl-stockin-entry-form :is(input,select):focus {
-  outline: none;
-  border-color: var(--sl-brand);
-  box-shadow: 0 0 0 3px color-mix(in srgb,var(--sl-focus) 18%,transparent);
-}
 .sl-stockin-entry-modal .sl-stockin-currency-input {
-  min-height: 48px;
-  border-radius: var(--sl-radius)!important;
-  background: var(--sl-surface)!important;
-  transition: border-color var(--sl-motion),box-shadow var(--sl-motion);
-  overflow: hidden;
-}
-.sl-stockin-entry-modal .sl-stockin-currency-input > span {
-  align-self: stretch;
-  border-right: 1px solid var(--sl-border);
   color: var(--sl-text);
-  background: var(--sl-surface-subtle)!important;
-  flex: 0 0 48px;
-  place-items: center;
-  font-weight: 700;
-  display: grid;
-}
-.sl-stockin-entry-modal .sl-stockin-currency-input > input {
-  border: 0!important;
-  border-radius: 0!important;
-  min-height: 46px!important;
-  background: transparent!important;
-  box-shadow: none!important;
-  flex: 1;
-  min-width: 0;
-  outline: 0!important;
-}
-.sl-stockin-entry-modal .sl-stockin-currency-input:focus-within {
-  border-color: var(--sl-brand)!important;
-  box-shadow: 0 0 0 3px color-mix(in srgb,var(--sl-focus) 18%,transparent);
 }
 .sl-stockin-entry-modal output.sl-staff-derived-unit {
   border: 1px solid var(--sl-border);
@@ -31735,7 +31668,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   padding: 0 .75rem;
   display: flex;
 }
-.sl-stockin-entry-message { grid-column: 1/-1; margin: 0; }
+.sl-stockin-entry-message { margin: 0; }
 .sl-stockin-entry-modal > .sl-dialog-actions {
   flex-wrap: nowrap;
   justify-content: flex-end;
@@ -31746,12 +31679,10 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 @media (width<=620px){
   .sl-stockin-entry-modal > .sl-popover-header,
   .sl-stockin-entry-modal > .sl-dialog-content { padding-inline: 16px!important; }
-  .sl-stockin-entry-form { grid-template-columns: 1fr; }
   .sl-stockin-entry-modal > .sl-dialog-actions { padding-inline: 16px!important; }
 }
 @media (width<=460px){
   .sl-stockin-entry-modal > .sl-dialog-actions { flex-direction: column; }
-  .sl-stockin-entry-modal > .sl-dialog-actions .sl-button { justify-content: center; width: 100%; }
 }
 
 :is(.sl-manager-kpis,.sl-manager-inventory-kpis,.sl-manager-usage-kpis,.sl-mgr-forecast-kpis,.sl-mgr-cr-kpis,.sl-manager-alerts-kpis,.sl-manager-reports-kpis) {
@@ -32854,32 +32785,37 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   padding: 0 24px!important;
 }
 .sl-admin-ingredient-dialog > .sl-dialog-content { padding: 24px 24px 0!important; }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form .sl-form-grid {
+.sl-creation-form { gap: 18px; display: grid; }
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form .sl-form-grid,.sl-creation-form-grid) {
   grid-template-columns: minmax(0,1fr)!important;
   gap: 18px!important;
+  display: grid;
 }
-.sl-admin-ingredient-dialog .sl-ingredient-form-row {
+:is(.sl-admin-ingredient-dialog .sl-ingredient-form-row,.sl-creation-form-row) {
   grid-template-columns: repeat(2,minmax(0,1fr));
   align-items: start;
   gap: 20px;
   display: grid;
 }
 .sl-admin-ingredient-dialog .sl-ingredient-form-row-wide { grid-template-columns: minmax(0,1fr); }
-.sl-admin-ingredient-dialog .sl-ingredient-field-group {
+:is(.sl-admin-ingredient-dialog .sl-ingredient-field-group,.sl-creation-form-field) {
   align-content: start;
   gap: .45rem;
   min-width: 0;
   margin: 0;
+  font-size: .8rem;
+  font-weight: 600;
   display: grid;
 }
-.sl-admin-ingredient-dialog .sl-ingredient-field-group > span:first-child { font: var(--sl-font-label); }
+:is(.sl-admin-ingredient-dialog .sl-ingredient-field-group,.sl-creation-form-field) > span:first-child { font: var(--sl-font-label); }
+:is(.sl-admin-ingredient-dialog .sl-ingredient-field-group,.sl-creation-form-field) > span:first-child b { color: var(--sl-critical); }
 .sl-admin-ingredient-dialog .sl-ingredient-field-group > .sl-ingredient-validation-slot {
   min-height: 1.35em;
   margin: -1px 0 0;
   line-height: 1.35;
 }
 .sl-admin-ingredient-dialog .sl-ingredient-validation-slot[data-empty="true"] { visibility: hidden; }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form :is(input,select,textarea) {
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) :is(input,select,textarea) {
   box-sizing: border-box;
   width: 100%;
   margin: 0;
@@ -32890,8 +32826,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   font: var(--sl-font-body);
   transition: border-color var(--sl-motion),box-shadow var(--sl-motion);
 }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form :is(input,select) { min-height: 48px; padding: 0 var(--sl-space-4); }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form select {
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) :is(input,select) { min-height: 48px; padding: 0 var(--sl-space-4); }
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) select {
   appearance: none;
   padding-right: 42px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23616b66' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -32904,13 +32840,13 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   padding: 12px var(--sl-space-4);
   resize: none;
 }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form :is(input,textarea)::placeholder { color: var(--sl-muted); opacity: 1; }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form :is(input,select,textarea):focus {
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) :is(input,textarea)::placeholder { color: var(--sl-muted); opacity: 1; }
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) :is(input,select,textarea):focus {
   outline: none;
   border-color: var(--sl-brand);
   box-shadow: 0 0 0 3px color-mix(in srgb,var(--sl-focus) 18%,transparent);
 }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form .sl-currency-input {
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) .sl-currency-input {
   min-height: 48px;
   overflow: hidden;
   border: 1px solid var(--sl-border)!important;
@@ -32918,11 +32854,11 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   background: var(--sl-surface)!important;
   transition: border-color var(--sl-motion),box-shadow var(--sl-motion);
 }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form .sl-currency-input:focus-within {
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) .sl-currency-input:focus-within {
   border-color: var(--sl-brand)!important;
   box-shadow: 0 0 0 3px color-mix(in srgb,var(--sl-focus) 18%,transparent);
 }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form .sl-currency-input > span:first-child {
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) .sl-currency-input > span:first-child {
   align-self: stretch;
   align-items: center;
   flex: 0 0 48px;
@@ -32932,7 +32868,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   display: inline-flex;
   justify-content: center;
 }
-.sl-admin-ingredient-dialog .sl-live-ingredient-form .sl-currency-input > input {
+:is(.sl-admin-ingredient-dialog .sl-live-ingredient-form,.sl-creation-form) .sl-currency-input > input {
   min-height: 46px;
   border: 0!important;
   border-radius: 0!important;
@@ -32946,6 +32882,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   padding: 18px 24px!important;
 }
 .sl-admin-ingredient-dialog .sl-ingredient-create-actions { margin-left: auto; }
+.sl-creation-form-actions { align-items: center; gap: 10px; margin-left: auto; display: flex; }
 .sl-area-dialog.sl-admin-ingredient-dialog.sl-ingredient-view-dialog {
   width: min(38rem,calc(100vw - 2rem))!important;
   max-width: 38rem!important;
@@ -32980,7 +32917,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 @media (width <= 620px) {
   .sl-admin-ingredient-dialog > .sl-popover-header,
   .sl-admin-ingredient-dialog > .sl-dialog-content { padding-inline: 16px!important; }
-  .sl-admin-ingredient-dialog .sl-ingredient-form-row { grid-template-columns: minmax(0,1fr); }
+  :is(.sl-admin-ingredient-dialog .sl-ingredient-form-row,.sl-creation-form-row) { grid-template-columns: minmax(0,1fr); }
   .sl-admin-ingredient-dialog > .sl-dialog-actions { align-items: stretch; padding-inline: 16px!important; }
   .sl-admin-ingredient-dialog.sl-ingredient-view-dialog > .sl-dialog-actions { flex-wrap: wrap; }
   .sl-ingredient-details-identity { padding: 20px 16px; }
@@ -32995,8 +32932,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 @media (width <= 460px) {
   .sl-admin-ingredient-dialog > .sl-dialog-actions { flex-direction: column; }
-  .sl-ingredient-create-actions { width: 100%; }
-  .sl-ingredient-create-actions .sl-button { flex: 1; justify-content: center; }
+  :is(.sl-ingredient-create-actions,.sl-creation-form-actions) { width: 100%; }
+  :is(.sl-ingredient-create-actions,.sl-creation-form-actions) .sl-button { flex: 1; justify-content: center; }
 }
 .sl-profile-page {
   align-content: start;
