@@ -6,7 +6,7 @@ const { randomBytes } = require('node:crypto');
 const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createIngredients } = require('../dist/services/ingredients');
-const { ingredientInput, ingredientPagination } = require('../dist/validators/ingredient');
+const { ingredientInput, ingredientPagination, ingredientPatch } = require('../dist/validators/ingredient');
 const { versionConflict } = require('../dist/validators/inventory-contract');
 
 const admin = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Admin User', email: 'admin@shelflife.com', role: 'Admin', isActive: true, authVersion: 0 };
@@ -16,6 +16,10 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
   const valid = ingredientInput({ name: '  Whole   Milk ', brand: '', description: '', category: 'Dairy', unitOfMeasure: ' L ', minimumStock: 0, standardUnitCost: 0, defaultShelfLifeDays: 7 });
   assert.equal(valid.name, 'Whole Milk');
   assert.equal(valid.unitOfMeasure, 'L');
+  assert.equal(ingredientInput({ name: 'Chips', category: 'Other', customCategory: '  Snacks ', unitOfMeasure: 'box' }).customCategory, 'Snacks');
+  assert.equal(ingredientInput({ name: 'Chips', category: 'Pantry', unitOfMeasure: 'box' }).customCategory, undefined);
+  assert.throws(() => ingredientInput({ name: 'Chips', category: 'Pantry', customCategory: 'Snacks', unitOfMeasure: 'box' }));
+  assert.equal(ingredientPatch({ expectedVersion: 0, category: 'Pantry' }).patch.customCategory, '');
   for (const body of [
     { ...valid, expirationDate: '2030-01-01' },
     { ...valid, name: '' },
@@ -65,11 +69,10 @@ test('ingredient HTTP API authenticates, enforces per-method roles, validates, p
       assert.equal((await request(role, 'PATCH', input, '/' + '3'.repeat(24))).status, 403);
       assert.equal((await request(role, 'DELETE', undefined, '/' + '3'.repeat(24))).status, 403);
     }
-    assert.equal((await request(staff, 'POST', { ...input, name: 'Staff creation' })).status, 201);
-    assert.equal((await request(staff, 'PATCH', input, '/' + rows[0].id)).status, 403);
-    assert.equal((await request(staff, 'DELETE', undefined, '/' + rows[0].id)).status, 403);
-    assert.equal(rows[0].name, 'Staff creation');
-    rows.length = 0;
+    assert.equal((await request(staff, 'POST', { ...input, name: 'Staff creation' })).status, 403);
+    assert.equal((await request(staff, 'PATCH', input, '/' + '3'.repeat(24))).status, 403);
+    assert.equal((await request(staff, 'DELETE', undefined, '/' + '3'.repeat(24))).status, 403);
+    assert.equal(rows.length, 0);
     assert.equal((await request(manager, 'POST', { ...input, expirationDate: '2030-01-01' })).status, 400);
     const created = await request(manager, 'POST', input); assert.equal(created.status, 201);
     const body = await created.json(); assert.equal(body.ingredient.name, 'Whole Milk'); assert.equal(body.ingredient.createdBy.id, manager.id);

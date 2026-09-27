@@ -41,7 +41,7 @@ test('Mongo key guard covers all business writes and reads without bypassing wri
   const writes = [
     ['POST', '/api/users', 'Super Admin'], ['PATCH', `/api/users/${id}`, 'Super Admin'],
     ['POST', `/api/users/${id}/deactivate`, 'Super Admin'], ['POST', `/api/users/${id}/reactivate`, 'Super Admin'],
-    ['POST', '/api/ingredients', 'Inventory Staff'], ['PATCH', `/api/ingredients/${id}`, 'Inventory Manager'],
+    ['PATCH', `/api/ingredients/${id}`, 'Inventory Manager'],
     ['DELETE', `/api/ingredients/${id}`, 'Inventory Manager'],
     ['POST', '/api/inventory-batches', 'Inventory Manager'], ['PATCH', `/api/inventory-batches/${id}`, 'Inventory Manager'],
     ['DELETE', `/api/inventory-batches/${id}`, 'Inventory Manager'],
@@ -57,6 +57,8 @@ test('Mongo key guard covers all business writes and reads without bypassing wri
     const response = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json' }, body: '{' });
     assert.equal(response.status, 401, path);
   }
+  const staffCreate = await fetch(base + '/api/ingredients', { method: 'POST', headers: { Authorization: 'Bearer Inventory Staff', 'Content-Type': 'application/json' }, body: JSON.stringify({ $set: { role: 'Super Admin' } }) });
+  assert.equal(staffCreate.status, 403);
   for (const path of ['/api/users', '/api/audit-records', '/api/dashboard/summary', '/api/ingredients', '/api/inventory-batches', `/api/inventory-batches/${id}`, '/api/system-config']) {
     const response = await fetch(base + path + '?%24where=x', { headers: { Authorization: 'Bearer Super Admin' } });
     assert.equal(response.status, 400, path);

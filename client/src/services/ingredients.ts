@@ -7,6 +7,7 @@ export interface Ingredient {
   brand: string;
   description: string;
   category: string;
+  customCategory?: string;
   unitOfMeasure: string;
   minimumStock?: number;
   standardUnitCost?: number;
@@ -22,6 +23,7 @@ export interface IngredientInput {
   brand: string;
   description: string;
   category: string;
+  customCategory?: string;
   unitOfMeasure: string;
   minimumStock?: number;
   standardUnitCost?: number;

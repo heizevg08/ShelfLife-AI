@@ -6,6 +6,7 @@ const schema = new Schema({
   brand: { type: String, trim: true, maxlength: 100, default: '' },
   description: { type: String, trim: true, maxlength: 500, default: '' },
   category: { enum: INGREDIENT_CATEGORIES, type: String, required: true, trim: true, maxlength: 50 },
+  customCategory: { type: String, trim: true, maxlength: 50, default: '' },
   unitOfMeasure: { enum: INGREDIENT_UNITS, type: String, required: true, trim: true, maxlength: 50 },
   minimumStock: { type: Number, min: 0 },
   standardUnitCost: { type: Number, min: 0 },

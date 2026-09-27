@@ -1,6 +1,6 @@
 import { ingredientPermissions } from './workspace';
 import { Link, type Href } from '../../routing/navigation';
-import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, Filter, Grid2X2, Info, Leaf, Minus, PackageX, Plus, Search, PackagePlus, Pencil, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, MoreVertical } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
@@ -11,35 +11,63 @@ import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { createIngredient, deleteIngredient, listIngredients, updateIngredient, type Ingredient, type IngredientInput } from '../../services/ingredients';
+import { createChangeRequest, deleteChangeRequest, listChangeRequests, updateChangeRequest, type ChangeRequest, type ChangeRequestInput } from '../../services/changeRequests';
+import { createIngredientRequest, deleteIngredientRequest, listIngredientRequests, reviewIngredientRequest, updateIngredientRequest, type IngredientRequest } from '../../services/ingredientRequests';
+import { listAccountRequests } from '../../services/accountRequests';
 
 
 const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
 const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
-type IngredientDraft = { name: string; brand: string; category: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
-const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
+type IngredientDraft = { name: string; brand: string; category: string; customCategory: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
+const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', customCategory:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
 type IngredientField = keyof IngredientDraft;
-const ingredientApiField: Record<string, IngredientField | undefined> = { name: 'name', brand: 'brand', category: 'category', unitOfMeasure: 'unit', minimumStock: 'minStock', standardUnitCost: 'unitCost', defaultShelfLifeDays: 'shelfLife', description: 'description' };
+const ingredientApiField: Record<string, IngredientField | undefined> = { name: 'name', brand: 'brand', category: 'category', customCategory: 'customCategory', unitOfMeasure: 'unit', minimumStock: 'minStock', standardUnitCost: 'unitCost', defaultShelfLifeDays: 'shelfLife', description: 'description' };
 
 function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit }: { form: IngredientDraft; errors: Partial<Record<IngredientField, string>>; busy: boolean; formError: string; set: (key: IngredientField, value: string) => void; setError: (key: IngredientField, value?: string) => void; onSubmit: (event: FormEvent) => void }) {
-  const field = (key: IngredientField, label: string, control: React.ReactNode, required = true) => <label>{label}{required && <span className="sl-required-mark"> *</span>}{control}{errors[key] && <span id={`ingredient-${key}-error`} className="sl-field-error">{errors[key]}</span>}</label>;
+  const field = (key: IngredientField, label: string, control: React.ReactNode, required = true) => <label><span className="sl-form-label">{label}{required && <span className="sl-required-mark"> *</span>}</span>{control}{errors[key] && <span id={`ingredient-${key}-error`} className="sl-field-error">{errors[key]}</span>}</label>;
   const validation = (key: IngredientField) => ({ 'aria-invalid': errors[key] ? true as const : undefined, 'aria-describedby': errors[key] ? `ingredient-${key}-error` : undefined });
-  const numericChange = (key: 'minStock' | 'unitCost' | 'shelfLife', label: string, whole = false) => (value: string) => {
+  const textChange = (key: IngredientField, label: string, max: number, required = false) => (value: string) => {
+    set(key, value);
+    setError(key, required && !value.trim() ? `Enter ${label.toLowerCase()}.` : value.length > max ? `Use at most ${max} characters.` : undefined);
+  };
+  const numericChange = (key: 'minStock' | 'unitCost' | 'shelfLife', label: string, whole = false, maxDecimals?: number, minimum = 0) => (value: string) => {
     set(key, value);
     if (!value) { setError(key); return; }
-    const valid = whole ? /^\d+$/.test(value) : /^\d*(?:\.\d*)?$/.test(value);
-    setError(key, valid ? undefined : whole ? `${label} accepts whole numbers only.` : `${label} accepts numbers only.`);
+    const validFormat = whole ? /^\d+$/.test(value) : maxDecimals === undefined ? /^\d*(?:\.\d*)?$/.test(value) : new RegExp(`^\\d*(?:\\.\\d{0,${maxDecimals}})?$`).test(value);
+    const number = Number(value);
+    setError(key, !validFormat || !Number.isFinite(number) ? `${label} must be a valid number${whole ? ' with no decimals' : maxDecimals ? ` with at most ${maxDecimals} decimal places` : ''}.` : number < minimum ? `${label} must be at least ${minimum}.` : undefined);
+  };
+  const chooseCategory = (value: string) => {
+    set('category', value);
+    setError('category', value ? undefined : 'Select a category.');
+    if (value !== 'Other') set('customCategory', '');
+    else setError('customCategory', form.customCategory.trim() ? undefined : 'Specify the category.');
+  };
+  const stepper = (key: 'minStock' | 'unitCost', label: string, step: number, precision: number, id: string, currency = false) => {
+    const value = form[key];
+    const adjust = (direction: -1 | 1) => {
+      const next = Math.max(0, Number(value || 0) + direction * step);
+      numericChange(key, label, false, key === 'unitCost' ? precision : undefined)(key === 'unitCost' ? next.toFixed(precision) : String(Number(next.toFixed(precision))));
+    };
+    return <div className={`sl-number-stepper${currency ? ' sl-number-stepper-currency' : ''}`}>
+      {currency && <span className="sl-number-stepper-prefix" aria-hidden="true">₱</span>}
+      <button type="button" className="sl-number-stepper-button" aria-label={`Decrease ${label}`} title={`Decrease ${label}`} disabled={busy || !value || Number(value) <= 0} onClick={() => adjust(-1)}><Minus size={15} aria-hidden="true" /></button>
+      <input id={id} disabled={busy} className="sl-admin-input" type="text" inputMode="decimal" role="spinbutton" aria-valuemin={0} aria-valuestep={step} aria-valuenow={value && Number.isFinite(Number(value)) ? Number(value) : undefined} value={key === 'unitCost' && value !== '' && /^\d+(?:\.\d{0,2})?$/.test(value) ? Number(value).toFixed(2) : value} onChange={event => numericChange(key, label, false, key === 'unitCost' ? precision : undefined)(event.target.value)} onKeyDown={event => { if (event.key === 'ArrowUp') { event.preventDefault(); adjust(1); } else if (event.key === 'ArrowDown') { event.preventDefault(); adjust(-1); } }} {...validation(key)} />
+      <button type="button" className="sl-number-stepper-button" aria-label={`Increase ${label}`} title={`Increase ${label}`} disabled={busy} onClick={() => adjust(1)}><Plus size={15} aria-hidden="true" /></button>
+    </div>;
   };
   return <form id="sl-ingredient-form" className="sl-preview sl-live-ingredient-form" noValidate onSubmit={onSubmit}>
     {formError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{formError}</p>}
     <div className="sl-form-grid">
-      {field('name', 'Name', <input autoFocus disabled={busy} className="sl-admin-input" placeholder="e.g. Chicken Breast" maxLength={100} value={form.name} onChange={e => set('name', e.target.value)} {...validation('name')} />)}
-      {field('brand', 'Brand', <input disabled={busy} className="sl-admin-input" placeholder="e.g. FreshFarm" maxLength={100} value={form.brand} onChange={e => set('brand', e.target.value)} {...validation('brand')} />, false)}
-      {field('category', 'Category', <select disabled={busy} className="sl-admin-input" value={form.category} onChange={e => set('category', e.target.value)} {...validation('category')}><option value="">Select category</option>{INGREDIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select>)}
-      {field('unit', 'Unit of measure', <select disabled={busy} className="sl-admin-input" value={form.unit} onChange={e => set('unit', e.target.value)} {...validation('unit')}><option value="">Select unit</option>{INGREDIENT_UNITS.map(value => <option key={value} value={value}>{value}</option>)}</select>)}
-      {field('minStock', 'Minimum stock', <input id="ingredient-minStock-input" disabled={busy} className="sl-admin-input" type="text" inputMode="decimal" value={form.minStock} onChange={e => numericChange('minStock', 'Minimum stock')(e.target.value)} {...validation('minStock')} />, false)}
-      {field('unitCost', 'Standard unit cost', <span className="sl-currency-input"><span aria-hidden="true">₱</span><input id="ingredient-unitCost-input" disabled={busy} className="sl-admin-input sl-currency-value" type="text" inputMode="decimal" value={form.unitCost === '' ? '' : (/^\d+(?:\.\d{0,2})?$/.test(form.unitCost) ? Number(form.unitCost).toFixed(2) : form.unitCost)} onFocus={e => { if (/^\d+(?:\.\d{1,2})?$/.test(form.unitCost)) e.currentTarget.select(); }} onChange={e => { const raw=e.target.value.replace(/^₱\s*/, ''); const stripped=raw.replace(/,/g,''); set('unitCost', stripped); if (!stripped) setError('unitCost'); else setError('unitCost', /^\d*(?:\.\d{0,2})?$/.test(stripped) ? undefined : 'Standard unit cost accepts numbers only.'); }} {...validation('unitCost')} /></span>, false)}
-      {field('shelfLife', 'Default shelf life (days)', <input id="ingredient-shelfLife-input" disabled={busy} className="sl-admin-input" type="text" inputMode="numeric" value={form.shelfLife} onChange={e => numericChange('shelfLife', 'Shelf life', true)(e.target.value)} {...validation('shelfLife')} />, false)}
-      {field('description', 'Description', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Boneless, skinless chicken breast" maxLength={500} value={form.description} onChange={e => set('description', e.target.value)} {...validation('description')} />, false)}
+      {field('name', 'Name', <input autoFocus disabled={busy} className="sl-admin-input" placeholder="e.g. Chicken Breast" maxLength={100} value={form.name} onChange={e => textChange('name', 'an ingredient name', 100, true)(e.target.value)} {...validation('name')} />)}
+      {field('brand', 'Brand', <input disabled={busy} className="sl-admin-input" placeholder="e.g. FreshFarm" maxLength={100} value={form.brand} onChange={e => textChange('brand', 'brand', 100)(e.target.value)} {...validation('brand')} />, false)}
+      {field('category', 'Category', <select disabled={busy} className="sl-admin-input" value={form.category} onChange={e => chooseCategory(e.target.value)} {...validation('category')}><option value="">Select category</option>{INGREDIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select>)}
+      {form.category === 'Other' && field('customCategory', 'Specify category', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Condiments" maxLength={50} value={form.customCategory} onChange={e => textChange('customCategory', 'a custom category', 50, true)(e.target.value)} {...validation('customCategory')} />)}
+      {field('unit', 'Unit of measure', <select disabled={busy} className="sl-admin-input" value={form.unit} onChange={e => { set('unit', e.target.value); setError('unit', e.target.value ? undefined : 'Select a unit of measure.'); }} {...validation('unit')}><option value="">Select unit</option>{INGREDIENT_UNITS.map(value => <option key={value} value={value}>{value}</option>)}</select>)}
+      {field('minStock', 'Minimum stock', stepper('minStock', 'Minimum stock', 1, 2, 'ingredient-minStock-input'), false)}
+      {field('unitCost', 'Standard unit cost', stepper('unitCost', 'Standard unit cost', 0.01, 2, 'ingredient-unitCost-input', true), false)}
+      {field('shelfLife', 'Default shelf life (days)', <input id="ingredient-shelfLife-input" disabled={busy} className="sl-admin-input" type="text" inputMode="numeric" value={form.shelfLife} onChange={e => numericChange('shelfLife', 'Shelf life', true, undefined, 1)(e.target.value)} {...validation('shelfLife')} />, false)}
+      {field('description', 'Description', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Boneless, skinless chicken breast" maxLength={500} value={form.description} onChange={e => textChange('description', 'description', 500)(e.target.value)} {...validation('description')} />, false)}
     </div>
   </form>;
 }
@@ -156,6 +184,15 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
   const [page, setPage] = useState(1);
   const [refresh, setRefresh] = useState(0);
   const [data, setData] = useState<{ items: Ingredient[]; page: number; pageSize: number; total: number } | null>(null);
+  const [ingredientRequests, setIngredientRequests] = useState<IngredientRequest[]>([]);
+  const [requestLoading, setRequestLoading] = useState(true);
+  const [requestLoadError, setRequestLoadError] = useState('');
+  const [requestActionError, setRequestActionError] = useState('');
+  const [requestBusy, setRequestBusy] = useState('');
+  const [successRequestName, setSuccessRequestName] = useState('');
+  const [successRequestUpdated, setSuccessRequestUpdated] = useState(false);
+  const [editIngredientRequest, setEditIngredientRequest] = useState<IngredientRequest | null>(null);
+  const canReviewRequests = ['Inventory Manager', 'Admin', 'Super Admin'].includes(user.role);
   const [loadError, setLoadError] = useState(false);
   const [form, setForm] = useState<IngredientDraft>(emptyIngredient);
   const [errors, setErrors] = useState<Partial<Record<IngredientField, string>>>({});
@@ -184,6 +221,14 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
     }, 250);
     return () => { window.clearTimeout(timer); abort.abort(); };
   }, [page, search, category, refresh]);
+  useEffect(() => {
+    const abort = new AbortController();
+    setRequestLoading(true); setRequestLoadError('');
+    listIngredientRequests(abort.signal).then(result => { if (!abort.signal.aborted) setIngredientRequests(result.items); }).catch(error => {
+      if (!abort.signal.aborted) setRequestLoadError(error instanceof Error ? error.message : 'Ingredient requests could not be loaded.');
+    }).finally(() => { if (!abort.signal.aborted) setRequestLoading(false); });
+    return () => abort.abort();
+  }, [refresh]);
   const setField = (key: IngredientField, value: string) => {
     setForm(current => ({ ...current, [key]: value }));
     setErrors(current => ({ ...current, [key]: undefined }));
@@ -191,19 +236,35 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
   };
   const setFieldError = (key: IngredientField, value?: string) => setErrors(current => ({ ...current, [key]: value }));
   const dismiss = () => { if (!busy) setPreview(null); };
-  const open = () => { if (!permissions.create) return; setEditIngredient(null); setForm(emptyIngredient); setErrors({}); setFormError(''); setPreview('Ingredients'); };
-  const openEdit = (item: Ingredient) => { if (!permissions.update) return; setEditIngredient(item); setForm({ name:item.name, brand:item.brand || '', category:item.category, unit:item.unitOfMeasure, minStock:item.minimumStock === undefined ? '' : String(item.minimumStock), unitCost:item.standardUnitCost === undefined ? '' : String(item.standardUnitCost), shelfLife:item.defaultShelfLifeDays === undefined ? '' : String(item.defaultShelfLifeDays), description:item.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
+  const open = () => { if (!permissions.create) return; setEditIngredient(null); setEditIngredientRequest(null); setForm(emptyIngredient); setErrors({}); setFormError(''); setPreview('Ingredients'); };
+  const openEdit = (item: Ingredient) => { if (!permissions.update) return; setEditIngredient(item); setEditIngredientRequest(null); setForm({ name:item.name, brand:item.brand || '', category:item.category, customCategory:item.customCategory || '', unit:item.unitOfMeasure, minStock:item.minimumStock === undefined ? '' : String(item.minimumStock), unitCost:item.standardUnitCost === undefined ? '' : String(item.standardUnitCost), shelfLife:item.defaultShelfLifeDays === undefined ? '' : String(item.defaultShelfLifeDays), description:item.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
+  const openEditRequest = (request: IngredientRequest) => { if (user.role !== 'Inventory Staff' || request.status !== 'Pending') return; setEditIngredient(null); setEditIngredientRequest(request); setForm({ name:request.name, brand:request.brand || '', category:request.category, customCategory:request.customCategory || '', unit:request.unitOfMeasure, minStock:request.minimumStock === undefined ? '' : String(request.minimumStock), unitCost:request.standardUnitCost === undefined ? '' : String(request.standardUnitCost), shelfLife:request.defaultShelfLifeDays === undefined ? '' : String(request.defaultShelfLifeDays), description:request.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
   const removeIngredient = async () => { if (!permissions.remove || !deleteTarget || actionBusy) return; setActionBusy(true); setDeleteError(''); try { await deleteIngredient(deleteTarget.id, deleteTarget.version); setDeleteTarget(null); setRefresh(value => value + 1); } catch (error) { setDeleteError(error instanceof ApiError ? error.message : 'The ingredient could not be archived. Check your connection and try again.'); } finally { setActionBusy(false); } };
+  const reviewRequest = async (request: IngredientRequest, decision: 'Approved' | 'Rejected') => {
+    if (!canReviewRequests || requestBusy) return;
+    setRequestBusy(request.id); setRequestActionError('');
+    try { await reviewIngredientRequest(request.id, decision, request.version); setRefresh(value => value + 1); }
+    catch (error) { setRequestActionError(error instanceof Error ? error.message : 'The ingredient request could not be reviewed.'); }
+    finally { setRequestBusy(''); }
+  };
+  const removeRequest = async (request: IngredientRequest) => {
+    if (!canReviewRequests || requestBusy || !window.confirm(`Remove the ${request.name} request from the list? Its history will be retained.`)) return;
+    setRequestBusy(request.id); setRequestActionError('');
+    try { await deleteIngredientRequest(request.id); setRefresh(value => value + 1); }
+    catch (error) { setRequestActionError(error instanceof Error ? error.message : 'The ingredient request could not be removed.'); }
+    finally { setRequestBusy(''); }
+  };
   const save = async (event: FormEvent) => {
     event.preventDefault();
-    if (busy || !(editIngredient ? permissions.update : permissions.create)) return;
+    if (busy || !(editIngredient ? permissions.update : editIngredientRequest ? user.role === 'Inventory Staff' : permissions.create)) return;
     const next: Partial<Record<IngredientField, string>> = {};
-    const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
+    const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), category: form.category.trim(), customCategory: form.customCategory.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
     for (const [key, limit] of [['name', 100], ['brand', 100], ['description', 500], ['unit', 50]] as const) {
       if (clean[key].length > limit) next[key] = `Use at most ${limit} characters.`;
     }
     if (!clean.name) next.name = 'Enter an ingredient name.';
     if (!clean.category) next.category = 'Select a category.';
+    if (clean.category === 'Other' && !clean.customCategory) next.customCategory = 'Specify the category.';
     if (!clean.unit) next.unit = 'Enter a unit of measure.';
     for (const [key, label] of [['minStock', 'Minimum stock'], ['unitCost', 'Standard unit cost']] as const) if (clean[key] !== '' && (!Number.isFinite(Number(clean[key])) || Number(clean[key]) < 0)) next[key] = `${label} must be 0 or greater.`;
     if (clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1)) next.shelfLife = 'Shelf life must be a whole number of at least 1 day.';
@@ -212,13 +273,18 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
       requestAnimationFrame(() => document.querySelector<HTMLElement>('#sl-ingredient-form [aria-invalid="true"]')?.focus());
       return;
     }
-    const input: IngredientInput = { name: clean.name, brand: clean.brand, description: clean.description, category: clean.category, unitOfMeasure: clean.unit, ...(clean.minStock === '' ? {} : { minimumStock: Number(clean.minStock) }), ...(clean.unitCost === '' ? {} : { standardUnitCost: Number(clean.unitCost) }), ...(clean.shelfLife === '' ? {} : { defaultShelfLifeDays: Number(clean.shelfLife) }) };
+    const input: IngredientInput = { name: clean.name, brand: clean.brand, description: clean.description, category: clean.category, ...(clean.category === 'Other' ? { customCategory: clean.customCategory } : {}), unitOfMeasure: clean.unit, ...(clean.minStock === '' ? {} : { minimumStock: Number(clean.minStock) }), ...(clean.unitCost === '' ? {} : { standardUnitCost: Number(clean.unitCost) }), ...(clean.shelfLife === '' ? {} : { defaultShelfLifeDays: Number(clean.shelfLife) }) };
     setBusy(true); setErrors({}); setFormError('');
     try {
-      const result = editIngredient ? await updateIngredient(editIngredient.id, input, editIngredient.version) : await createIngredient(input);
+      let savedIngredient: Ingredient | null = null;
+      if (editIngredient) savedIngredient = (await updateIngredient(editIngredient.id, input, editIngredient.version)).ingredient;
+      else if (editIngredientRequest) { await updateIngredientRequest(editIngredientRequest.id, input, editIngredientRequest.version); setSuccessRequestName(input.name); setSuccessRequestUpdated(true); }
+      else if (user.role === 'Inventory Staff') { await createIngredientRequest(input); setSuccessRequestName(input.name); }
+      else savedIngredient = (await createIngredient(input)).ingredient;
       setMessage('');
-      setSuccessIngredient(result.ingredient);
+      setSuccessIngredient(savedIngredient);
       setEditIngredient(null);
+      setEditIngredientRequest(null);
       setPage(1); setRefresh(value => value + 1); setPreview(null); setForm(emptyIngredient);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -246,8 +312,16 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
         <article data-tone="success"><span className="sl-admin-ingredient-kpi-icon"><Leaf /></span><div><small>Total Ingredients</small><strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong><span>{data ? 'Live ingredient catalogue' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</span></div></article>
         <article data-tone="attention"><span className="sl-admin-ingredient-kpi-icon"><Grid2X2 /></span><div><small>Categories</small><strong>{data ? loadedCategories : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
         <article data-tone="brand"><span className="sl-admin-ingredient-kpi-icon"><Tag /></span><div><small>Common Units</small><strong>{data ? loadedUnits : '—'}</strong><span>{data ? 'Across loaded records' : 'Live data pending'}</span></div></article>
-        <article data-tone="critical"><span className="sl-admin-ingredient-kpi-icon"><AlertTriangle /></span><div><small>For Review</small><strong>—</strong><span>Requires inventory batch data</span></div></article>
+        <article data-tone="critical"><span className="sl-admin-ingredient-kpi-icon"><AlertTriangle /></span><div><small>For Review</small><strong>{requestLoading ? '—' : requestLoadError ? 'Unavailable' : ingredientRequests.filter(request => request.status === 'Pending').length}</strong><span>{canReviewRequests ? 'Ingredient requests awaiting review' : 'Your requests awaiting approval'}</span></div></article>
       </section>
+
+      <Card id="ingredient-requests" title={canReviewRequests ? 'Ingredient requests for approval' : 'My ingredient requests'}>
+        {requestActionError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{requestActionError}</p>}
+        {requestLoading ? <DataState kind="loading" title="Loading ingredient requests" description="Fetching submitted ingredients." /> : requestLoadError ? <DataState kind="error" title="Requests unavailable" description={requestLoadError} action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /> : ingredientRequests.length === 0 ? <DataState kind="empty" title="No ingredient requests" description={canReviewRequests ? 'Staff submissions awaiting approval will appear here.' : 'Your ingredient submissions will appear here until reviewed.'} /> :
+          <div className="sl-table-scroll" role="region" aria-label="Ingredient requests" tabIndex={0}><table className="sl-data-table"><thead><tr><th scope="col">Ingredient</th><th scope="col">Category</th><th scope="col">Unit</th><th scope="col">Submitted by</th><th scope="col">Date</th><th scope="col">Status</th><th scope="col">Reviewed by</th><th scope="col">Actions</th></tr></thead>
+            <tbody>{ingredientRequests.map(request => <tr key={request.id}><td><strong>{request.name}</strong>{request.brand && <div className="sl-supporting">{request.brand}</div>}</td><td>{request.category}{request.customCategory && ` · ${request.customCategory}`}</td><td>{request.unitOfMeasure}</td><td>{request.createdBy.name}</td><td>{new Date(request.createdAt).toLocaleDateString()}</td><td><Status tone={request.status === 'Approved' ? 'success' : request.status === 'Rejected' ? 'critical' : 'attention'}>{request.status}</Status>{request.reviewNote && <div className="sl-supporting">{request.reviewNote}</div>}</td><td>{request.reviewedBy?.name ?? '—'}</td><td><div className="sl-row-actions">{canReviewRequests ? request.status === 'Pending' && <><button type="button" className="sl-button sl-button-primary" disabled={!!requestBusy} onClick={() => void reviewRequest(request, 'Approved')}>{requestBusy === request.id ? 'Saving…' : 'Approve'}</button><button type="button" className="sl-button" disabled={!!requestBusy} onClick={() => void reviewRequest(request, 'Rejected')}>Reject</button></> : request.status === 'Pending' && <button type="button" className="sl-button" onClick={() => openEditRequest(request)}><Pencil size={15} aria-hidden="true" />Edit</button>}{canReviewRequests && <button type="button" className="sl-icon-button" aria-label={`Delete ${request.name} request`} title="Remove request from list" disabled={!!requestBusy} onClick={() => void removeRequest(request)}><Trash2 size={16} aria-hidden="true" /></button>}</div></td></tr>)}</tbody>
+          </table></div>}
+      </Card>
 
       <section className="sl-admin-ingredient-filter-card" aria-label="Ingredient filters">
         <label className="sl-admin-ingredient-search"><span>Search ingredients</span><div><Search size={17}/><input type="search" placeholder="Search by name, category, or description..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} /></div></label>
@@ -261,7 +335,7 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
       <section className="sl-admin-ingredient-table-card" aria-label="Ingredients">
         <div className="sl-admin-ingredient-table-toolbar">
           <strong>{data ? `Showing ${visibleStart.toLocaleString()}–${visibleEnd.toLocaleString()} of ${data.total.toLocaleString()} ingredients` : loadError ? 'Ingredient records unavailable' : 'Loading ingredient records'}</strong>
-          <div><button className="sl-button" type="button" disabled={!data?.items.length} onClick={exportVisible}><Download size={16}/>Export</button>{permissions.create && <button ref={addButtonRef} className="sl-button sl-button-primary" type="button" onClick={open}><Plus size={16}/>Add Ingredient</button>}</div>
+          <div><button className="sl-button" type="button" disabled={!data?.items.length} onClick={exportVisible}><Download size={16}/>Export</button>{permissions.create && <button ref={addButtonRef} className="sl-button sl-button-primary" type="button" onClick={open}><Plus size={16}/>{user.role === 'Inventory Staff' ? 'Request Ingredient' : 'Add Ingredient'}</button>}</div>
         </div>
         {loadError ? <div className="sl-admin-ingredient-state"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></div> : !data ? <div className="sl-admin-ingredient-state"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></div> : data.items.length ? <div className="sl-admin-ingredient-table-scroll"><table><thead><tr><th aria-label="Select"><input type="checkbox" disabled /></th><th>Ingredient</th><th>Category</th><th>Default Unit</th><th>Typical Shelf Life</th><th>Status</th><th>Date Added</th><th>Actions</th></tr></thead><tbody>{data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td><td><Status>Active</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button>{permissions.update && <button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button>}{permissions.remove && <button type="button" className="sl-icon-button" aria-label={`Archive ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button>}</div></td></tr>)}</tbody></table></div> : <div className="sl-admin-ingredient-state"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} /><span className="sl-admin-data-pending">Preview · data pending</span></div>}
         {data && <div className="sl-admin-ingredient-pagination"><label>Rows per page <select value={data.pageSize} disabled><option>{data.pageSize}</option></select></label><Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} /></div>}
@@ -269,15 +343,16 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
     </div>
     <Dialog
       open={preview === 'Ingredients'}
-      title={<span className="sl-ingredient-reference-title">{editIngredient ? 'Edit Ingredient' : 'Add New Ingredient'}</span>}
+      title={<span className="sl-ingredient-reference-title">{editIngredientRequest ? 'Edit Ingredient Request' : editIngredient ? 'Edit Ingredient' : user.role === 'Inventory Staff' ? 'Request New Ingredient' : 'Add New Ingredient'}</span>}
       onDismiss={dismiss}
       returnFocus={addButtonRef}
       busy={busy}
       className="sl-add-user-dialog sl-ingredient-reference-dialog"
-      actions={<><button className="sl-button" type="button" disabled={busy} onClick={dismiss}>Cancel</button><button className="sl-button sl-button-primary" type="submit" form="sl-ingredient-form" disabled={busy}>{busy ? 'Saving…' : editIngredient ? 'Update Ingredient' : 'Save Ingredient'}</button></>}
+      actions={<><button className="sl-button" type="button" disabled={busy} onClick={dismiss}>Cancel</button><button className="sl-button sl-button-primary" type="submit" form="sl-ingredient-form" disabled={busy}>{busy ? 'Saving…' : editIngredientRequest ? 'Save Request' : editIngredient ? 'Update Ingredient' : user.role === 'Inventory Staff' ? 'Submit for Approval' : 'Save Ingredient'}</button></>}
     ><IngredientForm form={form} errors={errors} busy={busy} formError={formError} set={setField} setError={setFieldError} onSubmit={save} /></Dialog>
-    <Dialog open={!!successIngredient} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon sl-success-dialog-icon">✓</span><span><span className="sl-account-dialog-title">Ingredient saved successfully</span><small>The ingredient record is now up to date in the registered ingredient list.</small></span></span>} onDismiss={() => setSuccessIngredient(null)} className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-success-dialog" actions={<button className="sl-button sl-button-primary" type="button" onClick={() => setSuccessIngredient(null)}>Done</button>}>
+    <Dialog open={!!successIngredient || !!successRequestName} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon sl-success-dialog-icon">✓</span><span><span className="sl-account-dialog-title">{successRequestName ? successRequestUpdated ? 'Request updated' : 'Request submitted for approval' : 'Ingredient saved successfully'}</span><small>{successRequestName ? successRequestUpdated ? 'Your pending request has been updated.' : 'A manager or admin must approve it before it is added to the ingredient catalogue.' : 'The ingredient record is now up to date in the registered ingredient list.'}</small></span></span>} onDismiss={() => { setSuccessIngredient(null); setSuccessRequestName(''); setSuccessRequestUpdated(false); }} className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-success-dialog" actions={<button className="sl-button sl-button-primary" type="button" onClick={() => { setSuccessIngredient(null); setSuccessRequestName(''); setSuccessRequestUpdated(false); }}>Done</button>}>
       {successIngredient && <div className="sl-success-summary"><strong>{successIngredient.name}</strong><span>{successIngredient.category} · {successIngredient.unitOfMeasure}</span></div>}
+      {successRequestName && <div className="sl-success-summary"><strong>{successRequestName}</strong><span>Pending manager/admin approval</span></div>}
     </Dialog>
     <Dialog open={!!deleteTarget} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon sl-delete-warning-icon">!</span><span><span className="sl-account-dialog-title">Archive this ingredient?</span></span></span>} onDismiss={() => { if (!actionBusy) setDeleteTarget(null); }} busy={actionBusy} className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-delete-dialog" actions={<><button className="sl-button sl-delete-keep-button" type="button" disabled={actionBusy} onClick={() => setDeleteTarget(null)}>Keep this ingredient</button><button className="sl-button sl-button-danger sl-delete-confirm-button" type="button" disabled={actionBusy} onClick={removeIngredient}><Trash2 size={15} aria-hidden="true" />{actionBusy ? 'Archiving…' : 'Yes, archive it'}</button></>}>
       {deleteTarget && <div className="sl-delete-reference-body"><p>This hides the ingredient from active lists. Its record is retained for historical references.</p>{deleteError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{deleteError}</p>}<div className="sl-delete-ingredient-card"><span className="sl-delete-ingredient-avatar">{deleteTarget.name.trim().charAt(0).toUpperCase()}</span><span><strong>{deleteTarget.name}</strong><small>{deleteTarget.category} · {deleteTarget.unitOfMeasure}</small></span></div></div>}
@@ -1502,6 +1577,83 @@ function SuperAdminForecastingPage() {
 }
 
 
+const emptyChangeRequest: ChangeRequestInput = { target: '', type: '', proposedCorrection: '', reason: '' };
+const changeRequestTypes = ['Quantity correction', 'Expiration date', 'Batch details', 'Ingredient details', 'Other'];
+
+export function StaffChangeRequestsPage() {
+  const [items, setItems] = useState<ChangeRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [reload, setReload] = useState(0);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<ChangeRequest | null>(null);
+  const [form, setForm] = useState<ChangeRequestInput>(emptyChangeRequest);
+  const [formError, setFormError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState('');
+
+  useEffect(() => {
+    const abort = new AbortController();
+    setLoading(true); setLoadError('');
+    listChangeRequests(abort.signal).then(result => setItems(result.items)).catch(error => {
+      if (!abort.signal.aborted) setLoadError(error instanceof Error ? error.message : 'Could not load your requests.');
+    }).finally(() => { if (!abort.signal.aborted) setLoading(false); });
+    return () => abort.abort();
+  }, [reload]);
+
+  const openNew = () => { setEditing(null); setForm(emptyChangeRequest); setFormError(''); setBusy(false); setFormOpen(true); };
+  const openEdit = (request: ChangeRequest) => {
+    setEditing(request);
+    setForm({ target: request.target, type: request.type, proposedCorrection: request.proposedCorrection, reason: request.reason });
+    setFormError(''); setBusy(false); setFormOpen(true);
+  };
+  const dismissForm = () => { if (!busy) { setFormOpen(false); setEditing(null); setForm(emptyChangeRequest); setFormError(''); } };
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); setBusy(true); setFormError('');
+    try {
+      if (editing) await updateChangeRequest(editing.id, form, editing.version);
+      else await createChangeRequest(form);
+      setBusy(false); setFormOpen(false); setEditing(null); setForm(emptyChangeRequest); setReload(value => value + 1);
+    } catch (error) { setFormError(error instanceof Error ? error.message : 'Could not save your request.'); setBusy(false); }
+  };
+  const remove = async (request: ChangeRequest) => {
+    if (!window.confirm('Delete this pending request? This cannot be undone.')) return;
+    setDeleting(request.id);
+    try { await deleteChangeRequest(request.id); setReload(value => value + 1); }
+    catch (error) { setLoadError(error instanceof Error ? error.message : 'Could not delete your request.'); }
+    finally { setDeleting(''); }
+  };
+  const setField = (key: keyof ChangeRequestInput, value: string) => setForm(current => ({ ...current, [key]: value }));
+
+  return <>
+    <PageHeader title="My Change Requests" description="Submit inventory corrections and manage your pending requests." />
+    <div className="sl-admin-view">
+      <Card id="my-change-requests" title="Your requests" action={<button type="button" className="sl-button sl-button-primary" onClick={openNew}><Plus size={16} aria-hidden="true" />New request</button>}>
+        {loading ? <DataState kind="loading" title="Loading requests" description="Fetching your submissions." /> : loadError ? <DataState kind="error" title="Requests unavailable" description={loadError} action={<button className="sl-button" type="button" onClick={() => setReload(value => value + 1)}>Retry</button>} /> : items.length === 0 ? <DataState kind="empty" title="No requests yet" description="Submit a request when an inventory correction needs review." /> :
+          <div className="sl-table-scroll" role="region" aria-label="Your change requests" tabIndex={0}><table className="sl-data-table">
+            <thead><tr><th scope="col">Target</th><th scope="col">Request type</th><th scope="col">Proposed correction</th><th scope="col">Submitted</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+            <tbody>{items.map(request => <tr key={request.id}>
+              <td>{request.target}</td><td>{request.type}</td><td>{request.proposedCorrection}</td><td>{new Date(request.createdAt).toLocaleDateString()}</td>
+              <td><Status tone={request.status === 'Approved' ? 'success' : request.status === 'Rejected' ? 'critical' : 'attention'}>{request.status}</Status></td>
+              <td>{request.status === 'Pending' ? <div className="sl-row-actions"><button type="button" className="sl-button" aria-label={`Edit request for ${request.target}`} onClick={() => openEdit(request)}><Pencil size={15} aria-hidden="true" />Edit</button><button type="button" className="sl-button" aria-label={`Delete request for ${request.target}`} disabled={deleting === request.id} onClick={() => void remove(request)}><Trash2 size={15} aria-hidden="true" />Delete</button></div> : <span className="sl-supporting">Closed</span>}</td>
+            </tr>)}</tbody>
+          </table></div>}
+      </Card>
+    </div>
+    <Dialog open={formOpen} title={editing ? 'Edit request' : 'New change request'} onDismiss={dismissForm} busy={busy} actions={<><button type="button" className="sl-button" disabled={busy} onClick={dismissForm}>Cancel</button><button type="submit" form="staff-change-request-form" className="sl-button sl-button-primary" disabled={busy}>{busy ? 'Saving…' : editing ? 'Save changes' : 'Submit request'}</button></>}>
+      <form id="staff-change-request-form" className="sl-preview sl-live-ingredient-form" onSubmit={submit}>
+        {formError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{formError}</p>}
+        <div className="sl-form-grid">
+          <label>Target batch / ingredient<input autoFocus required maxLength={160} className="sl-admin-input" value={form.target} onChange={event => setField('target', event.target.value)} disabled={busy} placeholder="e.g. Batch B-104 / Chicken Breast" /></label>
+          <label>Change type<select required className="sl-admin-input" value={form.type} onChange={event => setField('type', event.target.value)} disabled={busy}><option value="">Select type</option>{changeRequestTypes.map(type => <option key={type}>{type}</option>)}</select></label>
+          <label>Proposed correction<textarea required maxLength={500} rows={3} className="sl-admin-input" value={form.proposedCorrection} onChange={event => setField('proposedCorrection', event.target.value)} disabled={busy} /></label>
+          <label>Reason<textarea required maxLength={500} rows={3} className="sl-admin-input" value={form.reason} onChange={event => setField('reason', event.target.value)} disabled={busy} /></label>
+        </div>
+      </form>
+    </Dialog>
+  </>;
+}
+
 function ManagerForecastingPage() {
   const [range, setRange] = useState('Current period');
   const [category, setCategory] = useState('All Categories');
@@ -1583,12 +1735,24 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   const [preview, setPreview] = useState<PreviewId | null>(null);
   const [accountTotals, setAccountTotals] = useState<DashboardSummary | null>(null);
   const [accountTotalsError, setAccountTotalsError] = useState(false);
+  const [pendingAccountApprovalCount, setPendingAccountApprovalCount] = useState<number | null>(null);
+  const [accountApprovalCountError, setAccountApprovalCountError] = useState(false);
   useEffect(() => {
     if (moduleId !== 'UserManagement') return;
     const abort = new AbortController(); setAccountTotalsError(false);
     accountSummary(abort.signal).then(setAccountTotals).catch(() => { if (!abort.signal.aborted) setAccountTotalsError(true); });
     return () => abort.abort();
   }, [moduleId]);
+  useEffect(() => {
+    if (moduleId !== 'UserManagement' || !['Admin', 'Super Admin'].includes(user.role)) return;
+    const abort = new AbortController();
+    setAccountApprovalCountError(false); setPendingAccountApprovalCount(null);
+    listAccountRequests(abort.signal).then(result => {
+      if (abort.signal.aborted) return;
+      setPendingAccountApprovalCount(result.items.filter(request => request.status === 'Pending' && (user.role === 'Super Admin' || request.requestedBy.role !== 'Admin' && request.role !== 'Admin')).length);
+    }).catch(() => { if (!abort.signal.aborted) setAccountApprovalCountError(true); });
+    return () => abort.abort();
+  }, [moduleId, user.role]);
   const staff = user.role === 'Inventory Staff';
   if (moduleId === 'UserManagement') {
     const adminUsers = user.role === 'Admin';
@@ -1612,7 +1776,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
         </div> : <SummaryCards items={[
           { label: 'Total users', value: liveValue(accountTotals?.totalUsers), detail: 'Directory total from live account data', tone: 'brand', trend: 'line' },
           { label: 'Active users', value: liveValue(accountTotals?.activeUsers), detail: 'Active account total', tone: 'success', trend: 'accuracy' },
-          { label: 'Pending invites', value: '—', detail: 'Invitation service not connected', tone: 'attention', trend: 'segments' },
+          { label: 'Pending account approvals', value: accountApprovalCountError ? 'Unavailable' : pendingAccountApprovalCount ?? '—', detail: accountApprovalCountError ? 'Approval queue unavailable' : 'Awaiting your review', tone: 'attention', trend: 'segments' },
           { label: 'Deactivated', value: liveValue(accountTotals?.inactiveUsers), detail: 'Inactive account total', tone: 'critical', trend: 'bars' },
         ]} />}
         <section className="sl-user-management-panel" aria-label="User account directory">

@@ -8,6 +8,7 @@ export type IngredientInput = {
   brand: string;
   description: string;
   category: typeof INGREDIENT_CATEGORIES[number];
+  customCategory?: string;
   unitOfMeasure: typeof INGREDIENT_UNITS[number];
   minimumStock?: number;
   standardUnitCost?: number;
@@ -30,7 +31,7 @@ const number = (field: string, value: unknown, minimum: number, fallback?: numbe
 export function ingredientInput(body: unknown): IngredientInput {
   if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
   const input = body as Record<string, unknown>;
-  const fields = ['name', 'brand', 'description', 'category', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays'];
+  const fields = ['name', 'brand', 'description', 'category', 'customCategory', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays'];
   for (const key of Object.keys(input)) if (!fields.includes(key)) invalid(key, 'Field is not permitted');
   if (typeof input.category !== 'string' || !INGREDIENT_CATEGORIES.includes(input.category as typeof INGREDIENT_CATEGORIES[number])) invalid('category', 'Select a valid category');
   const unit = cleanText('unitOfMeasure', input.unitOfMeasure, true, 50);
@@ -42,6 +43,10 @@ export function ingredientInput(body: unknown): IngredientInput {
     category: input.category as typeof INGREDIENT_CATEGORIES[number],
     unitOfMeasure: unit as typeof INGREDIENT_UNITS[number],
   };
+  if (input.customCategory !== undefined) {
+    if (input.category !== 'Other') invalid('customCategory', 'A custom category is only valid when Other is selected');
+    result.customCategory = cleanText('customCategory', input.customCategory, false, 50);
+  }
   if (input.minimumStock !== undefined && input.minimumStock !== '') result.minimumStock = number('minimumStock', input.minimumStock, 0);
   if (input.standardUnitCost !== undefined && input.standardUnitCost !== '') result.standardUnitCost = number('standardUnitCost', input.standardUnitCost, 0);
   if (input.defaultShelfLifeDays !== undefined && input.defaultShelfLifeDays !== '') {
@@ -64,7 +69,7 @@ export function ingredientPagination(query: Record<string, unknown>) {
 export type IngredientPageQuery = ReturnType<typeof ingredientPagination>;
 
 export function ingredientPatch(body: unknown) {
-  const input = bodyFields(body, ['expectedVersion', 'name', 'brand', 'description', 'category', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays']);
+  const input = bodyFields(body, ['expectedVersion', 'name', 'brand', 'description', 'category', 'customCategory', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays']);
   const version = expectedVersion(input.expectedVersion);
   const { expectedVersion: ignored, ...fields } = input;
   if (!Object.keys(fields).length) invalid('body', 'Provide at least one ingredient field');
@@ -72,5 +77,6 @@ export function ingredientPatch(body: unknown) {
   const validated = ingredientInput({ name: 'placeholder', category: 'Other', unitOfMeasure: 'pcs', ...fields });
   for (const key of ['minimumStock', 'standardUnitCost', 'defaultShelfLifeDays']) if (key in fields && !(key in validated)) invalid(key);
   const patch = Object.fromEntries(Object.keys(fields).map(key => [key, validated[key as keyof IngredientInput]])) as Partial<IngredientInput>;
+  if (fields.category !== undefined && fields.category !== 'Other' && fields.customCategory === undefined) patch.customCategory = '';
   return { patch, expectedVersion: version };
 }
