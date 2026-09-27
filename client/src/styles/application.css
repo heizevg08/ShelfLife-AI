@@ -31658,7 +31658,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-stockin-entry-modal output.sl-staff-derived-unit {
   border: 1px solid var(--sl-border);
   border-radius: var(--sl-radius);
-  background: var(--sl-surface-muted);
+  background: var(--sl-surface-subtle);
   align-items: center;
   width: 100%;
   min-width: 0;
@@ -31668,6 +31668,9 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   padding: 0 .75rem;
   display: flex;
 }
+.sl-stockin-entry-form .sl-creation-form-row { align-items: stretch; }
+.sl-staff-stockin-kpis > .sl-inventory-staff-kpi > div > span { font-weight: 600; }
+.sl-staff-stockin-history-filters > label > span { font-weight: 600; }
 .sl-stockin-entry-message { margin: 0; }
 .sl-stockin-entry-modal > .sl-dialog-actions {
   flex-wrap: nowrap;
