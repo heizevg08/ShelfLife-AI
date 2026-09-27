@@ -22,7 +22,6 @@ const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 
 const INVENTORY_STAFF_DATE_RANGES = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom'] as const;
 const STOCK_IN_DATE_RANGES = ['All dates', 'Today', 'Last 7 Days', 'Last 30 Days', 'Custom range'] as const;
 const INVENTORY_STAFF_WASTE_REASONS = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'] as const;
-const INVENTORY_STAFF_USAGE_PURPOSES = ['Menu Preparation', 'Staff Meal', 'Testing / R&D', 'Other'] as const;
 type IngredientDraft = { name: string; brand: string; category: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
 const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
 type IngredientField = keyof IngredientDraft;
@@ -189,75 +188,115 @@ function ManagerUsageWastePage() {
 
 
 function InventoryStaffUsagePage() {
+  type UsageField = 'ingredientId' | 'batchId' | 'dateUsed' | 'quantity';
   const [rowsPerPage, setRowsPerPage] = useState('10');
   const [search, setSearch] = useState('');
-  const [purpose, setPurpose] = useState('All Purposes');
   const [range, setRange] = useState('Last 7 Days');
   const [usageDateFrom, setUsageDateFrom] = useState('');
   const [usageDateTo, setUsageDateTo] = useState('');
-  const [ingredient, setIngredient] = useState('');
-  const [batch, setBatch] = useState('');
+  const [ingredientFilter, setIngredientFilter] = useState('All Ingredients');
+  const [usageIngredients, setUsageIngredients] = useState<StockInIngredient[]>([]);
+  const [usageBatches, setUsageBatches] = useState<InventoryBatch[]>([]);
+  const [ingredientId, setIngredientId] = useState('');
+  const [batchId, setBatchId] = useState('');
   const [dateUsed, setDateUsed] = useState('');
   const [quantity, setQuantity] = useState('');
-  const [usedFor, setUsedFor] = useState('');
-  const [menu, setMenu] = useState('');
   const [usageMessage, setUsageMessage] = useState('');
+  const [usageErrors, setUsageErrors] = useState<Partial<Record<UsageField, string>>>({});
   const [addUsageOpen, setAddUsageOpen] = useState(false);
   const addUsageButton = useRef<HTMLButtonElement>(null);
-  const clearForm = () => { setIngredient(''); setBatch(''); setDateUsed(''); setQuantity(''); setUsedFor(''); setMenu(''); setUsageMessage(''); };
-  const submitUsage = (event: FormEvent) => {
-    event.preventDefault();
-    setUsageMessage(ingredient && batch && dateUsed && quantity && usedFor
-      ? 'Usage recording is not connected to the backend yet.'
-      : 'Complete all required fields before saving.');
+  const usageForm = useRef<HTMLFormElement>(null);
+  const selectedUsageIngredient = usageIngredients.find(value => value.id === ingredientId);
+  const selectedUsageBatch = usageBatches.find(value => value.id === batchId);
+  const clearUsageError = (field: UsageField) => {
+    setUsageErrors(current => ({ ...current, [field]: undefined }));
+    setUsageMessage('');
   };
+  const usageValidation = (field: UsageField) => ({
+    'aria-invalid': usageErrors[field] ? true as const : undefined,
+    'aria-describedby': usageErrors[field] ? `usage-${field}-error` : undefined,
+  });
+  const renderUsageError = (field: UsageField) => usageErrors[field] ? <span id={`usage-${field}-error`} className="sl-field-error">{usageErrors[field]}</span> : null;
+  const clearForm = () => { setIngredientId(''); setBatchId(''); setDateUsed(''); setQuantity(''); setUsageBatches([]); setUsageErrors({}); setUsageMessage(''); };
+  const submitUsage = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const next: Partial<Record<UsageField, string>> = {};
+    if (!ingredientId) next.ingredientId = 'Select an ingredient.';
+    if (!batchId) next.batchId = 'Select a batch.';
+    if (!dateUsed) next.dateUsed = 'Select the date used.';
+    if (!quantity) next.quantity = 'Enter the quantity used.';
+    const numericQuantity = Number(quantity);
+    if (quantity && (!Number.isFinite(numericQuantity) || numericQuantity <= 0)) next.quantity = 'Enter a quantity greater than 0.';
+    if (Object.keys(next).length) {
+      setUsageErrors(next);
+      setUsageMessage('');
+      requestAnimationFrame(() => usageForm.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
+      return;
+    }
+    setUsageErrors({});
+    setUsageMessage('Usage recording is unavailable because the Usage Records service is not connected yet.');
+  };
+  useEffect(() => {
+    const controller = new AbortController();
+    listStockInIngredients(controller.signal).then(result => setUsageIngredients(result.ingredients)).catch(() => {
+      if (!controller.signal.aborted) setUsageIngredients([]);
+    });
+    return () => controller.abort();
+  }, []);
+  useEffect(() => {
+    if (!ingredientId) { setUsageBatches([]); return; }
+    const controller = new AbortController();
+    listInventoryBatches({ page: 1, pageSize: 150, ingredientId }, controller.signal).then(result => setUsageBatches(result.items)).catch(() => {
+      if (!controller.signal.aborted) setUsageBatches([]);
+    });
+    return () => controller.abort();
+  }, [ingredientId]);
 
   return <>
     <PageHeader
       title="Usage Recording"
-      description="Record ingredients used in food preparation. Keep your inventory accurate."
+      description="Record ingredient usage and maintain accurate inventory quantities."
     />
 
     <div className="sl-admin-view sl-staff-usage-v150">
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Usage summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
-          <div><span>Total Usage Today</span><strong>—</strong><small>Data unavailable</small></div>
+          <div><span>Total Usage Today</span><strong>—</strong><small>Usage quantity recorded today</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info">
           <span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span>
-          <div><span>Total Records Today</span><strong>—</strong><small>Data unavailable</small></div>
+          <div><span>Usage Records Today</span><strong>—</strong><small>Usage transactions recorded today</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
-          <div><span>Most Used Ingredient</span><strong>—</strong><small>Data unavailable</small></div>
+          <div><span>Most Used Ingredient</span><strong>—</strong><small>Based on recorded usage</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
-          <div><span>Current Stock (After Usage)</span><strong>—</strong><small>Data unavailable</small></div>
+          <div><span>Ingredients Used This Week</span><strong>—</strong><small>Distinct ingredients used this week</small></div>
         </article>
       </section></div>
 
-      <div className="sl-staff-usage-layout">
-        <main className="sl-staff-usage-main">
+      <div className="sl-usage-records-layout">
           <section className="sl-application-records sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records" aria-labelledby="recent-usage-title">
             <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
               <span className="sl-staff-usage-head-icon"><Clock3 aria-hidden="true" /></span>
               <h2 id="recent-usage-title">Recent Usage Records</h2>
             </header>
             <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-usage-toolbar">
-              <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or menu..." aria-label="Search usage records" /></div></label>
-              <label><span>Purpose</span><select value={purpose} onChange={e=>setPurpose(e.target.value)} aria-label="Filter by purpose"><option>All Purposes</option>{INVENTORY_STAFF_USAGE_PURPOSES.map(value=><option key={value}>{value}</option>)}</select></label>
+              <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient or Batch ID..." aria-label="Search usage records" /></div></label>
+              <label><span>Ingredient</span><select value={ingredientFilter} onChange={e=>setIngredientFilter(e.target.value)} aria-label="Filter by ingredient"><option>All Ingredients</option>{usageIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
               <label><span>Date range</span><select value={range} onChange={e=>setRange(e.target.value)} aria-label="Filter by date range">{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
               {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => setUsageDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => setUsageDateTo(event.target.value)} /></label></div>}
-              <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setPurpose('All Purposes');setRange('Last 7 Days');setUsageDateFrom('');setUsageDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addUsageButton} label="Record Usage" onClick={()=>setAddUsageOpen(true)} /></div>
+              <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setIngredientFilter('All Ingredients');setRange('Last 7 Days');setUsageDateFrom('');setUsageDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addUsageButton} label="Record Usage" onClick={()=>setAddUsageOpen(true)} /></div>
             </div></div>
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell">
               <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table">
-                <thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Used','Unit','Purpose','Menu','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+                <thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Used','Unit','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead>
                 <tbody>
                   <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">
-                    {Array.from({length:8}).map((_,index)=><td key={index}>—</td>)}
+                    {Array.from({length:6}).map((_,index)=><td key={index}>—</td>)}
                     <td className="sl-sa-ingredients-actions-cell">
                       <div className="sl-staff-waste-row-actions" aria-label="Usage record actions unavailable">
                         <button type="button" className="sl-icon-button" disabled aria-label="View usage record unavailable" title="View unavailable"><Eye size={16} aria-hidden="true" /></button>
@@ -272,32 +311,25 @@ function InventoryStaffUsagePage() {
               <Pagination compact page={1} pageSize={Number(rowsPerPage)} total={0} itemLabel="usage records" onPageChange={()=>{}} />
             </footer>
           </section>
-        </main>
-
-        <aside className="sl-staff-usage-rail">
-          <InventoryStaffAnalyticsCard
-            ariaLabel="Usage by purpose values unavailable"
-            centerLabel="Usage"
-            Icon={FileInput}
-            items={INVENTORY_STAFF_USAGE_PURPOSES.map((label, index) => ({ label, series: index + 1 }))}
-            title="Today's Usage by Purpose"
-            unavailableMessage="Usage data unavailable"
-          />
-        </aside>
       </div>
     </div>
 
-    <InventoryStaffModal open={addUsageOpen} title="Record Usage" subtitle="Enter the details of the ingredient used." Icon={FileInput} onDismiss={()=>setAddUsageOpen(false)} returnFocus={addUsageButton}>
-        <InventoryStaffModalForm onSubmit={submitUsage} message={usageMessage} secondaryLabel="Clear" onSecondary={clearForm} primaryLabel="Save Usage Record" PrimaryIcon={CheckCircle2}>
-          <label><span>Ingredient <b>*</b></span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option value="">Search or select ingredient...</option></select></label>
-          <label><span>Batch ID <b>*</b></span><select value={batch} onChange={e=>setBatch(e.target.value)}><option value="">Select batch...</option></select></label>
-          <label><span>Date Used <b>*</b></span><input type="date" value={dateUsed} onChange={e=>setDateUsed(e.target.value)} /></label>
-          <label><span>Quantity Used <b>*</b></span><input inputMode="decimal" value={quantity} onChange={e=>setQuantity(e.target.value.replace(/[^0-9.]/g,''))} placeholder="Enter quantity" /></label>
-          <label><span>Unit</span><input className="sl-staff-derived-unit" value="—" readOnly aria-label="Derived unit unavailable" /></label>
-          <label><span>Purpose <b>*</b></span><select value={usedFor} onChange={e=>setUsedFor(e.target.value)}><option value="">Select purpose...</option><option>Menu Preparation</option><option>Staff Meal</option><option>Testing / R&amp;D</option><option>Others</option></select></label>
-          {usedFor==='Menu Preparation'&&<label className="sl-staff-modal-wide"><span>Prepared Menu (Optional)</span><input value={menu} onChange={e=>setMenu(e.target.value)} placeholder="Enter menu name..." /></label>}
-        </InventoryStaffModalForm>
-    </InventoryStaffModal>
+    <Dialog open={addUsageOpen} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><FileInput size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Record Usage</span><small>Record ingredient consumption from an inventory batch.</small></span></span>} className="sl-add-user-dialog sl-account-reference-dialog sl-usage-entry-modal" onDismiss={()=>{clearForm();setAddUsageOpen(false)}} returnFocus={addUsageButton} actions={<span className="sl-creation-form-actions"><button type="button" className="sl-button" onClick={()=>{clearForm();setAddUsageOpen(false)}}>Cancel</button><button type="submit" form="sl-usage-entry-form" className="sl-button sl-button-primary">Save Usage Record</button></span>}>
+      <form id="sl-usage-entry-form" ref={usageForm} className="sl-usage-entry-form sl-creation-form" noValidate onSubmit={submitUsage}>
+        <div className="sl-creation-form-grid">
+          <div className="sl-creation-form-row">
+            <label className="sl-creation-form-field"><span>Ingredient</span><select value={ingredientId} onChange={event=>{setIngredientId(event.target.value);setBatchId('');clearUsageError('ingredientId');clearUsageError('batchId')}} {...usageValidation('ingredientId')}><option value="">Search or select ingredient...</option>{usageIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select>{renderUsageError('ingredientId')}</label>
+            <label className="sl-creation-form-field"><span>Batch ID</span><select value={batchId} disabled={!ingredientId} onChange={event=>{setBatchId(event.target.value);clearUsageError('batchId')}} {...usageValidation('batchId')}><option value="">Select batch...</option>{usageBatches.map(value=><option key={value.id} value={value.id}>{value.batchID}</option>)}</select>{renderUsageError('batchId')}</label>
+          </div>
+          <div className="sl-creation-form-row">
+            <label className="sl-creation-form-field"><span>Date Used</span><input type="date" value={dateUsed} onChange={event=>{setDateUsed(event.target.value);clearUsageError('dateUsed')}} {...usageValidation('dateUsed')} />{renderUsageError('dateUsed')}</label>
+            <label className="sl-creation-form-field"><span>Quantity Used</span><input inputMode="decimal" value={quantity} onChange={event=>{setQuantity(event.target.value);clearUsageError('quantity')}} placeholder="Enter quantity" {...usageValidation('quantity')} />{renderUsageError('quantity')}</label>
+          </div>
+          <div className="sl-creation-form-row"><label className="sl-creation-form-field sl-usage-entry-unit"><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedUsageBatch ? 'Unit derived from selected inventory batch' : selectedUsageIngredient ? 'Unit derived from selected ingredient' : 'Unit will be derived from the selected inventory batch'}>{selectedUsageBatch?.unit ?? selectedUsageIngredient?.unitOfMeasure ?? '—'}</output></label></div>
+        </div>
+        {usageMessage&&<p className="sl-inline-notice sl-usage-entry-message" role="status">{usageMessage}</p>}
+      </form>
+    </Dialog>
 
   </>;
 }

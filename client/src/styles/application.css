@@ -31639,6 +31639,49 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 
 /* Stock-In uses the established creation-dialog geometry while retaining operational fields. */
+.sl-area-dialog.sl-usage-entry-modal {
+  width: min(45rem,calc(100vw - 2rem))!important;
+  max-width: 45rem!important;
+  overflow: hidden;
+  border-radius: 16px!important;
+}
+.sl-usage-entry-modal > .sl-popover-header {
+  min-height: 88px!important;
+  padding: 0 24px!important;
+}
+.sl-usage-entry-modal > .sl-dialog-content { padding: 24px 24px 0!important; }
+.sl-usage-entry-modal output.sl-staff-derived-unit {
+  border: 1px solid var(--sl-border);
+  border-radius: var(--sl-radius);
+  background: var(--sl-surface-subtle)!important;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  color: var(--sl-muted);
+  font: var(--sl-font-supporting);
+  padding: 0 .75rem;
+  display: flex;
+}
+.sl-usage-entry-form .sl-usage-entry-unit { grid-column: 1/-1; }
+.sl-usage-entry-form .sl-creation-form-row { align-items: stretch; }
+.sl-usage-entry-message { margin: 0; }
+.sl-usage-entry-modal > .sl-dialog-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  min-height: 78px;
+  margin-top: 24px;
+  padding: 18px 24px!important;
+}
+@media (width<=620px){
+  .sl-usage-entry-modal > .sl-popover-header,
+  .sl-usage-entry-modal > .sl-dialog-content { padding-inline: 16px!important; }
+  .sl-usage-entry-modal > .sl-dialog-actions { padding-inline: 16px!important; }
+}
+@media (width<=460px){
+  .sl-usage-entry-modal > .sl-dialog-actions { flex-direction: column; }
+}
+
 .sl-area-dialog.sl-stockin-entry-modal {
   width: min(45rem,calc(100vw - 2rem))!important;
   max-width: 45rem!important;
