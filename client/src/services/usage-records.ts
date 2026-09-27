@@ -27,7 +27,6 @@ export function listUsageRecords(query: { page: number; pageSize: number; search
   if (query.to) params.set('to', query.to);
   return apiClient<{ items: UsageRecord[]; page: number; pageSize: number; total: number }>(`/usage-records?${params}`, { signal });
 }
-export const getUsageRecord = (id: string, signal?: AbortSignal) => apiClient<{ record: UsageRecord }>(`/usage-records/${encodeURIComponent(id)}`, { signal }).then(result => result.record);
 export const getUsageSummary = (signal?: AbortSignal) => apiClient<UsageSummary>('/usage-records/summary', { signal });
 export async function createUsageRecord(input: UsageInput) {
   const result = await apiClient<{ record: UsageRecord }>('/usage-records', { method: 'POST', body: JSON.stringify(input), successMessage: false });

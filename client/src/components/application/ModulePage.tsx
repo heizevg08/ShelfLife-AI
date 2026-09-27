@@ -15,7 +15,7 @@ import { accountSummary, type DashboardSummary } from '../../services/administra
 import { ApiError } from '../../services/apiClient';
 import { createIngredient, deleteIngredient, getIngredientSummary, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type Ingredient, type IngredientInput, type StockInIngredient } from '../../services/ingredients';
 import { createStockIn, getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
-import { createUsageRecord, getUsageRecord, getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
+import { createUsageRecord, getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
 import { formatDate, formatDateTime } from '../../utils/date-time';
 
 
@@ -204,7 +204,6 @@ function InventoryStaffUsagePage() {
   const [usageSummary, setUsageSummary] = useState<UsageSummary>();
   const [usageLoading, setUsageLoading] = useState(true);
   const [usageError, setUsageError] = useState(false);
-  const [viewUsage, setViewUsage] = useState<UsageRecord | null>(null);
   const [ingredientId, setIngredientId] = useState('');
   const [batchId, setBatchId] = useState('');
   const [dateUsed, setDateUsed] = useState('');
@@ -238,10 +237,6 @@ function InventoryStaffUsagePage() {
     const dateRange = resolveUsageRange();
     const [data, summary] = await Promise.all([listUsageRecords({ page: usagePage, pageSize: Number(rowsPerPage), ...(search.trim() ? { search: search.trim() } : {}), ...(ingredientFilter !== 'All Ingredients' ? { ingredientId: ingredientFilter } : {}), ...dateRange }, signal), getUsageSummary(signal)]);
     setUsageData(data); setUsageSummary(summary);
-  };
-  const openUsageRecord = async (record: UsageRecord) => {
-    const resolved = await getUsageRecord(record.id);
-    setViewUsage(resolved);
   };
   const submitUsage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -327,18 +322,18 @@ function InventoryStaffUsagePage() {
             <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-usage-toolbar">
               <label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={e=>{setSearch(e.target.value);setUsagePage(1)}} placeholder="Search by ingredient or Batch ID..." aria-label="Search usage records" /></div></label>
               <label><span>Ingredient</span><select value={ingredientFilter} onChange={e=>{setIngredientFilter(e.target.value);setUsagePage(1)}} aria-label="Filter by ingredient"><option>All Ingredients</option>{usageIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
-              <label><span>Date range</span><select value={range} onChange={e=>{setRange(e.target.value);setUsagePage(1)}} aria-label="Filter by date range">{STOCK_IN_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
+              <label className="sl-usage-date-range"><span>Date range</span><select value={range} onChange={e=>{setRange(e.target.value);setUsagePage(1)}} aria-label="Filter by date range">{STOCK_IN_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>
               {range === 'Custom range' && <div className="sl-v219-custom-date-range" aria-label="Custom usage date range"><label><span>From</span><input type="date" value={usageDateFrom} max={usageDateTo || undefined} onChange={event => {setUsageDateFrom(event.target.value);setUsagePage(1)}} /></label><label><span>To</span><input type="date" value={usageDateTo} min={usageDateFrom || undefined} onChange={event => {setUsageDateTo(event.target.value);setUsagePage(1)}} /></label></div>}
               <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setIngredientFilter('All Ingredients');setRange('All dates');setUsageDateFrom('');setUsageDateTo('');setUsagePage(1)}}>Reset</button><InventoryStaffAddButton buttonRef={addUsageButton} label="Record Usage" onClick={()=>setAddUsageOpen(true)} /></div>
             </div></div>
             <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell">
               <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table">
-                <thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Used','Unit','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+                <thead><tr><th data-usage-column="date-time">Date &amp; Time</th><th data-usage-column="ingredient">Ingredient</th><th data-usage-column="batch-id">Batch ID</th><th data-usage-column="quantity">Quantity Used</th><th data-usage-column="recorded-by">Recorded By</th></tr></thead>
                 <tbody>
-                  {usageData?.items.map(record => <tr key={record.id}><td><time dateTime={record.createdAt}>{formatDateTime(record.createdAt)}</time></td><td className="sl-emphasized-value" title={record.ingredient.name}>{record.ingredient.name}</td><td>{record.batch.batchID}</td><td>{record.quantityUsed}</td><td>{record.unit}</td><td>{record.recordedBy.name}</td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions"><button type="button" className="sl-icon-button" onClick={() => void openUsageRecord(record)} aria-label={`View usage record for ${record.ingredient.name}`} title="View usage record"><Eye size={16} aria-hidden="true" /></button></div></td></tr>)}
-                  {!usageLoading && !usageError && (!usageData || usageData.items.length === 0) && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:6}).map((_,index)=><td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Usage record actions unavailable"><button type="button" className="sl-icon-button" disabled aria-label="View usage record unavailable" title="View unavailable"><Eye size={16} aria-hidden="true" /></button></div></td></tr>}
-                  {usageLoading && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:7}).map((_,index)=><td key={index}>Loading…</td>)}</tr>}
-                  {usageError && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:7}).map((_,index)=><td key={index}>Data unavailable</td>)}</tr>}
+                  {usageData?.items.map(record => <tr key={record.id}><td data-usage-column="date-time"><time dateTime={record.createdAt}>{formatDateTime(record.createdAt)}</time></td><td data-usage-column="ingredient" className="sl-emphasized-value" title={record.ingredient.name}>{record.ingredient.name}</td><td data-usage-column="batch-id">{record.batch.batchID}</td><td data-usage-column="quantity">{record.quantityUsed} {record.unit}</td><td data-usage-column="recorded-by">{record.recordedBy.name}</td></tr>)}
+                  {!usageLoading && !usageError && (!usageData || usageData.items.length === 0) && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:5}).map((_,index)=><td key={index}>—</td>)}</tr>}
+                  {usageLoading && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:5}).map((_,index)=><td key={index}>Loading…</td>)}</tr>}
+                  {usageError && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:5}).map((_,index)=><td key={index}>Data unavailable</td>)}</tr>}
                 </tbody>
               </table>
             </div>
@@ -366,10 +361,6 @@ function InventoryStaffUsagePage() {
         {usageMessage&&<p className="sl-inline-notice sl-usage-entry-message" role="status">{usageMessage}</p>}
       </form>
     </Dialog>
-    <Dialog open={!!viewUsage} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><FileInput size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Usage Record Details</span><small>Review the recorded usage transaction.</small></span></span>} className="sl-add-user-dialog sl-account-reference-dialog sl-admin-ingredient-dialog sl-ingredient-view-dialog" onDismiss={() => setViewUsage(null)} actions={<button type="button" className="sl-button" onClick={() => setViewUsage(null)}>Close</button>}>
-      {viewUsage && <div className="sl-ingredient-details"><section className="sl-ingredient-details-identity" aria-labelledby="sl-usage-record-details-name"><div><h3 id="sl-usage-record-details-name">{viewUsage.ingredient.name}</h3><span className="sl-application-role-pill sl-account-details-role">{viewUsage.batch.batchID}</span></div></section><section className="sl-ingredient-details-information" aria-labelledby="sl-usage-record-information-title"><h3 id="sl-usage-record-information-title">Usage Information</h3><dl className="sl-ingredient-details-grid"><div><dt>Date Used</dt><dd><time dateTime={viewUsage.dateUsed}>{formatDate(viewUsage.dateUsed)}</time></dd></div><div><dt>Quantity Used</dt><dd>{viewUsage.quantityUsed} {viewUsage.unit}</dd></div><div><dt>Recorded By</dt><dd>{viewUsage.recordedBy.name}</dd></div><div><dt>Recorded At</dt><dd><time dateTime={viewUsage.createdAt}>{formatDateTime(viewUsage.createdAt)}</time></dd></div></dl></section></div>}
-    </Dialog>
-
   </>;
 }
 
