@@ -5097,7 +5097,7 @@ section.sl-card:has(.sl-filter-popover) {
 }
 .sl-logout-dialog>.sl-confirmation-header {
   border-bottom: 0;
-  padding: clamp(1.5rem,4vw,1.75rem) var(--sl-confirm-inline-padding);
+  padding: clamp(1.5rem,4vw,1.75rem) clamp(1rem,4vw,1.25rem);
 }
 .sl-confirmation-layout {
   grid-template-columns: var(--sl-confirm-icon-size) minmax(0,1fr);
