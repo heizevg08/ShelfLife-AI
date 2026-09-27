@@ -14,7 +14,7 @@ const record = { id: '3'.repeat(24), dateUsed: '2030-01-10T00:00:00.000Z', ingre
 
 test('Usage input accepts only staff-controlled fields and positive quantities', () => {
   assert.deepEqual(usageInput({ ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 2 }), { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: new Date('2030-01-10T00:00:00.000Z'), quantityUsed: 2 });
-  for (const body of [{ ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 0 }, { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: -1 }, { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 1, unit: 'kg' }]) assert.throws(() => usageInput(body));
+  for (const body of [{ ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 0 }, { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: -1 }, { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-02-31', quantityUsed: 1 }, { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 1, unit: 'kg' }]) assert.throws(() => usageInput(body));
   assert.deepEqual(usagePagination({ page: '2', pageSize: '15', ingredientId: record.ingredient.id, from: '2030-01-01', to: '2030-01-31' }), { page: 2, pageSize: 15, ingredientId: record.ingredient.id, from: new Date('2030-01-01T00:00:00.000Z'), to: new Date('2030-01-31T23:59:59.999Z') });
 });
 

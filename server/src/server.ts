@@ -146,10 +146,11 @@ if (require.main === module) {
         return result.modifiedCount === 1;
       },
     }, createResetEmail(process.env));
-    const administration = createAdministration(createAdministrationStore(driver, users, auditRecordModel(driver)));
-    const ingredients = createIngredients(createIngredientStore(driver, ingredientModel(driver), users));
-    const inventoryBatches = createInventoryBatches(createInventoryBatchStore(driver, inventoryBatchModel(driver), inventoryBatchCounterModel(driver), ingredientModel(driver), users, auditRecordModel(driver)));
-    const usageRecords = createUsageRecords(createUsageRecordStore(driver, usageRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, auditRecordModel(driver)));
+    const audits = auditRecordModel(driver);
+    const administration = createAdministration(createAdministrationStore(driver, users, audits));
+    const ingredients = createIngredients(createIngredientStore(driver, ingredientModel(driver), users, audits));
+    const inventoryBatches = createInventoryBatches(createInventoryBatchStore(driver, inventoryBatchModel(driver), inventoryBatchCounterModel(driver), ingredientModel(driver), users, audits));
+    const usageRecords = createUsageRecords(createUsageRecordStore(driver, usageRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
     const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches, usageRecords);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));

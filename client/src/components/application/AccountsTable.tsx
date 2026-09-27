@@ -7,7 +7,7 @@ import { Dialog } from './Dialog';
 import { APPLICATION_RECORD_PAGE_SIZES } from './ApplicationPatterns';
 import { DataState, Pagination, Status, SummaryCards } from './primitives';
 import { sessionInitials } from '../../services/auth';
-import { formatDateTime } from '../../utils/date-time';
+import { formatDate, formatDateTime } from '../../utils/date-time';
 
 const blank = { firstName: '', lastName: '', email: '', password: '' };
 type ManagedRole = 'Admin' | 'Manager' | 'Inventory Staff';
@@ -262,7 +262,7 @@ export function AccountsTable() {
                 <td><span className={superAdmin ? 'sl-v56-role-pill' : 'sl-application-role-pill'} data-role={account.role}>{account.role}</span></td>
                 <td>{superAdmin ? <Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status> : <span className="sl-status sl-application-status" data-tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Deactivated'}</span>}</td>
                 <td>{account.lastLoginAt ? <time dateTime={account.lastLoginAt}>{formatDateTime(account.lastLoginAt)}</time> : <span className={superAdmin ? 'sl-v56-unavailable' : 'sl-application-unavailable'} title="No recorded login">—</span>}</td>
-                {superAdmin && <td>{new Date(account.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</td>}
+                {superAdmin && <td>{formatDate(account.createdAt)}</td>}
                 <td><div className="sl-staff-waste-row-actions">
                   {superAdmin ? <>
                     <button type="button" className="sl-icon-button" disabled={busy} aria-label={`View ${account.name}`} title="View" onClick={() => open(account, 'view')}><Eye size={16} aria-hidden="true" /></button>

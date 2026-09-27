@@ -38,6 +38,7 @@ test('Stock-In validation and generated Batch ID contract reject client-owned fi
     { ingredientId: '5'.repeat(24), dateReceived: '2030-01-10', quantity: 0, expirationDate: '2030-01-20' },
     { ingredientId: '5'.repeat(24), dateReceived: '2030-01-10', quantity: -1, expirationDate: '2030-01-20' },
     { ingredientId: '5'.repeat(24), dateReceived: '2030-01-10', quantity: 1, expirationDate: '2030-01-10' },
+    { ingredientId: '5'.repeat(24), dateReceived: '2030-02-31', quantity: 1, expirationDate: '2030-03-05' },
     { ingredientId: '5'.repeat(24), dateReceived: '2030-01-10', quantity: 1, expirationDate: '2030-01-20', unitCost: -1 },
     { ingredientId: '5'.repeat(24), dateReceived: '2030-01-10', quantity: 1, expirationDate: '2030-01-20', batchID: 'client-owned' },
     { ingredientId: '5'.repeat(24), dateReceived: '2030-01-10', quantity: 1, expirationDate: '2030-01-20', unit: 'kg' },

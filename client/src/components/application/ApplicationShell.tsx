@@ -25,6 +25,7 @@ import { administrationAreas, type AdministrationAreaId } from './administration
 import { DataState } from './primitives';
 import { useHoverIntent } from './useHoverIntent';
 import { actionFeedbackEventName, type ActionFeedback } from '../../services/actionFeedback';
+import { formatDateTime } from '../../utils/date-time';
 
 import { canOpenWorkspacePath, dashboardPaths, profilePaths, workspaceNavigation } from './workspace';
 
@@ -104,7 +105,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
     return () => window.clearInterval(timer);
   }, []);
 
-  const topbarDateTime = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' }).format(topbarClock);
+  const topbarDateTime = formatDateTime(topbarClock);
 
   useEffect(() => {
     // Resolve identity through the existing auth boundary, never from cached role data.

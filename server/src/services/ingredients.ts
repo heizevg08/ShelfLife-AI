@@ -1,4 +1,5 @@
 import { INGREDIENT_CATEGORIES, type IngredientInput, type IngredientPageQuery } from '../validators/ingredient';
+import type { Actor } from './administration';
 
 export interface Ingredient {
   id: string;
@@ -17,9 +18,9 @@ export interface Ingredient {
 export interface IngredientStore {
   list(query: IngredientPageQuery): Promise<{ items: Ingredient[]; page: number; pageSize: number; total: number }>;
   summary(): Promise<{ total: number; categories: string[]; units: string[]; mostCommonIngredient: string | null }>;
-  create(actorId: string, input: IngredientInput): Promise<Ingredient>;
-  update(id: string, input: IngredientInput): Promise<Ingredient | null>;
-  remove(id: string): Promise<boolean>;
+  create(actor: Actor, input: IngredientInput): Promise<Ingredient>;
+  update(actor: Actor, id: string, input: IngredientInput): Promise<Ingredient | null>;
+  remove(actor: Actor, id: string): Promise<boolean>;
   stockInOptions(): Promise<{ id: string; name: string; unitOfMeasure: string; standardUnitCost?: number; defaultShelfLifeDays?: number }[]>;
 }
 export function createIngredients(store: IngredientStore) {
@@ -27,9 +28,9 @@ export function createIngredients(store: IngredientStore) {
     categories: () => [...INGREDIENT_CATEGORIES],
     list: (query: IngredientPageQuery) => store.list(query),
     summary: () => store.summary(),
-    create: (actorId: string, input: IngredientInput) => store.create(actorId, input),
-    update: (id: string, input: IngredientInput) => store.update(id, input),
-    remove: (id: string) => store.remove(id),
+    create: (actor: Actor, input: IngredientInput) => store.create(actor, input),
+    update: (actor: Actor, id: string, input: IngredientInput) => store.update(actor, id, input),
+    remove: (actor: Actor, id: string) => store.remove(actor, id),
     stockInOptions: () => store.stockInOptions(),
   };
 }

@@ -1,8 +1,7 @@
 type DateValue = string | Date;
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
-const dateTimeFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', hour12: true });
-const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
+const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const timeFormatter = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
 function dateOnlyValue(value: DateValue) {
   if (typeof value !== 'string') return new Date(value);
@@ -15,7 +14,7 @@ export function formatDate(value: DateValue) {
 }
 
 export function formatDateTime(value: DateValue) {
-  return dateTimeFormatter.format(new Date(value));
+  return `${formatDate(value)}, ${formatTime(value)}`;
 }
 
 export function formatTime(value: DateValue) {

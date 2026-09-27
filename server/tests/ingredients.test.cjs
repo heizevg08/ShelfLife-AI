@@ -42,14 +42,14 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
       const found = rows.filter(row => (!query.category || row.category === query.category) && (!query.unit || row.unitOfMeasure === query.unit) && (!query.search || `${row.name} ${row.brand}`.toLowerCase().includes(query.search.toLowerCase())));
       return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), page: query.page, pageSize: query.pageSize, total: found.length };
     },
-    async create(actorId, input) {
+    async create(actor, input) {
       if (rows.some(row => row.name.toLowerCase() === input.name.toLowerCase())) throw Object.assign(new Error('duplicate'), { code: 11000 });
       const now = new Date().toISOString();
-      const row = { id: String(rows.length + 3).repeat(24).slice(0, 24), ...input, createdBy: { id: actorId, name: admin.name }, createdAt: now, updatedAt: now };
+      const row = { id: String(rows.length + 3).repeat(24).slice(0, 24), ...input, createdBy: { id: actor.id, name: admin.name }, createdAt: now, updatedAt: now };
       rows.push(row); return row;
     },
-    async update(id, input) { const index = rows.findIndex(row => row.id === id); if (index < 0) return null; rows[index] = { ...rows[index], ...input, updatedAt: new Date().toISOString() }; return rows[index]; },
-    async remove(id) { const index = rows.findIndex(row => row.id === id); if (index < 0) return false; rows.splice(index, 1); return true; },
+    async update(_actor, id, input) { const index = rows.findIndex(row => row.id === id); if (index < 0) return null; rows[index] = { ...rows[index], ...input, updatedAt: new Date().toISOString() }; return rows[index]; },
+    async remove(_actor, id) { const index = rows.findIndex(row => row.id === id); if (index < 0) return false; rows.splice(index, 1); return true; },
   };
   const users = [admin, manager, staff];
   const auth = createAuth({ byId: async id => users.find(user => user.id === id) || null, byEmail: async () => null }, randomBytes(48).toString('hex'));
