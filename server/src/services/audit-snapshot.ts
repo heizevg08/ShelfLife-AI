@@ -3,7 +3,9 @@ const fields: Record<string, readonly string[]> = {
   SystemConfig: ['approachingDays', 'criticalDays', 'lowStockMultiplier', 'version'],
   InventoryBatch: ['id', 'ingredientId', 'batchCode', 'initialQuantity', 'quantity', 'unit', 'unitCost', 'currency', 'dateReceived', 'expirationDate', 'isActive', 'version', 'createdBy', 'createdAt', 'updatedAt'],
   User: ['id', 'firstName', 'lastName', 'name', 'email', 'role', 'isActive', 'createdAt', 'updatedAt'],
-  Ingredient: ['id', 'name', 'brand', 'description', 'category', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'version', 'isActive', 'createdBy', 'createdAt', 'updatedAt'],
+  Ingredient: ['id', 'name', 'brand', 'description', 'category', 'customCategory', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'version', 'isActive', 'createdBy', 'createdAt', 'updatedAt'],
+  ChangeRequest: ['id', 'name', 'brand', 'description', 'category', 'customCategory', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'firstName', 'lastName', 'email', 'role', 'requestedBy', 'requestedByRole', 'status', 'version', 'createdBy', 'reviewedBy', 'reviewNote', 'ingredientId', 'accountId', 'isDeleted', 'deletedBy', 'createdAt', 'updatedAt'],
+  AccountRequest: ['id', 'firstName', 'lastName', 'email', 'role', 'requestedBy', 'requestedByRole', 'status', 'reviewedBy', 'reviewNote', 'accountId', 'isDeleted', 'deletedBy', 'version', 'createdAt', 'updatedAt'],
 };
 export type AuditSnapshot = Record<string, unknown> | null;
 export function auditSnapshot(targetType: string, value: unknown): AuditSnapshot {

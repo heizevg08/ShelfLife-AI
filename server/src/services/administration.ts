@@ -41,6 +41,7 @@ export function createAdministration(store: AdministrationStore) {
     summary: (actor?: Actor) => store.summary(actor?.role === 'Admin' ? managedRoles(actor.role) : null),
     audits: (query: PageQuery) => store.audits(query),
     async create(actor: Actor, input: AccountInput) {
+      if (actor.role !== 'Super Admin') throw forbidden();
       if (!managedRoles(actor.role).includes(input.role!)) throw forbidden();
       const { password, ...fields } = input;
       const passwordHash = await hashPassword(password!);

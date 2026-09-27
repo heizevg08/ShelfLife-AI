@@ -25,6 +25,7 @@ const protectedRoutes = [
   createRoute({ getParentRoute: () => workspace, path: '/AdminDashboard', beforeLoad: () => guard('/AdminDashboard'), component: lazyRouteComponent(() => import('../pages/workspace/AdminDashboard')) }),
   createRoute({ getParentRoute: () => workspace, path: '/AdministrativeAudit', beforeLoad: () => guard('/AdministrativeAudit'), component: lazyRouteComponent(() => import('../pages/workspace/AdministrativeAudit')) }),
   createRoute({ getParentRoute: () => workspace, path: '/Alerts', beforeLoad: () => guard('/Alerts'), component: lazyRouteComponent(() => import('../pages/workspace/Alerts')) }),
+  createRoute({ getParentRoute: () => workspace, path: '/AccountRequests', beforeLoad: () => guard('/AccountRequests'), component: lazyRouteComponent(() => import('../pages/workspace/AccountRequests')) }),
   createRoute({ getParentRoute: () => workspace, path: '/ChangeRequests', beforeLoad: () => guard('/ChangeRequests'), component: lazyRouteComponent(() => import('../pages/workspace/ChangeRequests')) }),
   createRoute({ getParentRoute: () => workspace, path: '/ExpirationMonitoring', beforeLoad: () => guard('/ExpirationMonitoring'), component: lazyRouteComponent(() => import('../pages/workspace/ExpirationMonitoring')) }),
   createRoute({ getParentRoute: () => workspace, path: '/Forecasting', beforeLoad: () => guard('/Forecasting'), component: lazyRouteComponent(() => import('../pages/workspace/Forecasting')) }),

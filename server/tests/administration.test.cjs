@@ -68,6 +68,7 @@ test('administrative writes enforce all actor/target role combinations and self 
 
 test('creation hashes passwords; lifecycle is idempotent and audit failure rolls changes back', async () => {
   const f = fixture(), actor = f.rows()[0];
+  await assert.rejects(f.service.create(f.rows()[1], accountInput({ firstName: 'Admin', lastName: 'Requested', email: 'admin-request@shelflife.com', role: 'Inventory Staff', password: 'isolated-test-password' }, true)), error => error.status === 403);
   const user = await f.service.create(actor, accountInput({ firstName: 'New', lastName: 'Admin', email: 'new@shelflife.com', role: 'Admin', password: 'isolated-test-password' }, true));
   assert.equal(await verifyPassword('isolated-test-password', f.hash()), true);
   assert.equal(JSON.stringify(user).includes('password'), false);

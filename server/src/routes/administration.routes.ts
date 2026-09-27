@@ -6,18 +6,27 @@ import { authenticate } from '../middleware/auth.middleware';
 import { AdministrationError, authorizeAdministration } from '../middleware/administration.middleware';
 import { HttpError } from '../middleware/error.middleware';
 import { administrationControllers } from '../controllers/administration.controller';
+import type { AccountRequestService } from '../services/account-requests';
+import { accountRequestId, accountRequestInput, accountRequestReview } from '../validators/account-request';
 
-export function administrationRoutes(auth: AuthService, service: AdministrationService) {
+export function administrationRoutes(auth: AuthService, service: AdministrationService, accountRequests?: AccountRequestService) {
   const router = Router(), actions = administrationControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
   router.use('/users', authorizeAdministration(['Super Admin', 'Admin']));
+  if (accountRequests) router.use('/account-requests', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff']));
   router.use('/dashboard', authorizeAdministration(['Super Admin']));
+  router.post('/users', authorizeAdministration(['Super Admin']), json({ limit: '100kb' }), actions.create);
   router.use(json({ limit: '100kb' }));
   router.get('/users', actions.list);
   router.get('/users/summary', actions.summary);
   router.get('/users/:id', actions.get);
-  router.post('/users', actions.create);
+  if (accountRequests) {
+    router.get('/account-requests', async (_req, res) => { res.json(await accountRequests.list(res.locals.user)); });
+    router.post('/account-requests', async (req, res) => { res.status(201).json({ request: await accountRequests.create(res.locals.user, accountRequestInput(req.body, res.locals.user.role)) }); });
+    router.patch('/account-requests/:id/review', async (req, res) => { res.json({ request: await accountRequests.review(res.locals.user, accountRequestId(req.params.id), accountRequestReview(req.body)) }); });
+    router.delete('/account-requests/:id', authorizeAdministration(['Super Admin', 'Admin']), async (req, res) => { await accountRequests.remove(res.locals.user, accountRequestId(req.params.id)); res.status(204).end(); });
+  }
   router.patch('/users/:id', actions.update);
   router.post('/users/:id/deactivate', actions.deactivate);
   router.post('/users/:id/reactivate', actions.reactivate);

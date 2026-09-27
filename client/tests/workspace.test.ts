@@ -14,17 +14,28 @@ test('every Source-of-Truth-derived role and canonical route decision is enforce
       checked += 1;
     }
   }
-  assert.equal(Object.keys(canonicalWorkspaceAccess).length, 22);
-  assert.equal(checked, 88);
+  assert.equal(Object.keys(canonicalWorkspaceAccess).length, 23);
+  assert.equal(checked, 92);
+  assert.deepEqual([...canonicalWorkspaceAccess['/AccountRequests']], roles);
+  assert.equal(workspaceNavigation('Inventory Manager').some(item => item.path === '/AccountRequests'), false);
+  assert.equal(workspaceNavigation('Inventory Staff').some(item => item.path === '/AccountRequests'), false);
+  assert.equal(workspaceNavigation('Admin').some(item => item.path === '/AccountRequests'), true);
+  assert.equal(workspaceNavigation('Super Admin').some(item => item.path === '/AccountRequests'), true);
+  assert.equal(canOpenWorkspacePath('Inventory Staff', '/ChangeRequests'), false);
+  assert.equal(workspaceNavigation('Inventory Staff').some(item => item.path === '/ChangeRequests'), false);
 });
 
 test('API-backed route permissions match the actual backend guards', () => {
   const ingredients = readFileSync(new URL('../../server/src/routes/ingredient.routes.ts', import.meta.url), 'utf8');
+  const ingredientRequests = readFileSync(new URL('../../server/src/routes/ingredient-request.routes.ts', import.meta.url), 'utf8');
   const administration = readFileSync(new URL('../../server/src/routes/administration.routes.ts', import.meta.url), 'utf8');
   const rolesIn = (source: string, pattern: RegExp) => [...source.match(pattern)![1].matchAll(/'([^']+)'/g)].map(match => match[1]);
   assert.deepEqual([...canonicalWorkspaceAccess['/Ingredients']], rolesIn(ingredients, /router.get\('\/', authorizeAdministration\((\[[^\]]+\])/));
   const writeRoles = (action: 'create' | 'update' | 'remove') => roles.filter(role => ingredientPermissions(role)[action]);
-  assert.deepEqual(writeRoles('create'), rolesIn(ingredients, /router.post\('\/', authorizeAdministration\((\[[^\]]+\])/));
+  assert.deepEqual(rolesIn(ingredients, /router.post\('\/', authorizeAdministration\((\[[^\]]+\])/), ['Inventory Manager']);
+  assert.deepEqual(writeRoles('create'), ['Inventory Manager', 'Inventory Staff']);
+  assert.deepEqual(rolesIn(ingredientRequests, /router.post\('\/', authorizeAdministration\((\[[^\]]+\])/), ['Inventory Staff']);
+  assert.deepEqual(rolesIn(ingredientRequests, /router.patch\('\/:id\/review', authorizeAdministration\((\[[^\]]+\])/), ['Inventory Manager', 'Admin', 'Super Admin']);
   assert.deepEqual(writeRoles('update'), rolesIn(ingredients, /router.patch\('\/:id', authorizeAdministration\((\[[^\]]+\])/));
   assert.deepEqual(writeRoles('remove'), rolesIn(ingredients, /router.delete\('\/:id', authorizeAdministration\((\[[^\]]+\])/));
   assert.deepEqual([...canonicalWorkspaceAccess['/UserManagement']], rolesIn(administration, /router.use\('\/users', authorizeAdministration\((\[[^\]]+\])/));

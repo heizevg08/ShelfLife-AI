@@ -9,7 +9,7 @@ import { auditSnapshot } from './audit-snapshot';
 
 type Row = {
   _id: { toString(): string };
-  name: string; brand: string; description: string; category: string; unitOfMeasure: string;
+  name: string; brand: string; description: string; category: string; customCategory?: string; unitOfMeasure: string;
   minimumStock?: number; standardUnitCost?: number; defaultShelfLifeDays?: number;
   isActive?: boolean; version?: number;
   createdBy: { toString(): string }; createdAt: Date; updatedAt: Date;
@@ -30,7 +30,7 @@ export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<
     return {
       id: row._id.toString(), name: row.name, brand: row.brand, description: row.description,
       isActive: row.isActive !== false, version: row.version ?? 0,
-      category: row.category, unitOfMeasure: row.unitOfMeasure,
+      category: row.category, ...(row.customCategory ? { customCategory: row.customCategory } : {}), unitOfMeasure: row.unitOfMeasure,
       ...(row.minimumStock !== undefined ? { minimumStock: row.minimumStock } : {}),
       ...(row.standardUnitCost !== undefined ? { standardUnitCost: row.standardUnitCost } : {}),
       ...(row.defaultShelfLifeDays ? { defaultShelfLifeDays: row.defaultShelfLifeDays } : {}),

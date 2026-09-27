@@ -1,4 +1,4 @@
-import { Bell, Boxes, ChartNoAxesCombined, ClipboardList, Clock, Leaf, ListChecks, PackagePlus, ScrollText, Users, Utensils } from 'lucide-react';
+import { Bell, Boxes, ChartNoAxesCombined, ClipboardList, Clock, Leaf, ListChecks, PackagePlus, ScrollText, UserPlus, Users, Utensils } from 'lucide-react';
 import type { SessionUser } from '../../services/auth';
 
 export type WorkspaceRole = SessionUser['role'];
@@ -7,6 +7,7 @@ export const dashboardPaths: Record<WorkspaceRole, string> = {
 };
 export const modules = {
   UserManagement: { label: 'User Management', Icon: Users },
+  AccountRequests: { label: 'Account Requests', Icon: UserPlus },
   Ingredients: { label: 'Ingredients', Icon: Leaf },
   InventoryBatches: { label: 'Inventory Batches', Icon: Boxes },
   StockIn: { label: 'Stock-In', Icon: PackagePlus },
@@ -33,6 +34,7 @@ export const canonicalWorkspaceAccess = {
   '/SystemSettings': ['Super Admin'],
   '/SecurityActivity': ['Super Admin'],
   '/UserManagement': ['Super Admin', 'Admin'],
+  '/AccountRequests': ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'],
   '/Ingredients': ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'],
   '/InventoryBatches': ['Super Admin', 'Admin', 'Inventory Staff'],
   '/Inventory': ['Inventory Manager'],
@@ -41,7 +43,7 @@ export const canonicalWorkspaceAccess = {
   '/Usage': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
   '/Waste': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
   '/ExpirationMonitoring': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
-  '/ChangeRequests': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
+  '/ChangeRequests': ['Super Admin', 'Inventory Manager'],
   '/Forecasting': ['Super Admin', 'Inventory Manager'],
   '/Alerts': ['Super Admin', 'Admin', 'Inventory Manager'],
   '/Reports': ['Super Admin', 'Admin', 'Inventory Manager'],
@@ -50,16 +52,16 @@ export const canonicalWorkspaceAccess = {
 } as const satisfies Record<string, readonly WorkspaceRole[]>;
 export type CanonicalWorkspacePath = keyof typeof canonicalWorkspaceAccess;
 const navigation: Record<WorkspaceRole, ModuleId[]> = {
-  'Super Admin': ['UserManagement', 'Alerts', 'ChangeRequests', 'AdministrativeAudit', 'Reports'],
-  Admin: ['UserManagement', 'Ingredients', 'InventoryBatches', 'AdministrativeAudit', 'Reports'],
+  'Super Admin': ['UserManagement', 'AccountRequests', 'Alerts', 'ChangeRequests', 'AdministrativeAudit', 'Reports'],
+  Admin: ['UserManagement', 'AccountRequests', 'Ingredients', 'InventoryBatches', 'AdministrativeAudit', 'Reports'],
   'Inventory Manager': ['Ingredients', 'InventoryBatches', 'UsageWaste', 'ChangeRequests', 'Forecasting', 'Alerts', 'Reports'],
-  'Inventory Staff': ['Ingredients', 'InventoryBatches', 'StockIn', 'Usage', 'Waste', 'ChangeRequests'],
+  'Inventory Staff': ['Ingredients', 'InventoryBatches', 'StockIn', 'Usage', 'Waste'],
 };
 export function workspaceNavigation(role: WorkspaceRole) {
   return navigation[role].map(id => ({
     ...modules[id],
     path: role === 'Inventory Manager' && id === 'InventoryBatches' ? '/Inventory' : `/${id}`,
-    label: role === 'Admin' && id === 'UserManagement' ? 'Users' : (role === 'Admin' || role === 'Inventory Manager') && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : role === 'Inventory Staff' && id === 'ChangeRequests' ? 'My Requests' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
+    label: role === 'Admin' && id === 'UserManagement' ? 'Users' : (role === 'Admin' || role === 'Inventory Manager') && id === 'InventoryBatches' ? 'Inventory' : role === 'Admin' && id === 'Reports' ? 'Reports' : id === 'Forecasting' ? 'Forecasting' : modules[id].label,
   })).filter(item => canOpenWorkspacePath(role, item.path));
 }
 export function canOpenWorkspacePath(role: WorkspaceRole, pathname: string) {
