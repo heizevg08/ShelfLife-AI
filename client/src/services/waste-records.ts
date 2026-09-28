@@ -10,7 +10,6 @@ export interface WasteSummary {
   totalWasteToday: { quantity: number; unit: string } | null;
   wasteRecordsToday: number; mostWastedIngredient: string | null; commonWasteReason: WasteReason | null; totalWasteCostToday: number;
 }
-export interface WasteReasonBreakdown { period: 'Last 30 Days'; counts: Record<WasteReason, number>; total: number }
 export interface WasteInput { ingredientId: string; batchId: string; quantityWasted: number; reason: WasteReason; dateWasted: string }
 
 export function listWasteRecords(query: { page: number; pageSize: number; search?: string; reason?: WasteReason; ingredientId?: string; from?: string; to?: string }, signal?: AbortSignal) {
@@ -23,7 +22,6 @@ export function listWasteRecords(query: { page: number; pageSize: number; search
   return apiClient<{ items: WasteRecord[]; page: number; pageSize: number; total: number }>(`/waste-records?${params}`, { signal });
 }
 export const getWasteSummary = (signal?: AbortSignal) => apiClient<WasteSummary>('/waste-records/summary', { signal });
-export const getWasteReasonBreakdown = (signal?: AbortSignal) => apiClient<WasteReasonBreakdown>('/waste-records/reason-breakdown', { signal });
 export async function createWasteRecord(input: WasteInput) {
   const result = await apiClient<{ record: WasteRecord }>('/waste-records', { method: 'POST', body: JSON.stringify(input), successMessage: false });
   publishActionFeedback({ kind: 'success', message: 'Waste record saved successfully.' });
