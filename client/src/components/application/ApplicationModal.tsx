@@ -62,7 +62,7 @@ export function ApplicationModalForm({
   secondaryLabel: 'Clear' | 'Cancel';
   onSecondary: () => void;
   primaryLabel: string;
-  PrimaryIcon: LucideIcon;
+  PrimaryIcon?: LucideIcon;
   busy?: boolean;
   className?: string;
 }) {
@@ -71,7 +71,7 @@ export function ApplicationModalForm({
     {message && <p className="sl-inline-notice sl-application-modal-message" role="status">{message}</p>}
     <div className="sl-application-modal-actions">
       <button type="button" className="sl-button" disabled={busy} onClick={onSecondary}>{secondaryLabel}</button>
-      <button type="submit" className="sl-button sl-button-primary" disabled={busy}><PrimaryIcon size={16} aria-hidden="true" />{primaryLabel}</button>
+      <button type="submit" className="sl-button sl-button-primary" disabled={busy}>{PrimaryIcon && <PrimaryIcon size={16} aria-hidden="true" />}{primaryLabel}</button>
     </div>
   </form>;
 }

@@ -81,7 +81,7 @@ export function InventoryStaffModalForm({
   secondaryLabel: 'Clear' | 'Cancel';
   onSecondary: () => void;
   primaryLabel: string;
-  PrimaryIcon: LucideIcon;
+  PrimaryIcon?: LucideIcon;
   busy?: boolean;
   className?: string;
 }) {
