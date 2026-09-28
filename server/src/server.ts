@@ -25,6 +25,9 @@ import { inventoryBatchCounterModel } from './models/inventory-batch-counter';
 import { usageRecordModel } from './models/usage-record';
 import { createUsageRecords, type UsageRecordService } from './services/usage-records';
 import { createUsageRecordStore } from './services/usage-record-store';
+import { wasteRecordModel } from './models/waste-record';
+import { createWasteRecords, type WasteRecordService } from './services/waste-records';
+import { createWasteRecordStore } from './services/waste-record-store';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
@@ -59,11 +62,11 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords, wasteRecords));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -87,6 +90,7 @@ export async function startServer(config: Config, database: Database, shutdownTi
     await database.connect(config.mongoUri);
     await inventoryBatches?.ready();
     await usageRecords?.ready();
+    await wasteRecords?.ready();
     stage = 'http-listen'; onStage(stage);
     await new Promise<void>((resolve, reject) => {
       http.once('error', reject);
@@ -151,7 +155,8 @@ if (require.main === module) {
     const ingredients = createIngredients(createIngredientStore(driver, ingredientModel(driver), users, audits));
     const inventoryBatches = createInventoryBatches(createInventoryBatchStore(driver, inventoryBatchModel(driver), inventoryBatchCounterModel(driver), ingredientModel(driver), users, audits));
     const usageRecords = createUsageRecords(createUsageRecordStore(driver, usageRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
-    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches, usageRecords);
+    const wasteRecords = createWasteRecords(createWasteRecordStore(driver, wasteRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
+    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

@@ -29,6 +29,7 @@ export function InventoryStaffModal({
   children,
   actions,
   busy = false,
+  showClose = true,
   className = '',
 }: {
   open: boolean;
@@ -40,6 +41,7 @@ export function InventoryStaffModal({
   children: ReactNode;
   actions?: ReactNode;
   busy?: boolean;
+  showClose?: boolean;
   className?: string;
 }) {
   return <ApplicationModal
@@ -47,6 +49,7 @@ export function InventoryStaffModal({
     onDismiss={onDismiss}
     returnFocus={returnFocus}
     busy={busy}
+    showClose={showClose}
     className={`sl-staff-usage-dialog sl-staff-usage-dialog-exact sl-inventory-staff-modal${className ? ` ${className}` : ''}`}
     actions={actions}
     title={title}
@@ -68,6 +71,7 @@ export function InventoryStaffModalForm({
   primaryLabel,
   PrimaryIcon,
   busy = false,
+  className = '',
 }: {
   formId?: string;
   formRef?: RefObject<HTMLFormElement | null>;
@@ -79,6 +83,7 @@ export function InventoryStaffModalForm({
   primaryLabel: string;
   PrimaryIcon: LucideIcon;
   busy?: boolean;
+  className?: string;
 }) {
   return <ApplicationModalForm
     formId={formId}
@@ -90,6 +95,6 @@ export function InventoryStaffModalForm({
     primaryLabel={primaryLabel}
     PrimaryIcon={PrimaryIcon}
     busy={busy}
-    className="sl-staff-usage-form sl-inventory-staff-modal-form"
+    className={`sl-staff-usage-form sl-inventory-staff-modal-form${className ? ` ${className}` : ''}`}
   >{children}</ApplicationModalForm>;
 }

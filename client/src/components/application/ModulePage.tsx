@@ -16,12 +16,12 @@ import { ApiError } from '../../services/apiClient';
 import { createIngredient, deleteIngredient, getIngredientSummary, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type Ingredient, type IngredientInput, type StockInIngredient } from '../../services/ingredients';
 import { createStockIn, getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
 import { createUsageRecord, getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
+import { createWasteRecord, getWasteReasonBreakdown, getWasteSummary, listWasteRecords, type WasteReason, type WasteReasonBreakdown, type WasteRecord, type WasteSummary } from '../../services/waste-records';
 import { formatDate, formatDateTime } from '../../utils/date-time';
 
 
 const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
 const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
-const INVENTORY_STAFF_DATE_RANGES = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom'] as const;
 const STOCK_IN_DATE_RANGES = ['All dates', 'Today', 'Last 7 Days', 'Last 30 Days', 'Custom range'] as const;
 const INVENTORY_STAFF_WASTE_REASONS = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'] as const;
 type IngredientDraft = { name: string; brand: string; category: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
@@ -93,53 +93,89 @@ function FormPreview({ id }: { id: PreviewId }) {
 
 
 function InventoryStaffWastePage() {
-  const [addOpen,setAddOpen]=useState(false);
-  const addButton=useRef<HTMLButtonElement>(null);
-  const [ingredient,setIngredient]=useState(''); const [batch,setBatch]=useState(''); const [qty,setQty]=useState(''); const [reason,setReason]=useState('');
-  const [date,setDate]=useState(''); const [time,setTime]=useState(''); const [search,setSearch]=useState(''); const [reasonFilter,setReasonFilter]=useState('All Reasons'); const [range,setRange]=useState('Last 7 Days'); const [dateFrom,setDateFrom]=useState(''); const [dateTo,setDateTo]=useState(''); const [rows,setRows]=useState('10'); const [formMessage,setFormMessage]=useState('');
-  const clear=()=>{setIngredient('');setBatch('');setQty('');setReason('');setDate('');setTime('');setFormMessage('')};
-  const submitWaste=(event:FormEvent)=>{event.preventDefault();setFormMessage(ingredient&&batch&&qty&&reason&&date&&time?'Waste recording is not connected to the backend yet.':'Complete all required fields before saving.')};
-  const WasteForm=()=> <InventoryStaffModalForm onSubmit={submitWaste} message={formMessage} secondaryLabel="Clear" onSecondary={clear} primaryLabel="Save Waste Record" PrimaryIcon={Trash2}>
-    <label><span>Ingredient <b>*</b></span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option value="">Search or select ingredient...</option></select></label>
-    <label><span>Batch ID <b>*</b></span><select value={batch} onChange={e=>setBatch(e.target.value)}><option value="">Select batch ID...</option></select></label>
-    <label><span>Quantity Wasted <b>*</b></span><input inputMode="decimal" value={qty} onChange={e=>setQty(e.target.value.replace(/[^0-9.]/g,''))} placeholder="Enter quantity"/></label>
-    <label><span>Unit</span><input className="sl-staff-derived-unit" value="—" readOnly aria-label="Derived unit unavailable" /></label>
-    <label><span>Date <b>*</b></span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>
-    <label><span>Time <b>*</b></span><input type="time" value={time} onChange={e=>setTime(e.target.value)}/></label>
-    <label className="sl-staff-modal-wide"><span>Reason for Waste <b>*</b></span><select value={reason} onChange={e=>setReason(e.target.value)}><option value="">Select reason...</option><option>Expired</option><option>Spoiled</option><option>Trimming</option><option>Over-preparation</option><option>Damaged Packaging</option><option>Other</option></select></label>
-  </InventoryStaffModalForm>;
+  const [addOpen, setAddOpen] = useState(false), addButton = useRef<HTMLButtonElement>(null);
+  const [ingredientId, setIngredientId] = useState(''), [batchId, setBatchId] = useState(''), [quantityWasted, setQuantityWasted] = useState(''), [reason, setReason] = useState<WasteReason | ''>(''), [dateWasted, setDateWasted] = useState('');
+  const [search, setSearch] = useState(''), [reasonFilter, setReasonFilter] = useState<WasteReason | 'All Reasons'>('All Reasons'), [range, setRange] = useState('All dates'), [dateFrom, setDateFrom] = useState(''), [dateTo, setDateTo] = useState(''), [rows, setRows] = useState(10), [page, setPage] = useState(1);
+  const [ingredients, setIngredients] = useState<StockInIngredient[]>([]), [batches, setBatches] = useState<InventoryBatch[]>([]);
+  const [data, setData] = useState<{ items: WasteRecord[]; total: number } | null>(null), [summary, setSummary] = useState<WasteSummary | null>(null), [breakdown, setBreakdown] = useState<WasteReasonBreakdown | null>(null), [loading, setLoading] = useState(false), [loadError, setLoadError] = useState(false), [busy, setBusy] = useState(false), [formMessage, setFormMessage] = useState(''), [errors, setErrors] = useState<Partial<Record<'ingredientId' | 'batchId' | 'quantityWasted' | 'dateWasted' | 'reason', string>>>({});
+  const selectedBatch = batches.find(candidate => candidate.id === batchId);
+  const asDate = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+  const queryDates = () => {
+    const today = new Date(), end = asDate(today);
+    if (range === 'Today') return { from: end, to: end };
+    if (range === 'Last 7 Days') { const start = new Date(today); start.setDate(today.getDate() - 6); return { from: asDate(start), to: end }; }
+    if (range === 'Last 30 Days') { const start = new Date(today); start.setDate(today.getDate() - 29); return { from: asDate(start), to: end }; }
+    return range === 'Custom range' ? { ...(dateFrom ? { from: dateFrom } : {}), ...(dateTo ? { to: dateTo } : {}) } : {};
+  };
+  const resetForm = () => { setIngredientId(''); setBatchId(''); setQuantityWasted(''); setReason(''); setDateWasted(''); setErrors({}); setFormMessage(''); };
+  const closeForm = () => { if (!busy) { resetForm(); setAddOpen(false); } };
+  const load = async (signal: AbortSignal) => {
+    const query = { page, pageSize: rows, ...(search.trim() ? { search: search.trim() } : {}), ...(reasonFilter === 'All Reasons' ? {} : { reason: reasonFilter }), ...queryDates() };
+    const [records, nextSummary, nextBreakdown] = await Promise.all([listWasteRecords(query, signal), getWasteSummary(signal), getWasteReasonBreakdown(signal)]);
+    setData(records); setSummary(nextSummary); setBreakdown(nextBreakdown);
+  };
+  useEffect(() => { const controller = new AbortController(); listStockInIngredients(controller.signal).then(result => setIngredients(result.ingredients)).catch(() => { if (!controller.signal.aborted) setIngredients([]); }); return () => controller.abort(); }, []);
+  useEffect(() => { setBatchId(''); if (!ingredientId) { setBatches([]); return; } const controller = new AbortController(); listInventoryBatches({ page: 1, pageSize: 150, ingredientId }, controller.signal).then(result => setBatches(result.items)).catch(() => { if (!controller.signal.aborted) setBatches([]); }); return () => controller.abort(); }, [ingredientId]);
+  useEffect(() => { const controller = new AbortController(); setLoading(true); setLoadError(false); load(controller.signal).catch(() => { if (!controller.signal.aborted) setLoadError(true); }).finally(() => { if (!controller.signal.aborted) setLoading(false); }); return () => controller.abort(); }, [search, reasonFilter, range, dateFrom, dateTo, rows, page]);
+  const submitWaste = async (event: FormEvent) => {
+    event.preventDefault();
+    const next: Partial<Record<'ingredientId' | 'batchId' | 'quantityWasted' | 'dateWasted' | 'reason', string>> = {};
+    const numericQuantity = Number(quantityWasted);
+    if (!ingredientId) next.ingredientId = 'Select an ingredient.';
+    if (!batchId) next.batchId = 'Select a batch ID.';
+    if (!quantityWasted) next.quantityWasted = 'Enter the quantity wasted.';
+    else if (!Number.isFinite(numericQuantity) || numericQuantity <= 0) next.quantityWasted = 'Enter a quantity greater than 0.';
+    if (!dateWasted) next.dateWasted = 'Select the date wasted.';
+    if (!reason) next.reason = 'Select a reason.';
+    if (Object.keys(next).length || !reason) { setErrors(next); return; }
+    setBusy(true); setErrors({}); setFormMessage('');
+    try {
+      await createWasteRecord({ ingredientId, batchId, quantityWasted: numericQuantity, reason, dateWasted });
+      closeForm(); setPage(1);
+      const controller = new AbortController(); await load(controller.signal);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        const fields: Partial<Record<'ingredientId' | 'batchId' | 'quantityWasted' | 'dateWasted' | 'reason', string>> = {};
+        for (const detail of error.details) if (['ingredientId', 'batchId', 'quantityWasted', 'dateWasted', 'reason'].includes(detail.field)) fields[detail.field as keyof typeof fields] = detail.message;
+        setErrors(fields); setFormMessage(Object.keys(fields).length ? '' : error.message);
+      } else setFormMessage('Unable to save the waste record. Try again.');
+    } finally { setBusy(false); }
+  };
+  const fieldError = (field: keyof typeof errors) => errors[field] ? <span className="sl-field-error" role="alert">{errors[field]}</span> : null;
+  const invalid = (field: keyof typeof errors) => errors[field] ? { 'aria-invalid': true as const } : {};
+  const metric = (value: number | string | undefined) => loadError && !summary ? 'Unavailable' : loading && !summary ? '—' : (value ?? '—');
   return <>
     <PageHeader title="Waste Recording" description="Record ingredients that are discarded or no longer usable. Help us reduce food waste." />
     <div className="sl-admin-view sl-staff-waste-v159">
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-waste-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Waste summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Today</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Most Wasted Ingredient</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3/></span><div><span>Common Waste Reason</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown/></span><div><span>Estimated Value Lost</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Today</span><strong>{metric(summary?.totalWasteToday ? `${summary.totalWasteToday.quantity} ${summary.totalWasteToday.unit}` : undefined)}</strong><small>Compatible-unit quantity recorded today</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Most Wasted Ingredient</span><strong>{metric(summary?.mostWastedIngredient ?? undefined)}</strong><small>Today, when units are compatible</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3/></span><div><span>Common Waste Reason</span><strong>{metric(summary?.commonWasteReason ?? undefined)}</strong><small>Most frequent reason today</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown/></span><div><span>Total Waste Cost</span><strong>{metric(summary ? `₱${summary.totalWasteCostToday.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : undefined)}</strong><small>Authoritative cost recorded today</small></div></article>
       </section>
       </div>
       <div className="sl-staff-waste-layout">
         <main className="sl-staff-waste-main">
           <section className="sl-application-records sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-waste-card sl-staff-waste-records"><header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><Clock3/></span><h2>Recent Waste Records</h2></header>
-            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-waste-toolbar"><label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16}/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by ingredient, batch ID, or reason..."/></div></label><label><span>Reason</span><select value={reasonFilter} onChange={e=>setReasonFilter(e.target.value)}><option>All Reasons</option>{INVENTORY_STAFF_WASTE_REASONS.map(value=><option key={value}>{value}</option>)}</select></label><label><span>Date range</span><select value={range} onChange={e=>setRange(e.target.value)}>{INVENTORY_STAFF_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>{range==='Custom'&&<div className="sl-v219-custom-date-range" aria-label="Custom waste date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo||undefined} onChange={e=>setDateFrom(e.target.value)}/></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom||undefined} onChange={e=>setDateTo(e.target.value)}/></label></div>}<div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setReasonFilter('All Reasons');setRange('Last 7 Days');setDateFrom('');setDateTo('')}}>Reset</button><InventoryStaffAddButton buttonRef={addButton} label="Record Waste" onClick={()=>setAddOpen(true)} /></div></div></div>
-            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell"><table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-waste-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity','Unit','Reason','Recorded By','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody><tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:7}).map((_,index)=><td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Waste record actions unavailable"><button type="button" className="sl-icon-button" disabled aria-label="View waste record unavailable" title="View unavailable"><Eye size={16}/></button></div></td></tr></tbody></table></div>
-            <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>setRows(e.target.value)}>{['10','15','50','100','150'].map(n=><option key={n}>{n}</option>)}</select></label><Pagination compact page={1} pageSize={Number(rows)} total={0} itemLabel="waste records" onPageChange={()=>{}} /></footer>
+            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-waste-toolbar"><label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16}/><input type="search" value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="Search by ingredient or Batch ID..."/></div></label><label><span>Reason</span><select value={reasonFilter} onChange={e=>{setReasonFilter(e.target.value as WasteReason | 'All Reasons');setPage(1)}}><option>All Reasons</option>{INVENTORY_STAFF_WASTE_REASONS.map(value=><option key={value}>{value}</option>)}</select></label><label><span>Date range</span><select value={range} onChange={e=>{setRange(e.target.value);setPage(1)}}>{STOCK_IN_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>{range==='Custom range'&&<div className="sl-v219-custom-date-range" aria-label="Custom waste date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo||undefined} onChange={e=>{setDateFrom(e.target.value);setPage(1)}}/></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom||undefined} onChange={e=>{setDateTo(e.target.value);setPage(1)}}/></label></div>}<div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setReasonFilter('All Reasons');setRange('All dates');setDateFrom('');setDateTo('');setPage(1)}}>Reset</button><InventoryStaffAddButton buttonRef={addButton} label="Record Waste" onClick={()=>setAddOpen(true)} /></div></div></div>
+            <div className="sl-sa-ingredients-table-scroll sl-staff-waste-table-shell"><table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-waste-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Wasted','Reason','Recorded By'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{loading&&!data?<tr><td colSpan={6}><DataState kind="loading" title="Loading waste records" description="Retrieving recorded waste transactions."/></td></tr>:loadError?<tr><td colSpan={6}><DataState kind="error" title="Waste records unavailable" description="The waste service could not be reached."/></td></tr>:!data?.items.length?<tr><td colSpan={6}><DataState kind="empty" title={summary?.wasteRecordsToday || search || reasonFilter !== 'All Reasons' || range !== 'All dates' ? 'No matching records' : 'No live records yet'} description={summary?.wasteRecordsToday || search || reasonFilter !== 'All Reasons' || range !== 'All dates' ? 'No waste records match the current search and filters.' : 'Waste records will appear here after discarded inventory is recorded.'}/></td></tr>:data.items.map(record=><tr key={record.id}><td><time dateTime={record.createdAt}>{formatDateTime(record.createdAt)}</time></td><td className="sl-emphasized-value" title={record.ingredient.name}>{record.ingredient.name}</td><td>{record.batch.batchID}</td><td>{record.quantityWasted} {record.unit}</td><td>{record.reason}</td><td>{record.recordedBy.name}</td></tr>)}</tbody></table></div>
+            <footer className="sl-records-footer sl-staff-waste-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>{setRows(Number(e.target.value));setPage(1)}}>{[10,15,50,100,150].map(n=><option key={n}>{n}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={data?.total??0} itemLabel="waste records" onPageChange={setPage} /></footer>
           </section>
         </main>
         <aside className="sl-staff-waste-rail">
           <InventoryStaffAnalyticsCard
-            ariaLabel="Waste by reason values unavailable"
+            ariaLabel="Waste event counts by reason during the last 30 days"
             centerLabel="Waste"
             Icon={BarChart3}
-            items={INVENTORY_STAFF_WASTE_REASONS.map((label, index) => ({ label, series: index + 1 }))}
+            items={INVENTORY_STAFF_WASTE_REASONS.map(label => ({ label, ...(breakdown ? { series: breakdown.counts[label] } : {}) }))}
             title="Waste by Reason (Last 30 Days)"
-            unavailableMessage="Waste data unavailable"
+            unavailableMessage={loadError ? 'Waste data unavailable' : breakdown?.total ? 'Waste events recorded during the last 30 days' : 'No waste records in the last 30 days'}
           />
         </aside>
       </div>
     </div>
-    <InventoryStaffModal open={addOpen} title="Record Waste" subtitle="Enter the details of the discarded ingredient." Icon={Trash2} onDismiss={()=>setAddOpen(false)} returnFocus={addButton}><WasteForm/></InventoryStaffModal>
+    <InventoryStaffModal open={addOpen} busy={busy} showClose={false} className="sl-staff-waste-dialog" title="Record Waste" subtitle="Enter the details of the discarded ingredient." Icon={Trash2} onDismiss={closeForm} returnFocus={addButton}><InventoryStaffModalForm onSubmit={submitWaste} message={formMessage} secondaryLabel="Cancel" onSecondary={closeForm} primaryLabel="Save Waste Record" PrimaryIcon={Trash2} busy={busy} className="sl-staff-waste-form"><label><span>Ingredient</span><select value={ingredientId} onChange={e=>{setIngredientId(e.target.value);setErrors(value=>({...value,ingredientId:undefined}))}} {...invalid('ingredientId')}><option value="">Search or select ingredient...</option>{ingredients.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>{fieldError('ingredientId')}</label><label><span>Batch ID</span><select value={batchId} disabled={!ingredientId} onChange={e=>{setBatchId(e.target.value);setErrors(value=>({...value,batchId:undefined}))}} {...invalid('batchId')}><option value="">Select batch ID...</option>{batches.filter(item=>item.quantity>0).map(item=><option key={item.id} value={item.id}>{item.batchID}</option>)}</select>{fieldError('batchId')}</label><label><span>Quantity Wasted</span><input inputMode="decimal" value={quantityWasted} onChange={e=>{setQuantityWasted(e.target.value);setErrors(value=>({...value,quantityWasted:undefined}))}} placeholder="Enter quantity" {...invalid('quantityWasted')}/>{fieldError('quantityWasted')}</label><label><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedBatch ? `Derived unit ${selectedBatch.unit}` : 'Unit will be derived from selected batch'}>{selectedBatch?.unit ?? '—'}</output></label><label><span>Date Wasted</span><input type="date" value={dateWasted} onChange={e=>{setDateWasted(e.target.value);setErrors(value=>({...value,dateWasted:undefined}))}} {...invalid('dateWasted')}/>{fieldError('dateWasted')}</label><label><span>Reason</span><select value={reason} onChange={e=>{setReason(e.target.value as WasteReason | '');setErrors(value=>({...value,reason:undefined}))}} {...invalid('reason')}><option value="">Select reason...</option>{INVENTORY_STAFF_WASTE_REASONS.map(value=><option key={value}>{value}</option>)}</select>{fieldError('reason')}</label></InventoryStaffModalForm></InventoryStaffModal>
   </>;
 }
 

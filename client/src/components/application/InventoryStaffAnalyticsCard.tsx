@@ -3,7 +3,7 @@ import { ApplicationDonutChart } from './ApplicationPatterns';
 
 type InventoryStaffAnalyticsItem = {
   label: string;
-  series: number;
+  series?: number;
 };
 
 type InventoryStaffAnalyticsCardProps = {
@@ -28,6 +28,6 @@ export function InventoryStaffAnalyticsCard({
       <span className="sl-staff-usage-head-icon"><Icon aria-hidden="true" /></span>
       <h2>{title}</h2>
     </header>
-    <ApplicationDonutChart ariaLabel={ariaLabel} centerLabel={centerLabel} items={items.map(item => item.label)} unavailableMessage={unavailableMessage} />
+    <ApplicationDonutChart ariaLabel={ariaLabel} centerLabel={centerLabel} items={items.map(item => ({ label: item.label, ...(item.series === undefined ? {} : { value: item.series }) }))} unavailableMessage={unavailableMessage} />
   </section>;
 }

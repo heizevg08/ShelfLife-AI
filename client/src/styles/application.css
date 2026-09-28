@@ -23525,13 +23525,14 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
   }
 }
 .sl-staff-waste-v159 {
+  --sl-staff-waste-column-gap: clamp(.75rem,.6rem + .35vw,1rem);
   gap: clamp(.75rem,1.2vw,1rem);
   display: grid;
 }
 .sl-staff-waste-layout {
   grid-template-columns: minmax(0,3fr) minmax(250px,1fr);
   align-items: start;
-  gap: clamp(.75rem,1.2vw,1rem);
+  gap: var(--sl-staff-waste-column-gap);
   display: grid;
 }
 .sl-staff-waste-main,.sl-staff-waste-rail {
@@ -23580,7 +23581,7 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
   height: clamp(1rem,1.3vw,1.2rem);
 }
 .sl-staff-waste-form {
-  grid-template-columns: repeat(3,minmax(0,1fr));
+  grid-template-columns: repeat(2,minmax(0,1fr));
   gap: clamp(.7rem,1.1vw,1rem);
   padding: clamp(.8rem,1.4vw,1.1rem);
   display: grid;
@@ -23610,6 +23611,16 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
 .sl-staff-waste-form input:disabled {
   background: var(--sl-surface-muted);
   color: var(--sl-muted);
+}
+.sl-staff-waste-form .sl-staff-derived-unit {
+  border: 1px solid var(--sl-border);
+  background: var(--sl-surface-muted);
+  min-height: 2.55rem;
+  color: var(--sl-muted);
+  border-radius: .5rem;
+  align-items: center;
+  padding: .55rem .7rem;
+  display: flex;
 }
 .sl-staff-waste-quantity,.sl-staff-waste-datetime {
   grid-template-columns: minmax(0,1fr) minmax(72px,.38fr);
@@ -23655,7 +23666,7 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
 }
 .sl-staff-waste-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 780px;
 }
 .sl-staff-waste-table tbody td[colspan] {
   height: clamp(210px,29vh,340px);
@@ -23807,7 +23818,7 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
 }
 .sl-staff-waste-v159 .sl-staff-waste-kpis {
   grid-template-columns: repeat(4,minmax(0,1fr));
-  gap: clamp(.75rem,.6rem + .35vw,1rem);
+  gap: var(--sl-staff-waste-column-gap);
 }
 .sl-staff-waste-v159 .sl-staff-waste-kpis .sl-inventory-staff-kpi {
   border-top-width: 3px;
@@ -32121,6 +32132,15 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   align-self: start;
 }
 @media (width>=1051px){
+  .sl-staff-waste-v159 .sl-staff-waste-layout {
+    grid-template-columns: repeat(4,minmax(0,1fr));
+  }
+  .sl-staff-waste-v159 .sl-staff-waste-main {
+    grid-column: 1/span 3;
+  }
+  .sl-staff-waste-v159 .sl-staff-waste-rail {
+    grid-column: 4;
+  }
   .sl-staff-waste-v159 .sl-staff-waste-rail {
     grid-template-rows: auto;
     align-content: start;

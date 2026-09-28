@@ -12,6 +12,7 @@ export function ApplicationModal({
   children,
   actions,
   busy = false,
+  showClose = true,
   className = '',
 }: {
   open: boolean;
@@ -23,6 +24,7 @@ export function ApplicationModal({
   children: ReactNode;
   actions?: ReactNode;
   busy?: boolean;
+  showClose?: boolean;
   className?: string;
 }) {
   return <Dialog
@@ -30,6 +32,7 @@ export function ApplicationModal({
     onDismiss={onDismiss}
     returnFocus={returnFocus}
     busy={busy}
+    showClose={showClose}
     actions={actions}
     className={`sl-application-modal${className ? ` ${className}` : ''}`}
     title={<span className="sl-application-modal-title"><span className="sl-application-card-icon"><Icon aria-hidden="true" /></span><span><strong>{title}</strong><small>{subtitle}</small></span></span>}
