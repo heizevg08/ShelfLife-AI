@@ -91,7 +91,7 @@ function ManagerReports() {
   ] as const;
 
   return <>
-    <PageHeader title="Reports & Analytics" description="Turn your inventory data into actionable insights." />
+    <PageHeader eyebrow="Intelligence" title="Reports & Analytics" description="Turn your inventory data into actionable insights." />
     <div className="sl-admin-view sl-manager-reports-v139">
       <section className="sl-manager-reports-kpis sl-kpi-reference-v201" aria-label="Report summary">
         <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="brand"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><BarChart3 /></span><div><span>Total Ingredients Used</span><strong>—</strong><small>Data unavailable</small></div></article>
@@ -185,7 +185,7 @@ function SuperAdminReports() {
   };
 
   return <>
-    <PageHeader eyebrow="Analytics" title="Reports" description="Waste, inventory, and forecast reporting for system-wide oversight." />
+    <PageHeader eyebrow="System Oversight" title="Reports" description="Waste, inventory, and forecast reporting for system-wide oversight." />
     <div className="sl-admin-view sl-sa-reports-page sl-sa-reports-superadmin-v288 sl-sa-batches-page sl-sa-ingredients-page sl-superadmin-dashboard-v49 sl-staff-usage-v150">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Reporting summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Package aria-hidden="true" /></span><div><span>Overstock Inventory Value</span><strong>—</strong><small>Awaiting overstock valuation API</small></div></article>
@@ -210,7 +210,7 @@ function SuperAdminReports() {
 }
 
 function LegacyReports() {
-  return <><PageHeader eyebrow="Analytics" title="Reports" description="Waste, inventory, and forecast reporting for system-wide oversight."/><div className="sl-admin-view sl-sa-reports-page sl-staff-usage-v150">
+  return <><PageHeader eyebrow="System Oversight" title="Reports" description="Waste, inventory, and forecast reporting for system-wide oversight."/><div className="sl-admin-view sl-sa-reports-page sl-staff-usage-v150">
     <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis" aria-label="Reporting summary">
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Package aria-hidden="true" /></span><div><span>Inventory Value</span><strong>—</strong><small>Awaiting inventory valuation API</small></div></article>
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Trash2 aria-hidden="true" /></span><div><span>Weekly Waste Cost</span><strong>—</strong><small>Awaiting waste-cost API</small></div></article>

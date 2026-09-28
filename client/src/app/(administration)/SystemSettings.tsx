@@ -381,7 +381,7 @@ export default function SystemSettings() {
   return (
     <div className="sl-system-settings-v70" data-ui-version="v305-consistent-system-settings">
       <PageHeader
-        eyebrow="System Settings"
+        eyebrow="Administration"
         title="System Settings"
         description="Manage the global configuration of ShelfLife AI."
       />

@@ -226,7 +226,7 @@ export default function SecurityActivity() {
   return (
     <div className="sl-security-activity-v78 sl-staff-usage-v150" data-ui-version="dashboard-kpi-parity">
       <PageHeader
-        eyebrow="Security & Activity"
+        eyebrow="Administration"
         title="Security & Activity"
         description="Monitor system security, user activity, and audit records across ShelfLife AI."
       />

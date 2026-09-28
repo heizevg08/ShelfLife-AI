@@ -186,7 +186,7 @@ function InventoryStaffWastePage() {
   const invalid = (field: WasteField) => showWasteFieldError(field) ? { 'aria-invalid': true as const, 'aria-describedby': `waste-${field}-error` } : {};
   const metric = (value: number | string | undefined) => loadError && !summary ? 'Unavailable' : loading && !summary ? '—' : (value ?? '—');
   return <>
-    <PageHeader title="Waste Recording" description="Record ingredients that are discarded or no longer usable. Help us reduce food waste." />
+    <PageHeader eyebrow="Records" title="Waste Recording" description="Record ingredients that are discarded or no longer usable. Help us reduce food waste." />
     <div className="sl-admin-view sl-staff-waste-v159">
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-waste-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Waste summary">
@@ -220,7 +220,7 @@ function ManagerUsageWastePage() {
   const reset = () => { setRange('Current period'); setDateFrom(''); setDateTo(''); setCategory('All Categories'); setIngredient('All Ingredients'); setLocation('All Locations'); setFrequency('Daily'); setWastePeriod('This Month'); setPage(1); };
   const Pending = ({ label }: { label: string }) => <div className="sl-manager-usage-pending"><DataState kind="empty" title={`${label} unavailable`} description="Usage and waste analytics are not connected yet." /></div>;
   return <>
-    <PageHeader title="Usage & Waste" description="Monitor ingredient usage and waste to identify trends, reduce losses, and improve efficiency." />
+    <PageHeader eyebrow="Operations" title="Usage & Waste" description="Monitor ingredient usage and waste to identify trends, reduce losses, and improve efficiency." />
     <div className="sl-admin-view sl-manager-usage-waste-v121">
       <div className="sl-sa-kpis sl-admin-reference-kpis sl-manager-usage-kpis sl-kpi-reference-v201" aria-label="Usage and waste summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Total Ingredients Used</span><strong>—</strong><small>Data unavailable</small></div></article>
@@ -352,6 +352,7 @@ function InventoryStaffUsagePage() {
 
   return <>
     <PageHeader
+      eyebrow="Records"
       title="Usage Recording"
       description="Record ingredient usage and maintain accurate inventory quantities."
     />
@@ -478,7 +479,7 @@ function InventoryStaffStockInPage() {
   const metric=(value:number|undefined)=>stockError&&!stockSummary?'Unavailable':stockLoading&&!stockSummary?'—':(value??0).toLocaleString();
   const reset=()=>{setStockSearch('');setStockIngredient('All Ingredients');setStockDateRange('All dates');setStockDateFrom('');setStockDateTo('');setStockPage(1)};
   return <>
-    <PageHeader title="Stock-In" description="Receive and record inventory batches for existing ingredients." />
+    <PageHeader eyebrow="Inventory" title="Stock-In" description="Receive and record inventory batches for existing ingredients." />
     <div className="sl-admin-view sl-staff-stockin-v145">
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-stockin-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Stock-in summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Stock-In Today</span><strong>{metric(stockSummary?.stockInToday)}</strong><small>{stockSummary?.stockInToday===1?'Batch received today':'Batches received today'}</small></div></article>
@@ -553,7 +554,7 @@ function InventoryStaffInventoryBatchesPage() {
     return () => controller.abort();
   }, []);
   return <>
-    <PageHeader title="Inventory Batches" description="View and monitor all ingredient batches. Check stock levels, expiration dates, and FEFO order." />
+    <PageHeader eyebrow="Inventory" title="Inventory Batches" description="View and monitor all ingredient batches. Check stock levels, expiration dates, and FEFO order." />
 
     <div className="sl-admin-view sl-staff-inventory-v149">
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150">
@@ -1767,7 +1768,7 @@ function ManagerForecastingPage() {
   const [page, setPage] = useState(1);
   const Pending = ({ label, compact = false }: { label: string; compact?: boolean }) => <div className={`sl-mgr-forecast-pending${compact ? ' compact' : ''}`}><DataState kind="empty" title={`${label} unavailable`} description="Forecasting data is not connected yet." /></div>;
   return <>
-    <PageHeader title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
+    <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
     <div className="sl-admin-view sl-mgr-forecast-page">
       <section className="sl-sa-kpis sl-admin-reference-kpis sl-mgr-forecast-kpis sl-kpi-reference-v201" aria-label="Forecasting summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Data unavailable</small></div></article>
@@ -1813,7 +1814,7 @@ function ManagerChangeRequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<SelectedRequest | null>(null);
   const reset = () => { setSearch(''); setRequestType('All Types'); setSubmittedBy('All Staff'); setStatus('All Statuses'); setDateRange('Last 30 Days'); setDateFrom(''); setDateTo(''); setPage(1); };
   return <>
-    <PageHeader title="Change Requests" description="Review and decide on inventory-related requests submitted by your team." />
+    <PageHeader eyebrow="Operations" title="Change Requests" description="Review and decide on inventory-related requests submitted by your team." />
     <div className="sl-admin-view sl-mgr-cr-page">
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Change request summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput/></span><div><span>Total Requests</span><strong>—</strong><small>Data unavailable</small></div></article>

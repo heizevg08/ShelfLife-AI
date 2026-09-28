@@ -82,7 +82,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   const totalUsers = summary?.totalUsers ?? accountsTotal;
   return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49 sl-staff-usage-v150 sl-superadmin-users-page-v60 sl-superadmin-users-page-v63 sl-superadmin-users-page-v64">
     <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
-      <PageHeader eyebrow="Dashboard" title={`${greeting}, ${sessionDisplayName(user)}.`} />
+      <PageHeader eyebrow="Overview" title={`${greeting}, ${sessionDisplayName(user)}.`} />
       <p className="sl-dashboard-description">Monitor system-wide activity, security, operations and administrative oversight.</p>
     </div>
     <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="System overview">

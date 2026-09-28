@@ -5,7 +5,7 @@ const { once } = require('node:events');
 const { randomBytes } = require('node:crypto');
 const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
-const { changeRequestInput, changeRequestQuery } = require('../dist/validators/change-request');
+const { changeRequestInput, changeRequestQuery, reviewInput } = require('../dist/validators/change-request');
 
 const staff = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Staff', email: 'staff@shelflife.com', role: 'Inventory Staff', isActive: true, authVersion: 0 };
 const manager = { ...staff, id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Manager', email: 'manager@shelflife.com', role: 'Manager' };
@@ -20,6 +20,8 @@ test('Change request validator rejects client-owned fields, incompatible targets
   ]) assert.throws(() => changeRequestInput(body));
   assert.equal(changeRequestQuery({ page: '2', pageSize: '15', type: 'OTHER', status: 'PENDING' }).page, 2);
   assert.throws(() => changeRequestQuery({ page: '1', pageSize: '12' }));
+  assert.throws(() => reviewInput({ reviewNote: '   ' }, true));
+  assert.deepEqual(reviewInput({ reviewNote: 'Needs evidence' }, true), { reviewNote: 'Needs evidence' });
 });
 
 test('Change request API scopes staff creation, returns safe field errors, and reserves review for Managers', async () => {

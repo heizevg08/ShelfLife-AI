@@ -42,6 +42,7 @@ function ManagerAlerts() {
   const reset = () => { setTab('All Alerts'); setSearch(''); setType('All Types'); setPriority('All Priorities'); setLocation('All Locations'); setPage(1); };
   return <>
     <PageHeader
+      eyebrow="Intelligence"
       title="Alerts"
       description="Stay ahead of risks. Monitor important inventory, expiration, and forecast alerts for your branch."
     />

@@ -8,6 +8,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "node --env-file-if-exists=.env --import tsx --watch src/server.ts",
     "test": "npm run build && node --test tests/*.test.cjs",
+    "test:integration": "npm run build && node --test tests/*.integration.test.cjs",
+    "test:verify": "npm run test && npm run test:integration",
     "seed:dev-admin": "node --env-file-if-exists=.env --import tsx src/scripts/seed-dev-admin.ts"
   },
   "dependencies": {
@@ -22,6 +24,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.0",
+    "mongodb-memory-server": "^11.3.0",
     "tsx": "^4.20.0",
     "typescript": "~6.0.3"
   },
