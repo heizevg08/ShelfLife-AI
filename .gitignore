@@ -38,17 +38,11 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-example
-
 # generated native folders
 /ios
 /android
 /client/ios
 /client/android
-
-# Local development guidance is tracked as the repository-wide implementation standard.
-CODE_COMMENTING_GUIDELINE.md
-ShelfLifeAI_ML_FORECASTING_DEVELOPMENT_ROADMAP.md
 
 # Personal development / AI tooling
 .claude/
@@ -59,3 +53,10 @@ CODE_COMMENTING_GUIDELINE.md
 project_structure.txt
 ShelfLifeAI_FINAL_SOURCE_OF_TRUTH.md
 ShelfLifeAI_ML_FORECASTING_DEVELOPMENT_ROADMAP.md
+
+# Local server files
+/server/.env.test-accounts.local
+
+# Generated server files
+/server/dist/
+/server/node_modules/
