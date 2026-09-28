@@ -31529,6 +31529,42 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-my-requests-table {
   min-width: 66rem;
 }
+.sl-staff-my-request-link {
+  color: var(--sl-brand-strong);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+.sl-staff-my-request-form-grid,.sl-staff-my-request-detail {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: .85rem 1rem;
+  min-width: 0;
+  display: grid;
+}
+.sl-staff-my-request-form-grid > label {
+  align-content: start;
+  gap: .35rem;
+  min-width: 0;
+  display: grid;
+}
+.sl-staff-my-request-full { grid-column: 1/-1; }
+.sl-staff-my-request-derived {
+  min-height: 42px;
+  border: 1px solid var(--sl-border-subtle);
+  border-radius: var(--sl-radius-control);
+  background: var(--sl-surface-muted);
+  padding: .65rem .75rem;
+  color: var(--sl-text);
+}
+.sl-staff-my-request-detail > div {
+  min-width: 0;
+  border: 1px solid var(--sl-border-subtle);
+  border-radius: var(--sl-radius-control);
+  padding: .75rem;
+}
+.sl-staff-my-request-detail dt { color: var(--sl-text-muted); font: var(--sl-font-label); }
+.sl-staff-my-request-detail dd { margin: .3rem 0 0; overflow-wrap: anywhere; }
 @media (width<=1180px){
   .sl-staff-my-requests-toolbar {
     grid-template-columns: repeat(3,minmax(0,1fr));
@@ -31551,6 +31587,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
     flex: 1;
     min-width: 0;
   }
+  .sl-staff-my-request-form-grid,.sl-staff-my-request-detail { grid-template-columns: 1fr; }
 }
 .sl-application-modal-form[data-form="ingredient"] .sl-form-grid {
   grid-template-columns: repeat(2,minmax(0,1fr));
