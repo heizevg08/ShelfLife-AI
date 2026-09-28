@@ -23610,12 +23610,14 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
 }
 .sl-staff-waste-form .sl-staff-derived-unit {
   border: 1px solid var(--sl-border);
-  background: var(--sl-surface-muted);
-  min-height: 2.55rem;
+  background: var(--sl-surface-subtle)!important;
+  min-height: 48px;
   color: var(--sl-muted);
-  border-radius: .5rem;
+  border-radius: var(--sl-radius);
   align-items: center;
-  padding: .55rem .7rem;
+  width: 100%;
+  font: var(--sl-font-supporting);
+  padding: 0 .75rem;
   display: flex;
 }
 .sl-staff-waste-quantity,.sl-staff-waste-datetime {
