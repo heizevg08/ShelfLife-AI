@@ -23590,6 +23590,13 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
   font-weight: 600;
   display: grid;
 }
+.sl-staff-waste-form-row {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  grid-column: 1/-1;
+  align-items: start;
+  gap: inherit;
+  display: grid;
+}
 .sl-staff-waste-form label b {
   color: var(--sl-critical);
 }
@@ -23736,6 +23743,9 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
 }
 @media (width<=720px){
   .sl-staff-waste-form {
+    grid-template-columns: 1fr;
+  }
+  .sl-staff-waste-form-row {
     grid-template-columns: 1fr;
   }
   .sl-staff-waste-toolbar {
