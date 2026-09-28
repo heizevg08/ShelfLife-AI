@@ -23,11 +23,33 @@ const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', '
 const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
 const STOCK_IN_DATE_RANGES = ['All dates', 'Today', 'Last 7 Days', 'Last 30 Days', 'Custom range'] as const;
 const INVENTORY_STAFF_WASTE_REASONS = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'] as const;
+type WasteField = 'ingredientId' | 'batchId' | 'quantityWasted' | 'dateWasted' | 'reason';
+type WasteDraft = Record<WasteField, string>;
 type IngredientDraft = { name: string; brand: string; category: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
 const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
 type IngredientField = keyof IngredientDraft;
 const ingredientApiField: Record<string, IngredientField | undefined> = { name: 'name', brand: 'brand', category: 'category', unitOfMeasure: 'unit', minimumStock: 'minStock', standardUnitCost: 'unitCost', defaultShelfLifeDays: 'shelfLife', description: 'description' };
 const validShelfLife = (value: number | undefined) => value !== undefined && Number.isSafeInteger(value) && value >= 1 && value <= 3650;
+
+function wasteFieldError(field: WasteField, draft: WasteDraft) {
+  if (field === 'ingredientId') return draft.ingredientId ? undefined : 'Select an ingredient.';
+  if (field === 'batchId') return draft.batchId ? undefined : 'Select a batch ID.';
+  if (field === 'dateWasted') return draft.dateWasted ? undefined : 'Select the date wasted.';
+  if (field === 'reason') return draft.reason ? undefined : 'Select a reason.';
+  const quantity = draft.quantityWasted.trim();
+  if (!quantity) return 'Enter the quantity wasted.';
+  const numericQuantity = Number(quantity);
+  if (!Number.isFinite(numericQuantity)) return 'Enter a valid quantity.';
+  return numericQuantity > 0 ? undefined : 'Enter a quantity greater than 0.';
+}
+
+function wasteFormErrors(draft: WasteDraft) {
+  return (Object.keys(draft) as WasteField[]).reduce<Partial<Record<WasteField, string>>>((errors, field) => {
+    const error = wasteFieldError(field, draft);
+    if (error) errors[field] = error;
+    return errors;
+  }, {});
+}
 
 function IngredientFields({ form, errors, busy, formError, set, setError, canonicalModal = false, showRequiredIndicators = true, reserveErrorSpace = false }: { form: IngredientDraft; errors: Partial<Record<IngredientField, string>>; busy: boolean; formError: string; set: (key: IngredientField, value: string) => void; setError: (key: IngredientField, value?: string) => void; canonicalModal?: boolean; showRequiredIndicators?: boolean; reserveErrorSpace?: boolean }) {
   const field = (key: IngredientField, label: string, control: React.ReactNode, required = true, reserveValidationSlot = reserveErrorSpace) => {
@@ -96,7 +118,7 @@ function InventoryStaffWastePage() {
   const [ingredientId, setIngredientId] = useState(''), [batchId, setBatchId] = useState(''), [quantityWasted, setQuantityWasted] = useState(''), [reason, setReason] = useState<WasteReason | ''>(''), [dateWasted, setDateWasted] = useState('');
   const [search, setSearch] = useState(''), [reasonFilter, setReasonFilter] = useState<WasteReason | 'All Reasons'>('All Reasons'), [range, setRange] = useState('All dates'), [dateFrom, setDateFrom] = useState(''), [dateTo, setDateTo] = useState(''), [rows, setRows] = useState(10), [page, setPage] = useState(1);
   const [ingredients, setIngredients] = useState<StockInIngredient[]>([]), [batches, setBatches] = useState<InventoryBatch[]>([]);
-  const [data, setData] = useState<{ items: WasteRecord[]; total: number } | null>(null), [summary, setSummary] = useState<WasteSummary | null>(null), [loading, setLoading] = useState(false), [loadError, setLoadError] = useState(false), [busy, setBusy] = useState(false), [formMessage, setFormMessage] = useState(''), [errors, setErrors] = useState<Partial<Record<'ingredientId' | 'batchId' | 'quantityWasted' | 'dateWasted' | 'reason', string>>>({});
+  const [data, setData] = useState<{ items: WasteRecord[]; total: number } | null>(null), [summary, setSummary] = useState<WasteSummary | null>(null), [loading, setLoading] = useState(false), [loadError, setLoadError] = useState(false), [busy, setBusy] = useState(false), [formMessage, setFormMessage] = useState(''), [errors, setErrors] = useState<Partial<Record<WasteField, string>>>({}), [touched, setTouched] = useState<Partial<Record<WasteField, boolean>>>({});
   const selectedIngredient = ingredients.find(candidate => candidate.id === ingredientId);
   const selectedBatch = batches.find(candidate => candidate.id === batchId);
   const asDate = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
@@ -107,7 +129,8 @@ function InventoryStaffWastePage() {
     if (range === 'Last 30 Days') { const start = new Date(today); start.setDate(today.getDate() - 29); return { from: asDate(start), to: end }; }
     return range === 'Custom range' ? { ...(dateFrom ? { from: dateFrom } : {}), ...(dateTo ? { to: dateTo } : {}) } : {};
   };
-  const resetForm = () => { setIngredientId(''); setBatchId(''); setQuantityWasted(''); setReason(''); setDateWasted(''); setErrors({}); setFormMessage(''); };
+  const wasteDraft = { ingredientId, batchId, quantityWasted, dateWasted, reason };
+  const resetForm = () => { setIngredientId(''); setBatchId(''); setQuantityWasted(''); setReason(''); setDateWasted(''); setErrors({}); setTouched({}); setFormMessage(''); };
   const closeForm = () => { if (!busy) { resetForm(); setAddOpen(false); } };
   const load = async (signal: AbortSignal) => {
     const query = { page, pageSize: rows, ...(search.trim() ? { search: search.trim() } : {}), ...(reasonFilter === 'All Reasons' ? {} : { reason: reasonFilter }), ...queryDates() };
@@ -119,15 +142,10 @@ function InventoryStaffWastePage() {
   useEffect(() => { const controller = new AbortController(); setLoading(true); setLoadError(false); load(controller.signal).catch(() => { if (!controller.signal.aborted) setLoadError(true); }).finally(() => { if (!controller.signal.aborted) setLoading(false); }); return () => controller.abort(); }, [search, reasonFilter, range, dateFrom, dateTo, rows, page]);
   const submitWaste = async (event: FormEvent) => {
     event.preventDefault();
-    const next: Partial<Record<'ingredientId' | 'batchId' | 'quantityWasted' | 'dateWasted' | 'reason', string>> = {};
+    const next = wasteFormErrors(wasteDraft);
     const numericQuantity = Number(quantityWasted);
-    if (!ingredientId) next.ingredientId = 'Select an ingredient.';
-    if (!batchId) next.batchId = 'Select a batch ID.';
-    if (!quantityWasted) next.quantityWasted = 'Enter the quantity wasted.';
-    else if (!Number.isFinite(numericQuantity) || numericQuantity <= 0) next.quantityWasted = 'Enter a quantity greater than 0.';
-    if (!dateWasted) next.dateWasted = 'Select the date wasted.';
-    if (!reason) next.reason = 'Select a reason.';
-    if (Object.keys(next).length || !reason) { setErrors(next); return; }
+    if (Object.keys(next).length) { setTouched({ ingredientId: true, batchId: true, quantityWasted: true, dateWasted: true, reason: true }); setErrors(next); return; }
+    if (!reason) return;
     setBusy(true); setErrors({}); setFormMessage('');
     try {
       await createWasteRecord({ ingredientId, batchId, quantityWasted: numericQuantity, reason, dateWasted });
@@ -135,14 +153,15 @@ function InventoryStaffWastePage() {
       const controller = new AbortController(); await load(controller.signal);
     } catch (error) {
       if (error instanceof ApiError) {
-        const fields: Partial<Record<'ingredientId' | 'batchId' | 'quantityWasted' | 'dateWasted' | 'reason', string>> = {};
+        const fields: Partial<Record<WasteField, string>> = {};
         for (const detail of error.details) if (['ingredientId', 'batchId', 'quantityWasted', 'dateWasted', 'reason'].includes(detail.field)) fields[detail.field as keyof typeof fields] = detail.message;
         setErrors(fields); setFormMessage(Object.keys(fields).length ? '' : error.message);
       } else setFormMessage('Unable to save the waste record. Try again.');
     } finally { setBusy(false); }
   };
-  const fieldError = (field: keyof typeof errors) => errors[field] ? <span id={`waste-${field}-error`} className="sl-field-error" role="alert">{errors[field]}</span> : null;
-  const invalid = (field: keyof typeof errors) => errors[field] ? { 'aria-invalid': true as const, 'aria-describedby': `waste-${field}-error` } : {};
+  const validateWasteFieldOnBlur = (field: WasteField) => { setTouched(current => ({ ...current, [field]: true })); setErrors(current => ({ ...current, [field]: wasteFieldError(field, wasteDraft) })); };
+  const fieldError = (field: WasteField) => errors[field] ? <span id={`waste-${field}-error`} className="sl-field-error" role="alert">{errors[field]}</span> : null;
+  const invalid = (field: WasteField) => errors[field] ? { 'aria-invalid': true as const, 'aria-describedby': `waste-${field}-error` } : {};
   const metric = (value: number | string | undefined) => loadError && !summary ? 'Unavailable' : loading && !summary ? '—' : (value ?? '—');
   return <>
     <PageHeader title="Waste Recording" description="Record ingredients that are discarded or no longer usable. Help us reduce food waste." />
@@ -161,7 +180,7 @@ function InventoryStaffWastePage() {
             <footer className="sl-records-footer sl-staff-waste-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>{setRows(Number(e.target.value));setPage(1)}}>{[10,15,50,100,150].map(n=><option key={n}>{n}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={data?.total??0} itemLabel="waste records" onPageChange={setPage} /></footer>
       </section>
     </div>
-    <InventoryStaffModal open={addOpen} busy={busy} showClose={false} className="sl-staff-waste-dialog" title="Record Waste" subtitle="Enter the details of the discarded ingredient." Icon={Trash2} onDismiss={closeForm} returnFocus={addButton}><InventoryStaffModalForm onSubmit={submitWaste} message={formMessage} secondaryLabel="Cancel" onSecondary={closeForm} primaryLabel="Save Waste Record" busy={busy} className="sl-staff-waste-form"><div className="sl-staff-waste-form-row"><label><span>Ingredient</span><select value={ingredientId} onChange={e=>{setIngredientId(e.target.value);setErrors(value=>({...value,ingredientId:undefined}))}} {...invalid('ingredientId')}><option value="">Search or select ingredient...</option>{ingredients.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>{fieldError('ingredientId')}</label><label><span>Batch ID</span><select value={batchId} disabled={!ingredientId} onChange={e=>{setBatchId(e.target.value);setErrors(value=>({...value,batchId:undefined}))}} {...invalid('batchId')}><option value="">Select batch ID...</option>{batches.filter(item=>item.quantity>0).map(item=><option key={item.id} value={item.id}>{item.batchID}</option>)}</select>{fieldError('batchId')}</label></div><div className="sl-staff-waste-form-row"><label><span>Quantity Wasted</span><input inputMode="decimal" value={quantityWasted} onChange={e=>{setQuantityWasted(e.target.value);setErrors(value=>({...value,quantityWasted:undefined}))}} placeholder="Enter quantity" {...invalid('quantityWasted')}/>{fieldError('quantityWasted')}</label><label><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedBatch ? 'Unit derived from selected inventory batch' : selectedIngredient ? 'Unit derived from selected ingredient' : 'Unit will be derived from the selected inventory batch'}>{selectedBatch?.unit ?? selectedIngredient?.unitOfMeasure ?? '—'}</output></label></div><div className="sl-staff-waste-form-row"><label><span>Date Wasted</span><input type="date" value={dateWasted} onChange={e=>{setDateWasted(e.target.value);setErrors(value=>({...value,dateWasted:undefined}))}} {...invalid('dateWasted')}/>{fieldError('dateWasted')}</label><label><span>Reason</span><select value={reason} onChange={e=>{setReason(e.target.value as WasteReason | '');setErrors(value=>({...value,reason:undefined}))}} {...invalid('reason')}><option value="">Select reason...</option>{INVENTORY_STAFF_WASTE_REASONS.map(value=><option key={value}>{value}</option>)}</select>{fieldError('reason')}</label></div></InventoryStaffModalForm></InventoryStaffModal>
+    <InventoryStaffModal open={addOpen} busy={busy} showClose={false} className="sl-staff-waste-dialog" title="Record Waste" subtitle="Enter the details of the discarded ingredient." Icon={Trash2} onDismiss={closeForm} returnFocus={addButton}><InventoryStaffModalForm onSubmit={submitWaste} message={formMessage} secondaryLabel="Cancel" onSecondary={closeForm} primaryLabel="Save Waste Record" busy={busy} className="sl-staff-waste-form"><div className="sl-staff-waste-form-row"><label><span>Ingredient</span><select value={ingredientId} onBlur={()=>validateWasteFieldOnBlur('ingredientId')} onChange={e=>{setIngredientId(e.target.value);setErrors(value=>({...value,ingredientId:undefined,batchId:undefined}))}} {...invalid('ingredientId')}><option value="">Search or select ingredient...</option>{ingredients.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>{fieldError('ingredientId')}</label><label><span>Batch ID</span><select value={batchId} disabled={!ingredientId} onBlur={()=>validateWasteFieldOnBlur('batchId')} onChange={e=>{setBatchId(e.target.value);setErrors(value=>({...value,batchId:undefined}))}} {...invalid('batchId')}><option value="">Select batch ID...</option>{batches.filter(item=>item.quantity>0).map(item=><option key={item.id} value={item.id}>{item.batchID}</option>)}</select>{fieldError('batchId')}</label></div><div className="sl-staff-waste-form-row"><label><span>Quantity Wasted</span><input inputMode="decimal" value={quantityWasted} onBlur={()=>validateWasteFieldOnBlur('quantityWasted')} onChange={e=>{const value=e.target.value;setQuantityWasted(value);const error=value.trim()&&!Number.isFinite(Number(value))?'Enter a valid quantity.':touched.quantityWasted&&!value.trim()?'Enter the quantity wasted.':undefined;setErrors(current=>({...current,quantityWasted:error}))}} placeholder="Enter quantity" {...invalid('quantityWasted')}/>{fieldError('quantityWasted')}</label><label><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedBatch ? 'Unit derived from selected inventory batch' : selectedIngredient ? 'Unit derived from selected ingredient' : 'Unit will be derived from the selected inventory batch'}>{selectedBatch?.unit ?? selectedIngredient?.unitOfMeasure ?? '—'}</output></label></div><div className="sl-staff-waste-form-row"><label><span>Date Wasted</span><input type="date" value={dateWasted} onBlur={()=>validateWasteFieldOnBlur('dateWasted')} onChange={e=>{setDateWasted(e.target.value);setErrors(value=>({...value,dateWasted:undefined}))}} {...invalid('dateWasted')}/>{fieldError('dateWasted')}</label><label><span>Reason</span><select value={reason} onBlur={()=>validateWasteFieldOnBlur('reason')} onChange={e=>{setReason(e.target.value as WasteReason | '');setErrors(value=>({...value,reason:undefined}))}} {...invalid('reason')}><option value="">Select reason...</option>{INVENTORY_STAFF_WASTE_REASONS.map(value=><option key={value}>{value}</option>)}</select>{fieldError('reason')}</label></div></InventoryStaffModalForm></InventoryStaffModal>
   </>;
 }
 
