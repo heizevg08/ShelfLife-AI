@@ -23618,13 +23618,13 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
 .sl-staff-waste-form .sl-staff-derived-unit {
   border: 1px solid var(--sl-border);
   background: var(--sl-surface-subtle)!important;
-  min-height: 48px;
+  min-height: 2.55rem;
   color: var(--sl-muted);
-  border-radius: var(--sl-radius);
+  border-radius: .5rem;
   align-items: center;
   width: 100%;
-  font: var(--sl-font-supporting);
-  padding: 0 .75rem;
+  font: inherit;
+  padding: .55rem .7rem;
   display: flex;
 }
 .sl-staff-waste-quantity,.sl-staff-waste-datetime {
