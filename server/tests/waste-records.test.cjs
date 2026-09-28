@@ -17,6 +17,9 @@ test('Waste input accepts only client-owned fields and canonical reasons', () =>
   for (const body of [
     { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 0, reason: 'Spoiled' },
     { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: -1, reason: 'Spoiled' },
+    { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 'dddd', reason: 'Spoiled' },
+    { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: Number.NaN, reason: 'Spoiled' },
+    { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: Infinity, reason: 'Spoiled' },
     { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-02-31', quantityWasted: 1, reason: 'Spoiled' },
     { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 1, reason: 'Unknown' },
     { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 1, reason: 'Spoiled', unit: 'L' },
@@ -50,6 +53,8 @@ test('Waste API restricts mutation to Inventory Staff and preserves list, summar
     const created = await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 2, reason: 'Spoiled' });
     assert.equal(created.status, 201); assert.equal((await created.json()).record.unit, 'L');
     assert.equal((await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 1, reason: 'Spoiled', recordedBy: admin.id })).status, 400);
-    assert.equal((await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-11', quantityWasted: 1, reason: 'Spoiled' })).status, 400);
+    const futureWaste = await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-11', quantityWasted: 1, reason: 'Spoiled' });
+    assert.equal(futureWaste.status, 400);
+    assert.deepEqual((await futureWaste.json()).error.details, [{ field: 'dateWasted', message: 'Date wasted cannot be in the future' }]);
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });

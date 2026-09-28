@@ -9,6 +9,18 @@ function dateOnlyValue(value: DateValue) {
   return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : new Date(value);
 }
 
+export function localDateInputValue(value: Date = new Date()) {
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+}
+
+export function isValidDateOnlyInput(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const [year, month, day] = match.slice(1).map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+}
+
 export function formatDate(value: DateValue) {
   return dateFormatter.format(dateOnlyValue(value));
 }
