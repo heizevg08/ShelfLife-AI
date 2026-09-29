@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import mongoSanitize from "express-mongo-sanitize";
 import bcrypt from "bcryptjs";
 import connectDB from "./config/Database";
 import User, { UserRole } from "./models/User";
@@ -20,7 +21,8 @@ const app = express();
 connectDB().then(() => seedDefaults());
 
 interface DefaultAccount {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   role: UserRole;
@@ -28,10 +30,10 @@ interface DefaultAccount {
 
 // Creates a default account for each role on first run, if it doesn't exist yet.
 const defaultAccounts: DefaultAccount[] = [
-  { name: "Super Admin", email: "superadmin@shelflife.com", password: "superadmin1234", role: "Super Admin" },
-  { name: "Admin", email: "admin@shelflife.com", password: "admin1234", role: "Admin" },
-  { name: "Inventory Manager", email: "manager@shelflife.com", password: "manager1234", role: "Inventory Manager" },
-  { name: "Inventory Staff", email: "staff@shelflife.com", password: "inventorystaff1234", role: "Inventory Staff" },
+  { firstName: "Super", lastName: "Admin", email: "superadmin@shelflife.com", password: "superadmin1234", role: "Super Admin" },
+  { firstName: "Admin", lastName: "User", email: "admin@shelflife.com", password: "admin1234", role: "Admin" },
+  { firstName: "Inventory", lastName: "Manager", email: "manager@shelflife.com", password: "manager1234", role: "Inventory Manager" },
+  { firstName: "Inventory", lastName: "Staff", email: "staff@shelflife.com", password: "inventorystaff1234", role: "Inventory Staff" },
 ];
 
 async function seedDefaults(): Promise<void> {
@@ -42,7 +44,8 @@ async function seedDefaults(): Promise<void> {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(account.password, salt);
         await User.create({
-          name: account.name,
+          firstName: account.firstName,
+          lastName: account.lastName,
           email: account.email,
           role: account.role,
           passwordHash,
@@ -61,6 +64,17 @@ async function seedDefaults(): Promise<void> {
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+
+// Strips any keys starting with "$" or containing "." from req.body, req.query,
+// and req.params — blocks NoSQL injection attempts like { "$gt": "" } before
+// they ever reach a Mongoose query.
+app.use(
+  mongoSanitize({
+    onSanitize: ({ key }) => {
+      console.warn(`⚠️  Sanitized a potentially malicious key: ${key}`);
+    },
+  })
+);
 
 // --- Health check ---
 app.get("/api/health", (_req, res) => {

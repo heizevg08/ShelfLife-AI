@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
-import Ingredient from "../models/Ingredient";
+import Ingredient, { UnitOfMeasure } from "../models/Ingredient";
+
+const VALID_UNITS: UnitOfMeasure[] = ["pcs", "kg", "g", "L", "ml", "boxes", "packs"];
 
 interface CreateIngredientBody {
   name: string;
   brand: string;
   description: string;
   category: string;
-  unitOfMeasure: string;
+  unitOfMeasure: UnitOfMeasure;
   minimumStock: number;
   standardUnitCost: number;
   defaultShelfLifeDays: number;
@@ -43,6 +45,12 @@ export const createIngredient = async (
 
     if (minimumStock < 0 || standardUnitCost < 0 || defaultShelfLifeDays <= 0) {
       return res.status(400).json({ message: "Numeric fields must be valid (non-negative, shelf life > 0)" });
+    }
+
+    if (!VALID_UNITS.includes(unitOfMeasure)) {
+      return res.status(400).json({
+        message: `Invalid unitOfMeasure. Must be one of: ${VALID_UNITS.join(", ")}`,
+      });
     }
 
     const ingredient = await Ingredient.create({

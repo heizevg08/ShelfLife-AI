@@ -10,7 +10,8 @@ const generateToken = (userId: string): string => {
 };
 
 interface RegisterBody {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   role: UserRole;
@@ -18,9 +19,9 @@ interface RegisterBody {
 
 export const register = async (req: Request<{}, {}, RegisterBody>, res: Response): Promise<Response> => {
   try {
-    const { name, email, password, role } = req.body;
+    const { firstName, lastName, email, password, role } = req.body;
 
-    if (!name || !email || !password || !role) {
+    if (!firstName || !lastName || !email || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -32,11 +33,11 @@ export const register = async (req: Request<{}, {}, RegisterBody>, res: Response
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const user = await User.create({ name, email, role, passwordHash });
+    const user = await User.create({ firstName, lastName, email, role, passwordHash });
 
     return res.status(201).json({
       message: "User registered successfully",
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -72,7 +73,7 @@ export const login = async (req: Request<{}, {}, LoginBody>, res: Response): Pro
     return res.status(200).json({
       message: "Login successful",
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

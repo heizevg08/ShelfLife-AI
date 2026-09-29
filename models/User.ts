@@ -3,7 +3,8 @@ import mongoose, { Document, Schema } from "mongoose";
 export type UserRole = "Super Admin" | "Admin" | "Inventory Manager" | "Inventory Staff";
 
 export interface IUser extends Document {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: UserRole;
   passwordHash: string;
@@ -14,7 +15,8 @@ export interface IUser extends Document {
 
 const userSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
     email: {
       type: String,
       required: true,

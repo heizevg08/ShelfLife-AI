@@ -32,7 +32,8 @@ export const getUserById = async (req: Request, res: Response): Promise<Response
 };
 
 interface CreateUserBody {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   role: UserRole;
@@ -40,9 +41,9 @@ interface CreateUserBody {
 
 export const createUser = async (req: Request<{}, {}, CreateUserBody>, res: Response): Promise<Response> => {
   try {
-    const { name, email, password, role } = req.body;
+    const { firstName, lastName, email, password, role } = req.body;
 
-    if (!name || !email || !password || !role) {
+    if (!firstName || !lastName || !email || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -58,11 +59,18 @@ export const createUser = async (req: Request<{}, {}, CreateUserBody>, res: Resp
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const user = await User.create({ name, email, role, passwordHash });
+    const user = await User.create({ firstName, lastName, email, role, passwordHash });
 
     return res.status(201).json({
       message: "User created successfully",
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, isActive: user.isActive },
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -71,7 +79,8 @@ export const createUser = async (req: Request<{}, {}, CreateUserBody>, res: Resp
 };
 
 interface UpdateUserBody {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   role?: UserRole;
 }
@@ -79,7 +88,7 @@ interface UpdateUserBody {
 export const updateUser = async (req: Request<{ id: string }, {}, UpdateUserBody>, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
-    const { name, email, role } = req.body;
+    const { firstName, lastName, email, role } = req.body;
 
     if (req.user && req.user.id === id && role && role !== req.user.role) {
       return res.status(403).json({ message: "You cannot change your own role" });
@@ -90,7 +99,8 @@ export const updateUser = async (req: Request<{ id: string }, {}, UpdateUserBody
     }
 
     const updates: UpdateUserBody = {};
-    if (name) updates.name = name;
+    if (firstName) updates.firstName = firstName;
+    if (lastName) updates.lastName = lastName;
     if (email) updates.email = email;
     if (role) updates.role = role;
 
@@ -128,7 +138,14 @@ export const toggleUserActiveStatus = async (req: Request, res: Response): Promi
 
     return res.status(200).json({
       message: `User ${user.isActive ? "activated" : "deactivated"} successfully`,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, isActive: user.isActive },
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
