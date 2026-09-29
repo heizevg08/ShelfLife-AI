@@ -37,8 +37,8 @@ export function ingredientInput(body: unknown): IngredientInput {
   const unit = cleanText('unitOfMeasure', input.unitOfMeasure, true, 50);
   if (!INGREDIENT_UNITS.includes(unit as typeof INGREDIENT_UNITS[number])) invalid('unitOfMeasure', 'Select a valid unit');
   const result: IngredientInput = {
-    name: cleanText('name', input.name, true, 100),
-    brand: cleanText('brand', input.brand, false, 100),
+    name: cleanText('name', input.name, true, 30),
+    brand: cleanText('brand', input.brand, false, 30),
     description: cleanText('description', input.description, false, 500),
     category: input.category as typeof INGREDIENT_CATEGORIES[number],
     unitOfMeasure: unit as typeof INGREDIENT_UNITS[number],
@@ -47,11 +47,15 @@ export function ingredientInput(body: unknown): IngredientInput {
     if (input.category !== 'Other') invalid('customCategory', 'A custom category is only valid when Other is selected');
     result.customCategory = cleanText('customCategory', input.customCategory, false, 50);
   }
-  if (input.minimumStock !== undefined && input.minimumStock !== '') result.minimumStock = number('minimumStock', input.minimumStock, 0);
+  if (input.minimumStock !== undefined && input.minimumStock !== '') {
+    result.minimumStock = number('minimumStock', input.minimumStock, 0);
+    if (result.minimumStock > 9_999) invalid('minimumStock', 'Use a value from 0 to 9,999');
+  }
   if (input.standardUnitCost !== undefined && input.standardUnitCost !== '') result.standardUnitCost = number('standardUnitCost', input.standardUnitCost, 0);
   if (input.defaultShelfLifeDays !== undefined && input.defaultShelfLifeDays !== '') {
     const days = number('defaultShelfLifeDays', input.defaultShelfLifeDays, 1);
     if (!Number.isInteger(days)) invalid('defaultShelfLifeDays', 'Enter a whole number of at least 1');
+    if (days > 36_500) invalid('defaultShelfLifeDays', 'Use a shelf life of 1 to 36,500 days (100 years)');
     result.defaultShelfLifeDays = days;
   }
   return result;

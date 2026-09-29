@@ -32,6 +32,7 @@ function AccountApprovalPanel() {
   const [busy, setBusy] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [selected, setSelected] = useState<AccountRequest | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<AccountRequest | null>(null);
   const [password, setPassword] = useState('');
 
   useEffect(() => {
@@ -62,7 +63,7 @@ function AccountApprovalPanel() {
     void decide(selected, 'Approved', password);
   };
   const reject = (request: AccountRequest) => {
-    if (window.confirm(`Reject the account request for ${request.firstName} ${request.lastName}?`)) void decide(request, 'Rejected');
+    setRejectTarget(request);
   };
 
   return <>
@@ -75,6 +76,9 @@ function AccountApprovalPanel() {
     </Card>
     <Dialog open={!!selected} title="Approve account request" onDismiss={() => { if (!busy) setSelected(null); }} busy={busy} actions={<><button type="button" className="sl-button" disabled={busy} onClick={() => setSelected(null)}>Cancel</button><button type="submit" className="sl-button sl-button-primary" form="user-management-account-approval" disabled={busy}>{busy ? 'Creating account…' : 'Approve and create account'}</button></>}>
       {selected && <form id="user-management-account-approval" className="sl-v56-approval-form" onSubmit={approve}><p>Create {selected.firstName} {selected.lastName} as <strong>{selected.role}</strong>. Set an initial password to share securely with the requester.</p>{actionError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{actionError}</p>}<label>Initial password<input className="sl-admin-input" type="password" autoComplete="new-password" minLength={12} maxLength={1024} value={password} disabled={busy} onChange={event => { setPassword(event.target.value); setActionError(''); }} /></label></form>}
+    </Dialog>
+    <Dialog open={!!rejectTarget} title="Reject account request?" onDismiss={() => { if (!busy) setRejectTarget(null); }} busy={busy} actions={<><button type="button" className="sl-button" disabled={busy} onClick={() => setRejectTarget(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" disabled={busy} onClick={() => { if (rejectTarget) { void decide(rejectTarget, 'Rejected'); setRejectTarget(null); } }}>Reject request</button></>}>
+      {rejectTarget && <p>Reject the request for <strong>{rejectTarget.firstName} {rejectTarget.lastName}</strong> ({rejectTarget.email})?</p>}
     </Dialog>
   </>;
 }
@@ -172,7 +176,8 @@ export function AccountsTable() {
     if (key === 'firstName' || key === 'lastName') {
       const trimmed = value.trim();
       if (!trimmed) return REQUIRED_ERROR;
-      return trimmed.length > NAME_LIMIT ? `Enter 1–${NAME_LIMIT} characters.` : '';
+      if (trimmed.length > NAME_LIMIT) return `Enter 1–${NAME_LIMIT} characters.`;
+      return /[\p{L}]/u.test(trimmed) ? '' : 'Use at least one letter in the name.';
     }
     if (!value.trim()) return REQUIRED_ERROR;
     if (key === 'email') return !validShelfLifeEmail(value) ? 'Enter a valid shelflife.com email.' : '';
@@ -299,7 +304,7 @@ export function AccountsTable() {
           {!superAdmin && <button className="sl-button sl-button-primary sl-admin-users-apply" type="button" onClick={() => setPage(1)}>Apply Filters</button>}
         </div>
 
-        {superAdmin && <AccountApprovalPanel />}
+        {(superAdmin || user.role === 'Admin') && <AccountApprovalPanel />}
 
         <div className="sl-admin-users-table-toolbar">
           <strong>{data ? `Showing ${data.total ? ((data.page - 1) * data.pageSize) + 1 : 0}–${Math.min(data.page * data.pageSize, data.total)} of ${data.total} users` : 'Loading users…'}</strong>

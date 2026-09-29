@@ -17,7 +17,7 @@ export function finishInventoryRouter(router: ReturnType<typeof Router>) {
     let status = 500, code = 'INTERNAL_ERROR', message = 'Unable to complete the request', details: { field: string; message: string }[] = [];
     if (error instanceof AdministrationError) { status = error.status; code = error.code; message = error.message; details = error.details; }
     else if (error instanceof HttpError) { status = error.status; code = status === 401 ? 'UNAUTHENTICATED' : 'REQUEST_FAILED'; message = error.message; }
-    else if (error?.code === 11000) { status = 409; code = 'CONFLICT'; message = 'This identity is already in use, including archived records'; }
+    else if (error?.code === 11000) { status = 409; code = 'CONFLICT'; message = 'An ingredient with this name already exists, including archived ingredients'; }
     else if (error?.type === 'entity.parse.failed' || error?.type === 'entity.too.large') { status = error.type === 'entity.too.large' ? 413 : 400; code = 'VALIDATION_ERROR'; message = 'Invalid request body'; }
     res.status(status).json({ error: { code, message, details } });
   };

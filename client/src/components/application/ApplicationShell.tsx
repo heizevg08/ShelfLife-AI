@@ -495,7 +495,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
                 {systemHealth === 'checking' ? 'Checking' : systemHealth === 'healthy' ? 'Healthy' : systemHealth === 'attention' ? 'Needs attention' : 'Unavailable'}
               </span>
             </div>
-            <Notifications open={notificationsOpen} onChange={changeNotifications} />
+            <Notifications user={user} open={notificationsOpen} onChange={changeNotifications} />
 
             <div
               className="sl-account"

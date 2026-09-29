@@ -15,6 +15,7 @@ type RequestRow = IngredientInput & {
   ingredientId?: Types.ObjectId; isDeleted?: boolean; deletedBy?: Types.ObjectId; createdAt: Date; updatedAt: Date;
 };
 const missing = () => new AdministrationError(404, 'NOT_FOUND', 'Ingredient request not found');
+const editWindowMs = 15 * 60 * 1000;
 const requestValue = (row: RequestRow) => ({ id: row._id.toString(), name: row.name, brand: row.brand, description: row.description, category: row.category,
   ...(row.customCategory ? { customCategory: row.customCategory } : {}),
   unitOfMeasure: row.unitOfMeasure, ...(row.minimumStock !== undefined ? { minimumStock: row.minimumStock } : {}),
@@ -57,8 +58,9 @@ export function createIngredientRequestStore(driver: Mongoose, requests: ReturnT
       const row = await driver.connection.transaction(async session => {
         const before = await requests.findById(id).session(session).lean().exec() as RequestRow | null;
         if (!before || before.createdBy.toString() !== actorId || before.status !== 'Pending' || before.isDeleted) throw missing();
+        if (Date.now() - before.createdAt.getTime() > editWindowMs) throw new AdministrationError(403, 'EDIT_WINDOW_EXPIRED', 'Ingredient requests can only be edited within 15 minutes of submission');
         if (before.version !== expectedVersion) throw versionConflict();
-        const after = await requests.findOneAndUpdate({ _id: id, createdBy: actorId, status: 'Pending', isDeleted: { $ne: true }, version: expectedVersion }, {
+        const after = await requests.findOneAndUpdate({ _id: id, createdBy: actorId, status: 'Pending', isDeleted: { $ne: true }, createdAt: { $gte: new Date(Date.now() - editWindowMs) }, version: expectedVersion }, {
           $set: input, $inc: { version: 1 },
         }, { session, returnDocument: 'after', runValidators: true }).lean().exec() as RequestRow | null;
         if (!after) throw versionConflict();
