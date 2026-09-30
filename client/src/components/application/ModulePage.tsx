@@ -432,14 +432,12 @@ function InventoryStaffUsagePage() {
 const inventoryBatchStatusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired' ? 'critical' as const : status === 'Near Expiry' || status === 'Low Stock' ? 'attention' as const : 'success' as const;
 
 export function InventoryBatchDetailsDialog({ batch, onDismiss, returnFocus }: { batch: InventoryBatch | null; onDismiss: () => void; returnFocus?: RefObject<HTMLElement | null> }) {
-  return <Dialog open={Boolean(batch)} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Boxes size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Inventory Batch Details</span><small>View inventory batch information.</small></span></span>} onDismiss={onDismiss} returnFocus={returnFocus} actions={<button type="button" className="sl-button" onClick={onDismiss}>Close</button>} className="sl-account-reference-dialog sl-inventory-batch-details-dialog">
-    {batch && <dl className="sl-inventory-batch-details-grid">
-      <div><dt>Batch ID</dt><dd>{batch.batchID}</dd></div><div><dt>Ingredient</dt><dd>{batch.ingredient.name}</dd></div>
+  return <Dialog open={Boolean(batch)} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Boxes size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Inventory Batch Details</span><small>View inventory batch information.</small></span></span>} onDismiss={onDismiss} returnFocus={returnFocus} actions={<button type="button" className="sl-button" onClick={onDismiss}>Close</button>} className="sl-add-user-dialog sl-account-reference-dialog sl-admin-ingredient-dialog sl-ingredient-view-dialog sl-inventory-batch-details-dialog">
+    {batch && <div className="sl-ingredient-details"><section className="sl-ingredient-details-identity"><div><h3>{batch.batchID}</h3><span className="sl-application-role-pill sl-account-details-role">{batch.ingredient.name}</span></div></section><section className="sl-ingredient-details-information"><h3>Batch Information</h3><dl className="sl-ingredient-details-grid">
       <div><dt>Date Received</dt><dd>{formatDate(batch.dateReceived)}</dd></div><div><dt>Expiration Date</dt><dd>{formatDate(batch.expirationDate)}</dd></div>
-      <div><dt>Current Stock</dt><dd>{batch.quantity.toLocaleString()}</dd></div><div><dt>Unit</dt><dd>{batch.unit}</dd></div>
-      <div><dt>Days Left</dt><dd>{batch.daysLeft}</dd></div><div><dt>Status</dt><dd><Status tone={inventoryBatchStatusTone(batch.displayStatus)}>{batch.displayStatus}</Status></dd></div>
-      <div className="sl-inventory-batch-details-wide"><dt>Recorded By</dt><dd>{batch.createdBy.name}</dd></div>
-    </dl>}
+      <div><dt>Current Stock</dt><dd>{batch.quantity.toLocaleString()} {batch.unit}</dd></div><div><dt>Days Left</dt><dd>{batch.daysLeft}</dd></div>
+      <div><dt>Status</dt><dd><Status tone={inventoryBatchStatusTone(batch.displayStatus)}>{batch.displayStatus}</Status></dd></div><div><dt>Recorded By</dt><dd>{batch.createdBy.name}</dd></div>
+    </dl></section></div>}
   </Dialog>;
 }
 
@@ -466,8 +464,6 @@ function InventoryStaffStockInPage() {
   const [quantity, setQuantity] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
   const [unitCost, setUnitCost] = useState('');
-  const [viewBatch, setViewBatch] = useState<InventoryBatch|null>(null);
-  const viewBatchTrigger = useRef<HTMLTableRowElement>(null);
   const addStockInButton = useRef<HTMLButtonElement>(null);
   const stockForm = useRef<HTMLFormElement>(null);
   const selectedIngredient = stockIngredients.find(item => item.id === ingredientId);
@@ -510,8 +506,8 @@ function InventoryStaffStockInPage() {
           {stockDateRange==='Custom range'&&<div className="sl-v219-custom-date-range" aria-label="Custom stock-in date range"><label><span>From</span><input type="date" value={stockDateFrom} max={stockDateTo||undefined} onChange={event=>{setStockDateFrom(event.target.value);setStockPage(1)}}/></label><label><span>To</span><input type="date" value={stockDateTo} min={stockDateFrom||undefined} onChange={event=>{setStockDateTo(event.target.value);setStockPage(1)}}/></label></div>}
           <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={reset}>Reset</button><InventoryStaffAddButton buttonRef={addStockInButton} label="Add Stock-In" onClick={()=>setAddModalOpen(true)} /></div>
         </div></div>
-        <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell"><table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-stockin-table"><thead><tr>{['Recorded At','Date Received','Ingredient','Batch ID','Quantity','Unit','Expiration Date','Recorded By'].map(column=><th key={column}>{column}</th>)}</tr></thead><tbody>
-          {stockLoading&&!stockData?<tr><td colSpan={8} className="sl-empty-cell"><DataState kind="loading" title="Loading Stock-In records" description="Retrieving received inventory batches."/></td></tr>:stockError?<tr><td colSpan={8} className="sl-empty-cell"><DataState kind="error" title="Stock-In records unavailable" description="The inventory service could not be reached."/></td></tr>:!stockData?.items.length?<tr><td colSpan={8} className="sl-empty-cell"><DataState kind="empty" title={stockSummary?.totalBatches?'No matching records':'No live records yet'} description={stockSummary?.totalBatches?'No Stock-In records match the current search and filters.':'Stock-In records will appear here after inventory is received.'}/></td></tr>:stockData.items.map(batch=><tr key={batch.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event=>{viewBatchTrigger.current=event.currentTarget;setViewBatch(batch)}} onKeyDown={event=>{if(event.target!==event.currentTarget)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();viewBatchTrigger.current=event.currentTarget;setViewBatch(batch)}}}><td>{formatDateTime(batch.createdAt)}</td><td>{formatDate(batch.dateReceived)}</td><td className="sl-emphasized-value">{batch.ingredient.name}</td><td><button type="button" className="sl-record-identifier-link" onClick={event=>{event.stopPropagation();viewBatchTrigger.current=event.currentTarget.closest('tr');setViewBatch(batch)}}>{batch.batchID}</button></td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.createdBy.name}</td></tr>)}
+        <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell"><table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-stockin-table"><thead><tr>{['Recorded At','Date Received','Ingredient','Batch ID','Quantity','Expiration Date','Recorded By'].map(column=><th key={column}>{column}</th>)}</tr></thead><tbody>
+          {stockLoading&&!stockData?<tr><td colSpan={7} className="sl-empty-cell"><DataState kind="loading" title="Loading Stock-In records" description="Retrieving received inventory batches."/></td></tr>:stockError?<tr><td colSpan={7} className="sl-empty-cell"><DataState kind="error" title="Stock-In records unavailable" description="The inventory service could not be reached."/></td></tr>:!stockData?.items.length?<tr><td colSpan={7} className="sl-empty-cell"><DataState kind="empty" title={stockSummary?.totalBatches?'No matching records':'No live records yet'} description={stockSummary?.totalBatches?'No Stock-In records match the current search and filters.':'Stock-In records will appear here after inventory is received.'}/></td></tr>:stockData.items.map(batch=><tr key={batch.id}><td>{formatDateTime(batch.createdAt)}</td><td>{formatDate(batch.dateReceived)}</td><td className="sl-emphasized-value">{batch.ingredient.name}</td><td className="sl-canonical-identifier">{batch.batchID}</td><td>{batch.quantity.toLocaleString()} {batch.unit}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.createdBy.name}</td></tr>)}
         </tbody></table></div>
         <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={stockRows} onChange={event=>{setStockRows(Number(event.target.value));setStockPage(1)}}>{[10,15,50,100,150].map(value=><option key={value}>{value}</option>)}</select></label><Pagination compact page={stockPage} pageSize={stockRows} total={stockData?.total??0} itemLabel="stock-in records" onPageChange={setStockPage}/></footer>
       </section></main></div>
@@ -535,7 +531,6 @@ function InventoryStaffStockInPage() {
         {stockFormMessage&&<p className="sl-inline-notice sl-stockin-entry-message" role="status">{stockFormMessage}</p>}
       </form>
     </Dialog>
-    <InventoryBatchDetailsDialog batch={viewBatch} onDismiss={()=>setViewBatch(null)} returnFocus={viewBatchTrigger} />
   </>;
 }
 
@@ -554,7 +549,7 @@ function InventoryStaffInventoryBatchesPage() {
   const [batchError, setBatchError] = useState(false);
   const [batchSummaryError, setBatchSummaryError] = useState(false);
   const [viewBatch, setViewBatch] = useState<InventoryBatch | null>(null);
-  const viewBatchTrigger = useRef<HTMLTableRowElement>(null);
+  const viewBatchTrigger = useRef<HTMLButtonElement>(null);
   const reset = () => {
     setSearch('');
     setCategory('');
@@ -616,8 +611,8 @@ function InventoryStaffInventoryBatchesPage() {
 
             <div className="sl-application-records-table-shell sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Inventory Batches preview" tabIndex={0}>
               <table className="sl-application-records-table sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-inventory-records-table">
-                <thead><tr>{['Ingredient','Batch ID','Category','Date Received','Expiration Date','Days Left','Current Stock','Unit','Status'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead>
-                <tbody>{batchLoading && !batchData ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="loading" title="Loading inventory batches" description="Retrieving current inventory records." /></td></tr> : batchError ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="error" title="Inventory batches unavailable" description="The inventory service could not be reached." /></td></tr> : !batchData?.items.length ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="empty" title={search || category || batchStatus ? 'No matching records' : 'No inventory batches yet'} description={search || category || batchStatus ? 'Try adjusting the current filters.' : 'Inventory batches will appear after stock is received.'} /></td></tr> : batchData.items.map(batch => <tr key={batch.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event=>{viewBatchTrigger.current=event.currentTarget;setViewBatch(batch)}} onKeyDown={event=>{if(event.target!==event.currentTarget)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();viewBatchTrigger.current=event.currentTarget;setViewBatch(batch)}}}><td><span className="sl-emphasized-value">{batch.ingredient.name}</span></td><td><button type="button" className="sl-record-identifier-link" onClick={event=>{event.stopPropagation();viewBatchTrigger.current=event.currentTarget.closest('tr');setViewBatch(batch)}}>{batch.batchID}</button></td><td>{batch.ingredient.category}</td><td>{formatDate(batch.dateReceived)}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td><Status tone={inventoryBatchStatusTone(batch.displayStatus)}>{batch.displayStatus}</Status></td></tr>)}</tbody>
+                <thead><tr>{['Ingredient','Batch ID','Category','Date Received','Expiration Date','Days Left','Current Stock','Status'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead>
+                <tbody>{batchLoading && !batchData ? <tr><td colSpan={8} className="sl-empty-cell"><DataState kind="loading" title="Loading inventory batches" description="Retrieving current inventory records." /></td></tr> : batchError ? <tr><td colSpan={8} className="sl-empty-cell"><DataState kind="error" title="Inventory batches unavailable" description="The inventory service could not be reached." /></td></tr> : !batchData?.items.length ? <tr><td colSpan={8} className="sl-empty-cell"><DataState kind="empty" title={search || category || batchStatus ? 'No matching records' : 'No inventory batches yet'} description={search || category || batchStatus ? 'Try adjusting the current filters.' : 'Inventory batches will appear after stock is received.'} /></td></tr> : batchData.items.map(batch => <tr key={batch.id}><td><span className="sl-emphasized-value">{batch.ingredient.name}</span></td><td><button type="button" className="sl-record-identifier-link" onClick={event=>{viewBatchTrigger.current=event.currentTarget;setViewBatch(batch)}}>{batch.batchID}</button></td><td>{batch.ingredient.category}</td><td>{formatDate(batch.dateReceived)}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td><td>{batch.quantity.toLocaleString()} {batch.unit}</td><td><Status tone={inventoryBatchStatusTone(batch.displayStatus)}>{batch.displayStatus}</Status></td></tr>)}</tbody>
               </table>
             </div>
 
