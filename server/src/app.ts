@@ -6,6 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { secureJson } from './middleware/request-security.middleware';
+import { requestDiagnostics, requestErrorDiagnostics } from './middleware/request-diagnostics.middleware';
 import { corsOptions } from './config/cors';
 import { healthRoutes } from './routes/health.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
@@ -24,6 +25,7 @@ import type { AccountRequestService } from './services/account-requests';
 export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, systemConfig?: SystemConfigService, batches?: InventoryBatchService, changeRequests?: ChangeRequestService, ingredientRequests?: IngredientRequestService, accountRequests?: AccountRequestService) {
   const app = express();
   app.disable('x-powered-by');
+  app.use(requestDiagnostics);
   app.use(helmet({
     strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true },
     xFrameOptions: { action: 'deny' },
@@ -54,6 +56,7 @@ export function createApp(origins: readonly string[], isReady: () => boolean, au
   if (auth && changeRequests) app.use('/api/change-requests', changeRequestRoutes(auth, changeRequests));
   if (auth && ingredientRequests) app.use('/api/ingredient-requests', ingredientRequestRoutes(auth, ingredientRequests));
   app.use(notFound);
+  app.use(requestErrorDiagnostics);
   app.use(errorHandler);
   return app;
 }

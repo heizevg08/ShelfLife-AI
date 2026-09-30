@@ -6,6 +6,7 @@ import { authenticate } from '../middleware/auth.middleware';
 import { AdministrationError, authorizeAdministration } from '../middleware/administration.middleware';
 import { HttpError } from '../middleware/error.middleware';
 import { administrationControllers } from '../controllers/administration.controller';
+import { requestErrorDiagnostics } from '../middleware/request-diagnostics.middleware';
 import type { AccountRequestService } from '../services/account-requests';
 import { accountRequestId, accountRequestInput, accountRequestReview } from '../validators/account-request';
 
@@ -42,6 +43,6 @@ export function administrationRoutes(auth: AuthService, service: AdministrationS
     if (value?.type === 'entity.parse.failed' || value?.type === 'entity.too.large') { res.status(value.type === 'entity.too.large' ? 413 : 400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: [] } }); return; }
     res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Unable to complete the request', details: [] } });
   };
-  router.use(error);
+  router.use(requestErrorDiagnostics, error);
   return router;
 }

@@ -1,0 +1,14 @@
+# Historical IAS1 VAPT console evidence from 24 September 2026.
+# It was recorded against baseline 4075124; see ias1-security-verification.md for current 34de09c facts.
+{"event":"vapt_server_ready","database":"shelflifeai_vapt_20260924","baseUrl":"http://127.0.0.1:5051","persistence":"real Atlas","testServices":"actual compiled app/routes/services/models; no mocked persistence"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:36.543Z","requestId":"6ed277b2-60f4-4ff4-b870-c8c62e6c9b5a","method":"POST","scope":"auth","status":400,"errorType":"HttpError"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:36.597Z","requestId":"b22de4fb-b4bf-47c9-b383-53389d80aaf3","method":"DELETE","scope":"ingredients","status":403,"errorType":"AdministrationError"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:36.968Z","requestId":"4ec22320-4a5b-46ed-ba7c-8e5fcb040b34","method":"POST","scope":"auth","status":401,"errorType":"HttpError"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:37.389Z","requestId":"bdd30245-ba3c-4311-9e91-753e564d37cf","method":"POST","scope":"auth","status":401,"errorType":"HttpError"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:37.726Z","requestId":"585491af-d0d9-49ca-a572-870aa323bf1d","method":"POST","scope":"auth","status":401,"errorType":"HttpError"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:38.094Z","requestId":"516ee62d-ca5f-4d23-a772-c54912ff9f21","method":"POST","scope":"auth","status":401,"errorType":"HttpError"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:38.428Z","requestId":"690f101d-3f17-4f25-a42f-1ef2af3fb4b5","method":"POST","scope":"auth","status":401,"errorType":"HttpError"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:38.525Z","requestId":"b627e9ab-76b2-40c5-b50d-5050aff6af71","method":"POST","scope":"auth","status":429,"errorType":"HttpError"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:38.527Z","requestId":"c65ec72e-7594-4f98-b61d-3ffce253374d","method":"GET","scope":"ingredients","status":401,"errorType":"HttpError"}
+{"event":"request_rejected","timestamp":"2026-09-24T13:56:38.579Z","requestId":"8f59481d-b541-4441-8ed5-0a96b2944ee6","method":"POST","scope":"ingredients","status":400,"errorType":"AdministrationError"}
+{"event":"vapt_complete","cases":5,"httpEvidenceRows":10,"database":"shelflifeai_vapt_20260924","accountsDeactivated":true}
