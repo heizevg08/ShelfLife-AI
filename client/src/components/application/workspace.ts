@@ -40,8 +40,8 @@ export const canonicalWorkspaceAccess = {
   '/Inventory': ['Inventory Manager'],
   '/StockIn': ['Inventory Staff'],
   '/UsageWaste': ['Inventory Manager'],
-  '/Usage': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
-  '/Waste': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
+  '/Usage': ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'],
+  '/Waste': ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'],
   '/ExpirationMonitoring': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
   '/ChangeRequests': ['Super Admin', 'Inventory Manager', 'Inventory Staff'],
   '/Forecasting': ['Super Admin', 'Inventory Manager'],
@@ -52,9 +52,9 @@ export const canonicalWorkspaceAccess = {
 } as const satisfies Record<string, readonly WorkspaceRole[]>;
 export type CanonicalWorkspacePath = keyof typeof canonicalWorkspaceAccess;
 const navigation: Record<WorkspaceRole, ModuleId[]> = {
-  'Super Admin': ['UserManagement', 'AccountRequests', 'Alerts', 'ChangeRequests', 'AdministrativeAudit', 'Reports'],
-  Admin: ['UserManagement', 'AccountRequests', 'Ingredients', 'InventoryBatches', 'AdministrativeAudit', 'Reports'],
-  'Inventory Manager': ['Ingredients', 'InventoryBatches', 'UsageWaste', 'ChangeRequests', 'AccountRequests', 'Forecasting', 'Alerts', 'Reports'],
+  'Super Admin': ['UserManagement', 'AccountRequests', 'Usage', 'Waste', 'Alerts', 'ChangeRequests', 'AdministrativeAudit', 'Reports'],
+  Admin: ['UserManagement', 'AccountRequests', 'Ingredients', 'InventoryBatches', 'Usage', 'Waste', 'AdministrativeAudit', 'Reports'],
+  'Inventory Manager': ['Ingredients', 'InventoryBatches', 'Usage', 'Waste', 'ChangeRequests', 'AccountRequests', 'Forecasting', 'Alerts', 'Reports'],
   'Inventory Staff': ['Ingredients', 'InventoryBatches', 'StockIn', 'Usage', 'Waste', 'ChangeRequests', 'AccountRequests'],
 };
 export function workspaceNavigation(role: WorkspaceRole) {

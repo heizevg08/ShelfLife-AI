@@ -5,7 +5,7 @@ import type { ErrorRequestHandler, RequestHandler } from 'express';
 // those can contain credentials. Correlate client evidence using a generated ID.
 export const requestDiagnostics: RequestHandler = (req, res, next) => {
   const requestId = randomUUID();
-  const scope = /^\/api\/(auth|health|users|dashboard|audit-records|account-requests|ingredients|inventory-batches|system-config|change-requests|ingredient-requests)(?:\/|$)/.exec(req.path)?.[1] ?? 'other';
+  const scope = /^\/api\/(auth|health|users|dashboard|audit-records|account-requests|ingredients|inventory-batches|usage-records|waste-records|system-config|change-requests|ingredient-requests)(?:\/|$)/.exec(req.path)?.[1] ?? 'other';
   res.setHeader('X-Request-ID', requestId);
   res.once('finish', () => {
     if (res.statusCode < 400) return;

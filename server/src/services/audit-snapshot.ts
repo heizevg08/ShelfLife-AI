@@ -2,6 +2,8 @@
 const fields: Record<string, readonly string[]> = {
   SystemConfig: ['approachingDays', 'criticalDays', 'lowStockMultiplier', 'version'],
   InventoryBatch: ['id', 'ingredientId', 'batchCode', 'initialQuantity', 'quantity', 'unit', 'unitCost', 'currency', 'dateReceived', 'expirationDate', 'isActive', 'version', 'createdBy', 'createdAt', 'updatedAt'],
+  UsageRecord: ['id', 'ingredientId', 'batchId', 'quantity', 'unit', 'unitCostSnapshot', 'totalCostSnapshot', 'recordedBy', 'recordedAt', 'notes', 'correctionOf', 'type', 'isActive', 'version', 'createdAt', 'updatedAt'],
+  WasteRecord: ['id', 'ingredientId', 'batchId', 'quantity', 'unit', 'unitCostSnapshot', 'totalCostSnapshot', 'recordedBy', 'recordedAt', 'notes', 'reason', 'correctionOf', 'type', 'isActive', 'version', 'createdAt', 'updatedAt'],
   User: ['id', 'firstName', 'lastName', 'name', 'email', 'role', 'isActive', 'createdAt', 'updatedAt'],
   Ingredient: ['id', 'name', 'brand', 'description', 'category', 'customCategory', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'version', 'isActive', 'createdBy', 'createdAt', 'updatedAt'],
   ChangeRequest: ['id', 'name', 'brand', 'description', 'category', 'customCategory', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'firstName', 'lastName', 'email', 'role', 'requestedBy', 'requestedByRole', 'status', 'version', 'createdBy', 'reviewedBy', 'reviewNote', 'ingredientId', 'accountId', 'isDeleted', 'deletedBy', 'createdAt', 'updatedAt'],
