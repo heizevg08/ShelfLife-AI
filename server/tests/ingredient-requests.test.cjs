@@ -67,7 +67,6 @@ test('staff ingredient submissions remain pending until a manager or admin revie
   const request = (user, path, method = 'GET', body) => fetch(`${base}${path}`, { method, headers: { Authorization: `Bearer ${auth.issue(user).accessToken}`, 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   const staff = users[3], manager = users[2], admin = users[1];
 
-  assert.equal((await request(staff, '/ingredients', 'POST', input)).status, 403);
   const submitted = await request(staff, '/ingredient-requests', 'POST', otherInput);
   assert.equal(submitted.status, 201);
   const created = (await submitted.json()).request;

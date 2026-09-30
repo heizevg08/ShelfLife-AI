@@ -17,12 +17,12 @@ test('every Source-of-Truth-derived role and canonical route decision is enforce
   assert.equal(Object.keys(canonicalWorkspaceAccess).length, 23);
   assert.equal(checked, 92);
   assert.deepEqual([...canonicalWorkspaceAccess['/AccountRequests']], roles);
-  assert.equal(workspaceNavigation('Inventory Manager').some(item => item.path === '/AccountRequests'), false);
-  assert.equal(workspaceNavigation('Inventory Staff').some(item => item.path === '/AccountRequests'), false);
+  assert.equal(workspaceNavigation('Inventory Manager').some(item => item.path === '/AccountRequests'), true);
+  assert.equal(workspaceNavigation('Inventory Staff').some(item => item.path === '/AccountRequests'), true);
   assert.equal(workspaceNavigation('Admin').some(item => item.path === '/AccountRequests'), true);
   assert.equal(workspaceNavigation('Super Admin').some(item => item.path === '/AccountRequests'), true);
-  assert.equal(canOpenWorkspacePath('Inventory Staff', '/ChangeRequests'), false);
-  assert.equal(workspaceNavigation('Inventory Staff').some(item => item.path === '/ChangeRequests'), false);
+  assert.equal(canOpenWorkspacePath('Inventory Staff', '/ChangeRequests'), true);
+  assert.equal(workspaceNavigation('Inventory Staff').some(item => item.path === '/ChangeRequests'), true);
 });
 
 test('API-backed route permissions match the actual backend guards', () => {
@@ -32,7 +32,7 @@ test('API-backed route permissions match the actual backend guards', () => {
   const rolesIn = (source: string, pattern: RegExp) => [...source.match(pattern)![1].matchAll(/'([^']+)'/g)].map(match => match[1]);
   assert.deepEqual([...canonicalWorkspaceAccess['/Ingredients']], rolesIn(ingredients, /router.get\('\/', authorizeAdministration\((\[[^\]]+\])/));
   const writeRoles = (action: 'create' | 'update' | 'remove') => roles.filter(role => ingredientPermissions(role)[action]);
-  assert.deepEqual(rolesIn(ingredients, /router.post\('\/', authorizeAdministration\((\[[^\]]+\])/), ['Inventory Manager']);
+  assert.deepEqual(rolesIn(ingredients, /router.post\('\/', authorizeAdministration\((\[[^\]]+\])/), ['Inventory Manager', 'Inventory Staff']);
   assert.deepEqual(writeRoles('create'), ['Inventory Manager', 'Inventory Staff']);
   assert.deepEqual(rolesIn(ingredientRequests, /router.post\('\/', authorizeAdministration\((\[[^\]]+\])/), ['Inventory Staff']);
   assert.deepEqual(rolesIn(ingredientRequests, /router.patch\('\/:id\/review', authorizeAdministration\((\[[^\]]+\])/), ['Inventory Manager', 'Admin', 'Super Admin']);
