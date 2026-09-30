@@ -12,11 +12,11 @@ const manager = { ...staff, id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Mana
 const batch = '3'.repeat(24), ingredient = '4'.repeat(24);
 
 test('Change request validator rejects client-owned fields, incompatible targets, and malformed request data', () => {
-  assert.deepEqual(changeRequestInput({ requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, targetField: 'quantity', currentValue: '10 kg', requestedValue: '8 kg', reason: 'Count corrected' }), { requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, targetField: 'quantity', currentValue: '10 kg', requestedValue: '8 kg', reason: 'Count corrected' });
+  assert.deepEqual(changeRequestInput({ requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, requestedQuantity: 8, reason: 'Count corrected' }), { requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, requestedQuantity: 8, reason: 'Count corrected' });
   for (const body of [
-    { requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, targetField: 'unitOfMeasure', currentValue: '10', requestedValue: '8', reason: 'x' },
-    { requestType: 'OTHER', targetField: 'description', requestedValue: 'Need review', reason: ' ', status: 'APPROVED' },
-    { requestType: 'BATCH_CORRECTION', ingredientId: ingredient, batchId: 'not-an-id', targetField: 'batchID', currentValue: 'A', requestedValue: 'B', reason: 'x' },
+    { requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, requestedQuantity: Infinity, reason: 'x' },
+    { requestType: 'OTHER', requestDescription: 'Need review', reason: ' ', status: 'APPROVED' },
+    { requestType: 'BATCH_CORRECTION', ingredientId: ingredient, batchId: 'not-an-id', targetField: 'expirationDate', requestedValue: '2030-01-01', reason: 'x' },
   ]) assert.throws(() => changeRequestInput(body));
   assert.equal(changeRequestQuery({ page: '2', pageSize: '15', type: 'OTHER', status: 'PENDING' }).page, 2);
   assert.throws(() => changeRequestQuery({ page: '1', pageSize: '12' }));
@@ -39,10 +39,10 @@ test('Change request API scopes staff creation, returns safe field errors, and r
   const base = `http://127.0.0.1:${http.address().port}/api/change-requests`;
   const request = (user, path = '', method = 'GET', body) => fetch(base + path, { method, headers: { ...(user ? { Authorization: `Bearer ${auth.issue(user).accessToken}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
   try {
-    assert.equal((await request(manager, '', 'POST', { requestType: 'OTHER', targetField: 'description', requestedValue: 'Review', reason: 'Reason' })).status, 403);
-    const bad = await request(staff, '', 'POST', { requestType: 'OTHER', targetField: 'description', requestedValue: 'Review', reason: ' ', reviewedBy: manager.id });
+    assert.equal((await request(manager, '', 'POST', { requestType: 'OTHER', requestDescription: 'Review', reason: 'Reason' })).status, 403);
+    const bad = await request(staff, '', 'POST', { requestType: 'OTHER', requestDescription: 'Review', reason: ' ', reviewedBy: manager.id });
     assert.equal(bad.status, 400); assert.deepEqual((await bad.json()).error.details, [{ field: 'reviewedBy', message: 'Field is not permitted' }]);
-    const createdResponse = await request(staff, '', 'POST', { requestType: 'OTHER', targetField: 'description', requestedValue: 'Review a label', reason: 'Incorrect wording' });
+    const createdResponse = await request(staff, '', 'POST', { requestType: 'OTHER', requestDescription: 'Review a label', reason: 'Incorrect wording' });
     assert.equal(createdResponse.status, 201); assert.equal(created.actor.id, staff.id); assert.equal(created.input.status, undefined);
     assert.equal((await request(staff, '/' + '5'.repeat(24) + '/approve', 'POST', {})).status, 403);
     assert.equal((await request(manager, '/' + '5'.repeat(24) + '/approve', 'POST', {})).status, 200);
