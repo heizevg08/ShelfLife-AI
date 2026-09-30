@@ -162,7 +162,7 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
   const [pendingRequestsFailed, setPendingRequestsFailed] = useState(false);
   useEffect(() => {
     const abort = new AbortController();
-    listInventoryBatches({ page: 1, pageSize: 10, sort: 'fefo' }, abort.signal)
+    listInventoryBatches({ page: 1, pageSize: 5, sort: 'fefo' }, abort.signal)
       .then(records => { if (!abort.signal.aborted) setInventory(records.items); })
       .catch(() => { if (!abort.signal.aborted) setInventoryFailed(true); });
     getInventoryBatchSummary(abort.signal)
@@ -192,7 +192,7 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
 
       <section className="sl-inventory-staff-bottom" aria-label="Inventory staff dashboard records">
         <Card id="inventory-staff-my-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>My Pending Requests</DashboardCardTitle>} action={<Link href="/MyRequests" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
-          <div className="sl-inventory-staff-dashboard-table sl-dashboard-source-table-shell" role="region" aria-label="My Pending Requests" tabIndex={0}><table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['#','Request ID','Submitted On','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{pendingRequests?.length ? pendingRequests.map((request, index) => <tr key={request.id}><td>{index + 1}</td><td>{request.requestID}</td><td>{formatDateTime(request.createdAt)}</td><td><Status tone={requestStatusTone(request)}>{requestStatus(request)}</Status></td></tr>) : pendingRequestsFailed ? stateRow(4, 'error', 'Requests unavailable', 'Pending requests could not be loaded.') : pendingRequests === null ? stateRow(4, 'loading', 'Loading pending requests', 'Retrieving your submitted requests.') : stateRow(4, 'empty', 'No pending requests', 'You have no requests awaiting review.')}</tbody></table></div>
+          <div className="sl-inventory-staff-dashboard-table sl-dashboard-source-table-shell" role="region" aria-label="My Pending Requests" tabIndex={0}><table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['#','Request ID','Submitted On','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{pendingRequests?.length ? pendingRequests.map((request, index) => <tr key={request.id}><td>{index + 1}</td><td><span className="sl-emphasized-value">{request.requestID}</span></td><td>{formatDateTime(request.createdAt)}</td><td><Status tone={requestStatusTone(request)}>{requestStatus(request)}</Status></td></tr>) : pendingRequestsFailed ? stateRow(4, 'error', 'Requests unavailable', 'Pending requests could not be loaded.') : pendingRequests === null ? stateRow(4, 'loading', 'Loading pending requests', 'Retrieving your submitted requests.') : stateRow(4, 'empty', 'No pending requests', 'You have no requests awaiting review.')}</tbody></table></div>
         </Card>
       </section>
     </div>;

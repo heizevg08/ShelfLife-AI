@@ -11,6 +11,40 @@ const staff = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Staff', email: '
 const manager = { ...staff, id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Manager', email: 'manager@shelflife.com', role: 'Manager' };
 const batch = '3'.repeat(24), ingredient = '4'.repeat(24);
 
+test('Batch Correction accepts canonical targets and rejects unsupported or client-owned fields', () => {
+  const valid = changeRequestInput({ requestType: 'BATCH_CORRECTION', ingredientId: ingredient, batchId: batch, targetField: 'expirationDate', requestedValue: '2030-01-01', reason: 'Correct expiry' });
+  assert.equal(valid.targetField, 'expirationDate');
+  assert.throws(() => changeRequestInput({ ...valid, targetField: 'quantity' }));
+  assert.throws(() => changeRequestInput({ ...valid, currentValue: 'client value' }));
+});
+
+test('Quantity Adjustment requires a batch and a finite positive requested quantity', () => {
+  assert.equal(changeRequestInput({ requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, requestedQuantity: 8, reason: 'Count corrected' }).requestedQuantity, 8);
+  assert.throws(() => changeRequestInput({ requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, requestedQuantity: 8, reason: 'Count corrected' }));
+  assert.throws(() => changeRequestInput({ requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, requestedQuantity: 0, reason: 'Count corrected' }));
+  assert.throws(() => changeRequestInput({ requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, requestedQuantity: 8, unit: 'kg', reason: 'Count corrected' }));
+});
+
+test('Unit Correction derives current unit, requires a canonical requested unit, and rejects batch fields', () => {
+  assert.equal(changeRequestInput({ requestType: 'UNIT_CORRECTION', ingredientId: ingredient, requestedUnit: 'kg', reason: 'Correct unit' }).requestedUnit, 'kg');
+  assert.throws(() => changeRequestInput({ requestType: 'UNIT_CORRECTION', ingredientId: ingredient, requestedUnit: 'bucket', reason: 'Correct unit' }));
+  assert.throws(() => changeRequestInput({ requestType: 'UNIT_CORRECTION', ingredientId: ingredient, batchId: batch, requestedUnit: 'kg', reason: 'Correct unit' }));
+});
+
+test('Add Missing Batch accepts only structured proposed batch data and rejects client Batch IDs', () => {
+  const valid = changeRequestInput({ requestType: 'ADD_MISSING_BATCH', ingredientId: ingredient, proposedBatch: { dateReceived: '2030-01-01', quantityReceived: 5, expirationDate: '2030-01-10', unitCost: 0 }, reason: 'Missing receipt' });
+  assert.equal(valid.proposedBatch.quantityReceived, 5);
+  assert.throws(() => changeRequestInput({ requestType: 'ADD_MISSING_BATCH', ingredientId: ingredient, batchId: batch, proposedBatch: { dateReceived: '2030-01-01', quantityReceived: 5, expirationDate: '2030-01-10' }, reason: 'Missing receipt' }));
+  assert.throws(() => changeRequestInput({ requestType: 'ADD_MISSING_BATCH', ingredientId: ingredient, proposedBatch: { dateReceived: '2030-01-10', quantityReceived: 5, expirationDate: '2030-01-01' }, reason: 'Missing receipt' }));
+  assert.throws(() => changeRequestInput({ requestType: 'ADD_MISSING_BATCH', ingredientId: ingredient, proposedBatch: { dateReceived: '2030-01-01', quantityReceived: 5, expirationDate: '2030-01-10', arbitrary: true }, reason: 'Missing receipt' }));
+});
+
+test('Other accepts an optional inventory target and rejects generic correction fields', () => {
+  assert.equal(changeRequestInput({ requestType: 'OTHER', requestDescription: 'Review this record', reason: 'Incorrect label' }).requestDescription, 'Review this record');
+  assert.equal(changeRequestInput({ requestType: 'OTHER', ingredientId: ingredient, requestDescription: 'Review this record', reason: 'Incorrect label' }).ingredientId, ingredient);
+  assert.throws(() => changeRequestInput({ requestType: 'OTHER', requestDescription: 'Review this record', targetField: 'expirationDate', reason: 'Incorrect label' }));
+});
+
 test('Change request validator rejects client-owned fields, incompatible targets, and malformed request data', () => {
   assert.deepEqual(changeRequestInput({ requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, requestedQuantity: 8, reason: 'Count corrected' }), { requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient, batchId: batch, requestedQuantity: 8, reason: 'Count corrected' });
   for (const body of [

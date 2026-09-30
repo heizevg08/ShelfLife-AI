@@ -43,6 +43,9 @@ test('real Change Request creation persists server-owned state, audit, and uniqu
   const input = { requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient._id.toString(), batchId: batch._id.toString(), requestedQuantity: 8, reason: 'Count correction' };
   const [one, two] = await Promise.all([service.create(actor, input), service.create(actor, input)]);
   assert.match(one.requestID, /^REQ-\d{8}-\d{3}$/); assert.notEqual(one.requestID, two.requestID);
+  assert.equal(one.currentValue, '10 kg'); assert.equal(one.requestedQuantity, 8); assert.equal(one.batch.unit, 'kg');
   const stored = await Requests.findById(one.id).lean(); assert.equal(stored.status, 'PENDING'); assert.equal(stored.currentValue, '10 kg'); assert.equal(stored.requestedQuantity, 8); assert.equal(stored.requestedBy.toString(), actor.id); assert.equal(stored.reviewedBy, undefined);
   assert.equal(await Audits.countDocuments({ targetType: 'ChangeRequest', targetName: one.requestID }), 1);
+  await service.review({ id: staff._id.toString(), name: 'Manager', role: 'Manager' }, one.id, 'APPROVED');
+  assert.equal((await Batches.findById(batch._id).lean()).quantity, 10);
 });

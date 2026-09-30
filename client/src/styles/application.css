@@ -33591,3 +33591,40 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   grid-template-areas:"fefo";
 }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] { grid-area:fefo; }
+.sl-staff-stockin-v145 .sl-staff-stockin-kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.sl-record-identifier-link {
+  border:0;
+  background:transparent;
+  padding:0;
+  color:var(--sl-brand-strong);
+  font:inherit;
+  font-weight:400;
+  text-decoration:underline;
+  text-underline-offset:.18em;
+  cursor:pointer;
+}
+.sl-record-identifier-link:focus-visible { outline:2px solid var(--sl-focus); outline-offset:3px; border-radius:2px; }
+.sl-inventory-batch-details-dialog { width:min(680px,calc(100vw - 2rem)); }
+.sl-inventory-batch-details-grid {
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:.75rem;
+  margin:0;
+  padding:clamp(1rem,2vw,1.5rem);
+  display:grid;
+}
+.sl-inventory-batch-details-grid > div {
+  min-width:0;
+  border:1px solid var(--sl-border-subtle);
+  border-radius:var(--sl-radius-control);
+  padding:.75rem;
+}
+.sl-inventory-batch-details-grid dt { color:var(--sl-text-muted); font:var(--sl-font-label); font-weight:600; }
+.sl-inventory-batch-details-grid dd { margin:.3rem 0 0; color:var(--sl-text); font-weight:400; overflow-wrap:anywhere; }
+.sl-inventory-batch-details-wide { grid-column:1/-1; }
+@media (width<=900px) {
+  .sl-staff-stockin-v145 .sl-staff-stockin-kpis { grid-template-columns:minmax(0,1fr); }
+}
+@media (width<=760px) {
+  .sl-inventory-batch-details-grid { grid-template-columns:minmax(0,1fr); }
+  .sl-inventory-batch-details-wide { grid-column:auto; }
+}

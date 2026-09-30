@@ -13,6 +13,7 @@ export interface InventoryBatch {
   unitCost?: number;
   persistedStatus?: string;
   displayStatus: InventoryBatchDisplayStatus;
+  daysLeft: number;
   createdBy: { id: string; name: string };
   createdAt: string;
   updatedAt: string;

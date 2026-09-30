@@ -11,7 +11,7 @@ import { normalizeUserRole } from '../models/user';
 
 type BatchRow = { _id: { toString(): string }; ingredientId: { toString(): string }; batchID: string; quantity: number; unit: string; dateReceived: Date; expirationDate: Date; unitCost?: number; status?: string; createdBy: { toString(): string }; createdAt: Date; updatedAt: Date };
 type IngredientRow = { _id: { toString(): string }; name: string; category: string; unitOfMeasure: string; minimumStock?: number };
-type Resolved = { row: BatchRow; ingredient: IngredientRow; totalStock: number; displayStatus: InventoryBatchDisplayStatus; creatorName: string };
+type Resolved = { row: BatchRow; ingredient: IngredientRow; totalStock: number; displayStatus: InventoryBatchDisplayStatus; daysLeft: number; creatorName: string };
 
 export function deriveInventoryBatchDisplayStatus(expirationDate: Date, totalStock: number, minimumStock: number | undefined, now: Date): InventoryBatchDisplayStatus {
   if (expirationDate < now) return 'Expired';
@@ -43,14 +43,14 @@ export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<
     return rows.flatMap(row => {
       const ingredient = byId.get(row.ingredientId.toString()); if (!ingredient) return [];
       const totalStock = totals.get(row.ingredientId.toString()) ?? 0;
-      return [{ row, ingredient, totalStock, displayStatus: deriveInventoryBatchDisplayStatus(row.expirationDate, totalStock, ingredient.minimumStock, now), creatorName: creators.get(row.createdBy.toString()) ?? 'Unknown account' }];
+      return [{ row, ingredient, totalStock, displayStatus: deriveInventoryBatchDisplayStatus(row.expirationDate, totalStock, ingredient.minimumStock, now), daysLeft: Math.ceil((row.expirationDate.getTime() - now.getTime()) / 86_400_000), creatorName: creators.get(row.createdBy.toString()) ?? 'Unknown account' }];
     });
   };
-  const serialize = ({ row, ingredient, displayStatus, creatorName }: Resolved): InventoryBatch => ({
+  const serialize = ({ row, ingredient, displayStatus, daysLeft, creatorName }: Resolved): InventoryBatch => ({
     id: row._id.toString(), batchID: row.batchID,
     ingredient: { id: ingredient._id.toString(), name: ingredient.name, category: ingredient.category, unitOfMeasure: ingredient.unitOfMeasure, ...(ingredient.minimumStock !== undefined ? { minimumStock: ingredient.minimumStock } : {}) },
     quantity: row.quantity, unit: row.unit, dateReceived: row.dateReceived.toISOString(), expirationDate: row.expirationDate.toISOString(),
-    ...(row.unitCost !== undefined ? { unitCost: row.unitCost } : {}), ...(row.status ? { persistedStatus: row.status } : {}), displayStatus,
+    ...(row.unitCost !== undefined ? { unitCost: row.unitCost } : {}), ...(row.status ? { persistedStatus: row.status } : {}), displayStatus, daysLeft,
     createdBy: { id: row.createdBy.toString(), name: creatorName }, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
   });
   const filtered = (rows: Resolved[], query: InventoryBatchPageQuery) => rows.filter(item => {
