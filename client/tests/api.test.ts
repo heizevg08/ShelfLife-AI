@@ -19,14 +19,14 @@ test('failed writes surface field errors without automatic replay', async () => 
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
-test('ingredient adapter uses limit, PATCH and expectedVersion without altering account pagination', async () => {
+test('ingredient adapter uses limit, optional includeArchived, PATCH and expectedVersion without altering account pagination', async () => {
   const fetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 2, limit: 10, total: 0 })))
     .mockResolvedValueOnce(new Response(JSON.stringify({ ingredient: { id: 'id', version: 3 } })))
     .mockResolvedValueOnce(new Response(null, { status: 204 }));
   vi.stubGlobal('fetch', fetch);
-  const page = await listIngredients(2, 10);
+  const page = await listIngredients(2, 10, '', '', undefined, true);
   expect(page.pageSize).toBe(10);
-  expect(fetch.mock.calls[0][0]).toContain('page=2&limit=10');
+  expect(fetch.mock.calls[0][0]).toContain('page=2&limit=10&includeArchived=true');
   const input = { name: 'Milk', brand: '', description: '', category: 'Dairy', unitOfMeasure: 'L' };
   await updateIngredient('id', input, 2);
   expect(fetch.mock.calls[1][1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ ...input, expectedVersion: 2 }) });
