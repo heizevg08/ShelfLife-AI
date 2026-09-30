@@ -10,7 +10,7 @@ export function inventoryBatchRoutes(auth: AuthService, service: InventoryBatchS
   const router = Router(), actions = inventoryBatchControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
-  router.get('/summary', authorizeAdministration(['Super Admin', 'Admin']), actions.summary);
+  router.get('/summary', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.summary);
   router.get('/stock-in-summary', authorizeAdministration(['Inventory Staff']), actions.stockInSummary);
   router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.list);
   router.get('/:id', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.detail);

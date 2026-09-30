@@ -74,9 +74,16 @@ export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<
   };
   return {
     async ready() { await batches.collection.createIndex({ batchID: 1 }, { unique: true, name: 'batchID_1', collation: { locale: 'en', strength: 2 } }); },
-    async list(query, now) { const rows = filtered(await resolve(now), query), start = (query.page - 1) * query.pageSize; return { items: rows.slice(start, start + query.pageSize).map(serialize), page: query.page, pageSize: query.pageSize, total: rows.length }; },
+    async list(query, now) {
+      const rows = filtered(await resolve(now), query);
+      if (query.sort === 'fefo') rows.sort((a, b) => a.row.expirationDate.getTime() - b.row.expirationDate.getTime() || b.row.createdAt.getTime() - a.row.createdAt.getTime() || b.row._id.toString().localeCompare(a.row._id.toString()));
+      if (query.sort === 'latest') rows.sort((a, b) => b.row.dateReceived.getTime() - a.row.dateReceived.getTime() || b.row._id.toString().localeCompare(a.row._id.toString()));
+      if (query.sort === 'ingredient') rows.sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name) || a.row.expirationDate.getTime() - b.row.expirationDate.getTime());
+      const start = (query.page - 1) * query.pageSize;
+      return { items: rows.slice(start, start + query.pageSize).map(serialize), page: query.page, pageSize: query.pageSize, total: rows.length };
+    },
     async detail(id, now) { const item = (await resolve(now)).find(candidate => candidate.row._id.toString() === id); return item ? serialize(item) : null; },
-    async summary(now) { const rows = await resolve(now), ingredientRows = new Map(rows.map(item => [item.ingredient._id.toString(), item])); return { totalIngredients: ingredientRows.size, lowStockItems: [...ingredientRows.values()].filter(item => item.ingredient.minimumStock !== undefined && item.totalStock <= item.ingredient.minimumStock).length, nearExpiry: rows.filter(item => item.displayStatus === 'Near Expiry').length, expiredItems: rows.filter(item => item.displayStatus === 'Expired').length, categories: [...new Set(rows.map(item => item.ingredient.category))].sort((a, b) => a.localeCompare(b)) }; },
+    async summary(now) { const rows = await resolve(now), ingredientRows = new Map(rows.map(item => [item.ingredient._id.toString(), item])); return { totalIngredients: ingredientRows.size, totalBatches: rows.length, lowStockItems: [...ingredientRows.values()].filter(item => item.ingredient.minimumStock !== undefined && item.totalStock <= item.ingredient.minimumStock).length, nearExpiry: rows.filter(item => item.displayStatus === 'Near Expiry').length, expiredItems: rows.filter(item => item.displayStatus === 'Expired').length, categories: [...new Set(rows.map(item => item.ingredient.category))].sort((a, b) => a.localeCompare(b)) }; },
     async stockInSummary(now) {
       const rows = await resolve(now), dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()), dayEnd = new Date(dayStart.getTime() + 86_400_000), monthStart = new Date(now.getFullYear(), now.getMonth(), 1), monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
       const today = rows.filter(item => item.row.dateReceived >= dayStart && item.row.dateReceived < dayEnd);

@@ -23,10 +23,11 @@ test('inventory display status preserves expiration precedence over aggregate lo
 });
 
 test('inventory query validation accepts supported filters and rejects unsupported values', () => {
-  assert.deepEqual(inventoryBatchPagination({ page: '2', pageSize: '150', search: 'milk', category: 'Dairy', status: 'Near Expiry' }), { page: 2, pageSize: 150, search: 'milk', category: 'Dairy', status: 'Near Expiry' });
+  assert.deepEqual(inventoryBatchPagination({ page: '2', pageSize: '150', search: 'milk', category: 'Dairy', status: 'Near Expiry', sort: 'fefo' }), { page: 2, pageSize: 150, search: 'milk', category: 'Dairy', status: 'Near Expiry', sort: 'fefo' });
   assert.throws(() => inventoryBatchPagination({ status: 'Critical' }));
   assert.throws(() => inventoryBatchPagination({ pageSize: '151' }));
   assert.throws(() => inventoryBatchPagination({ sortBy: 'name' }));
+  assert.throws(() => inventoryBatchPagination({ sort: 'random' }));
 });
 
 test('Stock-In validation and generated Batch ID contract reject client-owned fields', () => {
@@ -59,7 +60,7 @@ test('inventory batch API preserves read roles and restricts Stock-In creation t
   const store = {
     async list(query) { return { items: query.search === 'none' ? [] : [batch], page: query.page, pageSize: query.pageSize, total: query.search === 'none' ? 0 : 1 }; },
     async detail(id) { return id === batch.id ? batch : null; },
-    async summary() { return { totalIngredients: 1, lowStockItems: 1, nearExpiry: 0, expiredItems: 0, categories: ['Dairy'] }; },
+    async summary() { return { totalIngredients: 1, totalBatches: 1, lowStockItems: 1, nearExpiry: 0, expiredItems: 0, categories: ['Dairy'] }; },
     async stockInSummary() { return { totalBatches: 1, stockInToday: 1, ingredientsReceivedToday: 1, batchesReceivedThisMonth: 1, expiringSoonBatches: 0 }; },
     async create(actor, input) { return { ...batch, quantity: input.quantity, createdBy: { id: actor.id, name: actor.name } }; },
     async ready() {},
@@ -75,6 +76,7 @@ test('inventory batch API preserves read roles and restricts Stock-In creation t
     assert.equal((await request(manager)).status, 403);
     assert.equal((await request(admin, '?page=1&pageSize=10&category=Dairy&status=Low%20Stock')).status, 200);
     assert.equal((await request(superAdmin, '/summary')).status, 200);
+    assert.equal((await request(staff, '/summary')).status, 200);
     assert.equal((await request(admin, `/${batch.id}`)).status, 200);
     assert.equal((await request(admin, `/${'9'.repeat(24)}`)).status, 404);
     assert.equal((await request(admin, '?status=Critical')).status, 400);

@@ -3,7 +3,8 @@ import { calendarDate } from './date';
 
 export const INVENTORY_BATCH_DISPLAY_STATUSES = ['In Stock', 'Low Stock', 'Near Expiry', 'Expired'] as const;
 export type InventoryBatchDisplayStatus = typeof INVENTORY_BATCH_DISPLAY_STATUSES[number];
-export type InventoryBatchPageQuery = { page: number; pageSize: number; search?: string; category?: string; status?: InventoryBatchDisplayStatus; ingredientId?: string; from?: Date; to?: Date };
+export type InventoryBatchSort = 'fefo' | 'latest' | 'ingredient';
+export type InventoryBatchPageQuery = { page: number; pageSize: number; search?: string; category?: string; status?: InventoryBatchDisplayStatus; ingredientId?: string; from?: Date; to?: Date; sort?: InventoryBatchSort };
 export type StockInInput = { ingredientId: string; dateReceived: Date; quantity: number; expirationDate: Date; unitCost?: number };
 
 const clean = (field: string, value: unknown, max: number) => {
@@ -14,7 +15,7 @@ const clean = (field: string, value: unknown, max: number) => {
 };
 
 export function inventoryBatchPagination(query: Record<string, unknown>): InventoryBatchPageQuery {
-  for (const key of Object.keys(query)) if (!['page', 'pageSize', 'search', 'category', 'status', 'ingredientId', 'from', 'to'].includes(key)) invalid(key);
+  for (const key of Object.keys(query)) if (!['page', 'pageSize', 'search', 'category', 'status', 'ingredientId', 'from', 'to', 'sort'].includes(key)) invalid(key);
   const integer = (key: 'page' | 'pageSize', fallback: number, max: number) => {
     const value = query[key];
     if (value === undefined) return fallback;
@@ -29,6 +30,10 @@ export function inventoryBatchPagination(query: Record<string, unknown>): Invent
     result.status = query.status as InventoryBatchDisplayStatus;
   }
   if (query.ingredientId !== undefined) result.ingredientId = objectId(query.ingredientId);
+  if (query.sort !== undefined) {
+    if (typeof query.sort !== 'string' || !['fefo', 'latest', 'ingredient'].includes(query.sort)) invalid('sort');
+    result.sort = query.sort as InventoryBatchSort;
+  }
   for (const key of ['from', 'to'] as const) if (query[key] !== undefined) {
     const date = calendarDate(key, query[key]);
     result[key] = key === 'to' ? new Date(date.getTime() + 86_400_000 - 1) : date;

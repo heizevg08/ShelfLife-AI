@@ -10,6 +10,9 @@ import { accountSummary, type DashboardSummary } from '../../services/administra
 import { listIngredientCategories, listIngredients } from '../../services/ingredients';
 import { AuditTable } from '../application/AuditTable';
 import { sessionDisplayName } from '../../services/auth';
+import { getInventoryBatchSummary, listInventoryBatches, type InventoryBatch } from '../../services/inventory-batches';
+import { listChangeRequests, type ChangeRequest } from '../../services/change-requests';
+import { formatDate, formatDateTime } from '../../utils/date-time';
 
 function DashboardHeading({ userName, description, source = false, descriptionInHeader = false }: { userName: string; description?: string; source?: boolean; descriptionInHeader?: boolean }) {
   const [greeting, setGreeting] = useState('Welcome');
@@ -151,36 +154,43 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
 }
 
 function InventoryStaffDashboardContent({ userName }: { userName: string }) {
-  const [ingredientTotal, setIngredientTotal] = useState<number | null>(null);
-  const [ingredientFailed, setIngredientFailed] = useState(false);
+  const [inventory, setInventory] = useState<InventoryBatch[] | null>(null);
+  const [inventorySummary, setInventorySummary] = useState<{ totalIngredients: number; totalBatches: number; nearExpiry: number; lowStockItems: number } | null>(null);
+  const [inventoryFailed, setInventoryFailed] = useState(false);
+  const [inventorySummaryFailed, setInventorySummaryFailed] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState<ChangeRequest[] | null>(null);
+  const [pendingRequestsFailed, setPendingRequestsFailed] = useState(false);
   useEffect(() => {
     const abort = new AbortController();
-    listIngredients(1, 1, '', '', abort.signal)
-      .then(result => { if (!abort.signal.aborted) setIngredientTotal(result.total); })
-      .catch(() => { if (!abort.signal.aborted) setIngredientFailed(true); });
+    listInventoryBatches({ page: 1, pageSize: 10, sort: 'fefo' }, abort.signal)
+      .then(records => { if (!abort.signal.aborted) setInventory(records.items); })
+      .catch(() => { if (!abort.signal.aborted) setInventoryFailed(true); });
+    getInventoryBatchSummary(abort.signal)
+      .then(summary => { if (!abort.signal.aborted) setInventorySummary({ totalIngredients: summary.totalIngredients, totalBatches: summary.totalBatches, nearExpiry: summary.nearExpiry, lowStockItems: summary.lowStockItems }); })
+      .catch(() => { if (!abort.signal.aborted) setInventorySummaryFailed(true); });
+    void listChangeRequests({ page: 1, pageSize: 10, status: 'PENDING' }, abort.signal).then(result => { if (!abort.signal.aborted) setPendingRequests(result.items); }).catch(() => { if (!abort.signal.aborted) setPendingRequestsFailed(true); });
     return () => abort.abort();
   }, []);
-  const ingredientValue = ingredientTotal === null ? '—' : ingredientTotal.toLocaleString();
-  const dashTable = (label: string, columns: string[], fitCard = false) => <div className={fitCard ? 'sl-dashboard-source-table-shell sl-inventory-staff-fefo-table' : 'sl-inventory-staff-dashboard-table sl-dashboard-source-table-shell'} role="region" aria-label={label} tabIndex={0}><table className="sl-data-table sl-dashboard-source-table"><thead><tr>{columns.map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr>{columns.map(column => <td key={column}>—</td>)}</tr></tbody></table></div>;
+  const stateRow = (columns: number, kind: 'loading' | 'empty' | 'error', title: string, description: string) => <tr><td colSpan={columns} className="sl-empty-cell"><DataState kind={kind} title={title} description={description} /></td></tr>;
 
   return <div className="sl-admin-view sl-inventory-staff-dashboard-v140 sl-dashboard-source-layout">
       <DashboardHeading userName={userName} source description="Your inventory overview for today. Keep track, record accurately, and help reduce food waste." />
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-dashboard-source-kpis" aria-label="Inventory staff dashboard summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Box aria-hidden="true" /></span><div><span>Total Ingredients</span><strong>{ingredientValue}</strong><small>{ingredientTotal !== null ? 'Live ingredient records' : ingredientFailed ? 'Ingredient service unavailable' : 'Loading ingredient records'}</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>—</strong><small>Batch service unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><TriangleAlert aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>—</strong><small>Expiration service unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList aria-hidden="true" /></span><div><span>Low Stock</span><strong>—</strong><small>Stock summary unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Box aria-hidden="true" /></span><div><span>Total Ingredients</span><strong>{inventorySummary?.totalIngredients ?? '—'}</strong><small>{inventorySummaryFailed ? 'Ingredient service unavailable' : 'Live ingredient records'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>{inventorySummary?.totalBatches ?? '—'}</strong><small>{inventorySummaryFailed ? 'Batch service unavailable' : 'Live inventory batches'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><TriangleAlert aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>{inventorySummary?.nearExpiry ?? '—'}</strong><small>{inventorySummaryFailed ? 'Expiration service unavailable' : 'Batches expiring within seven days'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList aria-hidden="true" /></span><div><span>Low Stock</span><strong>{inventorySummary?.lowStockItems ?? '—'}</strong><small>{inventorySummaryFailed ? 'Stock summary unavailable' : 'Ingredients at or below minimum stock'}</small></div></article>
       </section>
 
       <section className="sl-inventory-staff-analytics" aria-label="Use first inventory">
-        <Card id="inventory-staff-fefo" title={<DashboardCardTitle Icon={ListOrdered}>Use First ? FEFO</DashboardCardTitle>} action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
-          {dashTable('Use First FEFO', ['#', 'Ingredient', 'Batch ID', 'Expiry Date', 'Days Left'], true)}
+        <Card id="inventory-staff-fefo" title={<DashboardCardTitle Icon={ListOrdered}>Use First · FEFO</DashboardCardTitle>} action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
+          <div className="sl-dashboard-source-table-shell sl-inventory-staff-fefo-table" role="region" aria-label="Use First FEFO" tabIndex={0}><table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['#','Ingredient','Batch ID','Expiry Date','Days Left'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{inventory?.length ? inventory.map((batch, index) => <tr key={batch.id}><td>{index + 1}</td><td className="sl-emphasized-value">{batch.ingredient.name}</td><td>{batch.batchID}</td><td>{formatDate(batch.expirationDate)}</td><td>{Math.ceil((new Date(batch.expirationDate).getTime() - Date.now()) / 86400000)}</td></tr>) : inventoryFailed ? stateRow(5, 'error', 'Inventory unavailable', 'Inventory batches could not be loaded.') : inventory === null ? stateRow(5, 'loading', 'Loading inventory batches', 'Retrieving FEFO-priority records.') : stateRow(5, 'empty', 'No inventory batches yet', 'FEFO-priority batches will appear after stock is received.')}</tbody></table></div>
         </Card>
       </section>
 
       <section className="sl-inventory-staff-bottom" aria-label="Inventory staff dashboard records">
         <Card id="inventory-staff-my-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>My Pending Requests</DashboardCardTitle>} action={<Link href="/MyRequests" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
-          {dashTable('My Pending Requests', ['#', 'Request ID', 'Submitted On', 'Status'])}
+          <div className="sl-inventory-staff-dashboard-table sl-dashboard-source-table-shell" role="region" aria-label="My Pending Requests" tabIndex={0}><table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['#','Request ID','Submitted On','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{pendingRequests?.length ? pendingRequests.map((request, index) => <tr key={request.id}><td>{index + 1}</td><td>{request.requestID}</td><td>{formatDateTime(request.createdAt)}</td><td>{request.status}</td></tr>) : pendingRequestsFailed ? stateRow(4, 'error', 'Requests unavailable', 'Pending requests could not be loaded.') : pendingRequests === null ? stateRow(4, 'loading', 'Loading pending requests', 'Retrieving your submitted requests.') : stateRow(4, 'empty', 'No pending requests', 'You have no requests awaiting review.')}</tbody></table></div>
         </Card>
       </section>
     </div>;

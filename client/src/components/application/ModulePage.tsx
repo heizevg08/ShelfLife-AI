@@ -540,6 +540,11 @@ function InventoryStaffInventoryBatchesPage() {
   const [sortBy, setSortBy] = useState('FEFO (Earliest Expiry)');
   const [rows, setRows] = useState(10);
   const [page, setPage] = useState(1);
+  const [batchData, setBatchData] = useState<{ items: InventoryBatch[]; total: number } | null>(null);
+  const [batchSummary, setBatchSummary] = useState<InventoryBatchSummary | null>(null);
+  const [batchLoading, setBatchLoading] = useState(true);
+  const [batchError, setBatchError] = useState(false);
+  const [batchSummaryError, setBatchSummaryError] = useState(false);
   const reset = () => {
     setSearch('');
     setCategory('');
@@ -553,16 +558,33 @@ function InventoryStaffInventoryBatchesPage() {
       .catch(error => { if (error?.name !== 'AbortError') { setCategories([]); setCategoriesUnavailable(true); } });
     return () => controller.abort();
   }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    setBatchLoading(true); setBatchError(false); setBatchSummaryError(false);
+    const sort = sortBy === 'FEFO (Earliest Expiry)' ? 'fefo' as const : sortBy === 'Latest Received' ? 'latest' as const : sortBy === 'Ingredient Name' ? 'ingredient' as const : undefined;
+    const query = { page, pageSize: rows, ...(search.trim() ? { search: search.trim() } : {}), ...(category ? { category } : {}), ...(batchStatus ? { status: batchStatus as InventoryBatchDisplayStatus } : {}), ...(sort ? { sort } : {}) };
+    listInventoryBatches(query, controller.signal)
+      .then(records => { if (!controller.signal.aborted) setBatchData(records); })
+      .catch(() => { if (!controller.signal.aborted) setBatchError(true); })
+      .finally(() => { if (!controller.signal.aborted) setBatchLoading(false); });
+    getInventoryBatchSummary(controller.signal)
+      .then(summary => { if (!controller.signal.aborted) setBatchSummary(summary); })
+      .catch(() => { if (!controller.signal.aborted) setBatchSummaryError(true); });
+    return () => controller.abort();
+  }, [page, rows, search, category, batchStatus, sortBy]);
+  const batchStatusTone = (value: InventoryBatchDisplayStatus) => value === 'Expired' ? 'critical' : value === 'Near Expiry' || value === 'Low Stock' ? 'attention' : 'success';
+  const daysLeft = (value: string) => Math.ceil((new Date(value).getTime() - Date.now()) / 86400000);
+  const kpiValue = (value: number | undefined) => batchLoading && !batchSummary ? '—' : batchError && !batchSummary ? '—' : (value ?? 0).toLocaleString();
   return <>
     <PageHeader eyebrow="Inventory" title="Inventory Batches" description="View and monitor all ingredient batches. Check stock levels, expiration dates, and FEFO order." />
 
     <div className="sl-admin-view sl-staff-inventory-v149">
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150">
         <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-inventory-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Inventory batch summary">
-          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
-          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Batches Near Expiry (≤ 7 days)</span><strong>—</strong><small>Data unavailable</small></div></article>
-          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
-          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>{kpiValue(batchSummary?.totalBatches)}</strong><small>{batchSummaryError ? 'Batch service unavailable' : 'Inventory batch records'}</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Batches Near Expiry (≤ 7 days)</span><strong>{kpiValue(batchSummary?.nearExpiry)}</strong><small>{batchSummaryError ? 'Expiration service unavailable' : 'Batches expiring within seven days'}</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>{kpiValue(batchSummary?.lowStockItems)}</strong><small>{batchSummaryError ? 'Stock summary unavailable' : 'Ingredients at or below minimum stock'}</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>{kpiValue(batchSummary?.expiredItems)}</strong><small>{batchSummaryError ? 'Expiration service unavailable' : 'Batches past their expiration date'}</small></div></article>
         </section>
       </div>
 
@@ -586,32 +608,19 @@ function InventoryStaffInventoryBatchesPage() {
 
             <div className="sl-application-records-table-shell sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Inventory Batches preview" tabIndex={0}>
               <table className="sl-application-records-table sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-inventory-records-table">
-                <thead><tr>{['Ingredient','Batch ID','Category','Date Received','Expiration Date','Days Left','Current Stock','Unit','Status','Actions'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead>
-                <tbody><tr className="sl-sa-records-dash-row sl-staff-records-dash-row" aria-label="Inventory batch values unavailable">{Array.from({length:9}).map((_,index)=><td key={index}>—</td>)}<td className="sl-sa-ingredients-actions-cell"><UnavailableInventoryBatchActions /></td></tr></tbody>
+                <thead><tr>{['Ingredient','Batch ID','Category','Date Received','Expiration Date','Days Left','Current Stock','Unit','Status'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead>
+                <tbody>{batchLoading && !batchData ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="loading" title="Loading inventory batches" description="Retrieving current inventory records." /></td></tr> : batchError ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="error" title="Inventory batches unavailable" description="The inventory service could not be reached." /></td></tr> : !batchData?.items.length ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="empty" title={search || category || batchStatus ? 'No matching records' : 'No inventory batches yet'} description={search || category || batchStatus ? 'Try adjusting the current filters.' : 'Inventory batches will appear after stock is received.'} /></td></tr> : batchData.items.map(batch => <tr key={batch.id}><td><span className="sl-emphasized-value">{batch.ingredient.name}</span></td><td>{batch.batchID}</td><td>{batch.ingredient.category}</td><td>{formatDate(batch.dateReceived)}</td><td>{formatDate(batch.expirationDate)}</td><td>{daysLeft(batch.expirationDate)}</td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td><Status tone={batchStatusTone(batch.displayStatus)}>{batch.displayStatus}</Status></td></tr>)}</tbody>
               </table>
             </div>
 
             <footer className="sl-application-records-footer sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
               <label><span>Rows per page</span><select value={rows} aria-label="Rows per page" onChange={event => { setRows(Number(event.target.value)); setPage(1); }}><option>10</option><option>15</option><option>50</option><option>100</option><option>150</option></select></label>
-              <Pagination compact page={page} pageSize={rows} total={0} itemLabel="batch records" onPageChange={setPage} />
+              <Pagination compact page={page} pageSize={rows} total={batchData?.total ?? 0} itemLabel="batch records" onPageChange={setPage} />
             </footer>
           </section>
         </main>
 
-        <aside className="sl-staff-inventory-rail sl-superadmin-dashboard-v49" aria-label="Inventory analytics">
-          <Card id="staff-inventory-status" title={<span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><BarChart3 aria-hidden="true" /></span><span>Status Breakdown</span></span>}>
-            <div className="sl-sa-chart-surface sl-sa-expiration-donut-surface" role="img" aria-label="Inventory status breakdown; live values unavailable">
-              <div className="sl-sa-expiration-donut" aria-hidden="true"><strong>—</strong><span>Batches</span></div>
-              <div className="sl-sa-chart-legend" aria-label="Inventory status legend">
-                <div><i data-series="1"/><span>In Stock</span><strong>—</strong></div>
-                <div><i data-series="2"/><span>Low Stock</span><strong>—</strong></div>
-                <div><i data-series="3"/><span>Near Expiry</span><strong>—</strong></div>
-                <div><i data-series="4"/><span>Expired</span><strong>—</strong></div>
-              </div>
-              <span className="sl-sa-chart-empty-note">Status data unavailable</span>
-            </div>
-          </Card>
-        </aside>
+
       </div>
     </div>
   </>;

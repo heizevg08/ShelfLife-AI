@@ -17,11 +17,11 @@ export interface InventoryBatch {
   createdAt: string;
   updatedAt: string;
 }
-export interface InventoryBatchSummary { totalIngredients: number; lowStockItems: number; nearExpiry: number; expiredItems: number; categories: string[] }
+export interface InventoryBatchSummary { totalIngredients: number; totalBatches: number; lowStockItems: number; nearExpiry: number; expiredItems: number; categories: string[] }
 export interface StockInSummary { totalBatches: number; stockInToday: number; ingredientsReceivedToday: number; batchesReceivedThisMonth: number; expiringSoonBatches: number }
 export interface StockInInput { ingredientId: string; dateReceived: string; quantity: number; expirationDate: string; unitCost?: number }
 
-export function listInventoryBatches(query: { page: number; pageSize: number; search?: string; category?: string; status?: InventoryBatchDisplayStatus; ingredientId?: string; from?: string; to?: string }, signal?: AbortSignal) {
+export function listInventoryBatches(query: { page: number; pageSize: number; search?: string; category?: string; status?: InventoryBatchDisplayStatus; ingredientId?: string; from?: string; to?: string; sort?: 'fefo' | 'latest' | 'ingredient' }, signal?: AbortSignal) {
   const params = new URLSearchParams({ page: String(query.page), pageSize: String(query.pageSize) });
   if (query.search) params.set('search', query.search);
   if (query.category) params.set('category', query.category);
@@ -29,6 +29,7 @@ export function listInventoryBatches(query: { page: number; pageSize: number; se
   if (query.ingredientId) params.set('ingredientId', query.ingredientId);
   if (query.from) params.set('from', query.from);
   if (query.to) params.set('to', query.to);
+  if (query.sort) params.set('sort', query.sort);
   return apiClient<{ items: InventoryBatch[]; page: number; pageSize: number; total: number }>(`/inventory-batches?${params}`, { signal });
 }
 export function getInventoryBatchSummary(signal?: AbortSignal) { return apiClient<InventoryBatchSummary>('/inventory-batches/summary', { signal }); }
