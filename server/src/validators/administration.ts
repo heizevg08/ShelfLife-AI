@@ -1,6 +1,7 @@
 import { AdministrationError } from '../middleware/administration.middleware';
 import { ROLES } from '../models/user';
 import { normalizeEmail, validPassword } from './auth';
+import { personNameInput } from './text';
 
 export function invalid(field: string, message = 'Invalid value'): never {
   throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field, message }]);
@@ -64,9 +65,7 @@ export function accountInput(body: unknown, create: boolean): AccountInput {
   if (!Object.keys(input).length) invalid('body', 'Provide at least one permitted field');
   for (const field of ['firstName', 'lastName'] as const) {
     if (!create && input[field] === undefined) continue;
-    const value = input[field];
-    if (typeof value !== 'string' || !value.trim() || value.trim().length > 25) invalid(field, 'Enter 1–25 characters');
-    result[field] = value.trim();
+    result[field] = personNameInput(input[field], field);
   }
   if (create || input.email !== undefined) {
     const email = normalizeEmail(input.email);

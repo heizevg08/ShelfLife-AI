@@ -1,22 +1,20 @@
 import { invalid, objectId } from './administration';
+import { catalogueText, proseText } from './text';
 
 export type ChangeRequestInput = { target: string; type: string; proposedCorrection: string; reason: string };
 const fields = ['target', 'type', 'proposedCorrection', 'reason'] as const;
 
-function text(value: unknown, field: typeof fields[number], max: number): string {
-  if (typeof value !== 'string' || !value.trim() || value.trim().length > max) invalid(field, `Enter 1–${max} characters`);
-  return value.trim();
-}
+const changeTypes = ['Quantity correction', 'Expiration date', 'Batch details', 'Ingredient details', 'Other'] as const;
 
 function requestFields(body: unknown, expectedVersion?: unknown) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
   const input = body as Record<string, unknown>;
   for (const key of Object.keys(input)) if (![...fields, ...(expectedVersion === undefined ? [] : ['expectedVersion'])].includes(key as never)) invalid(key, 'Field is not permitted');
   const result: ChangeRequestInput = {
-    target: text(input.target, 'target', 160),
-    type: text(input.type, 'type', 80),
-    proposedCorrection: text(input.proposedCorrection, 'proposedCorrection', 500),
-    reason: text(input.reason, 'reason', 500),
+    target: catalogueText(input.target, 'target', true, 160),
+    type: typeof input.type === 'string' && changeTypes.includes(input.type as typeof changeTypes[number]) ? input.type : invalid('type', 'Select a valid change type'),
+    proposedCorrection: proseText(input.proposedCorrection, 'proposedCorrection', true, 500),
+    reason: proseText(input.reason, 'reason', true, 500),
   };
   if (expectedVersion !== undefined) {
     if (!Number.isSafeInteger(input.expectedVersion) || (input.expectedVersion as number) < 0) invalid('expectedVersion');

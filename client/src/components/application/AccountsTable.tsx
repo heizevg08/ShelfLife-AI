@@ -2,6 +2,7 @@ import { Ban, Check, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus,
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { accountSummary, createAccount, getAccount, listAccounts, listAuditRecords, setAccountActive, updateAccount, type Account, type AuditRecord, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
+import { personNameError } from '../../services/fieldValidation';
 import { createAccountRequest, listAccountRequests, reviewAccountRequest, type AccountRequest } from '../../services/accountRequests';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
@@ -170,9 +171,7 @@ export function AccountsTable() {
 
   function validateField(key: 'firstName' | 'lastName' | 'email' | 'password', value: string) {
     if (key === 'firstName' || key === 'lastName') {
-      const trimmed = value.trim();
-      if (!trimmed) return REQUIRED_ERROR;
-      return trimmed.length > NAME_LIMIT ? `Enter 1–${NAME_LIMIT} characters.` : '';
+      return personNameError(value, key === 'firstName' ? 'First name' : 'Last name', NAME_LIMIT);
     }
     if (!value.trim()) return REQUIRED_ERROR;
     if (key === 'email') return !validShelfLifeEmail(value) ? 'Enter a valid shelflife.com email.' : '';
@@ -417,7 +416,7 @@ export function AccountsTable() {
                 autoComplete={key === 'password' ? 'new-password' : 'off'}
                 disabled={busy}
                 value={fields[key]}
-                maxLength={key === 'firstName' || key === 'lastName' ? NAME_LIMIT : undefined}
+                maxLength={key === 'firstName' || key === 'lastName' ? NAME_LIMIT : key === 'email' ? 254 : undefined}
                 aria-invalid={touched[key] && !!errors[key] ? true : undefined}
                 aria-describedby={[touched[key] && errors[key] ? `admin-${key}-error` : '', key === 'password' ? 'admin-password-help' : ''].filter(Boolean).join(' ') || undefined}
                                 onBlur={() => { setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, fields[key]) })); }}

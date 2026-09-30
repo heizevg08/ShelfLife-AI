@@ -10,6 +10,7 @@ import { Card, DataState, PageHeader, Pagination, PlaceholderSummaryCards, Place
 import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
+import { catalogueTextError, proseTextError } from '../../services/fieldValidation';
 import { createIngredient, deleteIngredient, listIngredients, updateIngredient, type Ingredient, type IngredientInput } from '../../services/ingredients';
 import { createChangeRequest, deleteChangeRequest, listChangeRequests, updateChangeRequest, type ChangeRequest, type ChangeRequestInput } from '../../services/changeRequests';
 import { createIngredientRequest, deleteIngredientRequest, listIngredientRequests, reviewIngredientRequest, updateIngredientRequest, type IngredientRequest } from '../../services/ingredientRequests';
@@ -32,9 +33,10 @@ const ingredientApiField: Record<string, IngredientField | undefined> = { name: 
 function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit }: { form: IngredientDraft; errors: Partial<Record<IngredientField, string>>; busy: boolean; formError: string; set: (key: IngredientField, value: string) => void; setError: (key: IngredientField, value?: string) => void; onSubmit: (event: FormEvent) => void }) {
   const field = (key: IngredientField, label: string, control: React.ReactNode, required = true) => <label><span className="sl-form-label">{label}{required && <span className="sl-required-mark"> *</span>}</span>{control}{errors[key] && <span id={`ingredient-${key}-error`} className="sl-field-error">{errors[key]}</span>}</label>;
   const validation = (key: IngredientField) => ({ 'aria-invalid': errors[key] ? true as const : undefined, 'aria-describedby': errors[key] ? `ingredient-${key}-error` : undefined });
-  const textChange = (key: IngredientField, label: string, max: number, required = false) => (value: string) => {
+  const textChange = (key: IngredientField, label: string, max: number, required = false, kind: 'catalogue' | 'prose' = 'catalogue') => (value: string) => {
     set(key, value);
-    setError(key, required && !value.trim() ? `Enter ${label.toLowerCase()}.` : value.length > max ? `Use at most ${max} characters.` : undefined);
+    const error = kind === 'prose' ? proseTextError(value, label, max, required) : catalogueTextError(value, label, max, required);
+    setError(key, error || undefined);
   };
   const numericChange = (key: 'minStock' | 'unitCost' | 'shelfLife', label: string, whole = false, maxDecimals?: number, minimum = 0) => (value: string) => {
     set(key, value);
@@ -73,7 +75,7 @@ function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit
       {field('minStock', 'Minimum stock', stepper('minStock', 'Minimum stock', 1, 2, 'ingredient-minStock-input'), false)}
       {field('unitCost', 'Standard unit cost', stepper('unitCost', 'Standard unit cost', 0.01, 2, 'ingredient-unitCost-input', true), false)}
       {field('shelfLife', 'Default shelf life (days)', <input id="ingredient-shelfLife-input" disabled={busy} className="sl-admin-input" type="text" inputMode="numeric" value={form.shelfLife} onChange={e => numericChange('shelfLife', 'Shelf life', true, undefined, 1)(e.target.value)} {...validation('shelfLife')} />, false)}
-      {field('description', 'Description', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Boneless, skinless chicken breast" maxLength={500} value={form.description} onChange={e => textChange('description', 'description', 500)(e.target.value)} {...validation('description')} />, false)}
+      {field('description', 'Description', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Boneless, skinless chicken breast" maxLength={500} value={form.description} onChange={e => textChange('description', 'Description', 500, false, 'prose')(e.target.value)} {...validation('description')} />, false)}
     </div>
   </form>;
 }
@@ -266,13 +268,15 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
     if (busy || !(editIngredient ? permissions.update : editIngredientRequest ? user.role === 'Inventory Staff' : permissions.create)) return;
     const next: Partial<Record<IngredientField, string>> = {};
     const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), category: form.category.trim(), customCategory: form.customCategory.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
-    for (const [key, limit] of [['name', 100], ['brand', 100], ['description', 500], ['unit', 50]] as const) {
-      if (clean[key].length > limit) next[key] = `Use at most ${limit} characters.`;
+    for (const [key, limit] of [['name', 100], ['brand', 100], ['unit', 50]] as const) {
+      const error = catalogueTextError(clean[key], key === 'name' ? 'Ingredient name' : key === 'brand' ? 'Brand' : 'Unit of measure', limit, key === 'name' || key === 'unit');
+      if (error) next[key] = error;
     }
-    if (!clean.name) next.name = 'Enter an ingredient name.';
+    const descriptionError = proseTextError(clean.description, 'Description', 500);
+    if (descriptionError) next.description = descriptionError;
+    const customCategoryError = clean.category === 'Other' ? catalogueTextError(clean.customCategory, 'Custom category', 50, true) : '';
+    if (customCategoryError) next.customCategory = customCategoryError;
     if (!clean.category) next.category = 'Select a category.';
-    if (clean.category === 'Other' && !clean.customCategory) next.customCategory = 'Specify the category.';
-    if (!clean.unit) next.unit = 'Enter a unit of measure.';
     for (const [key, label] of [['minStock', 'Minimum stock'], ['unitCost', 'Standard unit cost']] as const) if (clean[key] !== '' && (!Number.isFinite(Number(clean[key])) || Number(clean[key]) < 0)) next[key] = `${label} must be 0 or greater.`;
     if (clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1)) next.shelfLife = 'Shelf life must be a whole number of at least 1 day.';
     if (Object.keys(next).length) {
@@ -1617,7 +1621,13 @@ export function StaffChangeRequestsPage() {
   };
   const dismissForm = () => { if (!busy) { setFormOpen(false); setEditing(null); setForm(emptyChangeRequest); setFormError(''); } };
   const submit = async (event: FormEvent) => {
-    event.preventDefault(); setBusy(true); setFormError('');
+    event.preventDefault();
+    const validation = catalogueTextError(form.target, 'Target batch or ingredient', 160, true)
+      || (!changeRequestTypes.includes(form.type) ? 'Select a valid change type.' : '')
+      || proseTextError(form.proposedCorrection, 'Proposed correction', 500, true)
+      || proseTextError(form.reason, 'Reason', 500, true);
+    if (validation) { setFormError(validation); return; }
+    setBusy(true); setFormError('');
     try {
       if (editing) await updateChangeRequest(editing.id, form, editing.version);
       else await createChangeRequest(form);

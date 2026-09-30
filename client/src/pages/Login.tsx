@@ -41,7 +41,7 @@ export default function ShelfLifeLogin({ recovery = false }: { recovery?: boolea
     const next: ValidationErrors = {};
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) next.email = 'Email is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) next.email = 'Enter a valid email address.';
+    else if (normalizedEmail.length > 254 || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/.test(normalizedEmail) || normalizedEmail.startsWith('.') || normalizedEmail.includes('..') || normalizedEmail.includes('.@')) next.email = 'Enter a valid @shelflife.com email address.';
     if (!password) next.password = 'Password is required.';
     setErrors(next);
     if (next.email) emailInput.current?.focus();
@@ -102,7 +102,7 @@ export default function ShelfLifeLogin({ recovery = false }: { recovery?: boolea
             <div className="sl-field">
               <label htmlFor="sl-email">Email</label>
               <input id="sl-email" ref={emailInput} name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false}
-                value={email} disabled={isLoading} placeholder="Enter your email" aria-invalid={!!errors.email}
+                maxLength={254} value={email} disabled={isLoading} placeholder="Enter your @shelflife.com email" aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? 'sl-email-error' : undefined}
                 onChange={event => { setEmail(event.target.value); setErrors(previous => ({ ...previous, email: undefined, auth: undefined })); }} />
               {errors.email && <p className="sl-field-error" id="sl-email-error" role="alert">{errors.email}</p>}
