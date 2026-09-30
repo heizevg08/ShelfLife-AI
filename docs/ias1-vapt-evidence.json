@@ -1,0 +1,355 @@
+{
+  "historicalEvidence": true,
+  "historicalBaseline": "4075124",
+  "currentBaseline": "34de09c",
+  "currentSystemNotes": [
+    "The captured VAPT requests remain historical evidence and do not verify the current deployment.",
+    "Current diagnostics also scope account-requests, ingredient-requests, and change-requests.",
+    "Inventory Staff direct ingredient creation is allowed alongside Inventory Manager.",
+    "AccountRequest and IngredientRequest are distinct current audit target types."
+  ],
+  "timestamp": "2026-09-24T13:56:38.829Z",
+  "database": "shelflifeai_vapt_20260924",
+  "baseUrl": "http://127.0.0.1:5051",
+  "scope": "Live HTTP against actual backend with real Atlas stores. Dedicated isolated database; no shared application data used. Session/recovery extensions unused in these cases.",
+  "evidence": [
+    {
+      "label": "1 NoSQL operators",
+      "request": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5051/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": {
+            "$ne": null
+          },
+          "password": {
+            "$gt": ""
+          }
+        }
+      },
+      "status": 400,
+      "response": {
+        "error": {
+          "message": "MongoDB operator and dotted keys are not permitted"
+        }
+      },
+      "requestId": "6ed277b2-60f4-4ff4-b870-c8c62e6c9b5a",
+      "retryAfter": null,
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:36.543Z",
+        "requestId": "6ed277b2-60f4-4ff4-b870-c8c62e6c9b5a",
+        "method": "POST",
+        "scope": "auth",
+        "status": 400,
+        "errorType": "HttpError"
+      }
+    },
+    {
+      "label": "2 Staff forbidden ingredient archive",
+      "request": {
+        "method": "DELETE",
+        "url": "http://127.0.0.1:5051/api/ingredients/6ab52c136525e7e3a6949980",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer <redacted disposable Staff access token>"
+        },
+        "body": {
+          "expectedVersion": 0
+        }
+      },
+      "status": 403,
+      "response": {
+        "error": {
+          "code": "FORBIDDEN",
+          "message": "This action is not permitted",
+          "details": []
+        }
+      },
+      "requestId": "b22de4fb-b4bf-47c9-b383-53389d80aaf3",
+      "retryAfter": null,
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:36.597Z",
+        "requestId": "b22de4fb-b4bf-47c9-b383-53389d80aaf3",
+        "method": "DELETE",
+        "scope": "ingredients",
+        "status": 403,
+        "errorType": "AdministrationError"
+      }
+    },
+    {
+      "label": "3 Login failure 1",
+      "request": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5051/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "ias1.staff@shelflife.com",
+          "password": "intentionally-wrong-ias1-password",
+          "rememberMe": false
+        }
+      },
+      "status": 401,
+      "response": {
+        "error": {
+          "message": "Invalid email or password"
+        }
+      },
+      "requestId": "4ec22320-4a5b-46ed-ba7c-8e5fcb040b34",
+      "retryAfter": null,
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:36.968Z",
+        "requestId": "4ec22320-4a5b-46ed-ba7c-8e5fcb040b34",
+        "method": "POST",
+        "scope": "auth",
+        "status": 401,
+        "errorType": "HttpError"
+      }
+    },
+    {
+      "label": "3 Login failure 2",
+      "request": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5051/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "ias1.staff@shelflife.com",
+          "password": "intentionally-wrong-ias1-password",
+          "rememberMe": false
+        }
+      },
+      "status": 401,
+      "response": {
+        "error": {
+          "message": "Invalid email or password"
+        }
+      },
+      "requestId": "bdd30245-ba3c-4311-9e91-753e564d37cf",
+      "retryAfter": null,
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:37.389Z",
+        "requestId": "bdd30245-ba3c-4311-9e91-753e564d37cf",
+        "method": "POST",
+        "scope": "auth",
+        "status": 401,
+        "errorType": "HttpError"
+      }
+    },
+    {
+      "label": "3 Login failure 3",
+      "request": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5051/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "ias1.staff@shelflife.com",
+          "password": "intentionally-wrong-ias1-password",
+          "rememberMe": false
+        }
+      },
+      "status": 401,
+      "response": {
+        "error": {
+          "message": "Invalid email or password"
+        }
+      },
+      "requestId": "585491af-d0d9-49ca-a572-870aa323bf1d",
+      "retryAfter": null,
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:37.726Z",
+        "requestId": "585491af-d0d9-49ca-a572-870aa323bf1d",
+        "method": "POST",
+        "scope": "auth",
+        "status": 401,
+        "errorType": "HttpError"
+      }
+    },
+    {
+      "label": "3 Login failure 4",
+      "request": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5051/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "ias1.staff@shelflife.com",
+          "password": "intentionally-wrong-ias1-password",
+          "rememberMe": false
+        }
+      },
+      "status": 401,
+      "response": {
+        "error": {
+          "message": "Invalid email or password"
+        }
+      },
+      "requestId": "516ee62d-ca5f-4d23-a772-c54912ff9f21",
+      "retryAfter": null,
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:38.094Z",
+        "requestId": "516ee62d-ca5f-4d23-a772-c54912ff9f21",
+        "method": "POST",
+        "scope": "auth",
+        "status": 401,
+        "errorType": "HttpError"
+      }
+    },
+    {
+      "label": "3 Login failure 5",
+      "request": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5051/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "ias1.staff@shelflife.com",
+          "password": "intentionally-wrong-ias1-password",
+          "rememberMe": false
+        }
+      },
+      "status": 401,
+      "response": {
+        "error": {
+          "message": "Invalid email or password"
+        }
+      },
+      "requestId": "690f101d-3f17-4f25-a42f-1ef2af3fb4b5",
+      "retryAfter": null,
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:38.428Z",
+        "requestId": "690f101d-3f17-4f25-a42f-1ef2af3fb4b5",
+        "method": "POST",
+        "scope": "auth",
+        "status": 401,
+        "errorType": "HttpError"
+      }
+    },
+    {
+      "label": "3 Login failure 6",
+      "request": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5051/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "ias1.staff@shelflife.com",
+          "password": "intentionally-wrong-ias1-password",
+          "rememberMe": false
+        }
+      },
+      "status": 429,
+      "response": {
+        "error": {
+          "message": "Too many login attempts. Try again later."
+        }
+      },
+      "requestId": "b627e9ab-76b2-40c5-b50d-5050aff6af71",
+      "retryAfter": "899",
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:38.525Z",
+        "requestId": "b627e9ab-76b2-40c5-b50d-5050aff6af71",
+        "method": "POST",
+        "scope": "auth",
+        "status": 429,
+        "errorType": "HttpError"
+      }
+    },
+    {
+      "label": "4 Missing bearer token",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:5051/api/ingredients",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "status": 401,
+      "response": {
+        "error": {
+          "code": "UNAUTHENTICATED",
+          "message": "Authentication required",
+          "details": []
+        }
+      },
+      "requestId": "c65ec72e-7594-4f98-b61d-3ffce253374d",
+      "retryAfter": null,
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:38.527Z",
+        "requestId": "c65ec72e-7594-4f98-b61d-3ffce253374d",
+        "method": "GET",
+        "scope": "ingredients",
+        "status": 401,
+        "errorType": "HttpError"
+      }
+    },
+    {
+      "label": "5 Invalid negative stock",
+      "request": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5051/api/ingredients",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer <redacted disposable Staff access token>"
+        },
+        "body": {
+          "name": "IAS1 invalid ingredient",
+          "category": "Other",
+          "unitOfMeasure": "pcs",
+          "minimumStock": -1
+        }
+      },
+      "status": 400,
+      "response": {
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Check the supplied fields",
+          "details": [
+            {
+              "field": "minimumStock",
+              "message": "Enter a number of at least 0"
+            }
+          ]
+        }
+      },
+      "requestId": "8f59481d-b541-4441-8ed5-0a96b2944ee6",
+      "retryAfter": null,
+      "serverLog": {
+        "event": "request_rejected",
+        "timestamp": "2026-09-24T13:56:38.579Z",
+        "requestId": "8f59481d-b541-4441-8ed5-0a96b2944ee6",
+        "method": "POST",
+        "scope": "ingredients",
+        "status": 400,
+        "errorType": "AdministrationError"
+      }
+    }
+  ],
+  "verification": {
+    "protectedIngredientStillActive": true,
+    "ingredientVersion": 0,
+    "ingredientCount": 1,
+    "successfulAuditCount": 1,
+    "failedAttemptCount": 5,
+    "testAccountsDeactivated": true
+  }
+}

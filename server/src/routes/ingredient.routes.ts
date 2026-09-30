@@ -6,6 +6,7 @@ import { authenticate } from '../middleware/auth.middleware';
 import { AdministrationError, authorizeAdministration } from '../middleware/administration.middleware';
 import { HttpError } from '../middleware/error.middleware';
 import { ingredientControllers } from '../controllers/ingredient.controller';
+import { requestErrorDiagnostics } from '../middleware/request-diagnostics.middleware';
 
 export function ingredientRoutes(auth: AuthService, service: IngredientService) {
   const router = Router(), actions = ingredientControllers(service);
@@ -25,6 +26,6 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
     if (value?.type === 'entity.parse.failed' || value?.type === 'entity.too.large') { res.status(value.type === 'entity.too.large' ? 413 : 400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: [] } }); return; }
     res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Unable to complete the request', details: [] } });
   };
-  router.use(error);
+  router.use(requestErrorDiagnostics, error);
   return router;
 }

@@ -3,6 +3,7 @@ import type { AuthService } from '../services/auth';
 import { authenticate } from '../middleware/auth.middleware';
 import { AdministrationError } from '../middleware/administration.middleware';
 import { HttpError } from '../middleware/error.middleware';
+import { requestErrorDiagnostics } from '../middleware/request-diagnostics.middleware';
 
 export function inventoryRouter(auth: AuthService) {
   const router = Router();
@@ -21,6 +22,6 @@ export function finishInventoryRouter(router: ReturnType<typeof Router>) {
     else if (error?.type === 'entity.parse.failed' || error?.type === 'entity.too.large') { status = error.type === 'entity.too.large' ? 413 : 400; code = 'VALIDATION_ERROR'; message = 'Invalid request body'; }
     res.status(status).json({ error: { code, message, details } });
   };
-  router.use(errors);
+  router.use(requestErrorDiagnostics, errors);
   return router;
 }
