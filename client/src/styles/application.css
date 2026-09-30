@@ -33584,7 +33584,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   grid-template-areas:"fefo";
 }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] { grid-area:fefo; }
-.sl-staff-stockin-v145 .sl-staff-stockin-kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .sl-record-identifier-link {
   border:0;
   background:transparent;
@@ -33598,7 +33597,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   cursor:pointer;
 }
 .sl-record-identifier-link:visited { color:var(--sl-text); }
-.sl-record-identifier-link:hover { color:var(--sl-brand-strong); text-decoration:none; }
+.sl-record-identifier-link:hover { color:var(--sl-text); text-decoration:none; }
 .sl-record-identifier-link:focus-visible { outline:2px solid var(--sl-focus); outline-offset:3px; border-radius:2px; }
 .sl-inventory-batch-details-dialog .sl-status-dot { display:none; }
 .sl-canonical-identifier { color:var(--sl-text); font-weight:400; white-space:nowrap; }
@@ -33642,9 +33641,32 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(4) { width:25%; }
 .sl-inventory-staff-dashboard-v140 .sl-canonical-identifier { white-space:nowrap; }
 .sl-inventory-staff-dashboard-v140 #inventory-staff-my-pending-requests .sl-empty-cell { height:auto; min-height:10rem; }
-.sl-detail-enabled-row { cursor:pointer; transition:background-color var(--sl-motion); }
-.sl-detail-enabled-row:hover { background:var(--sl-brand-subtle); }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid .sl-dashboard-source-table td {
+  color:var(--sl-text);
+  font:var(--sl-font-body);
+  font-weight:400;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid .sl-dashboard-source-table .sl-record-identifier-link {
+  color:var(--sl-text);
+  font:inherit;
+  font-weight:500;
+}
+.sl-detail-enabled-row,
+.sl-actionable-record-row { transition:background-color var(--sl-motion); }
+.sl-detail-enabled-row { cursor:pointer; }
+:is(.sl-detail-enabled-row,.sl-actionable-record-row):hover,
+.sl-actionable-record-row:focus-within { background:var(--sl-brand-subtle); }
 .sl-detail-enabled-row:focus-visible { background:var(--sl-brand-subtle); outline:2px solid var(--sl-focus); outline-offset:-2px; }
+.sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell {
+  border-top:1px solid var(--sl-border-subtle);
+  border-right:0;
+}
+.sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell--first-row { border-top:0; }
+.sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell--left { border-right:1px solid var(--sl-border-subtle); }
+.sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell--full {
+  grid-column:1/-1;
+  min-height:0;
+}
 @media (width<=1100px) {
   .sl-inventory-staff-preview-grid { grid-template-columns:minmax(0,1fr); }
   .sl-inventory-staff-preview-grid > :is(.sl-inventory-staff-analytics,.sl-inventory-staff-bottom) > .sl-card { height:auto; }
@@ -33654,6 +33676,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-inventory-staff-quick-actions > div { display:grid; grid-template-columns:minmax(0,1fr); }
   .sl-inventory-staff-quick-actions .sl-button { justify-content:center; width:100%; }
 }
-@media (width<=900px) {
-  .sl-staff-stockin-v145 .sl-staff-stockin-kpis { grid-template-columns:minmax(0,1fr); }
+@media (width<=540px) {
+  .sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell--left { border-right:0; }
+  .sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell + .sl-change-request-detail-cell { border-top:1px solid var(--sl-border-subtle); }
+  .sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell--full { grid-column:auto; }
 }
