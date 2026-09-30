@@ -58,7 +58,8 @@ test('Mongo key guard covers all business writes and reads without bypassing wri
     assert.equal(response.status, 401, path);
   }
   const staffCreate = await fetch(base + '/api/ingredients', { method: 'POST', headers: { Authorization: 'Bearer Inventory Staff', 'Content-Type': 'application/json' }, body: JSON.stringify({ $set: { role: 'Super Admin' } }) });
-  assert.equal(staffCreate.status, 403);
+  assert.equal(staffCreate.status, 400);
+  assert.match((await staffCreate.json()).error.message, /operator and dotted keys/);
   for (const path of ['/api/users', '/api/audit-records', '/api/dashboard/summary', '/api/ingredients', '/api/inventory-batches', `/api/inventory-batches/${id}`, '/api/system-config']) {
     const response = await fetch(base + path + '?%24where=x', { headers: { Authorization: 'Bearer Super Admin' } });
     assert.equal(response.status, 400, path);

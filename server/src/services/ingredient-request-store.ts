@@ -47,8 +47,8 @@ export function createIngredientRequestStore(driver: Mongoose, requests: ReturnT
       const row = await driver.connection.transaction(async session => {
         const [created] = await requests.create([{ ...input, createdBy: actorId }], { session });
         const value = created.toObject() as RequestRow;
-        await audits.create([{ userId: actorId, action: 'CREATE', targetType: 'ChangeRequest', targetId: value._id,
-          oldValue: null, newValue: auditSnapshot('ChangeRequest', { ...requestValue(value), createdBy: actorId }) }], { session });
+        await audits.create([{ userId: actorId, action: 'CREATE', targetType: 'IngredientRequest', targetId: value._id,
+          oldValue: null, newValue: auditSnapshot('IngredientRequest', { ...requestValue(value), createdBy: actorId }) }], { session });
         return value;
       });
       return (await serialize([row]))[0];
@@ -62,9 +62,9 @@ export function createIngredientRequestStore(driver: Mongoose, requests: ReturnT
           $set: input, $inc: { version: 1 },
         }, { session, returnDocument: 'after', runValidators: true }).lean().exec() as RequestRow | null;
         if (!after) throw versionConflict();
-        await audits.create([{ userId: actorId, action: 'UPDATE', targetType: 'ChangeRequest', targetId: id,
-          oldValue: auditSnapshot('ChangeRequest', { ...requestValue(before), createdBy: before.createdBy.toString() }),
-          newValue: auditSnapshot('ChangeRequest', { ...requestValue(after), createdBy: after.createdBy.toString() }) }], { session });
+        await audits.create([{ userId: actorId, action: 'UPDATE', targetType: 'IngredientRequest', targetId: id,
+          oldValue: auditSnapshot('IngredientRequest', { ...requestValue(before), createdBy: before.createdBy.toString() }),
+          newValue: auditSnapshot('IngredientRequest', { ...requestValue(after), createdBy: after.createdBy.toString() }) }], { session });
         return after;
       });
       return (await serialize([row]))[0];
@@ -77,9 +77,9 @@ export function createIngredientRequestStore(driver: Mongoose, requests: ReturnT
           $set: { isDeleted: true, deletedBy: actorId }, $inc: { version: 1 },
         }, { session, returnDocument: 'after', runValidators: true }).lean().exec() as RequestRow | null;
         if (!after) throw versionConflict();
-        await audits.create([{ userId: actorId, action: 'UPDATE', targetType: 'ChangeRequest', targetId: id,
-          oldValue: auditSnapshot('ChangeRequest', { ...requestValue(before), createdBy: before.createdBy.toString() }),
-          newValue: auditSnapshot('ChangeRequest', { ...requestValue(after), createdBy: after.createdBy.toString() }), reason: 'Ingredient request removed from the review list' }], { session });
+        await audits.create([{ userId: actorId, action: 'UPDATE', targetType: 'IngredientRequest', targetId: id,
+          oldValue: auditSnapshot('IngredientRequest', { ...requestValue(before), createdBy: before.createdBy.toString() }),
+          newValue: auditSnapshot('IngredientRequest', { ...requestValue(after), createdBy: after.createdBy.toString() }), reason: 'Ingredient request removed from the review list' }], { session });
       });
     },
     async review(reviewerId: string, id: string, input: IngredientRequestReview) {
@@ -103,9 +103,9 @@ export function createIngredientRequestStore(driver: Mongoose, requests: ReturnT
           $inc: { version: 1 },
         }, { session, returnDocument: 'after', runValidators: true }).lean().exec() as RequestRow | null;
         if (!after) throw versionConflict();
-        await audits.create([{ userId: reviewerId, action: 'UPDATE', targetType: 'ChangeRequest', targetId: id,
-          oldValue: auditSnapshot('ChangeRequest', { ...requestValue(before), createdBy: before.createdBy.toString() }),
-          newValue: auditSnapshot('ChangeRequest', { ...requestValue(after), createdBy: after.createdBy.toString() }), reason: input.note || `Ingredient request ${input.decision.toLowerCase()}` }], { session });
+        await audits.create([{ userId: reviewerId, action: 'UPDATE', targetType: 'IngredientRequest', targetId: id,
+          oldValue: auditSnapshot('IngredientRequest', { ...requestValue(before), createdBy: before.createdBy.toString() }),
+          newValue: auditSnapshot('IngredientRequest', { ...requestValue(after), createdBy: after.createdBy.toString() }), reason: input.note || `Ingredient request ${input.decision.toLowerCase()}` }], { session });
         return { request: after, ingredientId: createdIngredient?._id.toString() ?? null };
       });
       return { request: (await serialize([result.request]))[0], ingredientId: result.ingredientId };

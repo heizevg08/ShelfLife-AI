@@ -49,8 +49,8 @@ export function createAccountRequests(driver: Mongoose, requests: ReturnType<typ
         const created = new requests({ ...input, requestedBy: actor.id, requestedByRole: actor.role });
         await created.save({ session });
         const request = created.toObject() as RequestRow;
-        await audits.create([{ userId: actor.id, action: 'CREATE', targetType: 'ChangeRequest', targetId: request._id, oldValue: null,
-          newValue: auditSnapshot('ChangeRequest', { id: request._id.toString(), firstName: request.firstName, lastName: request.lastName, email: request.email, role: request.role, requestedBy: actor.id, requestedByRole: actor.role, status: request.status }) }], { session });
+        await audits.create([{ userId: actor.id, action: 'CREATE', targetType: 'AccountRequest', targetId: request._id, oldValue: null,
+          newValue: auditSnapshot('AccountRequest', { id: request._id.toString(), firstName: request.firstName, lastName: request.lastName, email: request.email, role: request.role, requestedBy: actor.id, requestedByRole: actor.role, status: request.status }) }], { session });
         return request;
       });
       return (await serialize([row]))[0];
@@ -75,9 +75,9 @@ export function createAccountRequests(driver: Mongoose, requests: ReturnType<typ
           $inc: { version: 1 },
         }, { session, returnDocument: 'after', runValidators: true }).lean().exec() as RequestRow | null;
         if (!after) throw versionConflict();
-        await audits.create([{ userId: actor.id, action: 'UPDATE', targetType: 'ChangeRequest', targetId: id,
-          oldValue: auditSnapshot('ChangeRequest', { id, firstName: before.firstName, lastName: before.lastName, email: before.email, role: before.role, requestedBy: before.requestedBy.toString(), requestedByRole: before.requestedByRole, status: before.status, reviewedBy: before.reviewedBy?.toString() ?? null }),
-          newValue: auditSnapshot('ChangeRequest', { id, firstName: after.firstName, lastName: after.lastName, email: after.email, role: after.role, requestedBy: after.requestedBy.toString(), requestedByRole: after.requestedByRole, status: after.status, reviewedBy: actor.id, accountId: accountId?.toString() ?? null }), reason: input.note || `Account request ${input.decision.toLowerCase()}` }], { session });
+        await audits.create([{ userId: actor.id, action: 'UPDATE', targetType: 'AccountRequest', targetId: id,
+          oldValue: auditSnapshot('AccountRequest', { id, firstName: before.firstName, lastName: before.lastName, email: before.email, role: before.role, requestedBy: before.requestedBy.toString(), requestedByRole: before.requestedByRole, status: before.status, reviewedBy: before.reviewedBy?.toString() ?? null }),
+          newValue: auditSnapshot('AccountRequest', { id, firstName: after.firstName, lastName: after.lastName, email: after.email, role: after.role, requestedBy: after.requestedBy.toString(), requestedByRole: after.requestedByRole, status: after.status, reviewedBy: actor.id, accountId: accountId?.toString() ?? null }), reason: input.note || `Account request ${input.decision.toLowerCase()}` }], { session });
         return after;
       });
       return (await serialize([result]))[0];
@@ -92,9 +92,9 @@ export function createAccountRequests(driver: Mongoose, requests: ReturnType<typ
           $set: { isDeleted: true, deletedBy: actor.id }, $inc: { version: 1 },
         }, { session, returnDocument: 'after', runValidators: true }).lean().exec() as RequestRow | null;
         if (!after) throw versionConflict();
-        await audits.create([{ userId: actor.id, action: 'UPDATE', targetType: 'ChangeRequest', targetId: id,
-          oldValue: auditSnapshot('ChangeRequest', { id, firstName: before.firstName, lastName: before.lastName, email: before.email, role: before.role, requestedBy: before.requestedBy.toString(), requestedByRole: before.requestedByRole, status: before.status, reviewedBy: before.reviewedBy?.toString() ?? null, accountId: before.accountId?.toString() ?? null, isDeleted: false }),
-          newValue: auditSnapshot('ChangeRequest', { id, firstName: after.firstName, lastName: after.lastName, email: after.email, role: after.role, requestedBy: after.requestedBy.toString(), requestedByRole: after.requestedByRole, status: after.status, reviewedBy: after.reviewedBy?.toString() ?? null, accountId: after.accountId?.toString() ?? null, isDeleted: true, deletedBy: actor.id }),
+        await audits.create([{ userId: actor.id, action: 'UPDATE', targetType: 'AccountRequest', targetId: id,
+          oldValue: auditSnapshot('AccountRequest', { id, firstName: before.firstName, lastName: before.lastName, email: before.email, role: before.role, requestedBy: before.requestedBy.toString(), requestedByRole: before.requestedByRole, status: before.status, reviewedBy: before.reviewedBy?.toString() ?? null, accountId: before.accountId?.toString() ?? null, isDeleted: false }),
+          newValue: auditSnapshot('AccountRequest', { id, firstName: after.firstName, lastName: after.lastName, email: after.email, role: after.role, requestedBy: after.requestedBy.toString(), requestedByRole: after.requestedByRole, status: after.status, reviewedBy: after.reviewedBy?.toString() ?? null, accountId: after.accountId?.toString() ?? null, isDeleted: true, deletedBy: actor.id }),
           reason: 'Approved account request removed from the request list' }], { session });
       });
     },

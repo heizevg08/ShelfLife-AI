@@ -69,10 +69,11 @@ test('ingredient HTTP API authenticates, enforces per-method roles, validates, p
       assert.equal((await request(role, 'PATCH', input, '/' + '3'.repeat(24))).status, 403);
       assert.equal((await request(role, 'DELETE', undefined, '/' + '3'.repeat(24))).status, 403);
     }
-    assert.equal((await request(staff, 'POST', { ...input, name: 'Staff creation' })).status, 403);
+    const staffCreated = await request(staff, 'POST', { ...input, name: 'Staff creation' }); assert.equal(staffCreated.status, 201);
+    assert.equal((await staffCreated.json()).ingredient.createdBy.id, staff.id);
     assert.equal((await request(staff, 'PATCH', input, '/' + '3'.repeat(24))).status, 403);
     assert.equal((await request(staff, 'DELETE', undefined, '/' + '3'.repeat(24))).status, 403);
-    assert.equal(rows.length, 0);
+    assert.equal(rows.length, 1);
     assert.equal((await request(manager, 'POST', { ...input, expirationDate: '2030-01-01' })).status, 400);
     const created = await request(manager, 'POST', input); assert.equal(created.status, 201);
     const body = await created.json(); assert.equal(body.ingredient.name, 'Whole Milk'); assert.equal(body.ingredient.createdBy.id, manager.id);
@@ -85,10 +86,10 @@ test('ingredient HTTP API authenticates, enforces per-method roles, validates, p
     assert.equal((await request(manager, 'PATCH', { brand: 'missing version' }, `/${id}`)).status, 400);
     assert.equal((await request(manager, 'DELETE', { expectedVersion: 1 }, `/${id}`)).status, 204);
     assert.equal((await request(manager, 'DELETE', { expectedVersion: 2 }, `/${id}`)).status, 404);
-    assert.equal(rows.length, 1);
-    assert.equal(rows[0].isActive, false);
-    assert.equal((await (await request(manager)).json()).total, 0);
-    assert.equal((await (await request(manager, 'GET', undefined, '?includeArchived=true')).json()).items[0].isActive, false);
+    assert.equal(rows.length, 2);
+    assert.equal(rows.find(row => row.id === id).isActive, false);
+    assert.equal((await (await request(manager, 'GET', undefined, '?search=whole')).json()).total, 0);
+    assert.equal((await (await request(manager, 'GET', undefined, '?includeArchived=true')).json()).items.find(item => item.id === id).isActive, false);
     assert.equal((await request(manager, 'PATCH', { ...input, expectedVersion: 2 }, `/${id}`)).status, 404);
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });

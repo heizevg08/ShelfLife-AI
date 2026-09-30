@@ -6,6 +6,7 @@ const fields: Record<string, readonly string[]> = {
   Ingredient: ['id', 'name', 'brand', 'description', 'category', 'customCategory', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'version', 'isActive', 'createdBy', 'createdAt', 'updatedAt'],
   ChangeRequest: ['id', 'name', 'brand', 'description', 'category', 'customCategory', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'firstName', 'lastName', 'email', 'role', 'requestedBy', 'requestedByRole', 'status', 'version', 'createdBy', 'reviewedBy', 'reviewNote', 'ingredientId', 'accountId', 'isDeleted', 'deletedBy', 'createdAt', 'updatedAt'],
   AccountRequest: ['id', 'firstName', 'lastName', 'email', 'role', 'requestedBy', 'requestedByRole', 'status', 'reviewedBy', 'reviewNote', 'accountId', 'isDeleted', 'deletedBy', 'version', 'createdAt', 'updatedAt'],
+  IngredientRequest: ['id', 'name', 'brand', 'description', 'category', 'customCategory', 'unitOfMeasure', 'minimumStock', 'standardUnitCost', 'defaultShelfLifeDays', 'status', 'version', 'createdBy', 'reviewedBy', 'reviewNote', 'ingredientId', 'isDeleted', 'deletedBy', 'createdAt', 'updatedAt'],
 };
 export type AuditSnapshot = Record<string, unknown> | null;
 export function auditSnapshot(targetType: string, value: unknown): AuditSnapshot {
