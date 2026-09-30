@@ -1,6 +1,11 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const { createServer } = require('node:http');
+const { once } = require('node:events');
+const { randomBytes } = require('node:crypto');
 const { Mongoose } = require('mongoose');
+const { createApp } = require('../dist/app');
+const { createAuth } = require('../dist/services/auth');
 const { batchInput, batchPatch, batchCorrection, batchPagination } = require('../dist/validators/inventory-batch');
 const { batchStatus, manilaDate } = require('../dist/services/batch-status');
 const { inventoryBatchModel } = require('../dist/models/inventory-batch');
@@ -46,4 +51,21 @@ test('batch schema enforces collection, controlled units, decimal bounds and no 
   assert.equal(row.currency, 'PHP'); assert.equal(row.version, 0);
   for (const patch of [{ unit: 'liter' }, { quantity: '10.501' }, { initialQuantity: '0', quantity: '0' }, { unitCost: '-1' }, { unitCost: '1.23456' }, { expirationDate: '2026-02-30' }, { expirationDate: '2026-09-19' }, { currency: 'USD' }]) await assert.rejects(new Model({ ...good, ...patch }).validate());
   assert.throws(() => new Model({ ...good, status: 'Normal' }));
+});
+
+test('a duplicate batch code reports the batch conflict rather than an ingredient conflict', async t => {
+  const manager = { id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Manager', email: 'manager@shelflife.com', role: 'Inventory Manager', isActive: true, authVersion: 0 };
+  const auth = createAuth({ byId: async id => id === manager.id ? manager : null, byEmail: async () => null }, randomBytes(48).toString('hex'));
+  const duplicate = Object.assign(new Error('E11000 duplicate key'), { code: 11000, keyPattern: { ingredientId: 1, batchCode: 1 }, index: 'ingredient_batch_code_unique' });
+  const batches = { create: async () => { throw duplicate; } };
+  const server = createServer(createApp([], () => true, auth, undefined, undefined, undefined, undefined, batches));
+  t.after(() => { server.closeAllConnections(); server.close(); });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/inventory-batches`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${auth.issue(manager).accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).error.message, 'A batch with this code already exists for this ingredient, including archived batches');
 });
