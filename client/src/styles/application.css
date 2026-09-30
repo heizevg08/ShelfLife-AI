@@ -33605,6 +33605,10 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-record-identifier-link:focus-visible { outline:2px solid var(--sl-focus); outline-offset:3px; border-radius:2px; }
 .sl-inventory-batch-details-dialog { width:min(680px,calc(100vw - 2rem)); }
+.sl-inventory-batch-details-dialog > .sl-dialog-content { min-height:0; height:auto; padding:0; }
+.sl-inventory-batch-details-dialog .sl-status-dot { display:none; }
+.sl-staff-my-request-link { border:0; background:transparent; padding:0; cursor:pointer; }
+.sl-staff-my-request-link:focus-visible { outline:2px solid var(--sl-focus); outline-offset:3px; border-radius:2px; }
 .sl-inventory-batch-details-grid {
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:.75rem;
@@ -33621,6 +33625,23 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-inventory-batch-details-grid dt { color:var(--sl-text-muted); font:var(--sl-font-label); font-weight:600; }
 .sl-inventory-batch-details-grid dd { margin:.3rem 0 0; color:var(--sl-text); font-weight:400; overflow-wrap:anywhere; }
 .sl-inventory-batch-details-wide { grid-column:1/-1; }
+.sl-inventory-staff-quick-actions {
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  border:1px solid var(--sl-border-subtle);
+  border-radius:var(--sl-radius-lg);
+  background:var(--sl-surface);
+  padding:.85rem 1rem;
+  display:flex;
+}
+.sl-inventory-staff-quick-actions > div { align-items:center; flex-wrap:wrap; gap:.65rem; display:flex; }
+:is(.sl-staff-usage-table,.sl-staff-waste-table,.sl-staff-stockin-table,.sl-staff-inventory-records-table,.sl-staff-my-requests-table,.sl-dashboard-source-table) tbody td { color:var(--sl-text); font-weight:400; }
+@media (width<=620px) {
+  .sl-inventory-staff-quick-actions { align-items:stretch; flex-direction:column; }
+  .sl-inventory-staff-quick-actions > div { display:grid; grid-template-columns:minmax(0,1fr); }
+  .sl-inventory-staff-quick-actions .sl-button { justify-content:center; width:100%; }
+}
 @media (width<=900px) {
   .sl-staff-stockin-v145 .sl-staff-stockin-kpis { grid-template-columns:minmax(0,1fr); }
 }
