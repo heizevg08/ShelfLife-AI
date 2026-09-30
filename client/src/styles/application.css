@@ -33586,3 +33586,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-staff-inventory-v149 .sl-staff-inventory-layout { grid-template-columns:minmax(0,1fr); }
 .sl-staff-inventory-v149 .sl-staff-inventory-main { min-width:0; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics {
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"fefo";
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] { grid-area:fefo; }

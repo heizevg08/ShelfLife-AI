@@ -6,7 +6,7 @@ export type ChangeRequestType = typeof CHANGE_REQUEST_TYPES[number];
 export type ChangeRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export interface ChangeRequest {
   id: string; requestID: string; requestType: ChangeRequestType; targetField?: string; reason: string; currentValue?: string; requestedValue?: string; requestedQuantity?: number; requestedUnit?: string; requestDescription?: string; proposedBatch?: { dateReceived: string; quantityReceived: number; expirationDate: string; unitCost?: number };
-  ingredient?: { id: string; name: string }; batch?: { id: string; batchID: string }; status: ChangeRequestStatus;
+  ingredient?: { id: string; name: string }; batch?: { id: string; batchID: string; unit?: string }; status: ChangeRequestStatus;
   requestedBy: { id: string; name: string }; reviewedBy?: { id: string; name: string }; reviewedAt?: string; reviewNote?: string; createdAt: string; updatedAt: string;
 }
 export interface ChangeRequestInput { requestType: ChangeRequestType; reason: string; ingredientId?: string; batchId?: string; targetField?: string; requestedValue?: string; requestedQuantity?: number; requestedUnit?: string; requestDescription?: string; proposedBatch?: { dateReceived: string; quantityReceived: number; expirationDate: string; unitCost?: number }; }
