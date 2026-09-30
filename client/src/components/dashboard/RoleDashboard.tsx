@@ -4,7 +4,7 @@ import { Link } from 'expo-router';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
 import { ApplicationDonutChart, ApplicationPendingState } from '../application/ApplicationPatterns';
 import { Card, DataState, PageHeader, PlaceholderSummaryCards, PlaceholderTable, Status } from '../application/primitives';
-import { ForecastFlow, WorkflowLink, WorkspaceLink } from '../application/ModulePage';
+import { ForecastFlow, InventoryBatchDetailsDialog, WorkflowLink, WorkspaceLink } from '../application/ModulePage';
 import { AccountsTable } from '../application/AccountsTable';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { listIngredientCategories, listIngredients } from '../../services/ingredients';
@@ -157,6 +157,7 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
 
 function InventoryStaffDashboardContent({ userName }: { userName: string }) {
   const requestTrigger = useRef<HTMLButtonElement>(null);
+  const batchTrigger = useRef<HTMLTableRowElement>(null);
   const [inventory, setInventory] = useState<InventoryBatch[] | null>(null);
   const [inventorySummary, setInventorySummary] = useState<{ totalIngredients: number; totalBatches: number; nearExpiry: number; lowStockItems: number } | null>(null);
   const [inventoryFailed, setInventoryFailed] = useState(false);
@@ -166,6 +167,7 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
   const [usageSummaryFailed, setUsageSummaryFailed] = useState(false);
   const [detail, setDetail] = useState<ChangeRequest | null>(null);
+  const [batchDetail, setBatchDetail] = useState<InventoryBatch | null>(null);
   useEffect(() => {
     const abort = new AbortController();
     listInventoryBatches({ page: 1, pageSize: 5, sort: 'fefo' }, abort.signal)
@@ -200,15 +202,16 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
 
       <div className="sl-inventory-staff-preview-grid"><section className="sl-inventory-staff-analytics" aria-label="Use first inventory">
         <Card id="inventory-staff-fefo" title={<DashboardCardTitle Icon={ListOrdered}>Use First · FEFO</DashboardCardTitle>} action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
-          <div className="sl-dashboard-source-table-shell sl-inventory-staff-fefo-table" role="region" aria-label="Use First FEFO" tabIndex={0}><table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['#','Ingredient','Batch ID','Expiration Date','Days Left'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{inventory?.length ? inventory.map((batch, index) => <tr key={batch.id}><td>{index + 1}</td><td className="sl-emphasized-value">{batch.ingredient.name}</td><td className="sl-canonical-identifier">{batch.batchID}</td><td>{formatDate(batch.expirationDate)}</td><td>{Math.ceil((new Date(batch.expirationDate).getTime() - Date.now()) / 86400000)}</td></tr>) : inventoryFailed ? stateRow(5, 'error', 'Inventory unavailable', 'Inventory batches could not be loaded.') : inventory === null ? stateRow(5, 'loading', 'Loading inventory batches', 'Retrieving FEFO-priority records.') : stateRow(5, 'empty', 'No inventory batches yet', 'FEFO-priority batches will appear after stock is received.')}</tbody></table></div>
+          <div className="sl-dashboard-source-table-shell sl-inventory-staff-fefo-table" role="region" aria-label="Use First FEFO" tabIndex={0}><table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['#','Ingredient','Batch ID','Expiration Date','Days Left'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{inventory?.length ? inventory.map((batch, index) => <tr key={batch.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event=>{batchTrigger.current=event.currentTarget;setBatchDetail(batch)}} onKeyDown={event=>{if(event.target!==event.currentTarget)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();batchTrigger.current=event.currentTarget;setBatchDetail(batch)}}}><td>{index + 1}</td><td className="sl-emphasized-value">{batch.ingredient.name}</td><td><button type="button" className="sl-record-identifier-link" onClick={event=>{event.stopPropagation();batchTrigger.current=event.currentTarget.closest('tr');setBatchDetail(batch)}}>{batch.batchID}</button></td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td></tr>) : inventoryFailed ? stateRow(5, 'error', 'Inventory unavailable', 'Inventory batches could not be loaded.') : inventory === null ? stateRow(5, 'loading', 'Loading inventory batches', 'Retrieving FEFO-priority records.') : stateRow(5, 'empty', 'No inventory batches yet', 'FEFO-priority batches will appear after stock is received.')}</tbody></table></div>
         </Card>
       </section>
 
       <section className="sl-inventory-staff-bottom" aria-label="Inventory staff dashboard records">
         <Card id="inventory-staff-my-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>My Pending Requests</DashboardCardTitle>} action={<Link href="/MyRequests" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
-          <div className="sl-inventory-staff-dashboard-table sl-dashboard-source-table-shell" role="region" aria-label="My Pending Requests" tabIndex={0}><table className="sl-data-table sl-dashboard-source-table"><thead><tr>{['#','Request ID','Submitted On','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{pendingRequests?.length ? pendingRequests.map((request, index) => <tr key={request.id}><td>{index + 1}</td><td><button type="button" className="sl-record-identifier-link" onClick={event => { requestTrigger.current = event.currentTarget; void openRequest(request.id); }}>{request.requestID}</button></td><td>{formatDateTime(request.createdAt)}</td><td><Status tone={requestStatusTone(request)}>{requestStatus(request)}</Status></td></tr>) : pendingRequestsFailed ? stateRow(4, 'error', 'Requests unavailable', 'Pending requests could not be loaded.') : pendingRequests === null ? stateRow(4, 'loading', 'Loading pending requests', 'Retrieving your submitted requests.') : stateRow(4, 'empty', 'No pending requests', 'You have no requests awaiting review.')}</tbody></table></div>
+          <div className="sl-inventory-staff-dashboard-table sl-dashboard-source-table-shell" role="region" aria-label="My Pending Requests" tabIndex={0}><table className="sl-data-table sl-dashboard-source-table sl-change-request-preview-table"><thead><tr>{['#','Request ID','Submitted On','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{pendingRequests?.length ? pendingRequests.map((request, index) => <tr key={request.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event=>{requestTrigger.current=event.currentTarget.querySelector('button');void openRequest(request.id)}} onKeyDown={event=>{if(event.target!==event.currentTarget)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();requestTrigger.current=event.currentTarget.querySelector('button');void openRequest(request.id)}}}><td>{index + 1}</td><td><button type="button" className="sl-record-identifier-link" onClick={event => { event.stopPropagation(); requestTrigger.current = event.currentTarget; void openRequest(request.id); }}>{request.requestID}</button></td><td>{formatDateTime(request.createdAt)}</td><td><Status tone={requestStatusTone(request)}>{requestStatus(request)}</Status></td></tr>) : pendingRequestsFailed ? stateRow(4, 'error', 'Requests unavailable', 'Pending requests could not be loaded.') : pendingRequests === null ? stateRow(4, 'loading', 'Loading pending requests', 'Retrieving your submitted requests.') : stateRow(4, 'empty', 'No pending requests', 'You have no requests awaiting review.')}</tbody></table></div>
         </Card>
       </section></div>
+      <InventoryBatchDetailsDialog batch={batchDetail} onDismiss={() => setBatchDetail(null)} returnFocus={batchTrigger} />
       <ChangeRequestDetailsDialog request={detail} onDismiss={() => setDetail(null)} returnFocus={requestTrigger} />
     </div>;
 }

@@ -1,6 +1,6 @@
 import { Link, type Href } from 'expo-router';
 import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, FileText, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Ruler, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, Truck, ClipboardCheck, PackageCheck } from 'lucide-react';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { APPLICATION_RECORD_PAGE_SIZES, ApplicationPendingState } from './ApplicationPatterns';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
@@ -431,8 +431,8 @@ function InventoryStaffUsagePage() {
 
 const inventoryBatchStatusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired' ? 'critical' as const : status === 'Near Expiry' || status === 'Low Stock' ? 'attention' as const : 'success' as const;
 
-function InventoryBatchDetailsDialog({ batch, onDismiss }: { batch: InventoryBatch | null; onDismiss: () => void }) {
-  return <Dialog open={Boolean(batch)} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Boxes size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Inventory Batch Details</span><small>View inventory batch information.</small></span></span>} onDismiss={onDismiss} actions={<button type="button" className="sl-button" onClick={onDismiss}>Close</button>} className="sl-account-reference-dialog sl-inventory-batch-details-dialog">
+export function InventoryBatchDetailsDialog({ batch, onDismiss, returnFocus }: { batch: InventoryBatch | null; onDismiss: () => void; returnFocus?: RefObject<HTMLElement | null> }) {
+  return <Dialog open={Boolean(batch)} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Boxes size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Inventory Batch Details</span><small>View inventory batch information.</small></span></span>} onDismiss={onDismiss} returnFocus={returnFocus} actions={<button type="button" className="sl-button" onClick={onDismiss}>Close</button>} className="sl-account-reference-dialog sl-inventory-batch-details-dialog">
     {batch && <dl className="sl-inventory-batch-details-grid">
       <div><dt>Batch ID</dt><dd>{batch.batchID}</dd></div><div><dt>Ingredient</dt><dd>{batch.ingredient.name}</dd></div>
       <div><dt>Date Received</dt><dd>{formatDate(batch.dateReceived)}</dd></div><div><dt>Expiration Date</dt><dd>{formatDate(batch.expirationDate)}</dd></div>
@@ -467,6 +467,7 @@ function InventoryStaffStockInPage() {
   const [expirationDate, setExpirationDate] = useState('');
   const [unitCost, setUnitCost] = useState('');
   const [viewBatch, setViewBatch] = useState<InventoryBatch|null>(null);
+  const viewBatchTrigger = useRef<HTMLTableRowElement>(null);
   const addStockInButton = useRef<HTMLButtonElement>(null);
   const stockForm = useRef<HTMLFormElement>(null);
   const selectedIngredient = stockIngredients.find(item => item.id === ingredientId);
@@ -510,7 +511,7 @@ function InventoryStaffStockInPage() {
           <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={reset}>Reset</button><InventoryStaffAddButton buttonRef={addStockInButton} label="Add Stock-In" onClick={()=>setAddModalOpen(true)} /></div>
         </div></div>
         <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell"><table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-stockin-table"><thead><tr>{['Recorded At','Date Received','Ingredient','Batch ID','Quantity','Unit','Expiration Date','Recorded By'].map(column=><th key={column}>{column}</th>)}</tr></thead><tbody>
-          {stockLoading&&!stockData?<tr><td colSpan={8} className="sl-empty-cell"><DataState kind="loading" title="Loading Stock-In records" description="Retrieving received inventory batches."/></td></tr>:stockError?<tr><td colSpan={8} className="sl-empty-cell"><DataState kind="error" title="Stock-In records unavailable" description="The inventory service could not be reached."/></td></tr>:!stockData?.items.length?<tr><td colSpan={8} className="sl-empty-cell"><DataState kind="empty" title={stockSummary?.totalBatches?'No matching records':'No live records yet'} description={stockSummary?.totalBatches?'No Stock-In records match the current search and filters.':'Stock-In records will appear here after inventory is received.'}/></td></tr>:stockData.items.map(batch=><tr key={batch.id}><td>{formatDateTime(batch.createdAt)}</td><td>{formatDate(batch.dateReceived)}</td><td className="sl-emphasized-value">{batch.ingredient.name}</td><td><button type="button" className="sl-record-identifier-link" onClick={()=>setViewBatch(batch)}>{batch.batchID}</button></td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.createdBy.name}</td></tr>)}
+          {stockLoading&&!stockData?<tr><td colSpan={8} className="sl-empty-cell"><DataState kind="loading" title="Loading Stock-In records" description="Retrieving received inventory batches."/></td></tr>:stockError?<tr><td colSpan={8} className="sl-empty-cell"><DataState kind="error" title="Stock-In records unavailable" description="The inventory service could not be reached."/></td></tr>:!stockData?.items.length?<tr><td colSpan={8} className="sl-empty-cell"><DataState kind="empty" title={stockSummary?.totalBatches?'No matching records':'No live records yet'} description={stockSummary?.totalBatches?'No Stock-In records match the current search and filters.':'Stock-In records will appear here after inventory is received.'}/></td></tr>:stockData.items.map(batch=><tr key={batch.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event=>{viewBatchTrigger.current=event.currentTarget;setViewBatch(batch)}} onKeyDown={event=>{if(event.target!==event.currentTarget)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();viewBatchTrigger.current=event.currentTarget;setViewBatch(batch)}}}><td>{formatDateTime(batch.createdAt)}</td><td>{formatDate(batch.dateReceived)}</td><td className="sl-emphasized-value">{batch.ingredient.name}</td><td><button type="button" className="sl-record-identifier-link" onClick={event=>{event.stopPropagation();viewBatchTrigger.current=event.currentTarget.closest('tr');setViewBatch(batch)}}>{batch.batchID}</button></td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.createdBy.name}</td></tr>)}
         </tbody></table></div>
         <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={stockRows} onChange={event=>{setStockRows(Number(event.target.value));setStockPage(1)}}>{[10,15,50,100,150].map(value=><option key={value}>{value}</option>)}</select></label><Pagination compact page={stockPage} pageSize={stockRows} total={stockData?.total??0} itemLabel="stock-in records" onPageChange={setStockPage}/></footer>
       </section></main></div>
@@ -534,7 +535,7 @@ function InventoryStaffStockInPage() {
         {stockFormMessage&&<p className="sl-inline-notice sl-stockin-entry-message" role="status">{stockFormMessage}</p>}
       </form>
     </Dialog>
-    <InventoryBatchDetailsDialog batch={viewBatch} onDismiss={()=>setViewBatch(null)} />
+    <InventoryBatchDetailsDialog batch={viewBatch} onDismiss={()=>setViewBatch(null)} returnFocus={viewBatchTrigger} />
   </>;
 }
 
@@ -553,6 +554,7 @@ function InventoryStaffInventoryBatchesPage() {
   const [batchError, setBatchError] = useState(false);
   const [batchSummaryError, setBatchSummaryError] = useState(false);
   const [viewBatch, setViewBatch] = useState<InventoryBatch | null>(null);
+  const viewBatchTrigger = useRef<HTMLTableRowElement>(null);
   const reset = () => {
     setSearch('');
     setCategory('');
@@ -615,7 +617,7 @@ function InventoryStaffInventoryBatchesPage() {
             <div className="sl-application-records-table-shell sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Inventory Batches preview" tabIndex={0}>
               <table className="sl-application-records-table sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-staff-inventory-records-table">
                 <thead><tr>{['Ingredient','Batch ID','Category','Date Received','Expiration Date','Days Left','Current Stock','Unit','Status'].map(column=><th scope="col" key={column}>{column}</th>)}</tr></thead>
-                <tbody>{batchLoading && !batchData ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="loading" title="Loading inventory batches" description="Retrieving current inventory records." /></td></tr> : batchError ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="error" title="Inventory batches unavailable" description="The inventory service could not be reached." /></td></tr> : !batchData?.items.length ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="empty" title={search || category || batchStatus ? 'No matching records' : 'No inventory batches yet'} description={search || category || batchStatus ? 'Try adjusting the current filters.' : 'Inventory batches will appear after stock is received.'} /></td></tr> : batchData.items.map(batch => <tr key={batch.id}><td><span className="sl-emphasized-value">{batch.ingredient.name}</span></td><td><button type="button" className="sl-record-identifier-link" onClick={()=>setViewBatch(batch)}>{batch.batchID}</button></td><td>{batch.ingredient.category}</td><td>{formatDate(batch.dateReceived)}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td><Status tone={inventoryBatchStatusTone(batch.displayStatus)}>{batch.displayStatus}</Status></td></tr>)}</tbody>
+                <tbody>{batchLoading && !batchData ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="loading" title="Loading inventory batches" description="Retrieving current inventory records." /></td></tr> : batchError ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="error" title="Inventory batches unavailable" description="The inventory service could not be reached." /></td></tr> : !batchData?.items.length ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="empty" title={search || category || batchStatus ? 'No matching records' : 'No inventory batches yet'} description={search || category || batchStatus ? 'Try adjusting the current filters.' : 'Inventory batches will appear after stock is received.'} /></td></tr> : batchData.items.map(batch => <tr key={batch.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event=>{viewBatchTrigger.current=event.currentTarget;setViewBatch(batch)}} onKeyDown={event=>{if(event.target!==event.currentTarget)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();viewBatchTrigger.current=event.currentTarget;setViewBatch(batch)}}}><td><span className="sl-emphasized-value">{batch.ingredient.name}</span></td><td><button type="button" className="sl-record-identifier-link" onClick={event=>{event.stopPropagation();viewBatchTrigger.current=event.currentTarget.closest('tr');setViewBatch(batch)}}>{batch.batchID}</button></td><td>{batch.ingredient.category}</td><td>{formatDate(batch.dateReceived)}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td><Status tone={inventoryBatchStatusTone(batch.displayStatus)}>{batch.displayStatus}</Status></td></tr>)}</tbody>
               </table>
             </div>
 
@@ -629,7 +631,7 @@ function InventoryStaffInventoryBatchesPage() {
 
       </div>
     </div>
-    <InventoryBatchDetailsDialog batch={viewBatch} onDismiss={()=>setViewBatch(null)} />
+    <InventoryBatchDetailsDialog batch={viewBatch} onDismiss={()=>setViewBatch(null)} returnFocus={viewBatchTrigger} />
   </>;
 }
 
