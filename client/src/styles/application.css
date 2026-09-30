@@ -31512,13 +31512,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-my-requests-table {
   min-width: 66rem;
 }
-.sl-staff-my-request-link {
-  color: var(--sl-brand-strong);
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: .18em;
-}
 .sl-staff-my-request-row { cursor: pointer; }
 .sl-staff-my-request-row:focus-visible {
   outline: 2px solid var(--sl-focus);
@@ -33596,19 +33589,20 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   border:0;
   background:transparent;
   padding:0;
-  color:var(--sl-brand-strong);
+  color:var(--sl-text);
   font:inherit;
-  font-weight:400;
-  text-decoration:underline;
+  font-weight:500;
+  text-decoration:none;
   text-underline-offset:.18em;
+  white-space:nowrap;
   cursor:pointer;
 }
+.sl-record-identifier-link:visited { color:var(--sl-text); }
+.sl-record-identifier-link:hover { color:var(--sl-brand-strong); text-decoration:underline; }
 .sl-record-identifier-link:focus-visible { outline:2px solid var(--sl-focus); outline-offset:3px; border-radius:2px; }
 .sl-inventory-batch-details-dialog { width:min(680px,calc(100vw - 2rem)); }
 .sl-inventory-batch-details-dialog > .sl-dialog-content { min-height:0; height:auto; padding:0; }
 .sl-inventory-batch-details-dialog .sl-status-dot { display:none; }
-.sl-staff-my-request-link { border:0; background:transparent; padding:0; cursor:pointer; }
-.sl-staff-my-request-link:focus-visible { outline:2px solid var(--sl-focus); outline-offset:3px; border-radius:2px; }
 .sl-inventory-batch-details-grid {
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:.75rem;
@@ -33637,6 +33631,36 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-inventory-staff-quick-actions > div { align-items:center; flex-wrap:wrap; gap:.65rem; display:flex; }
 :is(.sl-staff-usage-table,.sl-staff-waste-table,.sl-staff-stockin-table,.sl-staff-inventory-records-table,.sl-staff-my-requests-table,.sl-dashboard-source-table) tbody td { color:var(--sl-text); font-weight:400; }
+.sl-inventory-staff-preview-grid {
+  grid-template-columns:minmax(0,1.72fr) minmax(0,1fr);
+  align-items:start;
+  gap:clamp(.8rem,.6rem + .45vw,1rem);
+  min-width:0;
+  display:grid;
+}
+.sl-inventory-staff-preview-grid > :is(.sl-inventory-staff-analytics,.sl-inventory-staff-bottom) {
+  grid-template-columns:minmax(0,1fr);
+  align-items:start;
+  min-width:0;
+}
+.sl-inventory-staff-preview-grid > :is(.sl-inventory-staff-analytics,.sl-inventory-staff-bottom) > .sl-card { height:auto; min-width:0; }
+.sl-inventory-staff-dashboard-v140 .sl-dashboard-source-table-shell { overflow-x:auto; overflow-y:hidden; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table .sl-dashboard-source-table { min-width:42rem; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table .sl-dashboard-source-table { min-width:28rem; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(1) { width:7%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(2) { width:29%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(3) { width:23%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(4) { width:26%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(5) { width:15%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(1) { width:9%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(2) { width:32%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(3) { width:34%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(4) { width:25%; }
+.sl-inventory-staff-dashboard-v140 .sl-canonical-identifier { white-space:nowrap; }
+.sl-inventory-staff-dashboard-v140 #inventory-staff-my-pending-requests .sl-empty-cell { height:auto; min-height:10rem; }
+@media (width<=1100px) {
+  .sl-inventory-staff-preview-grid { grid-template-columns:minmax(0,1fr); }
+}
 @media (width<=620px) {
   .sl-inventory-staff-quick-actions { align-items:stretch; flex-direction:column; }
   .sl-inventory-staff-quick-actions > div { display:grid; grid-template-columns:minmax(0,1fr); }

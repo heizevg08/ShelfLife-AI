@@ -147,7 +147,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
           <div className="sl-staff-usage-head-actions"><Link href="/ExpirationMonitoring" className="sl-staff-usage-viewall sl-v209-viewall-button">View All <ArrowRight size={14} aria-hidden="true" /></Link></div>
         </header>
         <div className="sl-staff-usage-table-shell">
-          <table className="sl-data-table sl-staff-usage-table sl-sa-expiring-table"><thead><tr><th>Ingredient</th><th>Batch</th><th>Expiry Date</th><th>Status</th></tr></thead><tbody><tr className="sl-sa-dashboard-empty-data-row" aria-label="No expiration records available"><td>—</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+          <table className="sl-data-table sl-staff-usage-table sl-sa-expiring-table"><thead><tr><th>Ingredient</th><th>Batch</th><th>Expiration Date</th><th>Status</th></tr></thead><tbody><tr className="sl-sa-dashboard-empty-data-row" aria-label="No expiration records available"><td>—</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
         </div>
       </section>
       <section id="sl-sa-recent-activity" className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="sl-sa-recent-activity-title">
