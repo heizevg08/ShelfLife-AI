@@ -1,6 +1,7 @@
 import { apiClient } from './apiClient';
 
 export const CHANGE_REQUEST_TYPES = ['BATCH_CORRECTION', 'QUANTITY_ADJUSTMENT', 'UNIT_CORRECTION', 'ADD_MISSING_BATCH', 'OTHER'] as const;
+export const CHANGE_REQUEST_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
 export type ChangeRequestType = typeof CHANGE_REQUEST_TYPES[number];
 export type ChangeRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export interface ChangeRequest {

@@ -31519,6 +31519,11 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   text-decoration: underline;
   text-underline-offset: .18em;
 }
+.sl-staff-my-request-row { cursor: pointer; }
+.sl-staff-my-request-row:focus-visible {
+  outline: 2px solid var(--sl-focus);
+  outline-offset: -2px;
+}
 .sl-staff-my-request-form-grid,.sl-staff-my-request-detail {
   grid-template-columns: repeat(2,minmax(0,1fr));
   gap: clamp(.75rem,1.2vw,1rem);
@@ -31536,6 +31541,12 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-my-request-dialog .sl-staff-my-request-form {
   display: block;
   padding: var(--sl-application-modal-padding);
+}
+.sl-staff-my-request-dialog {
+  width: min(58rem,calc(100vw - 2rem));
+}
+.sl-staff-my-request-dialog--initial {
+  width: min(36rem,calc(100vw - 2rem));
 }
 .sl-staff-my-request-dialog .sl-application-modal-actions {
   border-top: 1px solid var(--sl-border-subtle);
