@@ -33651,11 +33651,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   font:inherit;
   font-weight:500;
 }
-.sl-detail-enabled-row,
-.sl-actionable-record-row { transition:background-color var(--sl-motion); }
-.sl-detail-enabled-row { cursor:pointer; }
-:is(.sl-detail-enabled-row,.sl-actionable-record-row):hover,
-.sl-actionable-record-row:focus-within { background:var(--sl-brand-subtle); }
+.sl-detail-enabled-row { cursor:pointer; transition:background-color var(--sl-motion); }
+.sl-detail-enabled-row:hover { background:var(--sl-brand-subtle); }
 .sl-detail-enabled-row:focus-visible { background:var(--sl-brand-subtle); outline:2px solid var(--sl-focus); outline-offset:-2px; }
 .sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell {
   border-top:1px solid var(--sl-border-subtle);
