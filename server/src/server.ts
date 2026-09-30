@@ -32,6 +32,8 @@ import { createIngredientRequestStore } from './services/ingredient-request-stor
 import { createIngredientRequests, type IngredientRequestService } from './services/ingredient-requests';
 import { accountRequestModel } from './models/account-request';
 import { createAccountRequests, type AccountRequestService } from './services/account-requests';
+import { usageRecordModel, wasteRecordModel } from './models/inventory-record';
+import { createInventoryRecords, type InventoryRecordService } from './services/inventory-records';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
@@ -66,11 +68,11 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, systemConfig?: SystemConfigService, batches?: InventoryBatchService, changeRequests?: ChangeRequestService, ingredientRequests?: IngredientRequestService, accountRequests?: AccountRequestService) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, systemConfig?: SystemConfigService, batches?: InventoryBatchService, changeRequests?: ChangeRequestService, ingredientRequests?: IngredientRequestService, accountRequests?: AccountRequestService, usageRecords?: InventoryRecordService, wasteRecords?: InventoryRecordService) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, systemConfig, batches, changeRequests, ingredientRequests, accountRequests));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, systemConfig, batches, changeRequests, ingredientRequests, accountRequests, usageRecords, wasteRecords));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -158,6 +160,10 @@ if (require.main === module) {
     const ingredients = createIngredients(createIngredientStore(driver, ingredientRows, users, audits));
     const batchRows = inventoryBatchModel(driver);
     const batches = createInventoryBatches(driver, batchRows, ingredientRows, audits, systemConfig);
+    const usageRows = usageRecordModel(driver);
+    const wasteRows = wasteRecordModel(driver);
+    const usageRecords = createInventoryRecords(driver, 'UsageRecord', usageRows, batchRows, ingredientRows, audits);
+    const wasteRecords = createInventoryRecords(driver, 'WasteRecord', wasteRows, batchRows, ingredientRows, audits);
     const changeRequestRows = changeRequestModel(driver);
     const changeRequests = createChangeRequests(changeRequestRows);
     const ingredientRequestRows = ingredientRequestModel(driver);
@@ -172,6 +178,10 @@ if (require.main === module) {
       await provisionHardeningIndexes(ingredientRows, attempts);
       await configRows.createCollection();
       await provisionBatchIndexes(batchRows);
+      await usageRows.createCollection();
+      await usageRows.createIndexes();
+      await wasteRows.createCollection();
+      await wasteRows.createIndexes();
       await changeRequestRows.createCollection();
       await changeRequestRows.createIndexes();
       await ingredientRequestRows.createCollection();
@@ -179,7 +189,7 @@ if (require.main === module) {
       await accountRequestRows.createCollection();
       await accountRequestRows.createIndexes();
     } };
-    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, systemConfig, batches, changeRequests, ingredientRequests, accountRequests);
+    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, systemConfig, batches, changeRequests, ingredientRequests, accountRequests, usageRecords, wasteRecords);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');
