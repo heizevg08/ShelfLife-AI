@@ -33562,3 +33562,14 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-account-details-dialog .sl-account-details-identity { grid-template-columns: 1fr; }
   .sl-account-details-dialog .sl-account-details-avatar { width: 4rem; height: 4rem; }
 }
+@media (width<=1080px){
+  .sl-staff-requests-v162 .sl-staff-requests-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-staff-requests-v162 .sl-staff-requests-toolbar .sl-sa-ingredients-search,
+  .sl-staff-requests-v162 .sl-staff-requests-toolbar .sl-v219-custom-date-range,
+  .sl-staff-requests-v162 .sl-staff-requests-toolbar .sl-sa-ingredients-filter-actions { grid-column:1/-1; }
+}
+@media (width<=620px){
+  .sl-staff-requests-v162 .sl-staff-requests-toolbar,
+  .sl-staff-requests-v162 .sl-staff-requests-toolbar .sl-v219-custom-date-range { grid-template-columns:minmax(0,1fr); }
+  .sl-staff-requests-v162 .sl-staff-requests-toolbar .sl-sa-ingredients-filter-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

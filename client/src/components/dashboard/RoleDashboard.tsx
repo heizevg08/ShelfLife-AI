@@ -151,7 +151,6 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
 }
 
 function InventoryStaffDashboardContent({ userName }: { userName: string }) {
-  const [timelineRange, setTimelineRange] = useState('30');
   const [ingredientTotal, setIngredientTotal] = useState<number | null>(null);
   const [ingredientFailed, setIngredientFailed] = useState(false);
   useEffect(() => {
@@ -173,28 +172,8 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList aria-hidden="true" /></span><div><span>Low Stock</span><strong>—</strong><small>Stock summary unavailable</small></div></article>
       </section>
 
-      <section className="sl-inventory-staff-analytics" aria-label="Inventory staff dashboard analytics">
-        <Card
-          id="inventory-staff-expiration-timeline"
-          title={<DashboardCardTitle Icon={CalendarClock}>Expiration Timeline</DashboardCardTitle>}
-          action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Expiration timeline period</span><select value={timelineRange} onChange={(event) => setTimelineRange(event.target.value)} aria-label="Expiration timeline period"><option value="7">Next 7 Days</option><option value="14">Next 14 Days</option><option value="30">Next 30 Days</option><option value="60">Next 60 Days</option></select></label>}
-        >
-          <div className="sl-inventory-staff-expiration-chart" role="img" aria-label="Expiration timeline by days until expiration and batch count; live values unavailable">
-            <span className="sl-inventory-staff-y-title">Batch Count</span>
-            <div className="sl-inventory-staff-chart-y" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span></div>
-            <div className="sl-inventory-staff-bar-plot" aria-hidden="true">{Array.from({ length: 4 }).map((_, index) => <i key={index} />)}</div>
-            <div className="sl-inventory-staff-chart-x" aria-hidden="true"><span>0–7 Days</span><span>8–14 Days</span><span>15–30 Days</span><span>31–60 Days</span></div>
-            <span className="sl-inventory-staff-x-title">Days Until Expiration</span>
-            <span className="sl-inventory-staff-chart-note">Expiration data unavailable</span>
-          </div>
-        </Card>
-        <Card id="inventory-staff-stock-status" title={<DashboardCardTitle Icon={Boxes}>Stock Level Status</DashboardCardTitle>}>
-          <div className="sl-inventory-staff-stock-chart">
-            <div className="sl-inventory-staff-stock-donut" aria-hidden="true"><strong>—</strong><span>Batches</span></div>
-            <div className="sl-inventory-staff-stock-legend" aria-label="Stock status legend">{['In Stock', 'Low Stock', 'Near Expiry', 'Expired'].map((label, index) => <div key={label}><i data-index={index}/><span>{label}</span><strong>—</strong></div>)}</div>
-          </div>
-        </Card>
-        <Card id="inventory-staff-fefo" title={<DashboardCardTitle Icon={ListOrdered}>Use First · FEFO</DashboardCardTitle>} action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
+      <section className="sl-inventory-staff-analytics" aria-label="Use first inventory">
+        <Card id="inventory-staff-fefo" title={<DashboardCardTitle Icon={ListOrdered}>Use First ? FEFO</DashboardCardTitle>} action={<Link href="/InventoryBatches" className="sl-text-link">View All <ArrowRight size={14} /></Link>}>
           {dashTable('Use First FEFO', ['#', 'Ingredient', 'Batch ID', 'Expiry Date', 'Days Left'], true)}
         </Card>
       </section>
