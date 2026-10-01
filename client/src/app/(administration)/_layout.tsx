@@ -1,18 +1,6 @@
-import { Slot, usePathname } from 'expo-router';
-import { ApplicationWorkspace, useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
-import { ConnectedManagerChangeRequestsPage } from '../../components/application/ManagerChangeRequestsPage';
-
-function AdministrationRoute() {
-  const pathname = usePathname();
-  const { user } = useApplicationWorkspace();
-
-  if (user.role === 'Manager' && pathname === '/ChangeRequests') {
-    return <ConnectedManagerChangeRequestsPage />;
-  }
-
-  return <Slot />;
-}
+import { Slot } from 'expo-router';
+import { ApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 
 export default function AdministrationLayout() {
-  return <ApplicationWorkspace><AdministrationRoute /></ApplicationWorkspace>;
+  return <ApplicationWorkspace><Slot /></ApplicationWorkspace>;
 }

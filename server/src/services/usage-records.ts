@@ -9,7 +9,7 @@ export interface UsageRecordView {
   batch: { id: string; batchID: string };
   quantityUsed: number;
   unit: string;
-  recordedBy: { id: string; name: string };
+  recordedBy: { id: string; name: string; firstName?: string; lastName?: string };
   createdAt: string;
 }
 export interface UsageSummary {

@@ -18913,13 +18913,16 @@ section.sl-card:has(.sl-filter-popover) {
 
 .sl-manager-reference-grid-three {
   grid-template-columns: repeat(2,minmax(0,1fr));
+  grid-template-areas: "value value" "stock expiry";
 }
 .sl-manager-reference-grid-three>#manager-inventory-value {
-  grid-column: 1/-1;
+  grid-area: value;
 }
+.sl-manager-reference-grid-three>#manager-stock-distribution { grid-area: stock; }
+.sl-manager-reference-grid-three>#manager-expiring-items { grid-area: expiry; }
 .sl-manager-usage-record-toolbar>* { min-width:0; }
 .sl-manager-alerts-v134 .sl-manager-alerts-table-wrap { max-height:none; overflow-y:visible; }
-@media(max-width:900px){.sl-manager-reference-grid-three{grid-template-columns:minmax(0,1fr)}.sl-manager-reference-grid-three>#manager-inventory-value{grid-column:auto}.sl-manager-usage-record-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.sl-manager-reference-grid-three{grid-template-columns:minmax(0,1fr);grid-template-areas:"value" "stock" "expiry"}.sl-manager-usage-record-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.sl-manager-usage-record-toolbar{grid-template-columns:minmax(0,1fr)}}
 .sl-manager-reference-grid>.sl-card {
   min-width: 0;
@@ -33726,7 +33729,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-manager-reports-table col:nth-child(4) { width: 12%; }
 /* Current Manager ledgers use one shared column model for header and body cells. */
 .sl-manager-alerts-v134 .sl-manager-alerts-table-wrap { max-height:none; overflow-y:hidden; }
-.sl-shell[data-role=Manager] .sl-page-header>.sl-description {
+.sl-shell[data-role=Manager] .sl-page-header>div:first-child>.sl-description {
   width: 100%;
   max-width: none;
   min-width: 0;
@@ -33739,7 +33742,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-manager-inventory-live .sl-manager-panel-empty { min-height: 172px; }
 .sl-manager-usage-live .sl-manager-usage-analytics>.sl-card { min-height: clamp(12.5rem,17vw,15.5rem); }
 .sl-manager-usage-live .sl-manager-usage-pending { min-height: clamp(8rem,12vw,11.5rem); }
-.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-mgr-forecast-pending { min-height: 225px; }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-mgr-forecast-pending { min-height: clamp(160px,17vw,205px); }
 .sl-manager-alerts-card-select { display: inline-flex; align-items: center; }
 .sl-manager-alerts-card-select select { min-height: 34px; max-width: 10rem; }
 .sl-manager-performance-summary { overflow-x: auto; }

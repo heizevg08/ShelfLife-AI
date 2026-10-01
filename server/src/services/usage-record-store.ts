@@ -21,11 +21,11 @@ const dayBounds = (now: Date) => {
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   return { start, end: new Date(start.getTime() + 86_400_000) };
 };
-const staffName = (staff: UserRow) => staff.name?.trim() || `${staff.firstName} ${staff.lastName}`.trim() || 'Unknown account';
+const staffIdentity = (staff: UserRow) => ({ name: staff.name?.trim() || `${staff.firstName} ${staff.lastName}`.trim() || 'Unknown account', firstName: staff.firstName, lastName: staff.lastName });
 const serialize = ({ row, ingredient, batch, staff }: Resolved): UsageRecordView => ({
   id: row._id.toString(), dateUsed: row.dateUsed.toISOString(), ingredient: { id: ingredient._id.toString(), name: ingredient.name },
   batch: { id: batch._id.toString(), batchID: batch.batchID }, quantityUsed: row.quantityUsed, unit: row.unit,
-  recordedBy: { id: staff._id.toString(), name: staffName(staff) }, createdAt: row.createdAt.toISOString(),
+  recordedBy: { id: staff._id.toString(), ...staffIdentity(staff) }, createdAt: row.createdAt.toISOString(),
 });
 
 export function createUsageRecordStore(driver: Mongoose, records: ReturnType<typeof usageRecordModel>, batches: ReturnType<typeof inventoryBatchModel>, ingredients: ReturnType<typeof ingredientModel>, users: ReturnType<typeof userModel>, audits: ReturnType<typeof auditRecordModel>): UsageRecordStore {

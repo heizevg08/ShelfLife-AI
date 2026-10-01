@@ -40,6 +40,15 @@ export function ConnectedManagerReportsPage() {
         </tbody></table></div>
         <p className="sl-supporting sl-manager-performance-note">Historical period comparison will appear when the reporting aggregation service is available.</p>
       </Card>
+      <Card id="manager-available-reports" title="Available Reports">
+        <div className="sl-application-records-table-shell sl-manager-performance-summary"><table className="sl-application-records-table sl-data-table"><thead><tr><th>Report</th><th>Description</th><th>Format</th><th>Action</th></tr></thead><tbody>
+          <tr><td>Inventory Summary</td><td>Current inventory levels, status, and authoritative value.</td><td>—</td><td>—</td></tr>
+          <tr><td>Usage &amp; Waste</td><td>Operational usage and waste transaction analysis.</td><td>—</td><td>—</td></tr>
+          <tr><td>Expiration Risk</td><td>Near-expiration inventory and FEFO risk analysis.</td><td>—</td><td>—</td></tr>
+          <tr><td>Forecast vs. Actual</td><td>Forecast performance against recorded consumption.</td><td>—</td><td>—</td></tr>
+        </tbody></table></div>
+        <p className="sl-supporting sl-manager-performance-note">Report generation will become available when the authorized reporting service is connected.</p>
+      </Card>
     </div>
   </>;
 }

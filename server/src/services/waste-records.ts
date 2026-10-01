@@ -4,7 +4,7 @@ import { AdministrationError } from '../middleware/administration.middleware';
 
 export interface WasteRecordView {
   id: string; dateWasted: string; ingredient: { id: string; name: string }; batch: { id: string; batchID: string };
-  quantityWasted: number; unit: string; reason: WasteReason; wasteCost: number; recordedBy: { id: string; name: string }; createdAt: string;
+  quantityWasted: number; unit: string; reason: WasteReason; wasteCost: number; recordedBy: { id: string; name: string; firstName?: string; lastName?: string }; createdAt: string;
 }
 export interface WasteSummary {
   totalWasteToday: { quantity: number; unit: string } | null;
