@@ -1783,7 +1783,7 @@ function ManagerForecastingPage() {
   return <>
     <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
     <div className="sl-admin-view sl-mgr-forecast-page">
-      <section className="sl-sa-kpis sl-admin-reference-kpis sl-mgr-forecast-kpis sl-kpi-reference-v201" aria-label="Forecasting summary">
+      <section className="sl-sa-kpis sl-kpi-reference-v201" aria-label="Forecasting summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Forecast data pending</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Demand forecast pending</small></div></article>
@@ -1798,7 +1798,7 @@ function ManagerForecastingPage() {
 
       <section className="sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records sl-mgr-forecast-records" aria-labelledby="mgr-ingredient-forecasts">
         <header className="sl-application-records-header sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2 id="mgr-ingredient-forecasts">Ingredient Forecasts</h2></header>
-        <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-application-records-toolbar sl-sa-ingredients-filter-card sl-mgr-forecast-filters" data-filter-layout="records-five" aria-label="Forecast filters">
+        <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-application-records-toolbar sl-sa-ingredients-filter-card" data-filter-layout="records-five" aria-label="Forecast filters">
           <label className="sl-application-records-search sl-sa-ingredients-search"><span>Search ingredients</span><div><Search size={16}/><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search ingredients..." /></div></label>
           <label><span>Date Range</span><select value={range} onChange={event => { setRange(event.target.value); setPage(1); }}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option><option>Custom</option></select></label>
           {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom forecast date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label></div>}
@@ -1806,7 +1806,7 @@ function ManagerForecastingPage() {
           <label><span>Ingredient</span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option>All Ingredients</option></select></label>
           <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions"><button className="sl-button" type="button" onClick={() => { setRange('Current period'); setDateFrom(''); setDateTo(''); setCategory('All Categories'); setIngredient('All Ingredients'); setPage(1); }}>Reset</button></div>
         </div></div>
-        <div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table sl-manager-forecast-table"><colgroup><col/><col/><col/><col/><col/><col/><col/></colgroup><thead><tr><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th></tr></thead><tbody><tr><td colSpan={7} className="sl-empty-cell"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available." /></td></tr></tbody></table></div>
+        <div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table"><thead><tr><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th></tr></thead><tbody><tr><td colSpan={7} className="sl-empty-cell"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available." /></td></tr></tbody></table></div>
         <div className="sl-mgr-forecast-footer sl-application-records-footer sl-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="forecasts" onPageChange={setPage} /></div>
       </section>
     </div>

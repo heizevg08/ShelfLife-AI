@@ -82,7 +82,7 @@ function ManagerAlerts() {
               ))}
             </nav>
 
-            <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-manager-alerts-filters sl-application-records-toolbar sl-sa-ingredients-filter-card" data-filter-layout="records-five" aria-label="Alert filters">
+            <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-application-records-toolbar sl-sa-ingredients-filter-card" data-filter-layout="records-four" aria-label="Alert filters">
               <label className="sl-manager-alerts-search sl-application-records-search sl-sa-ingredients-search">
                 <span>Search Alerts</span>
                 <div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search alerts..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
@@ -93,8 +93,7 @@ function ManagerAlerts() {
             </div></div>
 
             <div className="sl-manager-alerts-table-wrap sl-application-records-table-shell sl-sa-ingredients-table-scroll">
-              <table className="sl-manager-alerts-table sl-application-records-table sl-records-table sl-sa-ingredients-table sl-data-table">
-                <colgroup><col/><col/><col/><col/><col/><col/></colgroup>
+              <table className="sl-application-records-table sl-records-table sl-sa-ingredients-table sl-data-table">
                 <thead><tr>
                   <th>Date &amp; Time</th>
                   <th>Ingredient</th>
