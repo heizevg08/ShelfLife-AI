@@ -52,6 +52,9 @@ test('real Change Request creation persists server-owned state, audit, and uniqu
   assert.equal((await Ingredients.findById(ingredient._id).lean()).minimumStock, 8);
   assert.equal((await Batches.findById(batch._id).lean()).quantity, 10);
   const legacy = await Requests.create({ requestID: 'REQ-LEGACY-001', requestType: 'QUANTITY_ADJUSTMENT', ingredientId: ingredient._id, targetField: 'minimumStock', currentValue: '8', requestedValue: '9', reason: 'Legacy fixture', requestedBy: staff._id, status: 'PENDING' });
+  const actionable = await service.list({ id: manager._id.toString(), name: 'Development Manager', role: 'Manager' }, { page: 1, pageSize: 10, status: 'PENDING', currentOnly: true });
+  assert.ok(actionable.items.some(item => item.id === two.id));
+  assert.ok(actionable.items.every(item => !item.requestType.startsWith('QUANTITY_')));
   await assert.rejects(() => service.review({ id: manager._id.toString(), name: 'Development Manager', role: 'Manager' }, legacy._id.toString(), 'APPROVED'), error => error.code === 'CONFLICT' && /Legacy requests/.test(error.message));
   assert.equal((await Requests.findById(legacy._id).lean()).status, 'PENDING');
 });

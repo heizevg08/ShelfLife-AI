@@ -19911,6 +19911,7 @@ section.sl-card:has(.sl-filter-popover) {
   padding: 0 clamp(.8rem,1.2vw,1rem);
   display: flex;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 .sl-manager-alerts-tabs button {
   color: var(--sl-muted);
