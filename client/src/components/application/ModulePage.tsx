@@ -1783,7 +1783,7 @@ function ManagerForecastingPage() {
   return <>
     <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
     <div className="sl-admin-view sl-mgr-forecast-page">
-      <section className="sl-sa-kpis sl-kpi-reference-v201" aria-label="Forecasting summary">
+      <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Forecasting summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Forecast data pending</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Demand forecast pending</small></div></article>

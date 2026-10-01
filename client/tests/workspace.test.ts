@@ -12,6 +12,6 @@ test('every Source-of-Truth-derived role and canonical route decision is enforce
       checked += 1;
     }
   }
-  assert.equal(Object.keys(canonicalWorkspaceAccess).length, 21);
-  assert.equal(checked, 84);
+  assert.equal(Object.keys(canonicalWorkspaceAccess).length, 29);
+  assert.equal(checked, 116);
 });

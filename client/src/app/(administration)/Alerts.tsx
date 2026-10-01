@@ -44,7 +44,7 @@ function ManagerAlerts() {
     />
 
     <div className="sl-admin-view sl-manager-alerts-v134">
-      <section className="sl-sa-kpis sl-kpi-reference-v201" aria-label="Alert summary">
+      <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Alert summary">
         <article className="sl-sa-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
           <div><span>Expiring Soon</span><strong>—</strong><small>Expiration alerts unavailable</small></div>
