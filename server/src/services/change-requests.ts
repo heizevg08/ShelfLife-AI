@@ -20,10 +20,15 @@ export function createChangeRequests(driver: Mongoose, requests: any, counters: 
   };
   const ensureRole = (actor: Actor) => { if (!['Inventory Staff', 'Manager', 'Super Admin'].includes(actor.role)) throw forbidden(); };
   return {
+    async ingredientOptions(actor: Actor) {
+      ensureRole(actor);
+      const rows = await ingredients.find({}).select(`_id name ${CHANGE_REQUEST_TARGET_FIELDS.join(' ')}`).sort({ name: 1 }).lean().exec();
+      return { ingredients: rows.map((row: any) => ({ id: row._id.toString(), name: row.name, ...Object.fromEntries(CHANGE_REQUEST_TARGET_FIELDS.map(field => [field, row[field]])) })) };
+    },
     async list(actor: Actor, query: any) {
       ensureRole(actor); const filter: any = actor.role === 'Inventory Staff' ? { requestedBy: actor.id } : {};
       if (query.currentOnly) { filter.requestType = { $in: CHANGE_REQUEST_TYPES }; filter.targetField = { $in: CHANGE_REQUEST_TARGET_FIELDS }; }
-      if (query.type) filter.requestType = query.type; if (query.status) filter.status = query.status; if (query.from || query.to) filter.createdAt = { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lte: query.to } : {}) };
+      if (query.type) filter.requestType = query.type; if (query.status) filter.status = query.status; if (query.from || query.to) filter.createdAt = { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lt: query.to } : {}) };
       if (query.search) { const rows = await requests.find(filter).sort({ createdAt: -1, _id: -1 }).populate('ingredientId', 'name').lean().exec(); const term = query.search.toLowerCase(); const items = rows.filter((row: any) => [row.requestID, row.ingredientId?.name].some(value => value?.toLowerCase().includes(term))); return { items: await Promise.all(items.slice((query.page - 1) * query.pageSize, query.page * query.pageSize).map(view)), page: query.page, pageSize: query.pageSize, total: items.length }; }
       const total = await requests.countDocuments(filter), rows = await requests.find(filter).sort({ createdAt: -1, _id: -1 }).skip((query.page - 1) * query.pageSize).limit(query.pageSize).lean().exec(); return { items: await Promise.all(rows.map(view)), page: query.page, pageSize: query.pageSize, total };
     },

@@ -9,6 +9,7 @@ export function changeRequestRoutes(auth: any, service: any) {
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
   router.get('/summary', authorizeAdministration(['Inventory Staff']), actions.summary);
+  router.get('/ingredient-options', authorizeAdministration(['Inventory Staff', 'Manager']), actions.ingredientOptions);
   router.get('/', authorizeAdministration(['Inventory Staff', 'Manager', 'Super Admin']), actions.list);
   router.get('/:id', authorizeAdministration(['Inventory Staff', 'Manager', 'Super Admin']), actions.detail);
   router.post('/', authorizeAdministration(['Inventory Staff']), json({ limit: '100kb' }), actions.create);
