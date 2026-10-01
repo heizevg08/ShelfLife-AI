@@ -116,6 +116,8 @@ function AdminDashboardContent({ userName }: { userName: string }) {
 }
 
 function ManagerDashboardContent({ userName }: { userName: string }) {
+  const batchTrigger = useRef<HTMLTableRowElement>(null);
+  const requestTrigger = useRef<HTMLTableRowElement>(null);
   const [valueRange, setValueRange] = useState('30');
   const [expiryRange, setExpiryRange] = useState('30');
   const [topValueRange, setTopValueRange] = useState('month');
@@ -124,6 +126,8 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
   const [requests, setRequests] = useState<ChangeRequest[] | null>(null);
   const [inventoryError, setInventoryError] = useState(false);
   const [requestError, setRequestError] = useState(false);
+  const [batchDetail, setBatchDetail] = useState<InventoryBatch | null>(null);
+  const [requestDetail, setRequestDetail] = useState<ChangeRequest | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     Promise.all([getInventoryBatchSummary(controller.signal), listInventoryBatches({ page: 1, pageSize: 5, status: 'Near Expiry', sort: 'fefo' }, controller.signal)])
@@ -135,6 +139,10 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     return () => controller.abort();
   }, []);
   const pendingState = (description: string) => <div className="sl-manager-reference-state"><ApplicationPendingState description={description} /></div>;
+  const openRequest = async (request: ChangeRequest, trigger: HTMLTableRowElement) => {
+    requestTrigger.current = trigger;
+    try { setRequestDetail(await getChangeRequest(request.id)); } catch { setRequestDetail(request); }
+  };
   const recordState = (columns: number, loading: boolean, failed: boolean, description: string) => <tr><td colSpan={columns} className="sl-empty-cell"><DataState kind={failed ? 'error' : loading ? 'loading' : 'empty'} title={failed ? 'Data unavailable' : loading ? 'Loading records' : 'No live records yet'} description={failed ? 'The service could not be reached.' : loading ? 'Retrieving current records.' : description} /></td></tr>;
   return <>
     <DashboardHeading userName={userName} description="Review inventory priorities, pending decisions, and operational risk." descriptionInHeader />
@@ -148,10 +156,10 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
 
       <section className="sl-manager-attention-grid" aria-label="Manager attention queue">
         <Card id="manager-upcoming-expirations" title={<DashboardCardTitle Icon={CalendarClock}>Upcoming Expirations (≤ 7 days)</DashboardCardTitle>} action={<Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
-          <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table"><thead><tr>{['Ingredient','Batch ID','Expiration Date','Days Left'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{expirations?.length ? expirations.map(batch => <tr key={batch.id}><td className="sl-emphasized-value">{batch.ingredient.name}</td><td>{batch.batchID}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td></tr>) : recordState(4, expirations === null && !inventoryError, inventoryError, 'Upcoming expirations will appear when qualifying batches exist.')}</tbody></table></div>
+          <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table"><thead><tr>{['Ingredient','Batch ID','Expiration Date','Days Left'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{expirations?.length ? expirations.map(batch => <tr key={batch.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event => { batchTrigger.current = event.currentTarget; setBatchDetail(batch); }} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); batchTrigger.current = event.currentTarget; setBatchDetail(batch); } }}><td className="sl-emphasized-value">{batch.ingredient.name}</td><td><span className="sl-canonical-identifier">{batch.batchID}</span></td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td></tr>) : recordState(4, expirations === null && !inventoryError, inventoryError, 'Upcoming expirations will appear when qualifying batches exist.')}</tbody></table></div>
         </Card>
         <Card id="manager-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>Pending Change Requests</DashboardCardTitle>} action={<Link href="/ChangeRequests" className="sl-text-link">Review queue <ArrowRight size={14}/></Link>}>
-          <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table"><thead><tr>{['Request ID','Type','Submitted By','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{requests?.length ? requests.map(request => <tr key={request.id}><td>{request.requestID}</td><td>{request.requestType.replaceAll('_', ' ').replace(/\b\w/g, value => value.toUpperCase())}</td><td>{request.requestedBy.name}</td><td><Status tone="attention">Pending Review</Status></td></tr>) : recordState(4, requests === null && !requestError, requestError, 'Requests awaiting review will appear here.')}</tbody></table></div>
+          <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table"><thead><tr>{['Request ID','Type','Submitted By','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{requests?.length ? requests.map(request => <tr key={request.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event => void openRequest(request, event.currentTarget)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void openRequest(request, event.currentTarget); } }}><td><span className="sl-canonical-identifier">{request.requestID}</span></td><td>{request.requestType.replaceAll('_', ' ').replace(/\b\w/g, value => value.toUpperCase())}</td><td>{request.requestedBy.name}</td><td><Status tone="attention">Pending Review</Status></td></tr>) : recordState(4, requests === null && !requestError, requestError, 'Requests awaiting review will appear here.')}</tbody></table></div>
         </Card>
       </section>
 
@@ -170,6 +178,8 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
         </Card>
       </section>
     </div>
+    <InventoryBatchDetailsDialog batch={batchDetail} onDismiss={() => setBatchDetail(null)} returnFocus={batchTrigger} />
+    <ChangeRequestDetailsDialog request={requestDetail} onDismiss={() => setRequestDetail(null)} returnFocus={requestTrigger} />
   </>;
 }
 

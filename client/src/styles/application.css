@@ -33728,6 +33728,20 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-manager-report-form select,
 .sl-manager-review-note textarea { width: 100%; min-width: 0; }
 .sl-manager-operation-form output { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border: 1px solid var(--sl-color-border, #d8e1dc); border-radius: 10px; background: var(--sl-color-surface-muted, #f7f9f8); }
+.sl-manager-operation-form > label {
+  align-content: start;
+  gap: .35rem;
+  min-width: 0;
+  font: var(--sl-font-label);
+  display: grid;
+}
+.sl-manager-operation-form > .sl-application-modal-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--sl-space-3);
+  display: flex;
+}
 .sl-manager-form-wide { grid-column: 1 / -1; }
 .sl-manager-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; margin: 0; }
 .sl-manager-detail-grid > div { min-width: 0; padding: 12px; border-radius: 10px; background: var(--sl-color-surface-muted, #f7f9f8); }
@@ -33741,7 +33755,10 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-manager-alerts-v134 .sl-manager-alerts-main { min-width: 0; }
 .sl-manager-alerts-v134 .sl-manager-alerts-pending.compact { min-height: 220px; }
 .sl-manager-reports-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.sl-manager-reports-live .sl-manager-reports-row { grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.5fr) minmax(170px, .8fr) minmax(100px, .5fr); }
+.sl-manager-reports-live .sl-manager-reports-table th,
+.sl-manager-reports-live .sl-manager-reports-table td { vertical-align: middle; }
+.sl-manager-reports-live .sl-manager-reports-table th:last-child,
+.sl-manager-reports-live .sl-manager-reports-table td:last-child { text-align: center; }
 .sl-manager-report-form > .sl-v219-custom-date-range { grid-column: 1 / -1; }
 .sl-manager-report-form > .sl-application-pending-state { grid-column: 1 / -1; min-height: 190px; }
 
@@ -33763,6 +33780,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-manager-report-form,
   .sl-manager-detail-grid,
   .sl-manager-alerts-v134 .sl-manager-alerts-rail { grid-template-columns: minmax(0, 1fr); }
+  .sl-manager-operation-form > .sl-application-modal-actions { grid-column: auto; }
   .sl-manager-form-wide { grid-column: auto; }
   .sl-manager-reports-live .sl-manager-reports-table { min-width: 760px; }
 }

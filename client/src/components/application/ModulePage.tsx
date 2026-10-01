@@ -20,6 +20,9 @@ import { formatDate, formatDateTime, isValidDateOnlyInput, localDateInputValue }
 import { ConnectedManagerInventoryPage } from './ManagerInventoryPage';
 import { ConnectedManagerUsageWastePage } from './ManagerUsageWastePage';
 import { ConnectedManagerChangeRequestsPage } from './ManagerChangeRequestsPage';
+import { InventoryBatchDetailsDialog } from './InventoryBatchDetailsDialog';
+
+export { InventoryBatchDetailsDialog } from './InventoryBatchDetailsDialog';
 
 
 const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
@@ -433,16 +436,6 @@ function InventoryStaffUsagePage() {
 
 
 const inventoryBatchStatusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired' ? 'critical' as const : status === 'Near Expiry' || status === 'Low Stock' ? 'attention' as const : 'success' as const;
-
-export function InventoryBatchDetailsDialog({ batch, onDismiss, returnFocus }: { batch: InventoryBatch | null; onDismiss: () => void; returnFocus?: RefObject<HTMLElement | null> }) {
-  return <Dialog open={Boolean(batch)} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Boxes size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Inventory Batch Details</span><small>View inventory batch information.</small></span></span>} onDismiss={onDismiss} returnFocus={returnFocus} actions={<button type="button" className="sl-button" onClick={onDismiss}>Close</button>} className="sl-add-user-dialog sl-account-reference-dialog sl-admin-ingredient-dialog sl-ingredient-view-dialog sl-inventory-batch-details-dialog">
-    {batch && <div className="sl-ingredient-details"><section className="sl-ingredient-details-identity"><div><h3>{batch.batchID}</h3><span className="sl-application-role-pill sl-account-details-role">{batch.ingredient.name}</span></div></section><section className="sl-ingredient-details-information"><h3>Batch Information</h3><dl className="sl-ingredient-details-grid">
-      <div><dt>Date Received</dt><dd>{formatDate(batch.dateReceived)}</dd></div><div><dt>Expiration Date</dt><dd>{formatDate(batch.expirationDate)}</dd></div>
-      <div><dt>Current Stock</dt><dd>{batch.quantity.toLocaleString()} {batch.unit}</dd></div><div><dt>Days Left</dt><dd>{batch.daysLeft}</dd></div>
-      <div><dt>Status</dt><dd><Status tone={inventoryBatchStatusTone(batch.displayStatus)}>{batch.displayStatus}</Status></dd></div><div><dt>Recorded By</dt><dd>{batch.createdBy.name}</dd></div>
-    </dl></section></div>}
-  </Dialog>;
-}
 
 function InventoryStaffStockInPage() {
   type StockInField = 'dateReceived' | 'ingredientId' | 'quantity' | 'expirationDate' | 'unitCost';
@@ -1812,8 +1805,8 @@ function ManagerForecastingPage() {
       </section>
 
       <Card id="mgr-ingredient-forecasts" title={<span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><span>Ingredient Forecasts</span></span>} action={<div className="sl-mgr-forecast-table-actions"><span className="sl-directory-search"><Search size={16}/><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search ingredients..." /></span><button className="sl-button sl-download-trigger" disabled><Download size={16}/> Export Forecast</button></div>}>
-        <div className="sl-mgr-forecast-tablewrap"><table className="sl-reference-records-table"><thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th><th>Actions</th></tr></thead><tbody><tr><td colSpan={9} className="sl-empty-cell"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available." /></td></tr></tbody></table></div>
-        <div className="sl-mgr-forecast-footer sl-reference-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="forecasts" onPageChange={setPage} /></div>
+        <div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table"><thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th><th>Actions</th></tr></thead><tbody><tr><td colSpan={9} className="sl-empty-cell"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available." /></td></tr></tbody></table></div>
+        <div className="sl-mgr-forecast-footer sl-application-records-footer sl-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="forecasts" onPageChange={setPage} /></div>
       </Card>
     </div>
   </>;
