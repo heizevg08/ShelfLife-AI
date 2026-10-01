@@ -9,7 +9,7 @@ const fieldValue = (ingredient: any, field: ChangeRequestTargetField) => String(
 const parsedValue = (field: ChangeRequestTargetField, value: string) => ['minimumStock', 'standardUnitCost', 'defaultShelfLifeDays'].includes(field) ? Number(value) : value;
 
 export function createChangeRequests(driver: Mongoose, requests: any, counters: any, ingredients: any, _batches: any, users: any, audits: any) {
-  const name = (user: any) => user?.name?.trim() || `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'Unknown account';
+  const name = (user: any) => `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || user?.name?.trim() || 'Unknown account';
   const view = async (row: any) => {
     const [ingredient, requester, reviewer] = await Promise.all([
       ingredients.findById(row.ingredientId).select('_id name').lean().exec(),

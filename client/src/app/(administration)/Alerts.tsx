@@ -30,13 +30,12 @@ function ManagerAlertPending({ label, compact = false }: { label: string; compac
 function ManagerAlerts() {
   const [tab, setTab] = useState('All Alerts');
   const [search, setSearch] = useState('');
-  const [type, setType] = useState('All Types');
   const [priority, setPriority] = useState('All Priorities');
   const [status, setStatus] = useState('All Statuses');
   const [rows, setRows] = useState(10);
   const [page, setPage] = useState(1);
   const [trendRange, setTrendRange] = useState('Last 30 Days');
-  const reset = () => { setTab('All Alerts'); setSearch(''); setType('All Types'); setPriority('All Priorities'); setStatus('All Statuses'); setPage(1); };
+  const reset = () => { setTab('All Alerts'); setSearch(''); setPriority('All Priorities'); setStatus('All Statuses'); setPage(1); };
   return <>
     <PageHeader
       eyebrow="Intelligence"
@@ -60,7 +59,7 @@ function ManagerAlerts() {
         </article>
         <article className="sl-sa-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Info aria-hidden="true" /></span>
-          <div><span>Other Alerts</span><strong>—</strong><small>Alert summary unavailable</small></div>
+          <div><span>High Priority</span><strong>—</strong><small>Priority summary unavailable</small></div>
         </article>
       </section>
 
@@ -78,17 +77,16 @@ function ManagerAlerts() {
           <section className="sl-manager-alerts-records-card sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records" aria-label="Alert records">
             <header className="sl-application-records-header sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>Alert Records</h2></header>
             <nav className="sl-manager-alerts-tabs" aria-label="Alert categories">
-              {['All Alerts', 'Expiring Soon', 'Low Stock', 'Forecast Risk', 'Other'].map(label => (
+              {['All Alerts', 'Expiring Soon', 'Low Stock', 'Forecast Risk'].map(label => (
                 <button key={label} type="button" className={tab === label ? 'active' : ''} onClick={() => { setTab(label); setPage(1); }}>{label}</button>
               ))}
             </nav>
 
             <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-manager-alerts-filters sl-application-records-toolbar sl-sa-ingredients-filter-card" data-filter-layout="records-five" aria-label="Alert filters">
               <label className="sl-manager-alerts-search sl-application-records-search sl-sa-ingredients-search">
-                <span className="sl-sr-only">Search alerts</span>
+                <span>Search Alerts</span>
                 <div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search alerts..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
               </label>
-              <label><span>Alert Type</span><select value={type} onChange={event => { setType(event.target.value); setPage(1); }}><option>All Types</option><option>Expiration</option><option>Low Stock</option><option>Forecast Risk</option><option>Other</option></select></label>
               <label><span>Priority</span><select value={priority} onChange={event => { setPriority(event.target.value); setPage(1); }}><option>All Priorities</option><option>High</option><option>Medium</option><option>Low</option></select></label>
               <label><span>Status</span><select value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}><option>All Statuses</option><option>Active</option><option>Resolved</option></select></label>
               <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={reset}>Reset</button></div>
