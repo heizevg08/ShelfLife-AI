@@ -37,4 +37,12 @@ export function changeRequestQuery(query: Record<string, unknown>) {
   if (query.currentOnly !== undefined && query.currentOnly !== 'true') invalid('currentOnly');
   return { page, pageSize, ...(typeof query.search === 'string' && query.search.trim() ? { search: query.search.trim().slice(0,100) } : {}), ...(query.type ? { type: query.type as ChangeRequestType } : {}), ...(query.status ? { status: query.status as 'PENDING'|'APPROVED'|'REJECTED' } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}), ...(query.currentOnly === 'true' ? { currentOnly: true } : {}) };
 }
+export function changeRequestPeriodQuery(query: Record<string, unknown>) {
+  for (const key of Object.keys(query)) if (!['from', 'to'].includes(key)) invalid(key);
+  const from = query.from === undefined ? undefined : calendarDate('from', query.from);
+  const requestedTo = query.to === undefined ? undefined : calendarDate('to', query.to);
+  if (from && requestedTo && from > requestedTo) invalid('to', 'End date must be on or after start date');
+  const to = requestedTo ? new Date(requestedTo.getTime() + 86_400_000) : undefined;
+  return { ...(from ? { from } : {}), ...(to ? { to } : {}) };
+}
 export function reviewInput(body: unknown, rejection: boolean) { if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body'); const value = body as Record<string,unknown>; for (const key of Object.keys(value)) if (key !== 'reviewNote') invalid(key,'Field is not permitted'); const reviewNote = value.reviewNote === undefined && !rejection ? undefined : cleanText('reviewNote',value.reviewNote,rejection ? 1 : 0,500); return { ...(reviewNote ? { reviewNote } : {}) }; }

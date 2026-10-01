@@ -144,13 +144,14 @@ export function DataState({
   );
 }
 
-export function Pagination({ page, pageSize, total, itemLabel, onPageChange, compact = false }: {
+export function Pagination({ page, pageSize, total, itemLabel, onPageChange, compact = false, mutedWhenEmpty = false }: {
   page: number;
   pageSize: number;
   total: number;
   itemLabel: string;
   onPageChange: (page: number) => void;
   compact?: boolean;
+  mutedWhenEmpty?: boolean;
 }) {
   const totalPages = Math.ceil(total / pageSize);
   const safePage = totalPages > 0 ? Math.min(Math.max(page, 1), totalPages) : 1;
@@ -167,7 +168,7 @@ export function Pagination({ page, pageSize, total, itemLabel, onPageChange, com
     <div className="sl-row-actions">
       <button type="button" className="sl-button sl-pagination-arrow" aria-label="Previous page" disabled={totalPages === 0 || safePage <= 1} onClick={() => onPageChange(safePage - 1)}>{compact ? '‹' : 'Previous'}</button>
       {totalPages === 0
-        ? <button type="button" className="sl-button sl-page-number sl-page-number-active" aria-current="page" disabled>1</button>
+        ? <button type="button" className={`sl-button sl-page-number${mutedWhenEmpty ? '' : ' sl-page-number-active'}`} aria-current={mutedWhenEmpty ? undefined : 'page'} disabled>1</button>
         : pages.map((value, index) => <span key={value} className="sl-pagination-page-slot">
           {index > 0 && value - pages[index - 1] > 1 && <span className="sl-pagination-ellipsis" aria-hidden="true">…</span>}
           <button type="button" className={`sl-button sl-page-number${value === safePage ? ' sl-page-number-active' : ''}`} aria-current={value === safePage ? 'page' : undefined} onClick={() => onPageChange(value)}>{value}</button>

@@ -12,11 +12,11 @@ export function createChangeRequests(driver: Mongoose, requests: any, counters: 
   const name = (user: any) => `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || user?.name?.trim() || 'Unknown account';
   const view = async (row: any) => {
     const [ingredient, requester, reviewer] = await Promise.all([
-      ingredients.findById(row.ingredientId).select('_id name').lean().exec(),
+      ingredients.findById(row.ingredientId).select('_id name unitOfMeasure').lean().exec(),
       users.findById(row.requestedBy).select('_id name firstName lastName').lean().exec(),
       row.reviewedBy ? users.findById(row.reviewedBy).select('_id name firstName lastName').lean().exec() : null,
     ]);
-    return { id: row._id.toString(), requestID: row.requestID, requestType: row.requestType, targetField: row.targetField, ingredient: ingredient ? { id: ingredient._id.toString(), name: ingredient.name } : undefined, reason: row.reason, currentValue: row.currentValue, requestedValue: row.requestedValue, status: row.status, requestedBy: { id: requester?._id?.toString() ?? row.requestedBy.toString(), name: name(requester) }, reviewedBy: reviewer ? { id: reviewer._id.toString(), name: name(reviewer) } : undefined, reviewedAt: row.reviewedAt?.toISOString(), reviewNote: row.reviewNote, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
+    return { id: row._id.toString(), requestID: row.requestID, requestType: row.requestType, targetField: row.targetField, ingredient: ingredient ? { id: ingredient._id.toString(), name: ingredient.name, unitOfMeasure: ingredient.unitOfMeasure } : undefined, reason: row.reason, currentValue: row.currentValue, requestedValue: row.requestedValue, status: row.status, requestedBy: { id: requester?._id?.toString() ?? row.requestedBy.toString(), name: name(requester) }, reviewedBy: reviewer ? { id: reviewer._id.toString(), name: name(reviewer) } : undefined, reviewedAt: row.reviewedAt?.toISOString(), reviewNote: row.reviewNote, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
   };
   const ensureRole = (actor: Actor) => { if (!['Inventory Staff', 'Manager', 'Super Admin'].includes(actor.role)) throw forbidden(); };
   return {
@@ -34,6 +34,19 @@ export function createChangeRequests(driver: Mongoose, requests: any, counters: 
     },
     async detail(actor: Actor, id: string) { ensureRole(actor); const row = await requests.findById(id).lean().exec(); if (!row || (actor.role === 'Inventory Staff' && row.requestedBy.toString() !== actor.id)) throw new AdministrationError(404, 'NOT_FOUND', 'Change request not found'); return view(row); },
     async summary(actor: Actor) { if (actor.role !== 'Inventory Staff') throw forbidden(); const counts = await requests.aggregate([{ $match: { requestedBy: new driver.Types.ObjectId(actor.id) } }, { $group: { _id: '$status', count: { $sum: 1 } } }]); const map = new Map<string, number>(counts.map((row: any) => [row._id, row.count])); return { totalRequests: [...map.values()].reduce((a, b) => a + b, 0), approved: map.get('APPROVED') ?? 0, pending: map.get('PENDING') ?? 0, rejected: map.get('REJECTED') ?? 0 }; },
+    async managerSummary(actor: Actor, query: { from?: Date; to?: Date }) {
+      if (actor.role !== 'Manager') throw forbidden();
+      const current = { requestType: { $in: CHANGE_REQUEST_TYPES }, targetField: { $in: CHANGE_REQUEST_TARGET_FIELDS } };
+      const submittedPeriod = query.from || query.to ? { createdAt: { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lt: query.to } : {}) } } : {};
+      const reviewedPeriod = query.from || query.to ? { reviewedAt: { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lt: query.to } : {}) } } : {};
+      const [totalRequests, pending, approved, rejected] = await Promise.all([
+        requests.countDocuments({ ...current, ...submittedPeriod }),
+        requests.countDocuments({ ...current, status: 'PENDING' }),
+        requests.countDocuments({ ...current, status: 'APPROVED', ...reviewedPeriod }),
+        requests.countDocuments({ ...current, status: 'REJECTED', ...reviewedPeriod }),
+      ]);
+      return { totalRequests, pending, approved, rejected };
+    },
     async create(actor: Actor, input: ChangeRequestInput) {
       if (actor.role !== 'Inventory Staff') throw forbidden(); const ingredient = await ingredients.findById(input.ingredientId).select(CHANGE_REQUEST_TARGET_FIELDS.join(' ')).lean().exec(); if (!ingredient) throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found');
       return driver.connection.transaction(async (session: any) => { const now = new Date(), dateKey = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}`; const counter = await counters.findOneAndUpdate({ dateKey }, { $inc: { sequence: 1 } }, { new: true, upsert: true, setDefaultsOnInsert: true, session }).lean().exec(); const requestID = `REQ-${dateKey}-${String(counter.sequence).padStart(3, '0')}`; const created = await requests.create([{ ...input, currentValue: fieldValue(ingredient, input.targetField), requestID, status: 'PENDING', requestedBy: new driver.Types.ObjectId(actor.id) }], { session }); const row = created[0]; await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: actor.role, action: 'CREATE', targetType: 'ChangeRequest', targetId: row._id.toString(), targetName: requestID, module: 'Change Requests', status: 'Success', details: `${typeLabel(input.requestType)} submitted` }], { session }); return view(row); });
