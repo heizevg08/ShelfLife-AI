@@ -72,6 +72,8 @@ test('MongoDB enforces indexes, durable atomic login counters, soft archives, au
     const history = await service.list(ingredientPagination({ includeArchived: 'true' }));
     assert.equal(history.total, 1);
     assert.equal(history.items[0].isActive, false);
+    assert.equal(history.items[0].archivedBy.id, actorId);
+    assert.ok(history.items[0].archivedAt);
     await assert.rejects(service.create(actorId, input), e => e.code === 11000);
     const events = await audits.find().sort({ timestamp: 1, _id: 1 }).lean();
     assert.deepEqual(events.map(row => row.action), ['CREATE', 'UPDATE', 'DEACTIVATE']);

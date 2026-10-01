@@ -15,6 +15,7 @@ export interface SessionUser {
   email: string;
   role: 'Super Admin' | 'Admin' | 'Inventory Manager' | 'Inventory Staff';
   isActive: boolean;
+  mustChangePassword?: boolean;
 }
 
 // Normalize only known legacy role-label identities. Real personal names remain untouched.
@@ -78,4 +79,12 @@ export async function login(email: string, password: string, rememberMe = false)
   if (typeof body.accessToken !== 'string') throw new Error('Authentication failed');
   setAccessToken(body.accessToken);
   try { return await userFromAccessToken(); } catch (error) { clearSession(); throw error; }
+}
+export async function changeTemporaryPassword(password: string): Promise<SessionUser> {
+  const accessToken = getAccessToken();
+  if (!accessToken) throw new AuthRequestError(401, 'Authentication required');
+  const body = await request('password/change', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
+  if (typeof body.accessToken !== 'string') throw new Error('Password update failed');
+  setAccessToken(body.accessToken);
+  return userFromAccessToken();
 }

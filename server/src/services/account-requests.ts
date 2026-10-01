@@ -17,8 +17,7 @@ type RequestRow = RequestInput & {
   isDeleted?: boolean; deletedBy?: Types.ObjectId;
 };
 const missing = () => new AdministrationError(404, 'NOT_FOUND', 'Account request not found');
-const adminOnly = (row: Pick<RequestRow, 'requestedByRole' | 'role'>) => row.requestedByRole === 'Admin' || row.role === 'Admin';
-export const canReviewAccountRequest = (actor: Actor, row: Pick<RequestRow, 'requestedByRole' | 'role'>) => actor.role === 'Super Admin' || (actor.role === 'Admin' && !adminOnly(row));
+export const canReviewAccountRequest = (actor: Actor, _row: Pick<RequestRow, 'requestedByRole' | 'role'>) => actor.role === 'Super Admin';
 const value = (row: RequestRow, requester?: { name: string; role: string }, reviewer?: { name: string }) => ({
   id: row._id.toString(), firstName: row.firstName, lastName: row.lastName, email: row.email, role: row.role,
   requestedBy: { id: row.requestedBy.toString(), name: requester?.name ?? 'Unknown account', role: requester?.role ?? row.requestedByRole },
@@ -36,15 +35,13 @@ export function createAccountRequests(driver: Mongoose, requests: ReturnType<typ
   }
   return {
     async list(actor: Actor) {
-      if (!['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'].includes(actor.role)) throw forbidden();
-      const filter: Record<string, unknown> = { isDeleted: { $ne: true }, ...(actor.role === 'Super Admin' ? {} : actor.role === 'Admin'
-        ? { $or: [{ requestedBy: actor.id }, { requestedByRole: { $in: ['Inventory Staff', 'Inventory Manager'] }, role: { $ne: 'Admin' } }] }
-        : { requestedBy: actor.id }) };
+      if (!['Super Admin', 'Admin'].includes(actor.role)) throw forbidden();
+      const filter: Record<string, unknown> = { isDeleted: { $ne: true }, ...(actor.role === 'Super Admin' ? {} : { requestedBy: actor.id }) };
       const rows = await requests.find(filter).sort({ createdAt: -1, _id: -1 }).limit(100).lean().exec() as RequestRow[];
-      const visible = actor.role === 'Admin' ? rows.filter(row => row.requestedBy.toString() === actor.id || !adminOnly(row)) : rows;
-      return { items: await serialize(visible), total: visible.length };
+      return { items: await serialize(rows), total: rows.length };
     },
     async create(actor: Actor, input: RequestInput) {
+      if (actor.role !== 'Admin') throw forbidden();
       const row = await driver.connection.transaction(async session => {
         const created = new requests({ ...input, requestedBy: actor.id, requestedByRole: actor.role });
         await created.save({ session });
@@ -56,7 +53,7 @@ export function createAccountRequests(driver: Mongoose, requests: ReturnType<typ
       return (await serialize([row]))[0];
     },
     async review(actor: Actor, id: string, input: ReviewInput) {
-      const passwordHash = input.decision === 'Approved' ? await hashPassword(input.password!) : undefined;
+      const passwordHash = input.decision === 'Approved' ? await hashPassword('shelfLife123') : undefined;
       const result = await driver.connection.transaction(async session => {
         const before = await requests.findById(id).session(session).lean().exec() as RequestRow | null;
         if (!before || before.isDeleted) throw missing();
@@ -65,7 +62,7 @@ export function createAccountRequests(driver: Mongoose, requests: ReturnType<typ
         if (before.version !== input.expectedVersion) throw versionConflict();
         let accountId: Types.ObjectId | undefined;
         if (input.decision === 'Approved') {
-          const [account] = await users.create([{ firstName: before.firstName, lastName: before.lastName, email: before.email, role: before.role, passwordHash: passwordHash! }], { session });
+          const [account] = await users.create([{ firstName: before.firstName, lastName: before.lastName, email: before.email, role: before.role, passwordHash: passwordHash!, mustChangePassword: true }], { session });
           accountId = account._id;
           await audits.create([{ userId: actor.id, action: 'CREATE', targetType: 'User', targetId: account._id,
             oldValue: null, newValue: auditSnapshot('User', { id: account._id.toString(), firstName: before.firstName, lastName: before.lastName, name: `${before.firstName} ${before.lastName}`, email: before.email, role: before.role, isActive: true }) }], { session });

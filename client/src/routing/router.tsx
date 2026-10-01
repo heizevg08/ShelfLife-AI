@@ -6,7 +6,10 @@ import { canOpenWorkspacePath } from '../components/application/workspace';
 
 const root = createRootRoute({ component: Outlet,
   notFoundComponent: () => <main className="sl-app sl-session-state"><h1>Page not found</h1><Link to="/">Return to login</Link></main>,
-  errorComponent: ({ reset }) => <main className="sl-app sl-session-state"><h1>Unable to open this page</h1><p>Check your connection and try again.</p><button onClick={reset}>Retry</button><Link to="/">Return to login</Link></main>,
+  errorComponent: ({ error, reset }) => {
+    const detail = error instanceof Error ? `${error.name}: ${error.message}` : 'An unknown error interrupted page loading.';
+    return <main className="sl-app sl-session-state"><h1>Unable to open this page</h1><p>The page could not load your session or its data.</p><p role="alert">{detail}</p><button onClick={reset}>Retry</button><Link to="/">Return to login</Link></main>;
+  },
 });
 const login = createRoute({ getParentRoute: () => root, path: '/ShelfLifeAILogin', component: Login });
 const home = createRoute({ getParentRoute: () => root, path: '/', beforeLoad: ({ location }) => { throw redirect({ to: '/ShelfLifeAILogin', hash: location.hash, replace: true }); } });
@@ -18,6 +21,7 @@ async function guard(path: string) {
   let user;
   try { user = await currentUser(); }
   catch (error) { if (error instanceof AuthRequestError && error.status === 401) throw redirect({ to: '/ShelfLifeAILogin', replace: true }); throw error; }
+  if (user.mustChangePassword) throw redirect({ to: '/ShelfLifeAILogin', replace: true });
   if (!canOpenWorkspacePath(user.role, path)) throw redirect({ to: '/forbidden', replace: true });
 }
 const protectedRoutes = [

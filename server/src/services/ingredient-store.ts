@@ -42,15 +42,37 @@ export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<
     async list(query: IngredientPageQuery) {
       const filter: Record<string, unknown> = {};
       // Documents created before soft archiving have no flag and remain active.
-      if (!query.includeArchived) filter.isActive = { $ne: false };
+      filter.isActive = query.includeArchived ? false : { $ne: false };
       if (query.category) filter.category = query.category;
-      if (query.search) filter.$or = [{ name: { $regex: escape(query.search), $options: 'i' } }, { brand: { $regex: escape(query.search), $options: 'i' } }];
+      if (query.unit) filter.unitOfMeasure = query.unit;
+      if (query.search) filter.$or = [{ name: { $regex: escape(query.search), $options: 'i' } }, { brand: { $regex: escape(query.search), $options: 'i' } }, { description: { $regex: escape(query.search), $options: 'i' } }];
       const [rows, total] = await Promise.all([
         ingredients.find(filter).sort({ createdAt: -1, _id: -1 }).skip((query.page - 1) * query.limit).limit(query.limit).lean().exec() as Promise<Row[]>,
         ingredients.countDocuments(filter).exec(),
       ]);
       const names = await creators(rows);
-      return { items: rows.map(row => serialize(row, names)), page: query.page, limit: query.limit, total };
+      const archiveDetails = new Map<string, { id: string; name: string; at: Date }>();
+      if (query.includeArchived && rows.length) {
+        const events = await audits.find({ targetType: 'Ingredient', targetId: { $in: rows.map(row => row._id) }, action: 'DEACTIVATE' }).sort({ timestamp: -1 }).lean().exec() as { targetId: { toString(): string }; userId: { toString(): string }; timestamp: Date }[];
+        const actorIds = [...new Set(events.map(event => event.userId.toString()))];
+        const actors = await users.find({ _id: { $in: actorIds } }).select('_id firstName lastName name').lean().exec();
+        const actorNames = new Map(actors.map(user => [user._id.toString(), (user.name || `${user.firstName} ${user.lastName}`).trim()]));
+        for (const event of events) {
+          const id = event.targetId.toString();
+          if (!archiveDetails.has(id)) {
+            const actorId = event.userId.toString();
+            archiveDetails.set(id, { id: actorId, name: actorNames.get(actorId) || 'Unknown account', at: event.timestamp });
+          }
+        }
+      }
+      return {
+        items: rows.map(row => {
+          const item = serialize(row, names);
+          const archive = archiveDetails.get(row._id.toString());
+          return archive ? { ...item, archivedBy: { id: archive.id, name: archive.name }, archivedAt: archive.at.toISOString() } : item;
+        }),
+        page: query.page, limit: query.limit, total,
+      };
     },
     async create(actorId: string, input: IngredientInput) {
       const row = await driver.connection.transaction(async session => {

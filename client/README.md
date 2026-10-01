@@ -9,7 +9,7 @@ npm run server
 npm run client
 ```
 
-Open http://localhost:8081. `dev`, `start`, and `web` in this workspace all run
+Open http://localhost:5173. `dev`, `start`, and `web` in this workspace all run
 Vite. The API defaults to http://localhost:5000. For another API origin, copy
 `client/.env.example` to ignored `client/.env.local`, set `VITE_API_URL`, and
 restart Vite. This value is public and baked into the production build. Never
@@ -52,7 +52,7 @@ iOS Add to Home Screen should be checked on target devices.
 Updates offer **Reload app / Later** instead of interrupting open forms. The new
 worker removes only the previous app's `shelflifeai-pwa-*` caches when activated.
 Service workers are disabled during development. If you previously used production
-preview on localhost:8081, unregister its worker in browser Application tools
+preview on localhost:5173, unregister its worker in browser Application tools
 before switching to Vite development on that same origin.
 
 ## Routing and permissions
@@ -62,14 +62,14 @@ before protected screens mount. `components/application/workspace.ts` is the one
 permission map used by route guards, sidebar links, dashboard links, and tabs.
 Old bookmarks redirect to protected canonical routes. Unknown paths fail closed.
 
-| API-backed screen | Super Admin | Admin | Inventory Manager | Inventory Staff |
-| --- | --- | --- | --- | --- |
-| User management / account summary | Yes | Yes, scoped by API | No | No |
-| Audit records | Yes | Yes | No | No |
-| System dashboard summary | Yes | No | No | No |
-| Ingredient reads | Yes | Yes | Yes | Yes |
-| Ingredient creation | No | No | Yes | Yes |
-| Ingredient update/removal | No | No | Yes | No |
+| API-backed screen                 | Super Admin | Admin              | Inventory Manager | Inventory Staff |
+| --------------------------------- | ----------- | ------------------ | ----------------- | --------------- |
+| User management / account summary | Yes         | Yes, scoped by API | No                | No              |
+| Audit records                     | Yes         | Yes                | No                | No              |
+| System dashboard summary          | Yes         | No                 | No                | No              |
+| Ingredient reads                  | Yes         | Yes                | Yes               | Yes             |
+| Ingredient creation               | No          | No                 | Yes               | Yes             |
+| Ingredient update/removal         | No          | No                 | Yes               | No              |
 
 Admin dashboard uses `/users/summary`, not the Super Admin-only dashboard API.
 Ingredients is readable by all roles. Admin and Super Admin have no ingredient write controls; Inventory Staff can create, and Inventory Manager can create/update/remove. Staff's Alerts link and Admin's expiration link remain removed. Admin can create Inventory Manager / Inventory Staff accounts;

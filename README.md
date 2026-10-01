@@ -32,7 +32,7 @@ Fill in `MONGO_URI` and `JWT_SECRET` locally. For the default web setup, use:
 NODE_ENV=development
 HOST=127.0.0.1
 PORT=5000
-CORS_ORIGINS=http://localhost:8081
+CORS_ORIGINS=http://localhost:5173
 ```
 
 Generate a JWT secret and paste it into `server/.env`:
@@ -70,7 +70,7 @@ Terminal 2 (Vite web client):
 npm run client
 ```
 
-Open http://localhost:8081 and keep both terminals running. Ctrl+C stops each process.
+Open http://localhost:5173 and keep both terminals running. Ctrl+C stops each process.
 `npm run dev` is an alias for the web client only; it does not start both services.
 Inside `client`, `npm run dev` or `npm run web` starts the web client and `npm start`
 also starts Vite. Inside `server`, use `npm run dev`.

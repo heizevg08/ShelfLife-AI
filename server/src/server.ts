@@ -132,6 +132,7 @@ if (require.main === module) {
     const userStore = {
       byEmail: (email: string) => users.findOne({ email }).select('+passwordHash').lean().exec(),
       byId: (id: string) => users.findById(id).lean().exec(),
+      changePassword: async (id: string, passwordHash: string) => users.findOneAndUpdate({ _id: id, isActive: true, mustChangePassword: true }, { $set: { passwordHash, mustChangePassword: false }, $inc: { authVersion: 1 } }, { returnDocument: 'after' }).lean().exec(),
     };
     const auth = createAuth(userStore, secret);
     const sessions = persistentSessionModel(driver);

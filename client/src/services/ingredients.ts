@@ -15,6 +15,8 @@ export interface Ingredient {
   isActive: boolean;
   version: number;
   createdBy: { id: string; name: string };
+  archivedBy?: { id: string; name: string };
+  archivedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,10 +31,11 @@ export interface IngredientInput {
   standardUnitCost?: number;
   defaultShelfLifeDays?: number;
 }
-export async function listIngredients(page = 1, pageSize = 25, search = '', category = '', signal?: AbortSignal, includeArchived = false) {
+export async function listIngredients(page = 1, pageSize = 25, search = '', category = '', signal?: AbortSignal, includeArchived = false, unit = '') {
   const query = new URLSearchParams({ page: String(page), limit: String(pageSize) });
   if (search) query.set('search', search);
   if (category) query.set('category', category);
+  if (unit) query.set('unit', unit);
   if (includeArchived) query.set('includeArchived', 'true');
   const result = await apiClient<{ items: Ingredient[]; page: number; limit: number; total: number }>(`/ingredients?${query}`, { signal });
   return { ...result, pageSize: result.limit } as Page<Ingredient>;

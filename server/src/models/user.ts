@@ -12,6 +12,7 @@ const schema = new Schema({
   passwordHash: { type: String, required: true, select: false, match: /^scrypt\$131072\$8\$1\$[a-f0-9]{32}\$[a-f0-9]{128}$/ },
   role: { type: String, required: true, enum: ROLES },
   isActive: { type: Boolean, required: true, default: true },
+  mustChangePassword: { type: Boolean, default: false },
   authVersion: { type: Number, default: 0 },
   resetTokenHash: { type: String, select: false },
   resetExpiresAt: { type: Date, select: false },
@@ -30,5 +31,5 @@ export function safeUser(user: UserRecord) {
   if (user.role === 'Admin' && displayName === 'Super Admin') displayName = 'Admin';
   if (user.role === 'Super Admin' && displayName === 'Admin') displayName = 'Super Admin';
   return { id: user._id.toString(), name: displayName, email: user.email,
-    role: user.role, isActive: user.isActive };
+    role: user.role, isActive: user.isActive, ...(user.mustChangePassword === true ? { mustChangePassword: true } : {}) };
 }

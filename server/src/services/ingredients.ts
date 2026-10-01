@@ -13,6 +13,8 @@ export interface Ingredient {
   isActive: boolean;
   version: number;
   createdBy: { id: string; name: string };
+  archivedBy?: { id: string; name: string };
+  archivedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

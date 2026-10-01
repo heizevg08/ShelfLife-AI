@@ -1,9 +1,14 @@
 import { CalendarDays, CheckCircle2, Clock3, FileInput, Search, XCircle } from 'lucide-react';
+import { StaffChangeRequestsPage } from '../../components/application/ModulePage';
+import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 import { DataState, PageHeader, Status } from '../../components/application/primitives';
 
 const Empty = ({label}:{label:string}) => <DataState kind="empty" title="No live records yet" description={label} action={<Status>Preview · data pending</Status>} />;
 
 export default function ChangeRequests() {
+  const { user } = useApplicationWorkspace();
+  if (user.role === 'Inventory Staff') return <StaffChangeRequestsPage />;
+
   return <>
     <PageHeader title="Change Requests" description="Review and decide on inventory-related requests submitted by your team." />
     <div className="sl-admin-view sl-mgr-cr-page">

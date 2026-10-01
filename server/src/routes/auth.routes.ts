@@ -60,5 +60,16 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
     res.json(await extensions.recovery.complete(req.body));
   });
   router.get('/me', authenticate(auth), (_req, res) => { res.json({ user: res.locals.user }); });
+  router.post('/password/change', authenticate(auth), async (req, res) => {
+    const result = await auth.changePassword(res.locals.user.id, req.body?.password);
+    const previous = cookie(req.headers.cookie);
+    if (previous && extensions.sessions) {
+      verifyOrigin(req.headers.origin);
+      await extensions.sessions.revoke(previous);
+      const session = await extensions.sessions.create(result.user.id);
+      res.cookie(cookieName, session.token, { ...cookieOptions, expires: session.expiresAt });
+    }
+    res.json(result);
+  });
   return router;
 }

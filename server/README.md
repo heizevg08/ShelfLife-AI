@@ -17,7 +17,7 @@ field reference. Never put server secrets in Expo public variables.
 - `DEV_ADMIN_FIRST_NAME`, `DEV_ADMIN_LAST_NAME`: nonempty names, up to 100 characters.
 - `DEV_ADMIN_PASSWORD`: unique password of at least 12 characters and at most
   1,024 UTF-8 bytes. Passwords are never trimmed or lowercased.
-- `CORS_ORIGINS`: exact browser origins, for example `http://localhost:8081`.
+- `CORS_ORIGINS`: exact browser origins, for example `http://localhost:5173`.
   An empty value permits no cross-origin browser access.
 
 From the repository root, explicitly create the initial development account:
@@ -109,6 +109,7 @@ add a safe snapshot allowlist before exposing their fields. System migrations us
 `actorType: System` and null `userId`; normal writes require the authenticated user.
 
 Ingredient schema and request validators share these exact controlled lists:
+
 - Categories: Dairy, Produce, Bakery, Pantry, Meat, Seafood, Frozen, Beverages, Other.
 - Units: kg, g, L, mL, pcs, pack, box, bottle, can, tray.
 

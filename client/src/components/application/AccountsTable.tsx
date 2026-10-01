@@ -1,22 +1,62 @@
-import { Ban, Check, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus, Activity, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { accountSummary, createAccount, getAccount, listAccounts, listAuditRecords, setAccountActive, updateAccount, type Account, type AuditRecord, type DashboardSummary, type Page } from '../../services/administration';
-import { ApiError } from '../../services/apiClient';
-import { createAccountRequest, listAccountRequests, reviewAccountRequest, type AccountRequest } from '../../services/accountRequests';
-import { useApplicationWorkspace } from './ApplicationWorkspace';
-import { Dialog } from './Dialog';
-import { Card, DataState, Pagination, Status, SummaryCards } from './primitives';
+import {
+    Activity,
+    Check,
+    Download,
+    Eye,
+    EyeOff,
+    MoreVertical,
+    Pencil,
+    Search,
+    UserPlus,
+    X,
+} from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+    createAccountRequest,
+    listAccountRequests,
+    reviewAccountRequest,
+    type AccountRequest,
+} from "../../services/accountRequests";
+import {
+    accountSummary,
+    createAccount,
+    getAccount,
+    listAccounts,
+    listAuditRecords,
+    setAccountActive,
+    updateAccount,
+    type Account,
+    type AuditRecord,
+    type DashboardSummary,
+    type Page,
+} from "../../services/administration";
+import { ApiError } from "../../services/apiClient";
+import { useApplicationWorkspace } from "./ApplicationWorkspace";
+import { Dialog } from "./Dialog";
+import {
+    Card,
+    DataState,
+    Pagination,
+    Status,
+    SummaryCards,
+} from "./primitives";
 
-const blank = { firstName: '', lastName: '', email: '', password: '' };
-type ManagedRole = 'Admin' | 'Inventory Manager' | 'Inventory Staff';
+const blank = { firstName: "", lastName: "", email: "", password: "" };
+type ManagedRole = "Admin" | "Inventory Manager" | "Inventory Staff";
 const NAME_LIMIT = 25;
 const EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/;
 const PASSWORD_MAX_UTF8_BYTES = 1024;
-const REQUIRED_ERROR = 'This field is required.';
+const REQUIRED_ERROR = "This field is required.";
 
 function validShelfLifeEmail(value: string) {
   const email = value.trim().toLowerCase();
-  return email.length <= 254 && EMAIL_PATTERN.test(email) && !email.startsWith('.') && !email.includes('..') && !email.includes('.@');
+  return (
+    email.length <= 254 &&
+    EMAIL_PATTERN.test(email) &&
+    !email.startsWith(".") &&
+    !email.includes("..") &&
+    !email.includes(".@")
+  );
 }
 
 function utf8Length(value: string) {
@@ -27,88 +67,294 @@ function AccountApprovalPanel() {
   const { user } = useApplicationWorkspace();
   const [items, setItems] = useState<AccountRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [actionError, setActionError] = useState('');
+  const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [selected, setSelected] = useState<AccountRequest | null>(null);
-  const [password, setPassword] = useState('');
 
   useEffect(() => {
     const abort = new AbortController();
-    setLoading(true); setError('');
-    listAccountRequests(abort.signal).then(result => { if (!abort.signal.aborted) setItems(result.items); }).catch(reason => {
-      if (!abort.signal.aborted) setError(reason instanceof Error ? reason.message : 'Account requests could not be loaded.');
-    }).finally(() => { if (!abort.signal.aborted) setLoading(false); });
+    setLoading(true);
+    setError("");
+    listAccountRequests(abort.signal)
+      .then((result) => {
+        if (!abort.signal.aborted) setItems(result.items);
+      })
+      .catch((reason) => {
+        if (!abort.signal.aborted)
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "Account requests could not be loaded.",
+          );
+      })
+      .finally(() => {
+        if (!abort.signal.aborted) setLoading(false);
+      });
     return () => abort.abort();
   }, [refresh]);
 
-  const canReview = (request: AccountRequest) => user.role === 'Super Admin' || (user.role === 'Admin' && request.requestedBy.role !== 'Admin' && request.role !== 'Admin');
-  const pending = items.filter(request => request.status === 'Pending' && canReview(request));
-  const decide = async (request: AccountRequest, decision: 'Approved' | 'Rejected', initialPassword?: string) => {
-    setBusy(true); setActionError('');
+  const canReview = (_request: AccountRequest) => user.role === "Super Admin";
+  const pending = items.filter(
+    (request) => request.status === "Pending" && canReview(request),
+  );
+  const decide = async (
+    request: AccountRequest,
+    decision: "Approved" | "Rejected",
+  ) => {
+    setBusy(true);
+    setActionError("");
     try {
-      await reviewAccountRequest(request.id, decision, request.version, initialPassword);
-      setSelected(null); setPassword(''); setRefresh(value => value + 1);
-    } catch (reason) { setActionError(reason instanceof ApiError ? reason.message : `Request could not be ${decision.toLowerCase()}.`); }
-    finally { setBusy(false); }
-  };
-  const approve = (event: FormEvent) => {
-    event.preventDefault();
-    if (!selected) return;
-    if (password.trim().length < 12 || utf8Length(password) > PASSWORD_MAX_UTF8_BYTES) {
-      setActionError('Use at least 12 non-whitespace characters and at most 1,024 UTF-8 bytes.'); return;
+      await reviewAccountRequest(request.id, decision, request.version);
+      setSelected(null);
+      setRefresh((value) => value + 1);
+    } catch (reason) {
+      setActionError(
+        reason instanceof ApiError
+          ? reason.message
+          : `Request could not be ${decision.toLowerCase()}.`,
+      );
+    } finally {
+      setBusy(false);
     }
-    void decide(selected, 'Approved', password);
+  };
+  const approve = () => {
+    if (selected) void decide(selected, "Approved");
   };
   const reject = (request: AccountRequest) => {
-    if (window.confirm(`Reject the account request for ${request.firstName} ${request.lastName}?`)) void decide(request, 'Rejected');
+    if (
+      window.confirm(
+        `Reject the account request for ${request.firstName} ${request.lastName}?`,
+      )
+    )
+      void decide(request, "Rejected");
   };
 
-  return <>
-    <Card id="pending-account-approvals" title={`Pending account approvals${pending.length ? ` · ${pending.length}` : ''}`}>
-      {actionError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{actionError}</p>}
-      {loading ? <DataState kind="loading" title="Loading approvals" description="Checking pending account requests." /> : error ? <DataState kind="error" title="Approvals unavailable" description={error} action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /> : !pending.length ? <DataState kind="empty" title="No pending approvals" description="Account requests awaiting your review will appear here." /> :
-        <div className="sl-table-scroll sl-v56-approval-scroll" role="region" aria-label="Pending account approvals" tabIndex={0}><table className="sl-data-table sl-v56-approval-table"><colgroup><col className="approval-name-column" /><col className="approval-email-column" /><col className="approval-role-column" /><col className="approval-requester-column" /><col className="approval-date-column" /><col className="approval-actions-column" /></colgroup><thead><tr><th>Name</th><th>Email</th><th>Requested role</th><th>Requested by</th><th>Submitted</th><th>Actions</th></tr></thead><tbody>
-          {pending.map(request => <tr key={request.id}><td>{request.firstName} {request.lastName}</td><td>{request.email}</td><td>{request.role}</td><td>{request.requestedBy.name} <span className="sl-supporting">({request.requestedBy.role})</span></td><td>{new Date(request.createdAt).toLocaleDateString()}</td><td><div className="sl-row-actions"><button type="button" className="sl-button sl-button-primary" disabled={busy} onClick={() => { setSelected(request); setPassword(''); setActionError(''); }}><Check size={15} aria-hidden="true" />Approve</button><button type="button" className="sl-button" disabled={busy} onClick={() => reject(request)}><X size={15} aria-hidden="true" />Reject</button></div></td></tr>)}
-        </tbody></table></div>}
-    </Card>
-    <Dialog open={!!selected} title="Approve account request" onDismiss={() => { if (!busy) setSelected(null); }} busy={busy} actions={<><button type="button" className="sl-button" disabled={busy} onClick={() => setSelected(null)}>Cancel</button><button type="submit" className="sl-button sl-button-primary" form="user-management-account-approval" disabled={busy}>{busy ? 'Creating account…' : 'Approve and create account'}</button></>}>
-      {selected && <form id="user-management-account-approval" className="sl-v56-approval-form" onSubmit={approve}><p>Create {selected.firstName} {selected.lastName} as <strong>{selected.role}</strong>. Set an initial password to share securely with the requester.</p>{actionError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{actionError}</p>}<label>Initial password<input className="sl-admin-input" type="password" autoComplete="new-password" minLength={12} maxLength={1024} value={password} disabled={busy} onChange={event => { setPassword(event.target.value); setActionError(''); }} /></label></form>}
-    </Dialog>
-  </>;
+  return (
+    <>
+      <Card
+        id="pending-account-approvals"
+        title={`Pending account approvals${pending.length ? ` · ${pending.length}` : ""}`}
+      >
+        {actionError && (
+          <p className="sl-inline-notice sl-inline-notice-error" role="alert">
+            {actionError}
+          </p>
+        )}
+        {loading ? (
+          <DataState
+            kind="loading"
+            title="Loading approvals"
+            description="Checking pending account requests."
+          />
+        ) : error ? (
+          <DataState
+            kind="error"
+            title="Approvals unavailable"
+            description={error}
+            action={
+              <button
+                type="button"
+                className="sl-button"
+                onClick={() => setRefresh((value) => value + 1)}
+              >
+                Retry
+              </button>
+            }
+          />
+        ) : !pending.length ? (
+          <DataState
+            kind="empty"
+            title="No pending approvals"
+            description="Account requests awaiting your review will appear here."
+          />
+        ) : (
+          <div
+            className="sl-table-scroll sl-v56-approval-scroll"
+            role="region"
+            aria-label="Pending account approvals"
+            tabIndex={0}
+          >
+            <table className="sl-data-table sl-v56-approval-table">
+              <colgroup>
+                <col className="approval-name-column" />
+                <col className="approval-email-column" />
+                <col className="approval-role-column" />
+                <col className="approval-requester-column" />
+                <col className="approval-date-column" />
+                <col className="approval-actions-column" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Requested role</th>
+                  <th>Requested by</th>
+                  <th>Submitted</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pending.map((request) => (
+                  <tr key={request.id}>
+                    <td>
+                      {request.firstName} {request.lastName}
+                    </td>
+                    <td>{request.email}</td>
+                    <td>{request.role}</td>
+                    <td>
+                      {request.requestedBy.name}{" "}
+                      <span className="sl-supporting">
+                        ({request.requestedBy.role})
+                      </span>
+                    </td>
+                    <td>{new Date(request.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <div className="sl-row-actions">
+                        <button
+                          type="button"
+                          className="sl-button sl-button-primary"
+                          disabled={busy}
+                          onClick={() => {
+                            setSelected(request);
+                            setActionError("");
+                          }}
+                        >
+                          <Check size={15} aria-hidden="true" />
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          className="sl-button"
+                          disabled={busy}
+                          onClick={() => reject(request)}
+                        >
+                          <X size={15} aria-hidden="true" />
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+      <Dialog
+        open={!!selected}
+        title="Approve account request"
+        onDismiss={() => {
+          if (!busy) setSelected(null);
+        }}
+        busy={busy}
+        actions={
+          <>
+            <button
+              type="button"
+              className="sl-button"
+              disabled={busy}
+              onClick={() => setSelected(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="sl-button sl-button-primary"
+              disabled={busy}
+              onClick={approve}
+            >
+              {busy ? "Creating account…" : "Approve and create account"}
+            </button>
+          </>
+        }
+      >
+        {selected && (
+          <div className="sl-v56-approval-form">
+            <p>
+              Create {selected.firstName} {selected.lastName} as{" "}
+              <strong>{selected.role}</strong> with email{" "}
+              <strong>{selected.email}</strong>.
+            </p>
+            <p>
+              The temporary password will be shelfLife123. They must change it
+              before opening the dashboard.
+            </p>
+            {actionError && (
+              <p
+                className="sl-inline-notice sl-inline-notice-error"
+                role="alert"
+              >
+                {actionError}
+              </p>
+            )}
+          </div>
+        )}
+      </Dialog>
+    </>
+  );
 }
 
 export function AccountsTable() {
   const { user } = useApplicationWorkspace();
-  const superAdmin = user.role === 'Super Admin';
-  const assignableRoles: ManagedRole[] = superAdmin ? ['Admin', 'Inventory Manager', 'Inventory Staff'] : ['Inventory Manager', 'Inventory Staff'];
-  const [assignedRole, setAssignedRole] = useState<ManagedRole>(superAdmin ? 'Admin' : 'Inventory Manager');
-  const [page, setPage] = useState(1), [pageSize, setPageSize] = useState(10), [sort, setSort] = useState('createdAt'), [refresh, setRefresh] = useState(0);
-  const [directorySearch, setDirectorySearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('All Roles');
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const superAdmin = user.role === "Super Admin";
+  const assignableRoles: ManagedRole[] = superAdmin
+    ? ["Admin", "Inventory Manager", "Inventory Staff"]
+    : ["Inventory Manager", "Inventory Staff"];
+  const [assignedRole, setAssignedRole] = useState<ManagedRole>(
+    superAdmin ? "Admin" : "Inventory Manager",
+  );
+  const [page, setPage] = useState(1),
+    [pageSize, setPageSize] = useState(10),
+    [sort, setSort] = useState("createdAt"),
+    [refresh, setRefresh] = useState(0);
+  const [directorySearch, setDirectorySearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("All Roles");
+  const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [recentActivity, setRecentActivity] = useState<AuditRecord[] | null>(null);
+  const [recentActivity, setRecentActivity] = useState<AuditRecord[] | null>(
+    null,
+  );
   const [activityError, setActivityError] = useState(false);
-  const [data, setData] = useState<Page<Account> | null>(null), [loadError, setLoadError] = useState(false);
-  const [mode, setMode] = useState<'create' | 'view' | 'edit' | 'lifecycle' | null>(null), [selected, setSelected] = useState<Account | null>(null);
-  const [fields, setFields] = useState(blank), [errors, setErrors] = useState<Record<string, string>>({}), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
+  const [data, setData] = useState<Page<Account> | null>(null),
+    [loadError, setLoadError] = useState(false);
+  const [mode, setMode] = useState<
+      "create" | "view" | "edit" | "lifecycle" | null
+    >(null),
+    [selected, setSelected] = useState<Account | null>(null);
+  const adminRequest = mode === "create" && user.role === "Admin";
+  const [fields, setFields] = useState(blank),
+    [errors, setErrors] = useState<Record<string, string>>({}),
+    [message, setMessage] = useState(""),
+    [busy, setBusy] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const abort = new AbortController();
     setLoadError(false);
-    listAccounts(page, sort, sort === 'createdAt' ? 'desc' : 'asc', abort.signal, pageSize)
-      .then(value => { if (!abort.signal.aborted) setData(value); })
-      .catch(() => { if (!abort.signal.aborted) setLoadError(true); });
+    listAccounts(
+      page,
+      sort,
+      sort === "createdAt" ? "desc" : "asc",
+      abort.signal,
+      pageSize,
+    )
+      .then((value) => {
+        if (!abort.signal.aborted) setData(value);
+      })
+      .catch(() => {
+        if (!abort.signal.aborted) setLoadError(true);
+      });
     return () => abort.abort();
   }, [page, pageSize, sort, refresh]);
 
   useEffect(() => {
     const abort = new AbortController();
-    accountSummary(abort.signal).then(setSummary).catch(() => setSummary(null));
+    accountSummary(abort.signal)
+      .then(setSummary)
+      .catch(() => setSummary(null));
     return () => abort.abort();
   }, [refresh]);
 
@@ -121,63 +367,116 @@ export function AccountsTable() {
       // The existing audit API has no target filter. Search newest-first pages
       // rather than mistaking the latest five events for account activity.
       for (let auditPage = 1; !abort.signal.aborted; auditPage += 1) {
-        const result = await listAuditRecords(auditPage, 100, 'desc', {}, abort.signal);
-        accounts.push(...result.items.filter(record => record.targetType === 'User'));
-        if (accounts.length >= 5 || !result.items.length || result.page * result.pageSize >= result.total) break;
+        const result = await listAuditRecords(
+          auditPage,
+          100,
+          "desc",
+          {},
+          abort.signal,
+        );
+        accounts.push(
+          ...result.items.filter((record) => record.targetType === "User"),
+        );
+        if (
+          accounts.length >= 5 ||
+          !result.items.length ||
+          result.page * result.pageSize >= result.total
+        )
+          break;
       }
       if (!abort.signal.aborted) setRecentActivity(accounts.slice(0, 5));
     }
-    void loadAccountActivity().catch(() => { if (!abort.signal.aborted) setActivityError(true); });
+    void loadAccountActivity().catch(() => {
+      if (!abort.signal.aborted) setActivityError(true);
+    });
     return () => abort.abort();
   }, [superAdmin, refresh]);
 
-  const mayManage = (account: Account) => account.id !== user.id && (superAdmin ? ['Admin', 'Inventory Manager', 'Inventory Staff'].includes(account.role) : user.role === 'Admin' && (account.role === 'Inventory Manager' || account.role === 'Inventory Staff'));
+  const mayManage = (account: Account) =>
+    account.id !== user.id &&
+    (superAdmin
+      ? ["Admin", "Inventory Manager", "Inventory Staff"].includes(account.role)
+      : user.role === "Admin" &&
+        (account.role === "Inventory Manager" ||
+          account.role === "Inventory Staff"));
   const visibleAccounts = useMemo(() => {
     if (!data) return [];
     const query = directorySearch.trim().toLowerCase();
-    const filtered = data.items.filter(account => {
-      const matchesSearch = !query || [account.name, account.email, account.role, account.isActive ? 'active' : 'inactive'].some(value => value.toLowerCase().includes(query));
-      const matchesRole = roleFilter === 'All Roles' || account.role === roleFilter;
-      const matchesStatus = statusFilter === 'All Statuses' || (statusFilter === 'Active' ? account.isActive : !account.isActive);
+    const filtered = data.items.filter((account) => {
+      const matchesSearch =
+        !query ||
+        [
+          account.name,
+          account.email,
+          account.role,
+          account.isActive ? "active" : "inactive",
+        ].some((value) => value.toLowerCase().includes(query));
+      const matchesRole =
+        roleFilter === "All Roles" || account.role === roleFilter;
+      const matchesStatus =
+        statusFilter === "All Statuses" ||
+        (statusFilter === "Active" ? account.isActive : !account.isActive);
       return matchesSearch && matchesRole && matchesStatus;
     });
 
     // Keep the visible page deterministic even if the API/database collation differs by environment.
-    const direction = sort === 'createdAt' ? -1 : 1;
+    const direction = sort === "createdAt" ? -1 : 1;
     return filtered.sort((a, b) => {
-      const left = sort === 'createdAt' ? new Date(a.createdAt).getTime() : String(a[sort as keyof Account] ?? '').toLowerCase();
-      const right = sort === 'createdAt' ? new Date(b.createdAt).getTime() : String(b[sort as keyof Account] ?? '').toLowerCase();
+      const left =
+        sort === "createdAt"
+          ? new Date(a.createdAt).getTime()
+          : String(a[sort as keyof Account] ?? "").toLowerCase();
+      const right =
+        sort === "createdAt"
+          ? new Date(b.createdAt).getTime()
+          : String(b[sort as keyof Account] ?? "").toLowerCase();
       return left < right ? -1 * direction : left > right ? 1 * direction : 0;
     });
   }, [data, directorySearch, roleFilter, statusFilter, sort]);
 
-  async function open(account: Account, next: 'view' | 'edit' | 'lifecycle') {
-    setBusy(true); setMessage(''); setErrors({});
+  async function open(account: Account, next: "view" | "edit" | "lifecycle") {
+    setBusy(true);
+    setMessage("");
+    setErrors({});
     try {
       const result = await getAccount(account.id);
       setSelected(result.user);
       setAssignedRole(result.user.role as ManagedRole);
-      setFields({ firstName: result.user.firstName, lastName: result.user.lastName, email: result.user.email, password: '' });
+      setFields({
+        firstName: result.user.firstName,
+        lastName: result.user.lastName,
+        email: result.user.email,
+        password: "",
+      });
       setTouched({});
       setMode(next);
     } catch {
-      setMessage('The account could not be loaded. Try again.');
+      setMessage("The account could not be loaded. Try again.");
     } finally {
       setBusy(false);
     }
   }
 
-
-  function validateField(key: 'firstName' | 'lastName' | 'email' | 'password', value: string) {
-    if (key === 'firstName' || key === 'lastName') {
+  function validateField(
+    key: "firstName" | "lastName" | "email" | "password",
+    value: string,
+  ) {
+    if (key === "firstName" || key === "lastName") {
       const trimmed = value.trim();
       if (!trimmed) return REQUIRED_ERROR;
-      return trimmed.length > NAME_LIMIT ? `Enter 1–${NAME_LIMIT} characters.` : '';
+      return trimmed.length > NAME_LIMIT
+        ? `Enter 1–${NAME_LIMIT} characters.`
+        : "";
     }
     if (!value.trim()) return REQUIRED_ERROR;
-    if (key === 'email') return !validShelfLifeEmail(value) ? 'Enter a valid shelflife.com email.' : '';
-    if (value.length < 12) return 'Use at least 12 characters.';
-    return utf8Length(value) > PASSWORD_MAX_UTF8_BYTES ? 'Use a shorter password (at most 1,024 UTF-8 bytes).' : '';
+    if (key === "email")
+      return !validShelfLifeEmail(value)
+        ? "Enter a valid shelflife.com email."
+        : "";
+    if (value.length < 12) return "Use at least 12 characters.";
+    return utf8Length(value) > PASSWORD_MAX_UTF8_BYTES
+      ? "Use a shorter password (at most 1,024 UTF-8 bytes)."
+      : "";
   }
 
   function close() {
@@ -195,37 +494,85 @@ export function AccountsTable() {
     event.preventDefault();
     if (busy) return;
     const next: Record<string, string> = {};
-    const adminRequest = mode === 'create' && user.role === 'Admin';
-    const requiredFields = ['firstName', 'lastName', 'email', ...(mode === 'create' && !adminRequest ? ['password'] as const : [])] as const;
+    const adminRequest = mode === "create" && user.role === "Admin";
+    const requiredFields = [
+      "firstName",
+      "lastName",
+      ...(!adminRequest ? (["email"] as const) : []),
+      ...(mode === "create" && !adminRequest ? (["password"] as const) : []),
+    ] as const;
     for (const key of requiredFields) {
       const error = validateField(key, fields[key]);
       if (error) next[key] = error;
     }
-    if (!(adminRequest ? ['Admin', 'Inventory Manager', 'Inventory Staff'] as ManagedRole[] : assignableRoles).includes(assignedRole)) next.role = 'Select a role.';
+    if (
+      !(
+        adminRequest
+          ? (["Inventory Manager", "Inventory Staff"] as ManagedRole[])
+          : assignableRoles
+      ).includes(assignedRole)
+    )
+      next.role = "Select a role.";
     if (Object.keys(next).length) {
-      setTouched(previous => ({ ...previous, ...Object.fromEntries(Object.keys(next).map(key => [key, true])) }));
-      setErrors({ ...next, form: 'Complete the required account details before continuing.' });
-      const firstInvalidField = requiredFields.find(key => next[key]);
-      if (firstInvalidField) document.getElementById(`admin-${firstInvalidField}`)?.focus();
+      setTouched((previous) => ({
+        ...previous,
+        ...Object.fromEntries(Object.keys(next).map((key) => [key, true])),
+      }));
+      setErrors({
+        ...next,
+        form: "Complete the required account details before continuing.",
+      });
+      const firstInvalidField = requiredFields.find((key) => next[key]);
+      if (firstInvalidField)
+        document.getElementById(`admin-${firstInvalidField}`)?.focus();
       return;
     }
     setErrors({});
 
     setBusy(true);
     try {
-      const input = { firstName: fields.firstName.trim(), lastName: fields.lastName.trim(), email: fields.email.trim().toLowerCase(), role: assignedRole };
+      const firstName = fields.firstName.trim();
+      const requestEmail = `${firstName.toLowerCase().replace(/\s+/g, "")}${assignedRole === "Inventory Staff" ? "staff" : "manager"}@shelflife.com`;
+      const input = {
+        firstName,
+        lastName: fields.lastName.trim(),
+        email: adminRequest ? requestEmail : fields.email.trim().toLowerCase(),
+        role: assignedRole,
+      };
       if (adminRequest) {
         await createAccountRequest(input);
-        setMessage('Account request submitted. A Super Admin must approve it before the account is created.');
-      } else if (mode === 'create') await createAccount({ ...input, password: fields.password });
+        setMessage(
+          "Account request submitted. A Super Admin must approve it before the account is created.",
+        );
+      } else if (mode === "create")
+        await createAccount({ ...input, password: fields.password });
       else await updateAccount(selected!.id, input);
-      if (!adminRequest) setMessage(mode === 'create' ? 'Account created.' : 'Account updated.');
-      setMode(null); setFields(blank); setSelected(null); setShowPassword(false); setRefresh(value => value + 1);
+      if (!adminRequest)
+        setMessage(mode === "create" ? "Account created." : "Account updated.");
+      setMode(null);
+      setFields(blank);
+      setSelected(null);
+      setShowPassword(false);
+      setRefresh((value) => value + 1);
     } catch (error) {
-      const details = error instanceof ApiError
-        ? Object.fromEntries(error.details.map(item => [item.field, item.field === 'password' ? (item.message || 'Use at least 12 characters.') : item.message]))
-        : {};
-      setErrors({ ...details, form: error instanceof ApiError ? error.message : 'The result could not be confirmed. The directory will refresh automatically.' });
+      const details =
+        error instanceof ApiError
+          ? Object.fromEntries(
+              error.details.map((item) => [
+                item.field,
+                item.field === "password"
+                  ? item.message || "Use at least 12 characters."
+                  : item.message,
+              ]),
+            )
+          : {};
+      setErrors({
+        ...details,
+        form:
+          error instanceof ApiError
+            ? error.message
+            : "The result could not be confirmed. The directory will refresh automatically.",
+      });
     } finally {
       setBusy(false);
     }
@@ -233,13 +580,20 @@ export function AccountsTable() {
 
   async function lifecycle() {
     if (!selected || busy) return;
-    setBusy(true); setErrors({});
+    setBusy(true);
+    setErrors({});
     try {
       await setAccountActive(selected.id, !selected.isActive);
-      setMessage(selected.isActive ? 'Account deactivated.' : 'Account reactivated.');
-      setMode(null); setSelected(null); setRefresh(value => value + 1);
+      setMessage(
+        selected.isActive ? "Account deactivated." : "Account reactivated.",
+      );
+      setMode(null);
+      setSelected(null);
+      setRefresh((value) => value + 1);
     } catch {
-      setErrors({ form: 'The account change could not be confirmed. The directory will refresh automatically.' });
+      setErrors({
+        form: "The account change could not be confirmed. The directory will refresh automatically.",
+      });
     } finally {
       setBusy(false);
     }
@@ -249,200 +603,885 @@ export function AccountsTable() {
   const totalUsers = summary?.totalUsers ?? data?.total ?? 0;
   const activeUsers = summary?.activeUsers ?? 0;
   const inactiveUsers = summary?.inactiveUsers ?? 0;
-  const activePercent = totalUsers ? Math.round((activeUsers / totalUsers) * 100) : 0;
-  const inactivePercent = totalUsers ? Math.round((inactiveUsers / totalUsers) * 100) : 0;
-  const roleDistribution = (['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'] as const).map(role => ({
+  const activePercent = totalUsers
+    ? Math.round((activeUsers / totalUsers) * 100)
+    : 0;
+  const inactivePercent = totalUsers
+    ? Math.round((inactiveUsers / totalUsers) * 100)
+    : 0;
+  const roleDistribution = (
+    ["Super Admin", "Admin", "Inventory Manager", "Inventory Staff"] as const
+  ).map((role) => ({
     role,
     count: roleCounts[role] ?? 0,
   }));
-  const distributionTotal = roleDistribution.reduce((sum, item) => sum + item.count, 0);
+  const roleBreakdownText = summary
+    ? roleDistribution
+        .filter((item) => item.role !== "Super Admin")
+        .map((item) => {
+          const label =
+            item.role === "Admin"
+              ? "Admin"
+              : item.role === "Inventory Manager"
+                ? "Managers"
+                : "Staff";
+          return `${label}: ${item.count}`;
+        })
+        .join(" • ")
+    : "Awaiting account summary";
+  const distributionTotal = roleDistribution.reduce(
+    (sum, item) => sum + item.count,
+    0,
+  );
   const auditActionLabel: Record<string, string> = {
-    CREATE: 'Created a user account',
-    UPDATE: 'Updated account details',
-    DELETE: 'Deleted a user account',
-    DEACTIVATE: 'Deactivated an account',
-    REACTIVATE: 'Reactivated an account',
+    CREATE: "Created a user account",
+    UPDATE: "Updated account details",
+    DELETE: "Deleted a user account",
+    DEACTIVATE: "Deactivated an account",
+    REACTIVATE: "Reactivated an account",
   };
 
-  return <>
-    {superAdmin && <SummaryCards items={[
-      { label: 'Total Users', value: summary ? totalUsers : '—', detail: summary ? 'System-wide accounts' : 'Awaiting account summary', tone: 'brand' },
-      { label: 'Active Accounts', value: summary ? activeUsers : '—', detail: summary ? `▲ ${activePercent}% active` : 'Awaiting account summary', tone: 'success' },
-      { label: 'Inactive Accounts', value: summary ? inactiveUsers : '—', detail: summary ? `${inactivePercent}% inactive` : 'Awaiting account summary', tone: 'critical' },
-      { label: 'Roles', value: 4, detail: 'Super Admin, Admin, Inventory Manager, Inventory Staff', tone: 'attention' },
-    ]} />}
+  return (
+    <>
+      {superAdmin && (
+        <SummaryCards
+          items={[
+            {
+              label: "Total Users",
+              value: summary ? totalUsers : "—",
+              detail: summary
+                ? "System-wide accounts"
+                : "Awaiting account summary",
+              tone: "brand",
+            },
+            {
+              label: "Active Accounts",
+              value: summary ? activeUsers : "—",
+              detail: summary
+                ? `▲ ${activePercent}% active`
+                : "Awaiting account summary",
+              tone: "success",
+            },
+            {
+              label: "Inactive Accounts",
+              value: summary ? inactiveUsers : "—",
+              detail: summary
+                ? `${inactivePercent}% inactive`
+                : "Awaiting account summary",
+              tone: "critical",
+            },
+            {
+              label: "Roles",
+              value: 4,
+              detail: roleBreakdownText,
+              tone: "attention",
+            },
+          ]}
+        />
+      )}
 
-    <div className={superAdmin ? 'sl-v56-main-grid' : undefined}>
-      <section className={superAdmin ? 'sl-v56-directory' : undefined}>
-        <div className="sl-v56-filter-row">
-          <label className="sl-v56-filter sl-v56-search-field">Search users
-            <div className="sl-directory-search sl-v56-search" role="search">
-              <Search size={17} aria-hidden="true" />
-              <input type="search" value={directorySearch} placeholder="Search this page by name, email, role or status…" aria-label="Search users"
-                onChange={event => { setDirectorySearch(event.target.value); setPage(1); }} />
-            </div>
-          </label>
-          <label className="sl-v56-filter">Role
-            <select className="sl-admin-input" value={roleFilter} onChange={event => { setRoleFilter(event.target.value); setPage(1); }}>
-              <option>All Roles</option>{superAdmin && <option>Super Admin</option>}<option>Admin</option><option>Inventory Manager</option><option>Inventory Staff</option>
-            </select>
-          </label>
-          <label className="sl-v56-filter">Status
-            <select className="sl-admin-input" value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(1); }}>
-              <option>All Statuses</option><option>Active</option><option>Inactive</option>
-            </select>
-          </label>
-          {!superAdmin && <span className="sl-admin-clear-filters">Clear Filters</span>}
-          <button className="sl-button sl-v56-reset" onClick={() => {
-            setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
-          }}>Reset</button>
-          {!superAdmin && <button className="sl-button sl-button-primary sl-admin-users-apply" type="button" onClick={() => setPage(1)}>Apply Filters</button>}
-        </div>
-
-        {superAdmin && <AccountApprovalPanel />}
-
-        <div className="sl-admin-users-table-toolbar">
-          <strong>{data ? `Showing ${data.total ? ((data.page - 1) * data.pageSize) + 1 : 0}–${Math.min(data.page * data.pageSize, data.total)} of ${data.total} users` : 'Loading users…'}</strong>
-          {message && <span className="sl-admin-users-message" role="status">{message}</span>}
-          <div className="sl-admin-users-toolbar-actions">
-            {!superAdmin && <button type="button" className="sl-admin-users-export" onClick={() => {
-              if (!visibleAccounts.length) return;
-              const rows = [['Name','Email','Role','Status'], ...visibleAccounts.map(a => [a.name,a.email,a.role,a.isActive ? 'Active' : 'Inactive'])];
-              const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
-              const url = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
-              const link = document.createElement('a'); link.href=url; link.download='shelflife-users.csv'; link.click(); URL.revokeObjectURL(url);
-            }}><Download size={16} aria-hidden="true"/> Export <span aria-hidden="true">⌄</span></button>}
-            <button type="button" className="sl-button sl-button-primary sl-v56-add-user" disabled={busy} onClick={() => {
-              setMode('create'); setAssignedRole(superAdmin ? 'Admin' : 'Inventory Manager'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage('');
-            }}><UserPlus size={16} aria-hidden="true" /> Add User</button>
-          </div>
-        </div>
-
-        <div className="sl-v56-table-wrap" role="region" aria-label="User account directory" tabIndex={0}>
-          <table className="sl-data-table sl-v56-table">
-            <thead><tr>
-              {superAdmin ? <th scope="col">#</th> : <th scope="col" className="sl-admin-users-check"><input type="checkbox" aria-label="Select all visible users" /></th>}
-              <th scope="col">Name {!superAdmin && <span className="sl-admin-sort">↕</span>}</th><th scope="col">Email {!superAdmin && <span className="sl-admin-sort">↕</span>}</th><th scope="col">Role {!superAdmin && <span className="sl-admin-sort">↕</span>}</th><th scope="col">Status {!superAdmin && <span className="sl-admin-sort">↕</span>}</th>
-              <th scope="col">Last Login {!superAdmin && <span className="sl-admin-sort">↕</span>}</th>
-              {superAdmin && <th scope="col">Created At</th>}
-              <th scope="col">Actions</th>
-            </tr></thead>
-            <tbody>
-              {loadError ? <tr><td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell"><DataState kind="error" title="Accounts could not be loaded" description="Check your connection and try again." action={<button className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></td></tr>
-              : !data ? <tr><td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell"><DataState kind="loading" title="Loading accounts" description="" /></td></tr>
-              : !visibleAccounts.length ? <tr><td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell"><DataState kind="empty" title="No matching accounts" description="Try another search or filter." /></td></tr>
-              : visibleAccounts.map((account, index) => <tr key={account.id}>
-                {superAdmin ? <td>{(data.page - 1) * data.pageSize + index + 1}</td> : <td className="sl-admin-users-check"><input type="checkbox" aria-label={`Select ${account.name}`} /></td>}
-                <td className="sl-v56-name"><span className="sl-admin-user-avatar" aria-hidden="true">{account.name.split(/\s+/).map(v=>v[0]).join('').slice(0,2).toUpperCase()}</span><strong>{account.name}</strong></td>
-                <td>{account.email}</td>
-                <td><span className="sl-v56-role-pill" data-role={account.role}>{account.role}</span></td>
-                <td><Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status></td>
-                <td><span className="sl-v56-unavailable" title="Last-login data pending">—</span></td>
-                {superAdmin && <td>{new Date(account.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</td>}
-                <td><div className="sl-row-actions sl-v56-actions">
-                  <button className="sl-v56-more" disabled={busy} aria-label={`View actions for ${account.name}`} onClick={() => open(account, 'view')}>•••</button>
-                </div></td>
-              </tr>)}
-            </tbody>
-          </table>
-        </div>
-        {data && (superAdmin ? <Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="users" onPageChange={setPage} /> : <div className="sl-admin-users-footer"><label>Rows per page <select value={pageSize} aria-label="Rows per page" onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select></label><Pagination compact page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="users" onPageChange={setPage} /></div>)}
-      </section>
-
-      {superAdmin && <aside className="sl-v56-side">
-        <section className="sl-v56-side-card">
-          <h2>User Distribution</h2>
-          <div className="sl-v56-distribution">
-            <div className="sl-v56-distribution-total">
-              <strong>{summary ? totalUsers : '—'}</strong><span>Users</span>
-            </div>
-            <div className="sl-v61-status-track" aria-hidden="true">
-              {roleDistribution.map(item => <span key={item.role} data-role={item.role} style={{ width: distributionTotal ? `${item.count / distributionTotal * 100}%` : '0%' }} />)}
-            </div>
-            <div className="sl-v56-legend">
-              {roleDistribution.map(item => <div key={item.role}>
-                <span className="sl-v56-dot" data-role={item.role} />
-                <span>{item.role}</span><strong>{summary ? item.count : '—'}</strong><small>{summary ? `${distributionTotal ? Math.round(item.count / distributionTotal * 100) : 0}%` : '—'}</small>
-              </div>)}
-            </div>
-          </div>
-        </section>
-
-        <section className="sl-v56-side-card">
-          <h2>Account Status</h2>
-          <div className="sl-v61-status-track" aria-hidden="true">
-            <span data-kind="active" style={{ width: totalUsers ? `${activeUsers / totalUsers * 100}%` : '0%' }} />
-            <span data-kind="inactive" style={{ width: totalUsers ? `${inactiveUsers / totalUsers * 100}%` : '0%' }} />
-          </div>
-          <div className="sl-v56-legend">
-            <div><span className="sl-v56-dot" data-kind="active" /><span>Active</span><strong>{summary ? activeUsers : '—'}</strong><small>{summary ? `${activePercent}%` : '—'}</small></div>
-            <div><span className="sl-v56-dot" data-kind="inactive" /><span>Inactive</span><strong>{summary ? inactiveUsers : '—'}</strong><small>{summary ? `${inactivePercent}%` : '—'}</small></div>
-          </div>
-        </section>
-
-        <section className="sl-v56-side-card sl-v56-activity">
-          <div className="sl-v60-activity-head"><h2>Recent Account Activity</h2><a href="/SecurityActivity">View all <span aria-hidden="true">→</span></a></div>
-          {activityError ? <p className="sl-supporting" role="status">Account activity could not be loaded.</p>
-          : !recentActivity ? <p className="sl-supporting">Loading activity…</p>
-          : !recentActivity.length ? <div className="sl-v58-activity-empty"><span className="sl-v56-activity-icon"><Activity size={15} aria-hidden="true" /></span><div><strong>No account activity yet</strong><span>Recorded account changes will appear here.</span></div></div>
-          : <ul>{recentActivity.map(record => <li key={record.id}>
-              <span className="sl-v56-activity-icon"><Activity size={13} aria-hidden="true" /></span>
-              <div><strong>{record.actor.name}</strong><span>{auditActionLabel[record.action] ?? `${record.action} · ${record.targetType}`}</span></div>
-              <time dateTime={record.timestamp}>{new Date(record.timestamp).toLocaleString(undefined, { month: 'short', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</time>
-            </li>)}</ul>}
-        </section>
-      </aside>}
-    </div>
-
-    <Dialog
-      open={mode === 'create' || mode === 'edit'}
-      title={mode === 'create'
-        ? <span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><UserPlus size={21} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">{user.role === 'Admin' ? 'Request New Account' : 'Add User Account'}</span><small>{user.role === 'Admin' ? 'A Super Admin must approve this request before the account is created.' : 'Create a new account and assign their role.'}</small></span></span>
-        : mode === 'edit'
-          ? <span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Pencil size={20} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Edit User Account</span><small>Update account details and assigned role.</small></span></span>
-          : 'Create account'}
-      onDismiss={close}
-      busy={busy}
-      className={mode === 'create' || mode === 'edit' ? 'sl-add-user-dialog sl-account-reference-dialog' : ''}
-    >
-      <form className="sl-admin-form sl-account-form" onSubmit={save} noValidate>
-        <div className="sl-form-grid">
-          {(['firstName', 'lastName', 'email', ...(mode === 'create' && user.role !== 'Admin' ? ['password'] as const : [])] as const).map(key => <div key={key} className={`sl-account-field${key === 'email' || key === 'password' ? ' sl-form-span-2' : ''}`}>
-            <label htmlFor={`admin-${key}`}>{({ firstName: 'First name', lastName: 'Last name', email: 'Email', password: 'Temporary Password' })[key]}</label>
-            <div className={key === 'password' ? 'sl-password-field' : undefined}>
-              <input
+      <div className={superAdmin ? "sl-v56-main-grid" : undefined}>
+        <section className={superAdmin ? "sl-v56-directory" : undefined}>
+          <div className="sl-v56-filter-row">
+            <label className="sl-v56-filter sl-v56-search-field">
+              Search users
+              <div className="sl-directory-search sl-v56-search" role="search">
+                <Search size={17} aria-hidden="true" />
+                <input
+                  type="search"
+                  value={directorySearch}
+                  placeholder="Search this page by name, email, role or status…"
+                  aria-label="Search users"
+                  onChange={(event) => {
+                    setDirectorySearch(event.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+            </label>
+            <label className="sl-v56-filter">
+              Role
+              <select
                 className="sl-admin-input"
-                id={`admin-${key}`}
-                type={key === 'password' ? (showPassword ? 'text' : 'password') : key === 'email' ? 'email' : 'text'}
-                autoComplete={key === 'password' ? 'new-password' : 'off'}
-                disabled={busy}
-                value={fields[key]}
-                maxLength={key === 'firstName' || key === 'lastName' ? NAME_LIMIT : undefined}
-                aria-invalid={touched[key] && !!errors[key] ? true : undefined}
-                aria-describedby={[touched[key] && errors[key] ? `admin-${key}-error` : '', key === 'password' ? 'admin-password-help' : ''].filter(Boolean).join(' ') || undefined}
-                                onBlur={() => { setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, fields[key]) })); }}
-                onChange={event => { const value = event.target.value; setFields({ ...fields, [key]: value }); setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, value), form: '' })); }}
-              />
-              {key === 'password' && <button className="sl-password-toggle" type="button" disabled={busy} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-controls="admin-password" onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}</button>}
-            </div>
-            {touched[key] && errors[key] && <p id={`admin-${key}-error`} className="sl-admin-error">{errors[key]}</p>}
-            {key === 'password' && <p id="admin-password-help" className="sl-password-help">Share this with the user — they can change it after signing in.</p>}
-          </div>)}
-          <fieldset className="sl-form-span-2 sl-role-picker" aria-invalid={touched.role && !!errors.role ? true : undefined} aria-describedby={touched.role && errors.role ? 'admin-role-error' : undefined}><legend>Role</legend>{(mode === 'create' && user.role === 'Admin' ? ['Admin', 'Inventory Manager', 'Inventory Staff'] as ManagedRole[] : assignableRoles).map(role => <label key={role} className="sl-role-option" data-selected={assignedRole === role}>
-            <input type="radio" name="admin-role" value={role} checked={assignedRole === role} disabled={busy} onChange={() => { setAssignedRole(role); setTouched(previous => ({ ...previous, role: true })); setErrors(previous => ({ ...previous, role: '', form: '' })); }} />
-            <span>{role}</span>
-          </label>)}{touched.role && errors.role && <p id="admin-role-error" className="sl-admin-error">{errors.role}</p>}</fieldset>
-        </div>
-        {errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
-        <div className="sl-dialog-form-actions"><button className="sl-button" type="button" disabled={busy} onClick={close}>Cancel</button><button className="sl-button sl-button-primary" disabled={busy}>{busy ? 'Saving…' : mode === 'create' ? user.role === 'Admin' ? 'Submit request' : 'Create account' : 'Save changes'}</button></div>
-      </form>
-    </Dialog>
+                value={roleFilter}
+                onChange={(event) => {
+                  setRoleFilter(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option>All Roles</option>
+                {superAdmin && <option>Super Admin</option>}
+                <option>Admin</option>
+                <option>Inventory Manager</option>
+                <option>Inventory Staff</option>
+              </select>
+            </label>
+            <label className="sl-v56-filter">
+              Status
+              <select
+                className="sl-admin-input"
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option>All Statuses</option>
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </label>
+            {!superAdmin && (
+              <span className="sl-admin-clear-filters">Clear Filters</span>
+            )}
+            <button
+              className="sl-button sl-v56-reset"
+              onClick={() => {
+                setDirectorySearch("");
+                setRoleFilter("All Roles");
+                setStatusFilter("All Statuses");
+                setPage(1);
+              }}
+            >
+              Reset
+            </button>
+            {!superAdmin && (
+              <button
+                className="sl-button sl-button-primary sl-admin-users-apply"
+                type="button"
+                onClick={() => setPage(1)}
+              >
+                Apply Filters
+              </button>
+            )}
+          </div>
 
-    <Dialog open={mode === 'view'} title="Account details" onDismiss={close} busy={busy} actions={selected && mayManage(selected) ? <><button className="sl-button" disabled={busy} onClick={() => void open(selected, 'edit')}>Edit account</button><button className="sl-button" disabled={busy} onClick={() => void open(selected, 'lifecycle')}>{selected.isActive ? 'Deactivate account' : 'Reactivate account'}</button></> : undefined}>
-      {selected && <dl className="sl-identity-details">{[['Name', selected.name], ['Email', selected.email], ['Role', selected.role], ['Status', selected.isActive ? 'Active' : 'Inactive'], ['Created', new Date(selected.createdAt).toLocaleString(undefined, { hour12: true })]].map(([label, value]) => <div key={label}><dt className="sl-supporting">{label}</dt><dd>{value}</dd></div>)}</dl>}
-    </Dialog>
-    <Dialog open={mode === 'lifecycle'} title={`${selected?.isActive ? 'Deactivate' : 'Reactivate'} account?`} onDismiss={close} busy={busy} actions={<><button className="sl-button" data-initial-focus disabled={busy} onClick={close}>Cancel</button><button className="sl-button sl-button-primary" disabled={busy} onClick={lifecycle}>{busy ? 'Saving…' : selected?.isActive ? 'Deactivate account' : 'Reactivate account'}</button></>}>
-      <p>{selected?.isActive ? 'This account will lose access to ShelfLife AI. Historical records will be preserved.' : 'This account will be able to sign in to ShelfLife AI again.'}</p><p className="sl-supporting">{selected?.email}</p>{errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
-    </Dialog>
-  </>;
+          {superAdmin && <AccountApprovalPanel />}
+
+          <div className="sl-admin-users-table-toolbar">
+            <strong>
+              {data
+                ? `Showing ${data.total ? (data.page - 1) * data.pageSize + 1 : 0}–${Math.min(data.page * data.pageSize, data.total)} of ${data.total} users`
+                : "Loading users…"}
+            </strong>
+            {message && (
+              <span className="sl-admin-users-message" role="status">
+                {message}
+              </span>
+            )}
+            <div className="sl-admin-users-toolbar-actions">
+              {!superAdmin && (
+                <button
+                  type="button"
+                  className="sl-admin-users-export"
+                  onClick={() => {
+                    if (!visibleAccounts.length) return;
+                    const rows = [
+                      ["Name", "Email", "Role", "Status"],
+                      ...visibleAccounts.map((a) => [
+                        a.name,
+                        a.email,
+                        a.role,
+                        a.isActive ? "Active" : "Inactive",
+                      ]),
+                    ];
+                    const csv = rows
+                      .map((row) =>
+                        row
+                          .map(
+                            (cell) => `"${String(cell).replace(/"/g, '""')}"`,
+                          )
+                          .join(","),
+                      )
+                      .join("\n");
+                    const url = URL.createObjectURL(
+                      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+                    );
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = "shelflife-users.csv";
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  <Download size={16} aria-hidden="true" /> Export{" "}
+                  <span aria-hidden="true">⌄</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className="sl-button sl-button-primary sl-v56-add-user"
+                disabled={busy}
+                onClick={() => {
+                  setMode("create");
+                  setAssignedRole(superAdmin ? "Admin" : "Inventory Manager");
+                  setFields(blank);
+                  setErrors({});
+                  setTouched({});
+                  setShowPassword(false);
+                  setMessage("");
+                }}
+              >
+                <UserPlus size={16} aria-hidden="true" /> Add User
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="sl-v56-table-wrap"
+            role="region"
+            aria-label="User account directory"
+            tabIndex={0}
+          >
+            <table className="sl-data-table sl-v56-table">
+              <thead>
+                <tr>
+                  {superAdmin ? (
+                    <th scope="col">#</th>
+                  ) : (
+                    <th scope="col" className="sl-admin-users-check">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all visible users"
+                      />
+                    </th>
+                  )}
+                  <th scope="col">
+                    Name{" "}
+                    {!superAdmin && <span className="sl-admin-sort">↕</span>}
+                  </th>
+                  <th scope="col">
+                    Email{" "}
+                    {!superAdmin && <span className="sl-admin-sort">↕</span>}
+                  </th>
+                  <th scope="col">
+                    Role{" "}
+                    {!superAdmin && <span className="sl-admin-sort">↕</span>}
+                  </th>
+                  <th scope="col">
+                    Status{" "}
+                    {!superAdmin && <span className="sl-admin-sort">↕</span>}
+                  </th>
+                  <th scope="col">
+                    Last Login{" "}
+                    {!superAdmin && <span className="sl-admin-sort">↕</span>}
+                  </th>
+                  {superAdmin && <th scope="col">Created At</th>}
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadError ? (
+                  <tr>
+                    <td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell">
+                      <DataState
+                        kind="error"
+                        title="Accounts could not be loaded"
+                        description="Check your connection and try again."
+                        action={
+                          <button
+                            className="sl-button"
+                            onClick={() => setRefresh((value) => value + 1)}
+                          >
+                            Retry
+                          </button>
+                        }
+                      />
+                    </td>
+                  </tr>
+                ) : !data ? (
+                  <tr>
+                    <td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell">
+                      <DataState
+                        kind="loading"
+                        title="Loading accounts"
+                        description=""
+                      />
+                    </td>
+                  </tr>
+                ) : !visibleAccounts.length ? (
+                  <tr>
+                    <td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell">
+                      <DataState
+                        kind="empty"
+                        title="No matching accounts"
+                        description="Try another search or filter."
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  visibleAccounts.map((account, index) => (
+                    <tr key={account.id}>
+                      {superAdmin ? (
+                        <td>{(data.page - 1) * data.pageSize + index + 1}</td>
+                      ) : (
+                        <td className="sl-admin-users-check">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${account.name}`}
+                          />
+                        </td>
+                      )}
+                      <td className="sl-v56-name">
+                        <span
+                          className="sl-admin-user-avatar"
+                          aria-hidden="true"
+                        >
+                          {account.name
+                            .split(/\s+/)
+                            .map((v) => v[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </span>
+                        <strong>{account.name}</strong>
+                      </td>
+                      <td>{account.email}</td>
+                      <td>
+                        <span
+                          className="sl-v56-role-pill"
+                          data-role={account.role}
+                        >
+                          {account.role}
+                        </span>
+                      </td>
+                      <td>
+                        <Status
+                          tone={account.isActive ? "success" : "critical"}
+                        >
+                          {account.isActive ? "Active" : "Inactive"}
+                        </Status>
+                      </td>
+                      <td>
+                        <span
+                          className="sl-v56-unavailable"
+                          title="Last-login data pending"
+                        >
+                          —
+                        </span>
+                      </td>
+                      {superAdmin && (
+                        <td>
+                          {new Date(account.createdAt).toLocaleDateString(
+                            undefined,
+                            { year: "numeric", month: "short", day: "2-digit" },
+                          )}
+                        </td>
+                      )}
+                      <td>
+                        <div className="sl-row-actions sl-v56-actions">
+                          <button
+                            className="sl-v56-more"
+                            disabled={busy}
+                            aria-label={`View actions for ${account.name}`}
+                            onClick={() => open(account, "view")}
+                          >
+                            <MoreVertical size={16} aria-hidden="true" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          {data &&
+            (superAdmin ? (
+              <Pagination
+                page={data.page}
+                pageSize={data.pageSize}
+                total={data.total}
+                itemLabel="users"
+                onPageChange={setPage}
+              />
+            ) : (
+              <div className="sl-admin-users-footer">
+                <label>
+                  Rows per page{" "}
+                  <select
+                    value={pageSize}
+                    aria-label="Rows per page"
+                    onChange={(event) => {
+                      setPageSize(Number(event.target.value));
+                      setPage(1);
+                    }}
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                </label>
+                <Pagination
+                  compact
+                  page={data.page}
+                  pageSize={data.pageSize}
+                  total={data.total}
+                  itemLabel="users"
+                  onPageChange={setPage}
+                />
+              </div>
+            ))}
+        </section>
+
+        {superAdmin && (
+          <aside className="sl-v56-side">
+            <section className="sl-v56-side-card">
+              <h2>User Distribution</h2>
+              <div className="sl-v56-distribution">
+                <div className="sl-v56-distribution-total">
+                  <strong>{summary ? totalUsers : "—"}</strong>
+                  <span>Users</span>
+                </div>
+                <div className="sl-v61-status-track" aria-hidden="true">
+                  {roleDistribution.map((item) => (
+                    <span
+                      key={item.role}
+                      data-role={item.role}
+                      style={{
+                        width: distributionTotal
+                          ? `${(item.count / distributionTotal) * 100}%`
+                          : "0%",
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="sl-v56-legend">
+                  {roleDistribution.map((item) => (
+                    <div key={item.role}>
+                      <span className="sl-v56-dot" data-role={item.role} />
+                      <span>{item.role}</span>
+                      <strong>{summary ? item.count : "—"}</strong>
+                      <small>
+                        {summary
+                          ? `${distributionTotal ? Math.round((item.count / distributionTotal) * 100) : 0}%`
+                          : "—"}
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="sl-v56-side-card">
+              <h2>Account Status</h2>
+              <div className="sl-v61-status-track" aria-hidden="true">
+                <span
+                  data-kind="active"
+                  style={{
+                    width: totalUsers
+                      ? `${(activeUsers / totalUsers) * 100}%`
+                      : "0%",
+                  }}
+                />
+                <span
+                  data-kind="inactive"
+                  style={{
+                    width: totalUsers
+                      ? `${(inactiveUsers / totalUsers) * 100}%`
+                      : "0%",
+                  }}
+                />
+              </div>
+              <div className="sl-v56-legend">
+                <div>
+                  <span className="sl-v56-dot" data-kind="active" />
+                  <span>Active</span>
+                  <strong>{summary ? activeUsers : "—"}</strong>
+                  <small>{summary ? `${activePercent}%` : "—"}</small>
+                </div>
+                <div>
+                  <span className="sl-v56-dot" data-kind="inactive" />
+                  <span>Inactive</span>
+                  <strong>{summary ? inactiveUsers : "—"}</strong>
+                  <small>{summary ? `${inactivePercent}%` : "—"}</small>
+                </div>
+              </div>
+            </section>
+
+            <section className="sl-v56-side-card sl-v56-activity">
+              <div className="sl-v60-activity-head">
+                <h2>Recent Account Activity</h2>
+                <a href="/SecurityActivity">
+                  View all <span aria-hidden="true">→</span>
+                </a>
+              </div>
+              {activityError ? (
+                <p className="sl-supporting" role="status">
+                  Account activity could not be loaded.
+                </p>
+              ) : !recentActivity ? (
+                <p className="sl-supporting">Loading activity…</p>
+              ) : !recentActivity.length ? (
+                <div className="sl-v58-activity-empty">
+                  <span className="sl-v56-activity-icon">
+                    <Activity size={15} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <strong>No account activity yet</strong>
+                    <span>Recorded account changes will appear here.</span>
+                  </div>
+                </div>
+              ) : (
+                <ul>
+                  {recentActivity.map((record) => (
+                    <li key={record.id}>
+                      <span className="sl-v56-activity-icon">
+                        <Activity size={13} aria-hidden="true" />
+                      </span>
+                      <div>
+                        <strong>{record.actor.name}</strong>
+                        <span>
+                          {auditActionLabel[record.action] ??
+                            `${record.action} · ${record.targetType}`}
+                        </span>
+                      </div>
+                      <time dateTime={record.timestamp}>
+                        {new Date(record.timestamp).toLocaleString(undefined, {
+                          month: "short",
+                          day: "2-digit",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
+                      </time>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </aside>
+        )}
+      </div>
+
+      <Dialog
+        open={mode === "create" || mode === "edit"}
+        title={
+          mode === "create" ? (
+            <span className="sl-account-dialog-heading">
+              <span className="sl-account-dialog-icon">
+                <UserPlus size={21} aria-hidden="true" />
+              </span>
+              <span>
+                <span className="sl-account-dialog-title">
+                  {user.role === "Admin"
+                    ? "Request New Account"
+                    : "Add User Account"}
+                </span>
+                <small>
+                  {user.role === "Admin"
+                    ? "A Super Admin must approve this request before the account is created."
+                    : "Create a new account and assign their role."}
+                </small>
+              </span>
+            </span>
+          ) : mode === "edit" ? (
+            <span className="sl-account-dialog-heading">
+              <span className="sl-account-dialog-icon">
+                <Pencil size={20} aria-hidden="true" />
+              </span>
+              <span>
+                <span className="sl-account-dialog-title">
+                  Edit User Account
+                </span>
+                <small>Update account details and assigned role.</small>
+              </span>
+            </span>
+          ) : (
+            "Create account"
+          )
+        }
+        onDismiss={close}
+        busy={busy}
+        className={
+          mode === "create" || mode === "edit"
+            ? "sl-add-user-dialog sl-account-reference-dialog"
+            : ""
+        }
+      >
+        <form
+          className="sl-admin-form sl-account-form"
+          onSubmit={save}
+          noValidate
+        >
+          <div className="sl-form-grid">
+            {(
+              [
+                "firstName",
+                "lastName",
+                "email",
+                ...(mode === "create" && user.role !== "Admin"
+                  ? (["password"] as const)
+                  : []),
+              ] as const
+            ).map((key) => (
+              <div
+                key={key}
+                className={`sl-account-field${key === "email" || key === "password" ? " sl-form-span-2" : ""}`}
+              >
+                <label htmlFor={`admin-${key}`}>
+                  {
+                    {
+                      firstName: "First name",
+                      lastName: "Last name",
+                      email: "Email",
+                      password: "Temporary Password",
+                    }[key]
+                  }
+                </label>
+                <div
+                  className={
+                    key === "password" ? "sl-password-field" : undefined
+                  }
+                >
+                  <input
+                    className="sl-admin-input"
+                    id={`admin-${key}`}
+                    type={
+                      key === "password"
+                        ? showPassword
+                          ? "text"
+                          : "password"
+                        : key === "email"
+                          ? "email"
+                          : "text"
+                    }
+                    autoComplete={key === "password" ? "new-password" : "off"}
+                    disabled={busy}
+                    value={
+                      adminRequest && key === "email"
+                        ? `${fields.firstName.trim().toLowerCase().replace(/\s+/g, "")}${assignedRole === "Inventory Staff" ? "staff" : "manager"}@shelflife.com`
+                        : fields[key]
+                    }
+                    readOnly={adminRequest && key === "email"}
+                    maxLength={
+                      key === "firstName" || key === "lastName"
+                        ? NAME_LIMIT
+                        : undefined
+                    }
+                    aria-invalid={
+                      touched[key] && !!errors[key] ? true : undefined
+                    }
+                    aria-describedby={
+                      [
+                        touched[key] && errors[key] ? `admin-${key}-error` : "",
+                        key === "password" ? "admin-password-help" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ") || undefined
+                    }
+                    onBlur={() => {
+                      setTouched((previous) => ({ ...previous, [key]: true }));
+                      setErrors((previous) => ({
+                        ...previous,
+                        [key]: validateField(key, fields[key]),
+                      }));
+                    }}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setFields({ ...fields, [key]: value });
+                      setTouched((previous) => ({ ...previous, [key]: true }));
+                      setErrors((previous) => ({
+                        ...previous,
+                        [key]: validateField(key, value),
+                        form: "",
+                      }));
+                    }}
+                  />
+                  {key === "password" && (
+                    <button
+                      className="sl-password-toggle"
+                      type="button"
+                      disabled={busy}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      aria-controls="admin-password"
+                      onClick={() => setShowPassword((value) => !value)}
+                    >
+                      {showPassword ? (
+                        <EyeOff size={19} aria-hidden="true" />
+                      ) : (
+                        <Eye size={19} aria-hidden="true" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                {touched[key] && errors[key] && (
+                  <p id={`admin-${key}-error`} className="sl-admin-error">
+                    {errors[key]}
+                  </p>
+                )}
+                {key === "password" && (
+                  <p id="admin-password-help" className="sl-password-help">
+                    Share this with the user — they can change it after signing
+                    in.
+                  </p>
+                )}
+              </div>
+            ))}
+            <fieldset
+              className="sl-form-span-2 sl-role-picker"
+              aria-invalid={touched.role && !!errors.role ? true : undefined}
+              aria-describedby={
+                touched.role && errors.role ? "admin-role-error" : undefined
+              }
+            >
+              <legend>Role</legend>
+              {(mode === "create" && user.role === "Admin"
+                ? (["Inventory Manager", "Inventory Staff"] as ManagedRole[])
+                : assignableRoles
+              ).map((role) => (
+                <label
+                  key={role}
+                  className="sl-role-option"
+                  data-selected={assignedRole === role}
+                >
+                  <input
+                    type="radio"
+                    name="admin-role"
+                    value={role}
+                    checked={assignedRole === role}
+                    disabled={busy}
+                    onChange={() => {
+                      setAssignedRole(role);
+                      setTouched((previous) => ({ ...previous, role: true }));
+                      setErrors((previous) => ({
+                        ...previous,
+                        role: "",
+                        form: "",
+                      }));
+                    }}
+                  />
+                  <span>{role}</span>
+                </label>
+              ))}
+              {touched.role && errors.role && (
+                <p id="admin-role-error" className="sl-admin-error">
+                  {errors.role}
+                </p>
+              )}
+            </fieldset>
+          </div>
+          {errors.form && (
+            <p role="alert" className="sl-admin-error">
+              {errors.form}
+            </p>
+          )}
+          <div className="sl-dialog-form-actions">
+            <button
+              className="sl-button"
+              type="button"
+              disabled={busy}
+              onClick={close}
+            >
+              Cancel
+            </button>
+            <button className="sl-button sl-button-primary" disabled={busy}>
+              {busy
+                ? "Saving…"
+                : mode === "create"
+                  ? user.role === "Admin"
+                    ? "Submit request"
+                    : "Create account"
+                  : "Save changes"}
+            </button>
+          </div>
+        </form>
+      </Dialog>
+
+      <Dialog
+        open={mode === "view"}
+        title="Account details"
+        onDismiss={close}
+        busy={busy}
+        actions={
+          selected && mayManage(selected) ? (
+            <>
+              <button
+                className="sl-button"
+                disabled={busy}
+                onClick={() => void open(selected, "edit")}
+              >
+                Edit account
+              </button>
+              <button
+                className="sl-button"
+                disabled={busy}
+                onClick={() => void open(selected, "lifecycle")}
+              >
+                {selected.isActive
+                  ? "Deactivate account"
+                  : "Reactivate account"}
+              </button>
+            </>
+          ) : undefined
+        }
+      >
+        {selected && (
+          <dl className="sl-identity-details">
+            {[
+              ["Name", selected.name],
+              ["Email", selected.email],
+              ["Role", selected.role],
+              ["Status", selected.isActive ? "Active" : "Inactive"],
+              [
+                "Created",
+                new Date(selected.createdAt).toLocaleString(undefined, {
+                  hour12: true,
+                }),
+              ],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt className="sl-supporting">{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </Dialog>
+      <Dialog
+        open={mode === "lifecycle"}
+        title={`${selected?.isActive ? "Deactivate" : "Reactivate"} account?`}
+        onDismiss={close}
+        busy={busy}
+        actions={
+          <>
+            <button
+              className="sl-button"
+              data-initial-focus
+              disabled={busy}
+              onClick={close}
+            >
+              Cancel
+            </button>
+            <button
+              className="sl-button sl-button-primary"
+              disabled={busy}
+              onClick={lifecycle}
+            >
+              {busy
+                ? "Saving…"
+                : selected?.isActive
+                  ? "Deactivate account"
+                  : "Reactivate account"}
+            </button>
+          </>
+        }
+      >
+        <p>
+          {selected?.isActive
+            ? "This account will lose access to ShelfLife AI. Historical records will be preserved."
+            : "This account will be able to sign in to ShelfLife AI again."}
+        </p>
+        <p className="sl-supporting">{selected?.email}</p>
+        {errors.form && (
+          <p role="alert" className="sl-admin-error">
+            {errors.form}
+          </p>
+        )}
+      </Dialog>
+    </>
+  );
 }

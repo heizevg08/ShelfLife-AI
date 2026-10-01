@@ -29,10 +29,12 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
     { ...valid, category: 'Unknown' },
     { ...valid, isActive: false },
   ]) assert.throws(() => ingredientInput(body));
-  assert.deepEqual(ingredientPagination({ page: '2', limit: '10', search: 'milk', category: 'Dairy' }), { page: 2, limit: 10, search: 'milk', category: 'Dairy', includeArchived: false });
+  assert.deepEqual(ingredientPagination({ page: '2', limit: '10', search: 'milk', category: 'Dairy' }), { page: 2, limit: 10, search: 'milk', category: 'Dairy', unit: '', includeArchived: false });
+  assert.equal(ingredientPagination({ unit: 'kg' }).unit, 'kg');
   assert.equal(ingredientPagination({ includeArchived: 'true' }).includeArchived, true);
   assert.equal(ingredientPagination({ includeArchived: 'false' }).includeArchived, false);
   for (const includeArchived of ['yes', ['true'], { $ne: false }]) assert.throws(() => ingredientPagination({ includeArchived }));
+  assert.throws(() => ingredientPagination({ unit: 'liters' }));
 });
 
 test('ingredient HTTP API authenticates, enforces per-method roles, validates, pages, and returns real writes', async () => {
@@ -67,8 +69,9 @@ test('ingredient HTTP API authenticates, enforces per-method roles, validates, p
     for (const role of [admin, superAdmin]) {
       assert.equal((await request(role, 'POST', input)).status, 403);
       assert.equal((await request(role, 'PATCH', input, '/' + '3'.repeat(24))).status, 403);
-      assert.equal((await request(role, 'DELETE', undefined, '/' + '3'.repeat(24))).status, 403);
     }
+    assert.equal((await request(admin, 'DELETE', undefined, '/' + '3'.repeat(24))).status, 404);
+    assert.equal((await request(superAdmin, 'DELETE', undefined, '/' + '3'.repeat(24))).status, 403);
     const staffCreated = await request(staff, 'POST', { ...input, name: 'Staff creation' }); assert.equal(staffCreated.status, 201);
     assert.equal((await staffCreated.json()).ingredient.createdBy.id, staff.id);
     assert.equal((await request(staff, 'PATCH', input, '/' + '3'.repeat(24))).status, 403);

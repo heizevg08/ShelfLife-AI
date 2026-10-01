@@ -8,6 +8,7 @@ import { normalizeEmail, validPassword } from '../validators/auth';
 export interface UserStore {
   byEmail(email: string): Promise<UserRecord | null>;
   byId(id: string): Promise<UserRecord | null>;
+  changePassword?(id: string, passwordHash: string): Promise<UserRecord | null>;
 }
 const options = { algorithm: 'HS256' as const, issuer: 'shelflifeai', audience: 'shelflifeai-client', expiresIn: 900 };
 const denied = () => new HttpError(401, 'Invalid email or password');
@@ -44,6 +45,13 @@ export function createAuth(store: UserStore, secret: string) {
       const user = await store.byId(id);
       if (!eligible(user) || (user.authVersion ?? 0) !== version) throw new HttpError(401, 'Authentication required');
       return safeUser(user);
+    },
+    async changePassword(id: string, password: unknown) {
+      if (typeof password !== 'string' || password.trim().length < 12 || Buffer.byteLength(password, 'utf8') > 1024) throw new HttpError(400, 'Use at least 12 non-whitespace characters');
+      if (!store.changePassword) throw new HttpError(503, 'Password changes unavailable');
+      const user = await store.changePassword(id, await hashPassword(password));
+      if (!user) throw new HttpError(401, 'Authentication required');
+      return issue(user);
     },
   };
 }

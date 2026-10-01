@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Brand } from '../components/application/Brand';
 import { Dialog } from '../components/application/Dialog';
 import { PasswordRecovery } from '../components/application/PasswordRecovery';
-import { AuthRequestError, login } from '../services/auth';
+import { AuthRequestError, changeTemporaryPassword, login } from '../services/auth';
 import { clearSession } from '../services/session';
 import '../styles/application.css';
 
@@ -14,6 +14,7 @@ export default function ShelfLifeLogin({ recovery = false }: { recovery?: boolea
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mustChangePassword, setMustChangePassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
@@ -57,7 +58,12 @@ export default function ShelfLifeLogin({ recovery = false }: { recovery?: boolea
     setIsLoading(true);
     setErrors({});
     try {
-      const user = await login(email.trim().toLowerCase(), password, rememberMe);
+      let user = mustChangePassword
+        ? await changeTemporaryPassword(password)
+        : await login(email.trim().toLowerCase(), password, rememberMe);
+      if (!mustChangePassword && user.mustChangePassword) {
+        setMustChangePassword(true); setPassword(''); setErrors({}); return;
+      }
       switch (user.role) {
         case 'Super Admin': router.replace('/SuperAdminDashboard'); break;
         case 'Admin': router.replace('/AdminDashboard'); break;
@@ -68,7 +74,9 @@ export default function ShelfLifeLogin({ recovery = false }: { recovery?: boolea
           setErrors({ auth: 'Your account cannot access this application. Contact your administrator.' });
       }
     } catch (error) {
-      setErrors({ auth: error instanceof AuthRequestError && (error.status === 400 || error.status === 401)
+      setErrors({ auth: mustChangePassword && error instanceof AuthRequestError && error.status === 400
+        ? 'Use a new password with at least 12 characters.'
+        : error instanceof AuthRequestError && (error.status === 400 || error.status === 401)
         ? 'Incorrect email or password.'
         : error instanceof AuthRequestError && error.status === 429 ? 'Too many failed attempts. Wait 15 minutes before trying again.'
         : error instanceof TypeError || (error instanceof AuthRequestError && error.status >= 500)
@@ -94,23 +102,23 @@ export default function ShelfLifeLogin({ recovery = false }: { recovery?: boolea
         </section>
         <section className="sl-login-form-panel" aria-labelledby="sl-login-title">
           <div className="sl-login-form-heading">
-            <h1 id="sl-login-title" className="sl-page-title">Welcome Back!</h1>
-            <p className="sl-description">Please enter your login details below.</p>
+            <h1 id="sl-login-title" className="sl-page-title">{mustChangePassword ? 'Change your temporary password' : 'Welcome Back!'}</h1>
+            <p className="sl-description">{mustChangePassword ? 'Choose a new password to continue to your dashboard.' : 'Please enter your login details below.'}</p>
           </div>
           <form noValidate onSubmit={handleSubmit} aria-labelledby="sl-login-title" aria-describedby={errors.auth ? 'sl-auth-error' : undefined} aria-busy={isLoading}>
             {errors.auth && <div ref={errorSummary} tabIndex={-1} id="sl-auth-error" className="sl-form-error" role="alert"><TriangleAlert size={18} aria-hidden="true" /><p>{errors.auth}</p></div>}
-            <div className="sl-field">
+            {!mustChangePassword && <div className="sl-field">
               <label htmlFor="sl-email">Email</label>
               <input id="sl-email" ref={emailInput} name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false}
                 value={email} disabled={isLoading} placeholder="Enter your email" aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? 'sl-email-error' : undefined}
                 onChange={event => { setEmail(event.target.value); setErrors(previous => ({ ...previous, email: undefined, auth: undefined })); }} />
               {errors.email && <p className="sl-field-error" id="sl-email-error" role="alert">{errors.email}</p>}
-            </div>
+            </div>}
             <div className="sl-field">
-              <label htmlFor="sl-password">Password</label>
+              <label htmlFor="sl-password">{mustChangePassword ? 'New password' : 'Password'}</label>
               <div className="sl-password-field">
-                <input id="sl-password" ref={passwordInput} name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password"
+                <input id="sl-password" ref={passwordInput} name="password" type={showPassword ? 'text' : 'password'} autoComplete={mustChangePassword ? 'new-password' : 'current-password'} minLength={mustChangePassword ? 12 : undefined}
                   value={password} disabled={isLoading} placeholder="Enter your password" aria-invalid={!!errors.password}
                   aria-describedby="sl-password-feedback"
                   onKeyUp={event => setCapsLock(event.getModifierState('CapsLock'))}
@@ -126,13 +134,13 @@ export default function ShelfLifeLogin({ recovery = false }: { recovery?: boolea
                 {errors.password || (capsLock ? 'Caps Lock is on.' : '')}
               </p>
             </div>
-            <div className="sl-login-options">
+            {!mustChangePassword && <div className="sl-login-options">
               <label className="sl-remember"><input type="checkbox" checked={rememberMe} disabled={isLoading} onChange={event => setRememberMe(event.target.checked)} />Remember me</label>
               <button ref={recoveryButton} type="button" className="sl-text-action" onClick={() => setRecoveryOpen(true)}>Forgot Password</button>
-            </div>
+            </div>}
             <button className="sl-button sl-button-primary sl-login-submit" type="submit" disabled={isLoading}>
               {isLoading ? <LoaderCircle size={18} className="sl-spin" aria-hidden="true" /> : <LogIn size={18} aria-hidden="true" />}
-              <span>{isLoading ? 'Logging in...' : 'Log in'}</span>
+              <span>{isLoading ? (mustChangePassword ? 'Updating password...' : 'Logging in...') : (mustChangePassword ? 'Change password' : 'Log in')}</span>
             </button>
           </form>
         </section>
