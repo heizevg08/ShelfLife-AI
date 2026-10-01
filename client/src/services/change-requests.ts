@@ -16,3 +16,5 @@ export const listChangeRequests = (value: ChangeRequestQuery, signal?: AbortSign
 export const getChangeRequestSummary = (signal?: AbortSignal) => apiClient<{ totalRequests: number; approved: number; pending: number; rejected: number }>('/change-requests/summary', { signal });
 export const getChangeRequest = (id: string, signal?: AbortSignal) => apiClient<{ request: ChangeRequest }>(`/change-requests/${encodeURIComponent(id)}`, { signal }).then(result => result.request);
 export const createChangeRequest = (input: ChangeRequestInput) => apiClient<ChangeRequest>('/change-requests', { method: 'POST', body: JSON.stringify(input), successMessage: 'Change request submitted successfully.' });
+export const approveChangeRequest = (id: string) => apiClient<ChangeRequest>(`/change-requests/${encodeURIComponent(id)}/approve`, { method: 'POST', body: JSON.stringify({}), successMessage: 'Change request approved.' });
+export const rejectChangeRequest = (id: string, reviewNote: string) => apiClient<ChangeRequest>(`/change-requests/${encodeURIComponent(id)}/reject`, { method: 'POST', body: JSON.stringify({ reviewNote }), successMessage: 'Change request rejected.' });

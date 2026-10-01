@@ -23,9 +23,10 @@ function ManagerAlertPending({ label, compact = false }: { label: string; compac
     <div className={`sl-manager-alerts-pending${compact ? ' compact' : ''}`}>
       <DataState
         kind="empty"
-        title={`${label} unavailable`}
-        description="The alert service is not connected yet."
+        title="No live records yet"
+        description={`${label} will appear when alert history is available.`}
       />
+      <span className="sl-preview-badge">Preview · data pending</span>
     </div>
   );
 }
@@ -35,11 +36,11 @@ function ManagerAlerts() {
   const [search, setSearch] = useState('');
   const [type, setType] = useState('All Types');
   const [priority, setPriority] = useState('All Priorities');
-  const [location, setLocation] = useState('All Locations');
+  const [status, setStatus] = useState('All Statuses');
   const [rows, setRows] = useState(10);
   const [page, setPage] = useState(1);
   const [trendRange, setTrendRange] = useState('Last 30 Days');
-  const reset = () => { setTab('All Alerts'); setSearch(''); setType('All Types'); setPriority('All Priorities'); setLocation('All Locations'); setPage(1); };
+  const reset = () => { setTab('All Alerts'); setSearch(''); setType('All Types'); setPriority('All Priorities'); setStatus('All Statuses'); setPage(1); };
   return <>
     <PageHeader
       eyebrow="Intelligence"
@@ -68,6 +69,15 @@ function ManagerAlerts() {
       </section>
 
       <div className="sl-manager-alerts-layout">
+        <aside className="sl-manager-alerts-rail" aria-label="Alert analytics">
+          <Card id="manager-alert-trends" title="Alert Trends">
+            <div className="sl-manager-alerts-card-select"><select value={trendRange} onChange={event => setTrendRange(event.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></div>
+            <ManagerAlertPending label="Alert trends" compact />
+          </Card>
+          <Card id="manager-alert-priority" title="Alerts by Priority">
+            <ManagerAlertPending label="Alert priority distribution" compact />
+          </Card>
+        </aside>
         <main className="sl-manager-alerts-main">
           <section className="sl-manager-alerts-records-card sl-reference-records" aria-label="Alert records">
             <header className="sl-reference-records-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><strong>Alert Records</strong></header>
@@ -84,24 +94,21 @@ function ManagerAlerts() {
               </label>
               <label><span>Alert Type</span><select value={type} onChange={event => { setType(event.target.value); setPage(1); }}><option>All Types</option><option>Expiration</option><option>Low Stock</option><option>Forecast Risk</option><option>Other</option></select></label>
               <label><span>Priority</span><select value={priority} onChange={event => { setPriority(event.target.value); setPage(1); }}><option>All Priorities</option><option>High</option><option>Medium</option><option>Low</option></select></label>
-              <label><span>Location</span><select value={location} onChange={event => { setLocation(event.target.value); setPage(1); }}><option>All Locations</option></select></label>
+              <label><span>Status</span><select value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}><option>All Statuses</option><option>Active</option><option>Resolved</option></select></label>
               <button type="button" className="sl-button" onClick={reset}>Reset</button>
             </div>
 
             <div className="sl-manager-alerts-table-wrap">
               <table className="sl-manager-alerts-table sl-reference-records-table">
                 <thead><tr>
-                  <th aria-label="Select"></th>
                   <th>Date &amp; Time</th>
                   <th>Ingredient</th>
                   <th>Alert Type</th>
                   <th>Details</th>
-                  <th>Location</th>
                   <th>Priority</th>
                   <th>Status</th>
-                  <th>Actions</th>
                 </tr></thead>
-                <tbody><tr>{Array.from({ length: 9 }).map((_, index) => <td key={index}>—</td>)}</tr></tbody>
+                <tbody><tr><td colSpan={6} className="sl-empty-cell"><ManagerAlertPending label="Alert records" /></td></tr></tbody>
               </table>
             </div>
 
@@ -112,18 +119,6 @@ function ManagerAlerts() {
           </section>
         </main>
 
-        <aside className="sl-manager-alerts-rail" aria-label="Alert analytics">
-          <Card id="manager-alert-trends" title="Alert Trends">
-            <div className="sl-manager-alerts-card-select"><select value={trendRange} onChange={event => setTrendRange(event.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></div>
-            <ManagerAlertPending label="Alert trends" compact />
-          </Card>
-          <Card id="manager-alert-priority" title="Alerts by Priority">
-            <ManagerAlertPending label="Alert priority distribution" compact />
-          </Card>
-          <Card id="manager-alert-resolved" title="Recent Resolved Alerts">
-            <ManagerAlertPending label="Resolved alerts" compact />
-          </Card>
-        </aside>
       </div>
     </div>
   </>;

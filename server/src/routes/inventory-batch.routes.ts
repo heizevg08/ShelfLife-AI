@@ -10,11 +10,11 @@ export function inventoryBatchRoutes(auth: AuthService, service: InventoryBatchS
   const router = Router(), actions = inventoryBatchControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
-  router.get('/summary', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.summary);
-  router.get('/stock-in-summary', authorizeAdministration(['Inventory Staff']), actions.stockInSummary);
-  router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.list);
-  router.get('/:id', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.detail);
-  router.post('/', authorizeAdministration(['Inventory Staff']), json({ limit: '100kb' }), actions.create);
+  router.get('/summary', authorizeAdministration(['Super Admin', 'Admin', 'Manager', 'Inventory Staff']), actions.summary);
+  router.get('/stock-in-summary', authorizeAdministration(['Manager', 'Inventory Staff']), actions.stockInSummary);
+  router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Manager', 'Inventory Staff']), actions.list);
+  router.get('/:id', authorizeAdministration(['Super Admin', 'Admin', 'Manager', 'Inventory Staff']), actions.detail);
+  router.post('/', authorizeAdministration(['Manager', 'Inventory Staff']), json({ limit: '100kb' }), actions.create);
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });
   const error: ErrorRequestHandler = (value, _req, res, next) => {
     if (res.headersSent) { next(value); return; }

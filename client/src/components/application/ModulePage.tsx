@@ -17,6 +17,9 @@ import { createStockIn, getInventoryBatch, getInventoryBatchSummary, getStockInS
 import { createUsageRecord, getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
 import { createWasteRecord, getWasteSummary, listWasteRecords, type WasteReason, type WasteRecord, type WasteSummary } from '../../services/waste-records';
 import { formatDate, formatDateTime, isValidDateOnlyInput, localDateInputValue } from '../../utils/date-time';
+import { ConnectedManagerInventoryPage } from './ManagerInventoryPage';
+import { ConnectedManagerUsageWastePage } from './ManagerUsageWastePage';
+import { ConnectedManagerChangeRequestsPage } from './ManagerChangeRequestsPage';
 
 
 const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
@@ -1778,38 +1781,38 @@ function ManagerForecastingPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [category, setCategory] = useState('All Categories');
-  const [branch, setBranch] = useState('Current Branch');
+  const [ingredient, setIngredient] = useState('All Ingredients');
   const [trendPeriod, setTrendPeriod] = useState('Last 30 Days');
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState(10);
   const [page, setPage] = useState(1);
-  const Pending = ({ label, compact = false }: { label: string; compact?: boolean }) => <div className={`sl-mgr-forecast-pending${compact ? ' compact' : ''}`}><DataState kind="empty" title={`${label} unavailable`} description="Forecasting data is not connected yet." /></div>;
+  const Pending = ({ description, compact = false }: { description: string; compact?: boolean }) => <div className={`sl-mgr-forecast-pending${compact ? ' compact' : ''}`}><ApplicationPendingState description={description} /></div>;
   return <>
     <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
     <div className="sl-admin-view sl-mgr-forecast-page">
       <section className="sl-sa-kpis sl-admin-reference-kpis sl-mgr-forecast-kpis sl-kpi-reference-v201" aria-label="Forecasting summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At Risk of Overstock</span><strong>—</strong><small>Data unavailable</small></div></article>
-      </section>
-
-      <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
-        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual Usage" action={<label className="sl-dashboard-filter"><select aria-label="Forecast trend period" value={trendPeriod} onChange={e=>setTrendPeriod(e.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></label>}><Pending label="Forecast vs. actual usage" /></Card>
-        <Card id="mgr-category-demand" title="Category Demand Forecast (Next 30 Days)"><Pending label="Category demand forecast" /></Card>
-        <Card id="mgr-forecast-insights" title="Forecast Insights"><Pending label="Forecast insights" /></Card>
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Forecast data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Demand forecast pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At Risk of Overstock</span><strong>—</strong><small>Risk forecast pending</small></div></article>
       </section>
 
       <section className="sl-mgr-forecast-filters" aria-label="Forecast filters">
         <label><span>Date Range</span><select value={range} onChange={event => { setRange(event.target.value); setPage(1); }}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option><option>Custom</option></select></label>
         {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom forecast date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label></div>}
         <label><span>Ingredient Category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
-        <label><span>Branch</span><select value={branch} onChange={e=>setBranch(e.target.value)}><option>Current Branch</option></select></label>
-        <button className="sl-button sl-button-primary" type="button">Apply Filters</button>
+        <label><span>Ingredient</span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option>All Ingredients</option></select></label>
+        <button className="sl-button" type="button" onClick={() => { setRange('Current period'); setDateFrom(''); setDateTo(''); setCategory('All Categories'); setIngredient('All Ingredients'); setPage(1); }}>Reset</button>
+      </section>
+
+      <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
+        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<label className="sl-dashboard-filter"><select aria-label="Forecast trend period" value={trendPeriod} onChange={e=>setTrendPeriod(e.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></label>}><Pending description="Forecast comparisons will appear when forecast and usage data are available." /></Card>
+        <Card id="mgr-category-demand" title="Category Demand"><Pending description="Category demand will appear when forecasting data is available." /></Card>
+        <Card id="mgr-forecast-insights" title="Forecast Insights"><Pending description="Ranked risks and recommended actions will appear when the forecasting service is available." /></Card>
       </section>
 
       <Card id="mgr-ingredient-forecasts" title={<span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><span>Ingredient Forecasts</span></span>} action={<div className="sl-mgr-forecast-table-actions"><span className="sl-directory-search"><Search size={16}/><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search ingredients..." /></span><button className="sl-button sl-download-trigger" disabled><Download size={16}/> Export Forecast</button></div>}>
-        <div className="sl-mgr-forecast-tablewrap"><table className="sl-reference-records-table"><thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th><th>Actions</th></tr></thead><tbody><tr aria-label="Forecast values unavailable">{Array.from({length:9}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table></div>
+        <div className="sl-mgr-forecast-tablewrap"><table className="sl-reference-records-table"><thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th><th>Actions</th></tr></thead><tbody><tr><td colSpan={9} className="sl-empty-cell"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available." /></td></tr></tbody></table></div>
         <div className="sl-mgr-forecast-footer sl-reference-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="forecasts" onPageChange={setPage} /></div>
       </Card>
     </div>
@@ -1936,13 +1939,13 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'Ingredients' && user.role === 'Admin') return <IngredientsAdminPage preview={preview} setPreview={setPreview} />;
 
   if (moduleId === 'InventoryBatches' && user.role === 'Inventory Staff') return <InventoryStaffInventoryBatchesPage />;
-  if (moduleId === 'InventoryBatches' && user.role === 'Manager') return <ManagerInventoryPage />;
+  if (moduleId === 'InventoryBatches' && user.role === 'Manager') return <ConnectedManagerInventoryPage />;
   if (moduleId === 'InventoryBatches' && user.role === 'Super Admin') return <SuperAdminInventoryBatchesPage />;
   if (moduleId === 'Usage' && user.role === 'Super Admin') return <SuperAdminUsagePage />;
   if (moduleId === 'Usage' && user.role === 'Inventory Staff') return <InventoryStaffUsagePage />;
   if (moduleId === 'Waste' && user.role === 'Super Admin') return <SuperAdminWastePage />;
   if (moduleId === 'Waste' && user.role === 'Inventory Staff') return <InventoryStaffWastePage />;
-  if (moduleId === 'ChangeRequests' && user.role === 'Manager') return <ManagerChangeRequestsPage />;
+  if (moduleId === 'ChangeRequests' && user.role === 'Manager') return <ConnectedManagerChangeRequestsPage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Super Admin') return <SuperAdminChangeRequestsPage />;
   if (moduleId === 'ExpirationMonitoring' && user.role === 'Super Admin') return <SuperAdminExpirationMonitoringPage />;
   if (moduleId === 'Forecasting' && user.role === 'Manager') return <ManagerForecastingPage />;
@@ -2009,7 +2012,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
       <dl className="sl-guidance-list"><div><dt>Choose an ingredient</dt><dd>Use the approved catalogue and its unit of measure.</dd></div><div><dt>Record the batch</dt><dd>Capture the received quantity, cost and actual expiration date.</dd></div></dl><div className="sl-related-actions"><WorkspaceLink to="/InventoryBatches">View inventory</WorkspaceLink></div>
     </Card></div></div>
   </>;
-  if (moduleId === 'UsageWaste' && user.role === 'Manager') return <ManagerUsageWastePage />;
+  if (moduleId === 'UsageWaste' && user.role === 'Manager') return <ConnectedManagerUsageWastePage />;
   if (moduleId === 'UsageWaste') return <>
     <PageHeader eyebrow="Inventory oversight" title="Usage & Waste" description="Review consumption and loss as separate inventory transactions." />
     <div className="sl-admin-view"><div className="sl-workflow-links">

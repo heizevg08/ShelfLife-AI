@@ -17,9 +17,9 @@ export function ExportControl({ label = 'Export', menuId, available = false, ava
   </div>;
 }
 
-export function PageHeader({ eyebrow, title, description }: { eyebrow?: string; title: string; description?: string }) {
-  return <header className="sl-page-header">{eyebrow && <p className="sl-eyebrow">{eyebrow}</p>}
-    <h1 className="sl-page-title">{title}</h1>{description && <p className="sl-description">{description}</p>}</header>;
+export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {
+  return <header className={`sl-page-header${actions ? ' sl-page-header-with-actions' : ''}`}><div>{eyebrow && <p className="sl-eyebrow">{eyebrow}</p>}
+    <h1 className="sl-page-title">{title}</h1>{description && <p className="sl-description">{description}</p>}</div>{actions && <div className="sl-page-header-actions">{actions}</div>}</header>;
 }
 
 // Role dashboards share geometry, not permissions or data.

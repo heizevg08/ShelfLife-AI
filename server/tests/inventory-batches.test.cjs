@@ -54,7 +54,7 @@ test('concurrent Batch ID reservations remain unique within a receipt date', asy
   assert.equal(ids[24], 'SL-20300110-025');
 });
 
-test('inventory batch API preserves read roles and restricts Stock-In creation to Inventory Staff', async () => {
+test('inventory batch API permits authorized Manager and Inventory Staff Stock-In operations', async () => {
   const now = new Date('2030-01-10T12:00:00.000Z');
   const batch = { id: '4'.repeat(24), batchID: 'SL-20300110-001', ingredient: { id: '5'.repeat(24), name: 'Milk', category: 'Dairy', unitOfMeasure: 'L', minimumStock: 10 }, quantity: 4, unit: 'L', dateReceived: now.toISOString(), expirationDate: new Date('2030-02-01').toISOString(), displayStatus: 'Low Stock', createdBy: { id: staff.id, name: staff.name }, createdAt: now.toISOString(), updatedAt: now.toISOString() };
   const store = {
@@ -73,7 +73,7 @@ test('inventory batch API preserves read roles and restricts Stock-In creation t
   const request = (user, path = '', method = 'GET', body) => fetch(base + path, { method, headers: { ...(user ? { Authorization: `Bearer ${auth.issue(user).accessToken}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
   try {
     assert.equal((await request(undefined)).status, 401);
-    assert.equal((await request(manager)).status, 403);
+    assert.equal((await request(manager)).status, 200);
     assert.equal((await request(admin, '?page=1&pageSize=10&category=Dairy&status=Low%20Stock')).status, 200);
     assert.equal((await request(superAdmin, '/summary')).status, 200);
     assert.equal((await request(staff, '/summary')).status, 200);
@@ -83,7 +83,7 @@ test('inventory batch API preserves read roles and restricts Stock-In creation t
     assert.equal((await request(staff, '/stock-in-summary')).status, 200);
     const input = { ingredientId: '5'.repeat(24), dateReceived: '2030-01-10', quantity: 3, expirationDate: '2030-01-20', unitCost: 8 };
     assert.equal((await request(admin, '', 'POST', input)).status, 403);
-    assert.equal((await request(manager, '', 'POST', input)).status, 403);
+    const managerCreated = await request(manager, '', 'POST', input); assert.equal(managerCreated.status, 201); assert.equal((await managerCreated.json()).batch.createdBy.id, manager.id);
     const created = await request(staff, '', 'POST', input); assert.equal(created.status, 201); assert.equal((await created.json()).batch.batchID, batch.batchID);
     assert.equal((await request(staff, '', 'POST', { ...input, createdBy: admin.id })).status, 400);
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }

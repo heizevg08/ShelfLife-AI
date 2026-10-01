@@ -7,15 +7,18 @@ import { useApplicationWorkspace } from '../../components/application/Applicatio
 import { workspaceNavigation } from '../../components/application/workspace';
 import { listIngredients } from '../../services/ingredients';
 import { DateRangeFilter, type DateRangeValue } from '../../components/application/DateRangeFilter';
+import { Dialog } from '../../components/application/Dialog';
+import { ConnectedManagerReportsPage } from '../../components/application/ManagerReportsPage';
 
 function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
   return (
     <div className={`sl-manager-reports-pending${compact ? ' compact' : ''}`}>
       <DataState
         kind="empty"
-        title={`${label} unavailable`}
-        description="Reporting analytics are not connected yet."
+        title="No live records yet"
+        description={`${label} will appear when reporting data is available.`}
       />
+      <span className="sl-preview-badge">Preview · data pending</span>
     </div>
   );
 }
@@ -225,7 +228,7 @@ function LegacyReports() {
 export default function Reports(){
   const { user } = useApplicationWorkspace();
   if (user.role === 'Admin') return <AdminReports />;
-  if (user.role === 'Manager') return <ManagerReports />;
+  if (user.role === 'Manager') return <ConnectedManagerReportsPage />;
   if (user.role === 'Super Admin') return <SuperAdminReports />;
   return <LegacyReports />;
 }

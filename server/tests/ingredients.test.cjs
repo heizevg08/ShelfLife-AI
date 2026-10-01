@@ -61,13 +61,13 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
   const input = { name: 'Whole Milk', brand: 'Local', description: '', category: 'Dairy', unitOfMeasure: 'liter', minimumStock: 4, standardUnitCost: 82.5, defaultShelfLifeDays: 7 };
   try {
     assert.equal((await request(undefined)).status, 401);
-    assert.equal((await request(manager)).status, 403);
+    assert.equal((await request(manager)).status, 200);
     const categories = await request(staff, 'GET', undefined, '/categories');
     assert.equal(categories.status, 200);
     assert.deepEqual((await categories.json()).categories, ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other']);
     const options = await request(staff, 'GET', undefined, '/stock-in-options');
     assert.equal(options.status, 200); assert.deepEqual((await options.json()).ingredients, []);
-    assert.equal((await request(manager, 'GET', undefined, '/stock-in-options')).status, 403);
+    assert.equal((await request(manager, 'GET', undefined, '/stock-in-options')).status, 200);
     const summary = await request(admin, 'GET', undefined, '/summary');
     assert.equal(summary.status, 200);
     assert.deepEqual(await summary.json(), { total: 0, categories: [], units: [], mostCommonIngredient: null });
@@ -80,6 +80,9 @@ test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and
     const listed = await (await request(admin, 'GET', undefined, '?page=1&pageSize=10&search=milk&category=Dairy&unit=liter')).json();
     assert.equal(listed.total, 1); assert.equal(listed.items[0].id, body.ingredient.id);
     const duplicate = await request(admin, 'POST', input); assert.equal(duplicate.status, 409); assert.equal((await duplicate.json()).error.code, 'CONFLICT');
+    const managerCreated = await request(manager, 'POST', { ...input, name: 'Manager Ingredient' }); assert.equal(managerCreated.status, 201);
+    assert.equal((await request(manager, 'PUT', { ...input, brand: 'Denied' }, `/${body.ingredient.id}`)).status, 403);
+    assert.equal((await request(manager, 'DELETE', undefined, `/${body.ingredient.id}`)).status, 403);
     const id = body.ingredient.id;
     const updated = await request(admin, 'PUT', { ...input, brand: 'Updated Brand' }, `/${id}`); assert.equal(updated.status, 200); assert.equal((await updated.json()).ingredient.brand, 'Updated Brand');
     assert.equal((await request(admin, 'DELETE', undefined, `/${id}`)).status, 204);

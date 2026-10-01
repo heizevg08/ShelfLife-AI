@@ -119,36 +119,54 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
   const [valueRange, setValueRange] = useState('30');
   const [expiryRange, setExpiryRange] = useState('30');
   const [topValueRange, setTopValueRange] = useState('month');
-  const pendingState = (description: string) => <div className="sl-manager-reference-state"><DataState kind="empty" title={`${description} unavailable`} description="The supporting backend service is not connected yet." /></div>;
+  const [summary, setSummary] = useState<Awaited<ReturnType<typeof getInventoryBatchSummary>> | null>(null);
+  const [expirations, setExpirations] = useState<InventoryBatch[] | null>(null);
+  const [requests, setRequests] = useState<ChangeRequest[] | null>(null);
+  const [inventoryError, setInventoryError] = useState(false);
+  const [requestError, setRequestError] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all([getInventoryBatchSummary(controller.signal), listInventoryBatches({ page: 1, pageSize: 5, status: 'Near Expiry', sort: 'fefo' }, controller.signal)])
+      .then(([nextSummary, records]) => { if (!controller.signal.aborted) { setSummary(nextSummary); setExpirations(records.items); } })
+      .catch(() => { if (!controller.signal.aborted) setInventoryError(true); });
+    listChangeRequests({ page: 1, pageSize: 5, status: 'PENDING' }, controller.signal)
+      .then(result => { if (!controller.signal.aborted) setRequests(result.items); })
+      .catch(() => { if (!controller.signal.aborted) setRequestError(true); });
+    return () => controller.abort();
+  }, []);
+  const pendingState = (description: string) => <div className="sl-manager-reference-state"><ApplicationPendingState description={description} /></div>;
+  const recordState = (columns: number, loading: boolean, failed: boolean, description: string) => <tr><td colSpan={columns} className="sl-empty-cell"><DataState kind={failed ? 'error' : loading ? 'loading' : 'empty'} title={failed ? 'Data unavailable' : loading ? 'Loading records' : 'No live records yet'} description={failed ? 'The service could not be reached.' : loading ? 'Retrieving current records.' : description} /></td></tr>;
   return <>
-    <DashboardHeading userName={userName} />
-    <p className="sl-dashboard-description">Here&apos;s an overview of your inventory value, expiration risks, stock status, and pending inventory actions.</p>
+    <DashboardHeading userName={userName} description="Review inventory priorities, pending decisions, and operational risk." descriptionInHeader />
     <div className="sl-admin-view sl-manager-dashboard-v116">
       <section className="sl-sa-kpis sl-manager-kpis sl-kpi-reference-v201" aria-label="Manager inventory overview">
         <article className="sl-sa-kpi sl-manager-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso /></span><div><span>Total Inventory Value</span><strong>—</strong><small>Inventory valuation pending</small></div></article>
-        <article className="sl-sa-kpi sl-manager-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Items Near Expiry (≤ 7 days)</span><strong>—</strong><small>Expiration summary pending</small></div></article>
-        <article className="sl-sa-kpi sl-manager-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Low Stock Items</span><strong>—</strong><small>Stock summary pending</small></div></article>
-        <article className="sl-sa-kpi sl-manager-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast analytics pending</small></div></article>
+        <article className="sl-sa-kpi sl-manager-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Items Near Expiry (≤ 7 days)</span><strong>{summary?.nearExpiry ?? '—'}</strong><small>{inventoryError ? 'Expiration summary unavailable' : summary ? 'Batches requiring attention' : 'Loading expiration summary'}</small></div></article>
+        <article className="sl-sa-kpi sl-manager-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Low Stock Items</span><strong>{summary?.lowStockItems ?? '—'}</strong><small>{inventoryError ? 'Stock summary unavailable' : summary ? 'Items at or below minimum stock' : 'Loading stock summary'}</small></div></article>
+        <article className="sl-sa-kpi sl-manager-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
       </section>
 
-      <section className="sl-manager-reference-grid" aria-label="Manager inventory analytics and actions">
+      <section className="sl-manager-attention-grid" aria-label="Manager attention queue">
+        <Card id="manager-upcoming-expirations" title={<DashboardCardTitle Icon={CalendarClock}>Upcoming Expirations (≤ 7 days)</DashboardCardTitle>} action={<Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
+          <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table"><thead><tr>{['Ingredient','Batch ID','Expiration Date','Days Left'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{expirations?.length ? expirations.map(batch => <tr key={batch.id}><td className="sl-emphasized-value">{batch.ingredient.name}</td><td>{batch.batchID}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td></tr>) : recordState(4, expirations === null && !inventoryError, inventoryError, 'Upcoming expirations will appear when qualifying batches exist.')}</tbody></table></div>
+        </Card>
+        <Card id="manager-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>Pending Change Requests</DashboardCardTitle>} action={<Link href="/ChangeRequests" className="sl-text-link">Review queue <ArrowRight size={14}/></Link>}>
+          <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table"><thead><tr>{['Request ID','Type','Submitted By','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{requests?.length ? requests.map(request => <tr key={request.id}><td>{request.requestID}</td><td>{request.requestType.replaceAll('_', ' ').replace(/\b\w/g, value => value.toUpperCase())}</td><td>{request.requestedBy.name}</td><td><Status tone="attention">Pending Review</Status></td></tr>) : recordState(4, requests === null && !requestError, requestError, 'Requests awaiting review will appear here.')}</tbody></table></div>
+        </Card>
+      </section>
+
+      <section className="sl-manager-reference-grid" aria-label="Manager inventory analytics">
         <Card id="manager-inventory-value" title="Inventory Value Trend" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Inventory value period</span><select value={valueRange} onChange={(event) => setValueRange(event.target.value)} aria-label="Inventory value period"><option value="7">Last 7 Days</option><option value="30">Last 30 Days</option><option value="90">Last 90 Days</option></select></label>}>
-          {pendingState('Inventory value trend')}
+          {pendingState('Inventory value trends will appear when valuation history is available.')}
         </Card>
         <Card id="manager-expiring-items" title="Expiring Items Trend" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Expiring items period</span><select value={expiryRange} onChange={(event) => setExpiryRange(event.target.value)} aria-label="Expiring items period"><option value="7">Next 7 Days</option><option value="14">Next 14 Days</option><option value="30">Next 30 Days</option><option value="60">Next 60 Days</option></select></label>}>
-          {pendingState('Expiring items trend')}
+          {pendingState('Expiration trends will appear when historical batch data is available.')}
         </Card>
         <Card id="manager-stock-distribution" title="Stock Status Distribution">
-          {pendingState('Stock status distribution')}
+          {pendingState('Stock status distribution will appear when analytics data is available.')}
         </Card>
         <Card id="manager-top-value" title="Top Ingredients by Value" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Top ingredients period</span><select value={topValueRange} onChange={(event) => setTopValueRange(event.target.value)} aria-label="Top ingredients period"><option value="week">This Week</option><option value="month">This Month</option><option value="quarter">This Quarter</option><option value="year">This Year</option></select></label>}>
-          {pendingState('Top ingredients by inventory value')}
-        </Card>
-        <Card id="manager-upcoming-expirations" title={<DashboardCardTitle Icon={CalendarClock}>Upcoming Expirations (≤ 7 days)</DashboardCardTitle>} action={<Link href="/ExpirationMonitoring" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
-          <DashboardRecordTable label="Manager upcoming expirations" columns={['Ingredient','Batch ID','Expiration Date','Days Left']} />
-        </Card>
-        <Card id="manager-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>Pending Change Requests</DashboardCardTitle>} action={<Link href="/ChangeRequests" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
-          <DashboardRecordTable label="Manager pending change requests" columns={['Request ID','Type','Submitted By','Status']} />
+          {pendingState('Ingredient value rankings will appear when valuation analytics are available.')}
         </Card>
       </section>
     </div>

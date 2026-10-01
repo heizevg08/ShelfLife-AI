@@ -10,11 +10,11 @@ export function wasteRecordRoutes(auth: AuthService, service: WasteRecordService
   const router = Router(), actions = wasteRecordControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
-  router.get('/summary', authorizeAdministration(['Super Admin', 'Inventory Staff']), actions.summary);
-  router.get('/reason-breakdown', authorizeAdministration(['Super Admin', 'Inventory Staff']), actions.reasonBreakdown);
-  router.get('/', authorizeAdministration(['Super Admin', 'Inventory Staff']), actions.list);
-  router.get('/:id', authorizeAdministration(['Super Admin', 'Inventory Staff']), actions.detail);
-  router.post('/', authorizeAdministration(['Inventory Staff']), json({ limit: '100kb' }), actions.create);
+  router.get('/summary', authorizeAdministration(['Super Admin', 'Manager', 'Inventory Staff']), actions.summary);
+  router.get('/reason-breakdown', authorizeAdministration(['Super Admin', 'Manager', 'Inventory Staff']), actions.reasonBreakdown);
+  router.get('/', authorizeAdministration(['Super Admin', 'Manager', 'Inventory Staff']), actions.list);
+  router.get('/:id', authorizeAdministration(['Super Admin', 'Manager', 'Inventory Staff']), actions.detail);
+  router.post('/', authorizeAdministration(['Manager', 'Inventory Staff']), json({ limit: '100kb' }), actions.create);
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });
   const error: ErrorRequestHandler = (value, _req, res, next) => {
     if (res.headersSent) { next(value); return; }

@@ -10,15 +10,13 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
   const router = Router(), actions = ingredientControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
-  router.get('/categories', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Staff']), actions.categories);
-  router.get('/stock-in-options', authorizeAdministration(['Inventory Staff']), actions.stockInOptions);
-  router.use(authorizeAdministration(['Admin']));
-  router.use(json({ limit: '100kb' }));
-  router.get('/summary', actions.summary);
-  router.get('/', actions.list);
-  router.post('/', actions.create);
-  router.put('/:id', actions.update);
-  router.delete('/:id', actions.remove);
+  router.get('/categories', authorizeAdministration(['Super Admin', 'Admin', 'Manager', 'Inventory Staff']), actions.categories);
+  router.get('/stock-in-options', authorizeAdministration(['Manager', 'Inventory Staff']), actions.stockInOptions);
+  router.get('/summary', authorizeAdministration(['Admin', 'Manager']), actions.summary);
+  router.get('/', authorizeAdministration(['Admin', 'Manager']), actions.list);
+  router.post('/', authorizeAdministration(['Admin', 'Manager']), json({ limit: '100kb' }), actions.create);
+  router.put('/:id', authorizeAdministration(['Admin']), json({ limit: '100kb' }), actions.update);
+  router.delete('/:id', authorizeAdministration(['Admin']), actions.remove);
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });
   const error: ErrorRequestHandler = (value, _req, res, next) => {
     if (res.headersSent) { next(value); return; }
