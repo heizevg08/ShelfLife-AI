@@ -128,7 +128,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
     return () => {
       active = false;
     };
-  }, [attempt, router, pathname]);
+  }, [attempt, pathname]);
 
   useEffect(() => {
     try {

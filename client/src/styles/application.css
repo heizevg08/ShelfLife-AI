@@ -33727,11 +33727,28 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 /* Current Manager ledgers use one shared column model for header and body cells. */
 .sl-manager-alerts-v134 .sl-manager-alerts-table-wrap { max-height:none; overflow-y:hidden; }
 .sl-shell[data-role=Manager] .sl-page-header>.sl-description {
-  max-width: min(100%,72rem);
+  width: 100%;
+  max-width: none;
+  min-width: 0;
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
 }
+.sl-shell[data-role=Manager] .sl-page-header>div:first-child { min-width: 0; width: 100%; }
+.sl-manager-inventory-live .sl-manager-inventory-panel { min-height: clamp(172px,20vh,240px); }
+.sl-manager-inventory-live .sl-manager-panel-empty { min-height: 172px; }
+.sl-manager-usage-live .sl-manager-usage-analytics>.sl-card { min-height: clamp(12.5rem,17vw,15.5rem); }
+.sl-manager-usage-live .sl-manager-usage-pending { min-height: clamp(8rem,12vw,11.5rem); }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-mgr-forecast-pending { min-height: 225px; }
+.sl-manager-alerts-card-select { display: inline-flex; align-items: center; }
+.sl-manager-alerts-card-select select { min-height: 34px; max-width: 10rem; }
+.sl-manager-performance-summary { overflow-x: auto; }
+.sl-manager-performance-summary table { min-width: 42rem; }
+.sl-manager-performance-summary th:first-child,
+.sl-manager-performance-summary td:first-child { width: 40%; }
+.sl-manager-performance-summary th:not(:first-child),
+.sl-manager-performance-summary td:not(:first-child) { width: 20%; }
+.sl-manager-performance-note { margin: 0; padding: .7rem .9rem; border-top: 1px solid var(--sl-border); }
 
 .sl-application-records-toolbar[data-filter-layout="records-four"] {
   grid-template-columns: minmax(14rem,1.6fr) repeat(2,minmax(9rem,.8fr)) auto;

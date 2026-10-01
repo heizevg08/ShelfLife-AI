@@ -31,6 +31,15 @@ export function ConnectedManagerReportsPage() {
         <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp/></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
       </section>
       <section className="sl-manager-reports-three" aria-label="Cross-domain analytics">{analytics.map(([id,title,description])=><Card id={id} key={id} title={title}><ApplicationPendingState description={description}/></Card>)}</section>
+      <Card id="manager-performance-summary" title="Performance Summary">
+        <div className="sl-application-records-table-shell sl-manager-performance-summary"><table className="sl-application-records-table sl-data-table"><thead><tr><th>Metric</th><th>Current</th><th>Previous Period</th><th>Change</th></tr></thead><tbody>
+          <tr><td>Inventory Value</td><td>{inventoryError ? '—' : inventoryValue}</td><td>—</td><td>—</td></tr>
+          <tr><td>Near-Expiry Batches</td><td>{inventoryError ? '—' : inventory?.nearExpiry ?? '—'}</td><td>—</td><td>—</td></tr>
+          <tr><td>Waste Cost Today</td><td>{wasteError ? '—' : waste ? `₱${waste.totalWasteCostToday.toFixed(2)}` : '—'}</td><td>—</td><td>—</td></tr>
+          <tr><td>Forecast Accuracy</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody></table></div>
+        <p className="sl-supporting sl-manager-performance-note">Historical period comparison will appear when the reporting aggregation service is available.</p>
+      </Card>
     </div>
   </>;
 }

@@ -65,8 +65,7 @@ function ManagerAlerts() {
 
       <div className="sl-manager-alerts-layout">
         <aside className="sl-manager-alerts-rail" aria-label="Alert analytics">
-          <Card id="manager-alert-trends" title="Alert Trends">
-            <div className="sl-manager-alerts-card-select"><select value={trendRange} onChange={event => setTrendRange(event.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></div>
+          <Card id="manager-alert-trends" title="Alert Trends" action={<label className="sl-manager-alerts-card-select"><span className="sl-sr-only">Trend period</span><select aria-label="Trend period" value={trendRange} onChange={event => setTrendRange(event.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></label>}>
             <ManagerAlertPending label="Alert trends" compact />
           </Card>
           <Card id="manager-alert-priority" title="Alerts by Priority">
