@@ -2,7 +2,8 @@ import type { RefObject } from 'react';
 import { Boxes } from 'lucide-react';
 import type { InventoryBatch, InventoryBatchDisplayStatus } from '../../services/inventory-batches';
 import { formatDate } from '../../utils/date-time';
-import { Dialog } from './Dialog';
+import { formatHumanReadableText } from '../../utils/display-text';
+import { ApplicationDetailsDialog } from './ApplicationDetailsDialog';
 import { Status } from './primitives';
 
 const statusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired'
@@ -11,24 +12,15 @@ const statusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired'
     ? 'attention' as const
     : 'success' as const;
 
-export function InventoryBatchDetailsDialog({ batch, onDismiss, returnFocus }: {
+export function InventoryBatchDetailsDialog({ batch, onDismiss, returnFocus, humanizeIngredient = false }: {
   batch: InventoryBatch | null;
   onDismiss: () => void;
   returnFocus?: RefObject<HTMLElement | null>;
+  humanizeIngredient?: boolean;
 }) {
-  return <Dialog
-    open={Boolean(batch)}
-    showClose={false}
-    title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Boxes size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Inventory Batch Details</span><small>View inventory batch information.</small></span></span>}
-    onDismiss={onDismiss}
-    returnFocus={returnFocus}
-    actions={<button type="button" className="sl-button" onClick={onDismiss}>Close</button>}
-    className="sl-add-user-dialog sl-account-reference-dialog sl-admin-ingredient-dialog sl-ingredient-view-dialog sl-inventory-batch-details-dialog"
-  >
-    {batch && <div className="sl-ingredient-details"><section className="sl-ingredient-details-identity"><div><h3>{batch.batchID}</h3><span className="sl-application-role-pill sl-account-details-role">{batch.ingredient.name}</span></div></section><section className="sl-ingredient-details-information"><h3>Batch Information</h3><dl className="sl-ingredient-details-grid">
-      <div><dt>Date Received</dt><dd>{formatDate(batch.dateReceived)}</dd></div><div><dt>Expiration Date</dt><dd>{formatDate(batch.expirationDate)}</dd></div>
-      <div><dt>Current Stock</dt><dd>{batch.quantity.toLocaleString()} {batch.unit}</dd></div><div><dt>Days Left</dt><dd>{batch.daysLeft}</dd></div>
-      <div><dt>Status</dt><dd><Status tone={statusTone(batch.displayStatus)}>{batch.displayStatus}</Status></dd></div><div><dt>Recorded By</dt><dd>{batch.createdBy.name}</dd></div>
-    </dl></section></div>}
-  </Dialog>;
+  return <ApplicationDetailsDialog open={Boolean(batch)} title="Inventory Batch Details" subtitle="View inventory batch information." Icon={Boxes} identityTitle={batch?.batchID ?? '—'} identityBadge={batch ? humanizeIngredient ? formatHumanReadableText(batch.ingredient.name) : batch.ingredient.name : '—'} sectionTitle="Batch Information" rows={batch ? [
+    { label: 'Date Received', value: formatDate(batch.dateReceived) }, { label: 'Expiration Date', value: formatDate(batch.expirationDate) },
+    { label: 'Current Stock', value: `${batch.quantity.toLocaleString()} ${batch.unit}` }, { label: 'Days Left', value: batch.daysLeft },
+    { label: 'Status', value: <Status tone={statusTone(batch.displayStatus)}>{batch.displayStatus}</Status> }, { label: 'Recorded By', value: batch.createdBy.name },
+  ] : []} onDismiss={onDismiss} returnFocus={returnFocus} className="sl-inventory-batch-details-dialog" />;
 }

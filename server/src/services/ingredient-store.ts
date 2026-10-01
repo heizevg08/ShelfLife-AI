@@ -35,8 +35,8 @@ export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<
   };
   return {
     async stockInOptions() {
-      const rows = await ingredients.find({}).select('_id name unitOfMeasure standardUnitCost defaultShelfLifeDays').sort({ name: 1, _id: 1 }).lean().exec();
-      return rows.map(row => ({ id: row._id.toString(), name: row.name, unitOfMeasure: row.unitOfMeasure, ...(typeof row.standardUnitCost === 'number' ? { standardUnitCost: row.standardUnitCost } : {}), ...(typeof row.defaultShelfLifeDays === 'number' ? { defaultShelfLifeDays: row.defaultShelfLifeDays } : {}) }));
+      const rows = await ingredients.find({}).select('_id name category unitOfMeasure standardUnitCost defaultShelfLifeDays').sort({ name: 1, _id: 1 }).lean().exec();
+      return rows.map(row => ({ id: row._id.toString(), name: row.name, category: row.category, unitOfMeasure: row.unitOfMeasure, ...(typeof row.standardUnitCost === 'number' ? { standardUnitCost: row.standardUnitCost } : {}), ...(typeof row.defaultShelfLifeDays === 'number' ? { defaultShelfLifeDays: row.defaultShelfLifeDays } : {}) }));
     },
     async summary() {
       const [total, categories, units] = await Promise.all([

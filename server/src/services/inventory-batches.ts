@@ -17,7 +17,7 @@ export interface InventoryBatch {
   createdAt: string;
   updatedAt: string;
 }
-export interface InventoryBatchSummary { totalIngredients: number; totalBatches: number; lowStockItems: number; nearExpiry: number; expiredItems: number; categories: string[] }
+export interface InventoryBatchSummary { totalIngredients: number; totalBatches: number; lowStockItems: number; nearExpiry: number; expiredItems: number; inventoryValue: number | null; statusCounts: Record<InventoryBatchDisplayStatus, number>; categories: string[]; categoryCounts: Array<{ label: string; value: number }> }
 export interface StockInSummary { totalBatches: number; stockInToday: number; ingredientsReceivedToday: number; batchesReceivedThisMonth: number; expiringSoonBatches: number }
 export interface InventoryBatchStore {
   ready(): Promise<void>;

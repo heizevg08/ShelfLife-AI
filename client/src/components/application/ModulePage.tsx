@@ -1790,24 +1790,25 @@ function ManagerForecastingPage() {
         <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At Risk of Overstock</span><strong>—</strong><small>Risk forecast pending</small></div></article>
       </section>
 
-      <section className="sl-mgr-forecast-filters" aria-label="Forecast filters">
-        <label><span>Date Range</span><select value={range} onChange={event => { setRange(event.target.value); setPage(1); }}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option><option>Custom</option></select></label>
-        {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom forecast date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label></div>}
-        <label><span>Ingredient Category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
-        <label><span>Ingredient</span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option>All Ingredients</option></select></label>
-        <button className="sl-button" type="button" onClick={() => { setRange('Current period'); setDateFrom(''); setDateTo(''); setCategory('All Categories'); setIngredient('All Ingredients'); setPage(1); }}>Reset</button>
-      </section>
-
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
         <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<label className="sl-dashboard-filter"><select aria-label="Forecast trend period" value={trendPeriod} onChange={e=>setTrendPeriod(e.target.value)}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option></select></label>}><Pending description="Forecast comparisons will appear when forecast and usage data are available." /></Card>
         <Card id="mgr-category-demand" title="Category Demand"><Pending description="Category demand will appear when forecasting data is available." /></Card>
         <Card id="mgr-forecast-insights" title="Forecast Insights"><Pending description="Ranked risks and recommended actions will appear when the forecasting service is available." /></Card>
       </section>
 
-      <Card id="mgr-ingredient-forecasts" title={<span className="sl-dashboard-card-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><span>Ingredient Forecasts</span></span>} action={<div className="sl-mgr-forecast-table-actions"><span className="sl-directory-search"><Search size={16}/><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search ingredients..." /></span><button className="sl-button sl-download-trigger" disabled><Download size={16}/> Export Forecast</button></div>}>
+      <section className="sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records sl-mgr-forecast-records" aria-labelledby="mgr-ingredient-forecasts">
+        <header className="sl-application-records-header sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2 id="mgr-ingredient-forecasts">Ingredient Forecasts</h2></header>
+        <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-application-records-toolbar sl-sa-ingredients-filter-card sl-mgr-forecast-filters" aria-label="Forecast filters">
+          <label className="sl-application-records-search sl-sa-ingredients-search"><span>Search ingredients</span><div><Search size={16}/><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search ingredients..." /></div></label>
+          <label><span>Date Range</span><select value={range} onChange={event => { setRange(event.target.value); setPage(1); }}><option>Current period</option><option>Last 7 Days</option><option>Last 30 Days</option><option>This Month</option><option>Custom</option></select></label>
+          {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom forecast date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label></div>}
+          <label><span>Ingredient Category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option></select></label>
+          <label><span>Ingredient</span><select value={ingredient} onChange={e=>setIngredient(e.target.value)}><option>All Ingredients</option></select></label>
+          <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions"><button className="sl-button" type="button" onClick={() => { setRange('Current period'); setDateFrom(''); setDateTo(''); setCategory('All Categories'); setIngredient('All Ingredients'); setPage(1); }}>Reset</button><button className="sl-button sl-download-trigger" disabled><Download size={16}/> Export Forecast</button></div>
+        </div></div>
         <div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table"><thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th><th>Actions</th></tr></thead><tbody><tr><td colSpan={9} className="sl-empty-cell"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available." /></td></tr></tbody></table></div>
         <div className="sl-mgr-forecast-footer sl-application-records-footer sl-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="forecasts" onPageChange={setPage} /></div>
-      </Card>
+      </section>
     </div>
   </>;
 }

@@ -10,7 +10,7 @@ import type { Actor } from './administration';
 import { normalizeUserRole } from '../models/user';
 
 type BatchRow = { _id: { toString(): string }; ingredientId: { toString(): string }; batchID: string; quantity: number; unit: string; dateReceived: Date; expirationDate: Date; unitCost?: number; status?: string; createdBy: { toString(): string }; createdAt: Date; updatedAt: Date };
-type IngredientRow = { _id: { toString(): string }; name: string; category: string; unitOfMeasure: string; minimumStock?: number };
+type IngredientRow = { _id: { toString(): string }; name: string; category: string; unitOfMeasure: string; minimumStock?: number; standardUnitCost?: number };
 type Resolved = { row: BatchRow; ingredient: IngredientRow; totalStock: number; displayStatus: InventoryBatchDisplayStatus; daysLeft: number; creatorName: string };
 
 export function deriveInventoryBatchDisplayStatus(expirationDate: Date, totalStock: number, minimumStock: number | undefined, now: Date): InventoryBatchDisplayStatus {
@@ -23,6 +23,13 @@ export function formatInventoryBatchID(dateReceived: Date, sequence: number) {
   return `SL-${date}-${String(sequence).padStart(3, '0')}`;
 }
 
+export function resolveInventoryValue(items: ReadonlyArray<{ quantity: number; batchUnitCost?: number; standardUnitCost?: number }>) {
+  const resolved = items.map(item => ({ quantity: item.quantity, unitCost: item.batchUnitCost ?? item.standardUnitCost }));
+  return resolved.every(item => typeof item.unitCost === 'number' && Number.isFinite(item.unitCost) && item.unitCost >= 0)
+    ? resolved.reduce((total, item) => total + item.quantity * item.unitCost!, 0)
+    : null;
+}
+
 export async function reserveInventoryBatchID(dateReceived: Date, increment: (key: string) => Promise<number>) {
   const key = `${dateReceived.getUTCFullYear()}${String(dateReceived.getUTCMonth() + 1).padStart(2, '0')}${String(dateReceived.getUTCDate()).padStart(2, '0')}`;
   return formatInventoryBatchID(dateReceived, await increment(key));
@@ -33,7 +40,7 @@ export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<
     const rows = await batches.find({}).sort({ createdAt: -1, _id: -1 }).lean().exec() as BatchRow[];
     const ingredientIds = [...new Set(rows.map(row => row.ingredientId.toString()))], creatorIds = [...new Set(rows.map(row => row.createdBy.toString()))];
     const [ingredientRows, creatorRows] = await Promise.all([
-      ingredients.find({ _id: { $in: ingredientIds } }).select('_id name category unitOfMeasure minimumStock').lean().exec() as Promise<IngredientRow[]>,
+      ingredients.find({ _id: { $in: ingredientIds } }).select('_id name category unitOfMeasure minimumStock standardUnitCost').lean().exec() as Promise<IngredientRow[]>,
       users.find({ _id: { $in: creatorIds } }).select('_id firstName lastName').lean().exec(),
     ]);
     const byId = new Map(ingredientRows.map(row => [row._id.toString(), row]));
@@ -83,7 +90,18 @@ export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<
       return { items: rows.slice(start, start + query.pageSize).map(serialize), page: query.page, pageSize: query.pageSize, total: rows.length };
     },
     async detail(id, now) { const item = (await resolve(now)).find(candidate => candidate.row._id.toString() === id); return item ? serialize(item) : null; },
-    async summary(now) { const rows = await resolve(now), ingredientRows = new Map(rows.map(item => [item.ingredient._id.toString(), item])); return { totalIngredients: ingredientRows.size, totalBatches: rows.length, lowStockItems: [...ingredientRows.values()].filter(item => item.ingredient.minimumStock !== undefined && item.totalStock <= item.ingredient.minimumStock).length, nearExpiry: rows.filter(item => item.displayStatus === 'Near Expiry').length, expiredItems: rows.filter(item => item.displayStatus === 'Expired').length, categories: [...new Set(rows.map(item => item.ingredient.category))].sort((a, b) => a.localeCompare(b)) }; },
+    async summary(now) {
+      const rows = await resolve(now), ingredientRows = new Map(rows.map(item => [item.ingredient._id.toString(), item]));
+      const inventoryValue = resolveInventoryValue(rows.map(item => ({ quantity: item.row.quantity, batchUnitCost: item.row.unitCost, standardUnitCost: item.ingredient.standardUnitCost })));
+      const statusCounts = { 'In Stock': 0, 'Low Stock': 0, 'Near Expiry': 0, Expired: 0 } satisfies Record<InventoryBatchDisplayStatus, number>;
+      const categoryCounts = new Map<string, number>();
+      for (const item of rows) {
+        statusCounts[item.displayStatus] += 1;
+        categoryCounts.set(item.ingredient.category, (categoryCounts.get(item.ingredient.category) ?? 0) + 1);
+      }
+      const categories = [...categoryCounts.keys()].sort((a, b) => a.localeCompare(b));
+      return { totalIngredients: ingredientRows.size, totalBatches: rows.length, lowStockItems: [...ingredientRows.values()].filter(item => item.ingredient.minimumStock !== undefined && item.totalStock <= item.ingredient.minimumStock).length, nearExpiry: rows.filter(item => item.displayStatus === 'Near Expiry').length, expiredItems: rows.filter(item => item.displayStatus === 'Expired').length, inventoryValue, statusCounts, categories, categoryCounts: categories.map(label => ({ label, value: categoryCounts.get(label) ?? 0 })) };
+    },
     async stockInSummary(now) {
       const rows = await resolve(now), dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()), dayEnd = new Date(dayStart.getTime() + 86_400_000), monthStart = new Date(now.getFullYear(), now.getMonth(), 1), monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
       const today = rows.filter(item => item.row.dateReceived >= dayStart && item.row.dateReceived < dayEnd);

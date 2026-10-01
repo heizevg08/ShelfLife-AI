@@ -34,7 +34,7 @@ export function listIngredients(page = 1, pageSize = 25, search = '', category =
 }
 export const getIngredientSummary = (signal?: AbortSignal) => apiClient<{ total: number; categories: string[]; units: string[]; mostCommonIngredient: string | null }>('/ingredients/summary', { signal });
 export const listIngredientCategories = (signal?: AbortSignal) => apiClient<{ categories: string[] }>('/ingredients/categories', { signal });
-export type StockInIngredient = Pick<Ingredient, 'id' | 'name' | 'unitOfMeasure' | 'standardUnitCost' | 'defaultShelfLifeDays'>;
+export type StockInIngredient = Pick<Ingredient, 'id' | 'name' | 'category' | 'unitOfMeasure' | 'standardUnitCost' | 'defaultShelfLifeDays'>;
 export const listStockInIngredients = (signal?: AbortSignal) => apiClient<{ ingredients: StockInIngredient[] }>('/ingredients/stock-in-options', { signal });
 export const createIngredient = (input: IngredientInput) => apiClient<{ ingredient: Ingredient }>('/ingredients', { method: 'POST', body: JSON.stringify(input), successMessage: 'Ingredient added successfully.' });
 

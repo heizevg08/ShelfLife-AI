@@ -6,7 +6,7 @@ const { randomBytes } = require('node:crypto');
 const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createInventoryBatches } = require('../dist/services/inventory-batches');
-const { deriveInventoryBatchDisplayStatus, formatInventoryBatchID, reserveInventoryBatchID } = require('../dist/services/inventory-batch-store');
+const { deriveInventoryBatchDisplayStatus, formatInventoryBatchID, reserveInventoryBatchID, resolveInventoryValue } = require('../dist/services/inventory-batch-store');
 const { inventoryBatchPagination, stockInInput } = require('../dist/validators/inventory-batch');
 
 const admin = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Admin', email: 'admin@shelflife.com', role: 'Admin', isActive: true, authVersion: 0 };
@@ -54,13 +54,24 @@ test('concurrent Batch ID reservations remain unique within a receipt date', asy
   assert.equal(ids[24], 'SL-20300110-025');
 });
 
+test('inventory valuation prefers batch cost, accepts zero, and requires an authoritative cost for every batch', () => {
+  assert.equal(resolveInventoryValue([
+    { quantity: 2, batchUnitCost: 10, standardUnitCost: 100 },
+    { quantity: 3, standardUnitCost: 4 },
+    { quantity: 8, batchUnitCost: 0, standardUnitCost: 7 },
+  ]), 32);
+  assert.equal(resolveInventoryValue([]), 0);
+  assert.equal(resolveInventoryValue([{ quantity: 2 }]), null);
+  assert.equal(resolveInventoryValue([{ quantity: 2, batchUnitCost: Number.NaN, standardUnitCost: 4 }]), null);
+});
+
 test('inventory batch API permits authorized Manager and Inventory Staff Stock-In operations', async () => {
   const now = new Date('2030-01-10T12:00:00.000Z');
   const batch = { id: '4'.repeat(24), batchID: 'SL-20300110-001', ingredient: { id: '5'.repeat(24), name: 'Milk', category: 'Dairy', unitOfMeasure: 'L', minimumStock: 10 }, quantity: 4, unit: 'L', dateReceived: now.toISOString(), expirationDate: new Date('2030-02-01').toISOString(), displayStatus: 'Low Stock', createdBy: { id: staff.id, name: staff.name }, createdAt: now.toISOString(), updatedAt: now.toISOString() };
   const store = {
     async list(query) { return { items: query.search === 'none' ? [] : [batch], page: query.page, pageSize: query.pageSize, total: query.search === 'none' ? 0 : 1 }; },
     async detail(id) { return id === batch.id ? batch : null; },
-    async summary() { return { totalIngredients: 1, totalBatches: 1, lowStockItems: 1, nearExpiry: 0, expiredItems: 0, categories: ['Dairy'] }; },
+    async summary() { return { totalIngredients: 1, totalBatches: 1, lowStockItems: 1, nearExpiry: 0, expiredItems: 0, inventoryValue: 32, statusCounts: { 'In Stock': 0, 'Low Stock': 1, 'Near Expiry': 0, Expired: 0 }, categories: ['Dairy'], categoryCounts: [{ label: 'Dairy', value: 1 }] }; },
     async stockInSummary() { return { totalBatches: 1, stockInToday: 1, ingredientsReceivedToday: 1, batchesReceivedThisMonth: 1, expiringSoonBatches: 0 }; },
     async create(actor, input) { return { ...batch, quantity: input.quantity, createdBy: { id: actor.id, name: actor.name } }; },
     async ready() {},
@@ -75,7 +86,8 @@ test('inventory batch API permits authorized Manager and Inventory Staff Stock-I
     assert.equal((await request(undefined)).status, 401);
     assert.equal((await request(manager)).status, 200);
     assert.equal((await request(admin, '?page=1&pageSize=10&category=Dairy&status=Low%20Stock')).status, 200);
-    assert.equal((await request(superAdmin, '/summary')).status, 200);
+    const summaryResponse = await request(superAdmin, '/summary'); assert.equal(summaryResponse.status, 200);
+    const summary = await summaryResponse.json(); assert.equal(summary.inventoryValue, 32); assert.deepEqual(summary.categoryCounts, [{ label: 'Dairy', value: 1 }]);
     assert.equal((await request(staff, '/summary')).status, 200);
     assert.equal((await request(admin, `/${batch.id}`)).status, 200);
     assert.equal((await request(admin, `/${'9'.repeat(24)}`)).status, 404);

@@ -21,7 +21,7 @@ export interface IngredientStore {
   create(actor: Actor, input: IngredientInput): Promise<Ingredient>;
   update(actor: Actor, id: string, input: IngredientInput): Promise<Ingredient | null>;
   remove(actor: Actor, id: string): Promise<boolean>;
-  stockInOptions(): Promise<{ id: string; name: string; unitOfMeasure: string; standardUnitCost?: number; defaultShelfLifeDays?: number }[]>;
+  stockInOptions(): Promise<{ id: string; name: string; category: string; unitOfMeasure: string; standardUnitCost?: number; defaultShelfLifeDays?: number }[]>;
 }
 export function createIngredients(store: IngredientStore) {
   return {

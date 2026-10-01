@@ -18898,13 +18898,13 @@ section.sl-card:has(.sl-filter-popover) {
     grid-column: auto;
   }
 }
-nn .sl-manager-dashboard-v116 {
+.sl-manager-dashboard-v116 {
   gap: clamp(.65rem,.48rem + .35vw,.95rem);
   min-width: 0;
   display: grid;
 }
 .sl-manager-reference-grid {
-  grid-template-columns: repeat(3,minmax(0,1fr));
+  grid-template-columns: repeat(4,minmax(0,1fr));
   align-items: stretch;
   gap: clamp(.65rem,.48rem + .35vw,.95rem);
   min-width: 0;
@@ -18958,7 +18958,7 @@ nn .sl-manager-dashboard-v116 {
   gap: .3rem;
   display: inline-flex;
 }
-@media (width<=1180px){
+@media (width<=1380px){
   .sl-manager-reference-grid {
     grid-template-columns: repeat(2,minmax(0,1fr));
   }
@@ -33783,4 +33783,94 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-manager-operation-form > .sl-application-modal-actions { grid-column: auto; }
   .sl-manager-form-wide { grid-column: auto; }
   .sl-manager-reports-live .sl-manager-reports-table { min-width: 760px; }
+}
+
+/* Manager pages consume the same record geometry as the established application tables. */
+:is(.sl-manager-dashboard-v116,.sl-manager-inventory-live,.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-manager-alerts-v134,.sl-manager-reports-live,.sl-mgr-forecast-page) :is(.sl-dashboard-reference-table,.sl-application-records-table-shell,.sl-sa-ingredients-table-scroll,.sl-manager-inventory-table-shell,.sl-manager-alerts-table-wrap,.sl-manager-reports-table-scroll,.sl-mgr-forecast-tablewrap) {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+:is(.sl-manager-dashboard-v116,.sl-manager-inventory-live,.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-manager-alerts-v134,.sl-manager-reports-live,.sl-mgr-forecast-page) table {
+  border-collapse: collapse;
+  width: 100%;
+}
+:is(.sl-manager-dashboard-v116,.sl-manager-inventory-live,.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-manager-alerts-v134,.sl-manager-reports-live,.sl-mgr-forecast-page) th {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+.sl-manager-dashboard-expiration-table {
+  table-layout: fixed;
+  min-width: 42rem;
+}
+.sl-manager-dashboard-expiration-table col:nth-child(1) { width: 32%; }
+.sl-manager-dashboard-expiration-table col:nth-child(2) { width: 25%; }
+.sl-manager-dashboard-expiration-table col:nth-child(3) { width: 27%; }
+.sl-manager-dashboard-expiration-table col:nth-child(4) { width: 16%; }
+.sl-manager-dashboard-request-table {
+  table-layout: fixed;
+  min-width: 40rem;
+}
+.sl-manager-dashboard-request-table col:nth-child(1) { width: 27%; }
+.sl-manager-dashboard-request-table col:nth-child(2) { width: 28%; }
+.sl-manager-dashboard-request-table col:nth-child(3) { width: 27%; }
+.sl-manager-dashboard-request-table col:nth-child(4) { width: 18%; }
+.sl-manager-inventory-table { min-width: 64rem; }
+.sl-manager-fefo-table { min-width: 43rem; }
+.sl-manager-usage-records-table { min-width: 72rem; }
+.sl-manager-change-request-table { min-width: 78rem; }
+.sl-manager-alerts-table { min-width: 66rem; }
+.sl-manager-reports-table { min-width: 54rem; }
+.sl-mgr-forecast-records .sl-application-records-table { min-width: 78rem; }
+
+.sl-manager-inventory-live .sl-manager-inventory-filters {
+  grid-template-columns: minmax(14rem,1.6fr) repeat(3,minmax(8.5rem,.72fr)) auto;
+}
+.sl-manager-usage-live .sl-manager-usage-record-toolbar {
+  grid-template-columns: minmax(14rem,1.55fr) repeat(3,minmax(8.5rem,.72fr)) auto;
+  max-width: none;
+  padding: 0;
+}
+.sl-manager-change-requests-live .sl-mgr-cr-filters {
+  grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8.5rem,.72fr)) auto;
+}
+.sl-manager-alerts-v134 .sl-manager-alerts-filters {
+  grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8.5rem,.72fr)) auto;
+}
+.sl-mgr-forecast-records .sl-mgr-forecast-filters {
+  grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8.5rem,.72fr)) auto;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+:is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) :is(.sl-manager-usage-record-toolbar,.sl-mgr-cr-filters,.sl-mgr-forecast-filters):has(.sl-v219-custom-date-range) {
+  grid-template-columns: minmax(14rem,1.45fr) repeat(3,minmax(8rem,.65fr)) minmax(17.5rem,1.25fr) auto;
+}
+:is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) :is(.sl-manager-usage-record-toolbar,.sl-mgr-cr-filters,.sl-mgr-forecast-filters):has(.sl-v219-custom-date-range) .sl-v219-custom-date-range {
+  grid-column: auto;
+}
+@media (width<=1180px) {
+  :is(.sl-manager-inventory-live .sl-manager-inventory-filters,.sl-manager-usage-live .sl-manager-usage-record-toolbar,.sl-manager-change-requests-live .sl-mgr-cr-filters,.sl-manager-alerts-v134 .sl-manager-alerts-filters,.sl-mgr-forecast-records .sl-mgr-forecast-filters) {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  :is(.sl-manager-inventory-live,.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-manager-alerts-v134,.sl-mgr-forecast-records) :is(.sl-application-records-search,.sl-sa-ingredients-search) {
+    grid-column: 1 / -1;
+  }
+  :is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) :is(.sl-manager-usage-record-toolbar,.sl-mgr-cr-filters,.sl-mgr-forecast-filters):has(.sl-v219-custom-date-range) {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  :is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) .sl-v219-custom-date-range,
+  :is(.sl-manager-inventory-live,.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-manager-alerts-v134,.sl-mgr-forecast-records) .sl-application-records-filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+@media (width<=760px) {
+  :is(.sl-manager-inventory-live .sl-manager-inventory-filters,.sl-manager-usage-live .sl-manager-usage-record-toolbar,.sl-manager-change-requests-live .sl-mgr-cr-filters,.sl-manager-alerts-v134 .sl-manager-alerts-filters,.sl-mgr-forecast-records .sl-mgr-forecast-filters),
+  :is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) :is(.sl-manager-usage-record-toolbar,.sl-mgr-cr-filters,.sl-mgr-forecast-filters):has(.sl-v219-custom-date-range) {
+    grid-template-columns: minmax(0,1fr);
+  }
+  :is(.sl-manager-inventory-live,.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-manager-alerts-v134,.sl-mgr-forecast-records) :is(.sl-application-records-search,.sl-sa-ingredients-search,.sl-v219-custom-date-range,.sl-application-records-filter-actions) {
+    grid-column: auto;
+  }
 }
