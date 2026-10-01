@@ -18910,6 +18910,24 @@ section.sl-card:has(.sl-filter-popover) {
   min-width: 0;
   display: grid;
 }
+
+.sl-manager-reference-grid-three {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+}
+.sl-manager-reference-grid-three>#manager-inventory-value {
+  grid-column: 1/-1;
+}
+.sl-manager-usage-record-toolbar {
+  grid-template-columns: minmax(0,1.6fr) repeat(3,minmax(0,1fr)) auto;
+}
+.sl-manager-usage-record-toolbar>* { min-width:0; }
+.sl-manager-change-request-table { table-layout:fixed; min-width:76rem; }
+.sl-manager-change-request-table col:nth-child(1){width:13%}.sl-manager-change-request-table col:nth-child(2){width:15%}.sl-manager-change-request-table col:nth-child(3){width:14%}.sl-manager-change-request-table col:nth-child(4){width:18%}.sl-manager-change-request-table col:nth-child(5){width:13%}.sl-manager-change-request-table col:nth-child(6){width:12%}.sl-manager-change-request-table col:nth-child(7){width:9%}.sl-manager-change-request-table col:nth-child(8){width:6%}
+.sl-manager-usage-records-table { table-layout:fixed; min-width:72rem; }
+.sl-manager-usage-records-table col:nth-child(1){width:16%}.sl-manager-usage-records-table col:nth-child(2){width:16%}.sl-manager-usage-records-table col:nth-child(3){width:9%}.sl-manager-usage-records-table col:nth-child(4){width:11%}.sl-manager-usage-records-table col:nth-child(5){width:14%}.sl-manager-usage-records-table col:nth-child(6){width:18%}.sl-manager-usage-records-table col:nth-child(7){width:16%}
+.sl-manager-alerts-v134 .sl-manager-alerts-table-wrap { max-height:none; overflow-y:visible; }
+@media(max-width:900px){.sl-manager-reference-grid-three{grid-template-columns:minmax(0,1fr)}.sl-manager-reference-grid-three>#manager-inventory-value{grid-column:auto}.sl-manager-usage-record-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.sl-manager-usage-record-toolbar{grid-template-columns:minmax(0,1fr)}}
 .sl-manager-reference-grid>.sl-card {
   min-width: 0;
   min-height: clamp(13.5rem,19vw,18.5rem);
@@ -33858,6 +33876,11 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-manager-forecast-table col:nth-child(7) { width: 14%; }
 .sl-manager-forecast-table col:nth-child(8) { width: 8%; }
 .sl-manager-forecast-table col:nth-child(9) { width: 7%; }
+
+/* Current Manager ledgers use one shared column model for header and body cells. */
+.sl-manager-change-request-table col:nth-child(1){width:13%}.sl-manager-change-request-table col:nth-child(2){width:15%}.sl-manager-change-request-table col:nth-child(3){width:14%}.sl-manager-change-request-table col:nth-child(4){width:18%}.sl-manager-change-request-table col:nth-child(5){width:13%}.sl-manager-change-request-table col:nth-child(6){width:12%}.sl-manager-change-request-table col:nth-child(7){width:9%}.sl-manager-change-request-table col:nth-child(8){width:6%}
+.sl-manager-usage-records-table col:nth-child(1){width:16%}.sl-manager-usage-records-table col:nth-child(2){width:16%}.sl-manager-usage-records-table col:nth-child(3){width:9%}.sl-manager-usage-records-table col:nth-child(4){width:11%}.sl-manager-usage-records-table col:nth-child(5){width:14%}.sl-manager-usage-records-table col:nth-child(6){width:18%}.sl-manager-usage-records-table col:nth-child(7){width:16%}
+.sl-manager-alerts-v134 .sl-manager-alerts-table-wrap { max-height:none; overflow-y:hidden; }
 
 .sl-application-records-toolbar[data-filter-layout="records-five"] {
   grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8.5rem,.72fr)) auto;

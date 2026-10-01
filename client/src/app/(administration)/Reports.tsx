@@ -97,7 +97,7 @@ function ManagerReports() {
     <PageHeader eyebrow="Intelligence" title="Reports & Analytics" description="Turn your inventory data into actionable insights." />
     <div className="sl-admin-view sl-manager-reports-v139">
       <section className="sl-manager-reports-kpis sl-kpi-reference-v201" aria-label="Report summary">
-        <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="brand"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><BarChart3 /></span><div><span>Total Ingredients Used</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="brand"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><BarChart3 /></span><div><span>Total Usage</span><strong>—</strong><small>Compatible-unit usage data unavailable</small></div></article>
         <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="info"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><Trash2 /></span><div><span>Total Waste</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="attention"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><PieChart /></span><div><span>Waste Rate</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-manager-reports-kpi sl-sa-kpi" data-tone="critical"><span className="sl-manager-reports-kpi-icon sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Data unavailable</small></div></article>

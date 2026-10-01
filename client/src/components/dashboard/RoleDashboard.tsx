@@ -121,7 +121,6 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
   const requestTrigger = useRef<HTMLTableRowElement>(null);
   const [valueRange, setValueRange] = useState('30');
   const [expiryRange, setExpiryRange] = useState('30');
-  const [topValueRange, setTopValueRange] = useState('month');
   const [summary, setSummary] = useState<Awaited<ReturnType<typeof getInventoryBatchSummary>> | null>(null);
   const [expirations, setExpirations] = useState<InventoryBatch[] | null>(null);
   const [requests, setRequests] = useState<ChangeRequest[] | null>(null);
@@ -159,23 +158,20 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
         <Card id="manager-upcoming-expirations" title={<DashboardCardTitle Icon={CalendarClock}>Upcoming Expirations (≤ 7 days)</DashboardCardTitle>} action={<Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
           <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table sl-manager-dashboard-expiration-table"><colgroup><col/><col/><col/><col/></colgroup><thead><tr>{['Ingredient','Batch ID','Expiration Date','Days Left'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{expirations?.length ? expirations.map(batch => <tr key={batch.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event => { batchTrigger.current = event.currentTarget; setBatchDetail(batch); }} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); batchTrigger.current = event.currentTarget; setBatchDetail(batch); } }}><td className="sl-emphasized-value">{formatHumanReadableText(batch.ingredient.name)}</td><td><span className="sl-canonical-identifier">{batch.batchID}</span></td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td></tr>) : recordState(4, expirations === null && !inventoryError, inventoryError, 'Upcoming expirations will appear when qualifying batches exist.')}</tbody></table></div>
         </Card>
-        <Card id="manager-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>Pending Change Requests</DashboardCardTitle>} action={<Link href="/ChangeRequests" className="sl-text-link">Review queue <ArrowRight size={14}/></Link>}>
+        <Card id="manager-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>Pending Change Requests</DashboardCardTitle>} action={<Link href="/ChangeRequests" className="sl-text-link">Review requests <ArrowRight size={14}/></Link>}>
           <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table sl-manager-dashboard-request-table"><colgroup><col/><col/><col/><col/></colgroup><thead><tr>{['Request ID','Type','Submitted By','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{requests?.length ? requests.map(request => <tr key={request.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event => void openRequest(request, event.currentTarget)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void openRequest(request, event.currentTarget); } }}><td><span className="sl-canonical-identifier">{request.requestID}</span></td><td>{formatHumanReadableText(request.requestType.replaceAll('_', ' '))}</td><td>{formatHumanReadableText(request.requestedBy.name)}</td><td><Status tone="attention">Pending Review</Status></td></tr>) : recordState(4, requests === null && !requestError, requestError, 'Requests awaiting review will appear here.')}</tbody></table></div>
         </Card>
       </section>
 
-      <section className="sl-manager-reference-grid" aria-label="Manager inventory analytics">
+      <section className="sl-manager-reference-grid sl-manager-reference-grid-three" aria-label="Manager inventory analytics">
         <Card id="manager-inventory-value" title="Inventory Value Trend" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Inventory value period</span><select value={valueRange} onChange={(event) => setValueRange(event.target.value)} aria-label="Inventory value period"><option value="7">Last 7 Days</option><option value="30">Last 30 Days</option><option value="90">Last 90 Days</option></select></label>}>
           {pendingState('Inventory value trends will appear when valuation history is available.')}
-        </Card>
-        <Card id="manager-expiring-items" title="Expiring Items Trend" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Expiring items period</span><select value={expiryRange} onChange={(event) => setExpiryRange(event.target.value)} aria-label="Expiring items period"><option value="7">Next 7 Days</option><option value="14">Next 14 Days</option><option value="30">Next 30 Days</option><option value="60">Next 60 Days</option></select></label>}>
-          {pendingState('Expiration trends will appear when historical batch data is available.')}
         </Card>
         <Card id="manager-stock-distribution" title="Stock Status Distribution">
           {summary ? <ApplicationDonutChart ariaLabel="Current inventory batch status distribution" centerLabel="Batches" centerValue={summary.totalBatches} items={Object.entries(summary.statusCounts).map(([label, value]) => ({ label, value }))} /> : inventoryError ? <DataState kind="error" title="Data unavailable" description="Inventory status data could not be loaded." /> : <DataState kind="loading" title="Loading inventory status" description="Retrieving current batch status totals." />}
         </Card>
-        <Card id="manager-top-value" title="Top Ingredients by Value" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Top ingredients period</span><select value={topValueRange} onChange={(event) => setTopValueRange(event.target.value)} aria-label="Top ingredients period"><option value="week">This Week</option><option value="month">This Month</option><option value="quarter">This Quarter</option><option value="year">This Year</option></select></label>}>
-          {pendingState('Ingredient value rankings will appear when valuation analytics are available.')}
+        <Card id="manager-expiring-items" title="Expiring Items Trend" action={<label className="sl-dashboard-filter"><span className="sl-sr-only">Expiring items period</span><select value={expiryRange} onChange={(event) => setExpiryRange(event.target.value)} aria-label="Expiring items period"><option value="7">Next 7 Days</option><option value="14">Next 14 Days</option><option value="30">Next 30 Days</option><option value="60">Next 60 Days</option></select></label>}>
+          {pendingState('Expiration trends will appear when historical batch data is available.')}
         </Card>
       </section>
     </div>

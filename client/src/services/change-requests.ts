@@ -1,20 +1,23 @@
 import { apiClient } from './apiClient';
 
-export const CHANGE_REQUEST_TYPES = ['BATCH_CORRECTION', 'QUANTITY_ADJUSTMENT', 'UNIT_CORRECTION', 'ADD_MISSING_BATCH', 'OTHER'] as const;
-export const CHANGE_REQUEST_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
+export const CHANGE_REQUEST_TYPES = ['MINIMUM_STOCK_CHANGE','STANDARD_UNIT_COST_CHANGE','CATEGORY_CHANGE','BRAND_CHANGE','DESCRIPTION_CHANGE','UNIT_OF_MEASURE_CHANGE','DEFAULT_SHELF_LIFE_CHANGE'] as const;
+export const CHANGE_REQUEST_UNITS = ['kg','g','L','mL','pcs','pack','box','bottle','can','tray'] as const;
+export const CHANGE_REQUEST_TYPE_LABELS = { MINIMUM_STOCK_CHANGE:'Minimum Stock Change', STANDARD_UNIT_COST_CHANGE:'Standard Unit Cost Change', CATEGORY_CHANGE:'Category Change', BRAND_CHANGE:'Brand Change', DESCRIPTION_CHANGE:'Description Change', UNIT_OF_MEASURE_CHANGE:'Unit of Measure Change', DEFAULT_SHELF_LIFE_CHANGE:'Default Shelf Life Change' } as const;
+export const CHANGE_REQUEST_TARGET_LABELS = { minimumStock:'Minimum Stock', standardUnitCost:'Standard Unit Cost', category:'Category', brand:'Brand', description:'Description', unitOfMeasure:'Unit of Measure', defaultShelfLifeDays:'Default Shelf Life' } as const;
 export type ChangeRequestType = typeof CHANGE_REQUEST_TYPES[number];
-export type ChangeRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
-export interface ChangeRequest {
-  id: string; requestID: string; requestType: ChangeRequestType; targetField?: string; reason: string; currentValue?: string; requestedValue?: string; requestedQuantity?: number; requestedUnit?: string; requestDescription?: string; proposedBatch?: { dateReceived: string; quantityReceived: number; expirationDate: string; unitCost?: number };
-  ingredient?: { id: string; name: string }; batch?: { id: string; batchID: string; unit?: string }; status: ChangeRequestStatus;
-  requestedBy: { id: string; name: string }; reviewedBy?: { id: string; name: string }; reviewedAt?: string; reviewNote?: string; createdAt: string; updatedAt: string;
-}
-export interface ChangeRequestInput { requestType: ChangeRequestType; reason: string; ingredientId?: string; batchId?: string; targetField?: string; requestedValue?: string; requestedQuantity?: number; requestedUnit?: string; requestDescription?: string; proposedBatch?: { dateReceived: string; quantityReceived: number; expirationDate: string; unitCost?: number }; }
-export interface ChangeRequestQuery { page: number; pageSize: number; search?: string; type?: ChangeRequestType; status?: ChangeRequestStatus; from?: string; to?: string; }
-const query = (value: ChangeRequestQuery) => { const params = new URLSearchParams({ page: String(value.page), pageSize: String(value.pageSize) }); Object.entries(value).forEach(([key, item]) => { if (!['page', 'pageSize'].includes(key) && item) params.set(key, String(item)); }); return params; };
-export const listChangeRequests = (value: ChangeRequestQuery, signal?: AbortSignal) => apiClient<{ items: ChangeRequest[]; page: number; pageSize: number; total: number }>(`/change-requests?${query(value)}`, { signal });
-export const getChangeRequestSummary = (signal?: AbortSignal) => apiClient<{ totalRequests: number; approved: number; pending: number; rejected: number }>('/change-requests/summary', { signal });
-export const getChangeRequest = (id: string, signal?: AbortSignal) => apiClient<{ request: ChangeRequest }>(`/change-requests/${encodeURIComponent(id)}`, { signal }).then(result => result.request);
-export const createChangeRequest = (input: ChangeRequestInput) => apiClient<ChangeRequest>('/change-requests', { method: 'POST', body: JSON.stringify(input), successMessage: 'Change request submitted successfully.' });
-export const approveChangeRequest = (id: string) => apiClient<ChangeRequest>(`/change-requests/${encodeURIComponent(id)}/approve`, { method: 'POST', body: JSON.stringify({}), successMessage: 'Change request approved.' });
-export const rejectChangeRequest = (id: string, reviewNote: string) => apiClient<ChangeRequest>(`/change-requests/${encodeURIComponent(id)}/reject`, { method: 'POST', body: JSON.stringify({ reviewNote }), successMessage: 'Change request rejected.' });
+export type ChangeRequestTargetField = keyof typeof CHANGE_REQUEST_TARGET_LABELS;
+export type LegacyChangeRequestType = 'BATCH_CORRECTION'|'QUANTITY_ADJUSTMENT'|'UNIT_CORRECTION'|'ADD_MISSING_BATCH'|'OTHER';
+export type ChangeRequestStatus = 'PENDING'|'APPROVED'|'REJECTED';
+export interface ChangeRequest { id:string; requestID:string; requestType:ChangeRequestType|LegacyChangeRequestType; targetField?:ChangeRequestTargetField; reason:string; currentValue?:string; requestedValue?:string; ingredient?:{id:string;name:string}; status:ChangeRequestStatus; requestedBy:{id:string;name:string}; reviewedBy?:{id:string;name:string}; reviewedAt?:string; reviewNote?:string; createdAt:string; updatedAt:string }
+export interface ChangeRequestInput { requestType:ChangeRequestType; ingredientId:string; requestedValue:string|number; reason:string }
+export interface ChangeRequestQuery { page:number; pageSize:number; search?:string; type?:ChangeRequestType; status?:ChangeRequestStatus; from?:string; to?:string }
+export const isCurrentChangeRequest = (value: ChangeRequest): value is ChangeRequest & { requestType: ChangeRequestType; targetField: ChangeRequestTargetField } => CHANGE_REQUEST_TYPES.includes(value.requestType as ChangeRequestType) && Boolean(value.targetField);
+export const changeRequestTypeLabel = (value: ChangeRequest['requestType']) => CHANGE_REQUEST_TYPE_LABELS[value as ChangeRequestType] ?? `Legacy · ${value.split('_').map(word=>word[0]+word.slice(1).toLowerCase()).join(' ')}`;
+export const changeRequestValue = (record: ChangeRequest, value: string | undefined) => { if (value === undefined || value === '') return '—'; if (record.targetField === 'standardUnitCost') return `₱${Number(value).toFixed(2)}`; if (record.targetField === 'defaultShelfLifeDays') return `${value} days`; return value; };
+const query = (value:ChangeRequestQuery) => { const params=new URLSearchParams({page:String(value.page),pageSize:String(value.pageSize)}); Object.entries(value).forEach(([key,item])=>{if(!['page','pageSize'].includes(key)&&item)params.set(key,String(item));}); return params; };
+export const listChangeRequests=(value:ChangeRequestQuery,signal?:AbortSignal)=>apiClient<{items:ChangeRequest[];page:number;pageSize:number;total:number}>(`/change-requests?${query(value)}`,{signal});
+export const getChangeRequestSummary=(signal?:AbortSignal)=>apiClient<{totalRequests:number;approved:number;pending:number;rejected:number}>('/change-requests/summary',{signal});
+export const getChangeRequest=(id:string,signal?:AbortSignal)=>apiClient<{request:ChangeRequest}>(`/change-requests/${encodeURIComponent(id)}`,{signal}).then(result=>result.request);
+export const createChangeRequest=(input:ChangeRequestInput)=>apiClient<{request:ChangeRequest}>('/change-requests',{method:'POST',body:JSON.stringify(input),successMessage:'Change request submitted successfully.'});
+export const approveChangeRequest=(id:string)=>apiClient<{request:ChangeRequest}>(`/change-requests/${encodeURIComponent(id)}/approve`,{method:'POST',body:JSON.stringify({}),successMessage:'Change request approved and applied.'});
+export const rejectChangeRequest=(id:string,reviewNote:string)=>apiClient<{request:ChangeRequest}>(`/change-requests/${encodeURIComponent(id)}/reject`,{method:'POST',body:JSON.stringify({reviewNote}),successMessage:'Change request rejected.'});
