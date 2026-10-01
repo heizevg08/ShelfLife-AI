@@ -18904,7 +18904,7 @@ section.sl-card:has(.sl-filter-popover) {
   display: grid;
 }
 .sl-manager-reference-grid {
-  grid-template-columns: repeat(4,minmax(0,1fr));
+  grid-template-columns: repeat(2,minmax(0,1fr));
   align-items: stretch;
   gap: clamp(.65rem,.48rem + .35vw,.95rem);
   min-width: 0;
@@ -18914,9 +18914,6 @@ section.sl-card:has(.sl-filter-popover) {
   min-width: 0;
   min-height: clamp(13.5rem,19vw,18.5rem);
   overflow: hidden;
-}
-.sl-manager-reference-grid>.sl-card:nth-child(n+4) {
-  min-height: clamp(12rem,16vw,15.5rem);
 }
 .sl-manager-dashboard-v116 .sl-card-header {
   flex-wrap: wrap;
@@ -18958,22 +18955,12 @@ section.sl-card:has(.sl-filter-popover) {
   gap: .3rem;
   display: inline-flex;
 }
-@media (width<=1380px){
-  .sl-manager-reference-grid {
-    grid-template-columns: repeat(2,minmax(0,1fr));
-  }
-}
 @media (width<=720px){
   .sl-manager-reference-grid {
     grid-template-columns: 1fr;
   }
-  .sl-manager-reference-grid>.sl-card,.sl-manager-reference-grid>.sl-card:nth-child(n+4) {
+  .sl-manager-reference-grid>.sl-card {
     min-height: clamp(12rem,48vw,16rem);
-  }
-}
-@media (resolution>=1.25x){
-  .sl-manager-reference-grid {
-    grid-template-columns: repeat(auto-fit,minmax(min(100%,19rem),1fr));
   }
 }
 .sl-manager-dashboard-v116 .sl-dashboard-filter {
@@ -31206,7 +31193,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-dashboard-reference-table { width: 100%; min-width: 0; overflow-x: auto; }
 .sl-dashboard-reference-table .sl-reference-records-table { min-width: 34rem; }
 .sl-admin-dashboard-v103 :is(#admin-upcoming-expirations,#admin-low-stock,#admin-recent-activity) > .sl-card-body,
-.sl-manager-dashboard-v120 :is(#manager-upcoming-expirations,#manager-pending-requests) > .sl-card-body { padding: 0; }
+.sl-manager-dashboard-v116 :is(#manager-upcoming-expirations,#manager-pending-requests) > .sl-card-body { padding: 0; }
 
 /* Keep the FEFO card on the right grid edge and let the timeline size to its content. */
 .sl-inventory-staff-dashboard-v140 #inventory-staff-expiration-timeline .sl-card-body { height: auto; }
@@ -33816,61 +33803,99 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-manager-dashboard-request-table col:nth-child(2) { width: 28%; }
 .sl-manager-dashboard-request-table col:nth-child(3) { width: 27%; }
 .sl-manager-dashboard-request-table col:nth-child(4) { width: 18%; }
-.sl-manager-inventory-table { min-width: 64rem; }
-.sl-manager-fefo-table { min-width: 43rem; }
-.sl-manager-usage-records-table { min-width: 72rem; }
-.sl-manager-change-request-table { min-width: 78rem; }
-.sl-manager-alerts-table { min-width: 66rem; }
-.sl-manager-reports-table { min-width: 54rem; }
-.sl-mgr-forecast-records .sl-application-records-table { min-width: 78rem; }
+.sl-manager-inventory-table { table-layout: fixed; min-width: 64rem; }
+.sl-manager-inventory-table col:nth-child(1) { width: 22%; }
+.sl-manager-inventory-table col:nth-child(2) { width: 18%; }
+.sl-manager-inventory-table col:nth-child(3) { width: 14%; }
+.sl-manager-inventory-table col:nth-child(4) { width: 15%; }
+.sl-manager-inventory-table col:nth-child(5) { width: 15%; }
+.sl-manager-inventory-table col:nth-child(6) { width: 8%; }
+.sl-manager-inventory-table col:nth-child(7) { width: 8%; }
+.sl-manager-fefo-table { table-layout: fixed; min-width: 43rem; }
+.sl-manager-fefo-table col:nth-child(1) { width: 28%; }
+.sl-manager-fefo-table col:nth-child(2) { width: 23%; }
+.sl-manager-fefo-table col:nth-child(3) { width: 23%; }
+.sl-manager-fefo-table col:nth-child(4) { width: 12%; }
+.sl-manager-fefo-table col:nth-child(5) { width: 14%; }
+.sl-manager-usage-records-table { table-layout: fixed; min-width: 72rem; }
+.sl-manager-usage-records-table col:nth-child(1) { width: 15%; }
+.sl-manager-usage-records-table col:nth-child(2) { width: 15%; }
+.sl-manager-usage-records-table col:nth-child(3) { width: 9%; }
+.sl-manager-usage-records-table col:nth-child(4) { width: 10%; }
+.sl-manager-usage-records-table col:nth-child(5) { width: 13%; }
+.sl-manager-usage-records-table col:nth-child(6) { width: 16%; }
+.sl-manager-usage-records-table col:nth-child(7) { width: 14%; }
+.sl-manager-usage-records-table col:nth-child(8) { width: 8%; }
+.sl-manager-change-request-table { table-layout: fixed; min-width: 78rem; }
+.sl-manager-change-request-table col:nth-child(1) { width: 4%; }
+.sl-manager-change-request-table col:nth-child(2) { width: 13%; }
+.sl-manager-change-request-table col:nth-child(3) { width: 13%; }
+.sl-manager-change-request-table col:nth-child(4) { width: 17%; }
+.sl-manager-change-request-table col:nth-child(5) { width: 16%; }
+.sl-manager-change-request-table col:nth-child(6) { width: 12%; }
+.sl-manager-change-request-table col:nth-child(7) { width: 11%; }
+.sl-manager-change-request-table col:nth-child(8) { width: 8%; }
+.sl-manager-change-request-table col:nth-child(9) { width: 6%; }
+.sl-manager-alerts-table { table-layout: fixed; min-width: 66rem; }
+.sl-manager-alerts-table col:nth-child(1) { width: 17%; }
+.sl-manager-alerts-table col:nth-child(2) { width: 16%; }
+.sl-manager-alerts-table col:nth-child(3) { width: 15%; }
+.sl-manager-alerts-table col:nth-child(4) { width: 25%; }
+.sl-manager-alerts-table col:nth-child(5) { width: 12%; }
+.sl-manager-alerts-table col:nth-child(6) { width: 15%; }
+.sl-manager-reports-table { table-layout: fixed; min-width: 54rem; }
+.sl-manager-reports-table col:nth-child(1) { width: 22%; }
+.sl-manager-reports-table col:nth-child(2) { width: 43%; }
+.sl-manager-reports-table col:nth-child(3) { width: 23%; }
+.sl-manager-reports-table col:nth-child(4) { width: 12%; }
+.sl-manager-forecast-table { table-layout: fixed; min-width: 78rem; }
+.sl-manager-forecast-table col:nth-child(1) { width: 4%; }
+.sl-manager-forecast-table col:nth-child(2) { width: 15%; }
+.sl-manager-forecast-table col:nth-child(3) { width: 11%; }
+.sl-manager-forecast-table col:nth-child(4) { width: 11%; }
+.sl-manager-forecast-table col:nth-child(5) { width: 12%; }
+.sl-manager-forecast-table col:nth-child(6) { width: 18%; }
+.sl-manager-forecast-table col:nth-child(7) { width: 14%; }
+.sl-manager-forecast-table col:nth-child(8) { width: 8%; }
+.sl-manager-forecast-table col:nth-child(9) { width: 7%; }
 
-.sl-manager-inventory-live .sl-manager-inventory-filters {
-  grid-template-columns: minmax(14rem,1.6fr) repeat(3,minmax(8.5rem,.72fr)) auto;
-}
-.sl-manager-usage-live .sl-manager-usage-record-toolbar {
-  grid-template-columns: minmax(14rem,1.55fr) repeat(3,minmax(8.5rem,.72fr)) auto;
+.sl-application-records-toolbar[data-filter-layout="records-five"] {
+  grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8.5rem,.72fr)) auto;
   max-width: none;
+  min-width: 0;
+}
+.sl-manager-usage-record-toolbar[data-filter-layout="records-five"],
+.sl-mgr-forecast-filters[data-filter-layout="records-five"] {
   padding: 0;
 }
-.sl-manager-change-requests-live .sl-mgr-cr-filters {
-  grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8.5rem,.72fr)) auto;
-}
-.sl-manager-alerts-v134 .sl-manager-alerts-filters {
-  grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8.5rem,.72fr)) auto;
-}
-.sl-mgr-forecast-records .sl-mgr-forecast-filters {
-  grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8.5rem,.72fr)) auto;
+.sl-mgr-forecast-filters[data-filter-layout="records-five"] {
   border: 0;
   border-radius: 0;
-  padding: 0;
 }
-:is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) :is(.sl-manager-usage-record-toolbar,.sl-mgr-cr-filters,.sl-mgr-forecast-filters):has(.sl-v219-custom-date-range) {
+.sl-application-records-toolbar[data-filter-layout="records-five"]:has(.sl-v219-custom-date-range) {
   grid-template-columns: minmax(14rem,1.45fr) repeat(3,minmax(8rem,.65fr)) minmax(17.5rem,1.25fr) auto;
 }
-:is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) :is(.sl-manager-usage-record-toolbar,.sl-mgr-cr-filters,.sl-mgr-forecast-filters):has(.sl-v219-custom-date-range) .sl-v219-custom-date-range {
+.sl-application-records-toolbar[data-filter-layout="records-five"] .sl-v219-custom-date-range {
   grid-column: auto;
 }
 @media (width<=1180px) {
-  :is(.sl-manager-inventory-live .sl-manager-inventory-filters,.sl-manager-usage-live .sl-manager-usage-record-toolbar,.sl-manager-change-requests-live .sl-mgr-cr-filters,.sl-manager-alerts-v134 .sl-manager-alerts-filters,.sl-mgr-forecast-records .sl-mgr-forecast-filters) {
+  .sl-application-records-toolbar[data-filter-layout="records-five"],
+  .sl-application-records-toolbar[data-filter-layout="records-five"]:has(.sl-v219-custom-date-range) {
     grid-template-columns: repeat(2,minmax(0,1fr));
   }
-  :is(.sl-manager-inventory-live,.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-manager-alerts-v134,.sl-mgr-forecast-records) :is(.sl-application-records-search,.sl-sa-ingredients-search) {
+  .sl-application-records-toolbar[data-filter-layout="records-five"] :is(.sl-application-records-search,.sl-sa-ingredients-search) {
     grid-column: 1 / -1;
   }
-  :is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) :is(.sl-manager-usage-record-toolbar,.sl-mgr-cr-filters,.sl-mgr-forecast-filters):has(.sl-v219-custom-date-range) {
-    grid-template-columns: repeat(2,minmax(0,1fr));
-  }
-  :is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) .sl-v219-custom-date-range,
-  :is(.sl-manager-inventory-live,.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-manager-alerts-v134,.sl-mgr-forecast-records) .sl-application-records-filter-actions {
+  .sl-application-records-toolbar[data-filter-layout="records-five"] :is(.sl-v219-custom-date-range,.sl-application-records-filter-actions) {
     grid-column: 1 / -1;
   }
 }
 @media (width<=760px) {
-  :is(.sl-manager-inventory-live .sl-manager-inventory-filters,.sl-manager-usage-live .sl-manager-usage-record-toolbar,.sl-manager-change-requests-live .sl-mgr-cr-filters,.sl-manager-alerts-v134 .sl-manager-alerts-filters,.sl-mgr-forecast-records .sl-mgr-forecast-filters),
-  :is(.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-mgr-forecast-records) :is(.sl-manager-usage-record-toolbar,.sl-mgr-cr-filters,.sl-mgr-forecast-filters):has(.sl-v219-custom-date-range) {
+  .sl-application-records-toolbar[data-filter-layout="records-five"],
+  .sl-application-records-toolbar[data-filter-layout="records-five"]:has(.sl-v219-custom-date-range) {
     grid-template-columns: minmax(0,1fr);
   }
-  :is(.sl-manager-inventory-live,.sl-manager-usage-live,.sl-manager-change-requests-live,.sl-manager-alerts-v134,.sl-mgr-forecast-records) :is(.sl-application-records-search,.sl-sa-ingredients-search,.sl-v219-custom-date-range,.sl-application-records-filter-actions) {
+  .sl-application-records-toolbar[data-filter-layout="records-five"] :is(.sl-application-records-search,.sl-sa-ingredients-search,.sl-v219-custom-date-range,.sl-application-records-filter-actions) {
     grid-column: auto;
   }
 }

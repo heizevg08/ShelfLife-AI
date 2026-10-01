@@ -45,21 +45,21 @@ function ManagerAlerts() {
     />
 
     <div className="sl-admin-view sl-manager-alerts-v134">
-      <section className="sl-manager-alerts-kpis sl-kpi-reference-v201" aria-label="Alert summary">
-        <article className="sl-manager-alerts-kpi sl-sa-kpi" data-tone="brand">
-          <span className="sl-manager-alerts-kpi-icon sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+      <section className="sl-sa-kpis sl-kpi-reference-v201" aria-label="Alert summary">
+        <article className="sl-sa-kpi" data-tone="brand">
+          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
           <div><span>Expiring Soon</span><strong>—</strong><small>Expiration alerts unavailable</small></div>
         </article>
-        <article className="sl-manager-alerts-kpi sl-sa-kpi" data-tone="info">
-          <span className="sl-manager-alerts-kpi-icon sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
+        <article className="sl-sa-kpi" data-tone="info">
+          <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
           <div><span>Low Stock</span><strong>—</strong><small>Stock alerts unavailable</small></div>
         </article>
-        <article className="sl-manager-alerts-kpi sl-sa-kpi" data-tone="attention">
-          <span className="sl-manager-alerts-kpi-icon sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
+        <article className="sl-sa-kpi" data-tone="attention">
+          <span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
           <div><span>Forecast Risk</span><strong>—</strong><small>Forecast alerts unavailable</small></div>
         </article>
-        <article className="sl-manager-alerts-kpi sl-sa-kpi" data-tone="critical">
-          <span className="sl-manager-alerts-kpi-icon sl-sa-kpi-icon"><Info aria-hidden="true" /></span>
+        <article className="sl-sa-kpi" data-tone="critical">
+          <span className="sl-sa-kpi-icon"><Info aria-hidden="true" /></span>
           <div><span>Other Alerts</span><strong>—</strong><small>Alert summary unavailable</small></div>
         </article>
       </section>
@@ -83,7 +83,7 @@ function ManagerAlerts() {
               ))}
             </nav>
 
-            <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-manager-alerts-filters sl-application-records-toolbar sl-sa-ingredients-filter-card" aria-label="Alert filters">
+            <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-manager-alerts-filters sl-application-records-toolbar sl-sa-ingredients-filter-card" data-filter-layout="records-five" aria-label="Alert filters">
               <label className="sl-manager-alerts-search sl-application-records-search sl-sa-ingredients-search">
                 <span className="sl-sr-only">Search alerts</span>
                 <div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search alerts..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
@@ -96,6 +96,7 @@ function ManagerAlerts() {
 
             <div className="sl-manager-alerts-table-wrap sl-application-records-table-shell sl-sa-ingredients-table-scroll">
               <table className="sl-manager-alerts-table sl-application-records-table sl-records-table sl-sa-ingredients-table sl-data-table">
+                <colgroup><col/><col/><col/><col/><col/><col/></colgroup>
                 <thead><tr>
                   <th>Date &amp; Time</th>
                   <th>Ingredient</th>

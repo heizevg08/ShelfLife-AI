@@ -60,9 +60,10 @@ test('Change request validator rejects client-owned fields, incompatible targets
 
 test('Change request API scopes staff creation, returns safe field errors, and reserves review for Managers', async () => {
   let created;
+  let listed;
   const service = {
     async summary() { return { totalRequests: 0, approved: 0, pending: 0, rejected: 0 }; },
-    async list() { return { items: [], page: 1, pageSize: 10, total: 0 }; },
+    async list(actor, query) { listed = { actor, query }; return { items: [], page: query.page, pageSize: query.pageSize, total: 4 }; },
     async detail() { return { id: '5'.repeat(24) }; },
     async create(actor, input) { created = { actor, input }; return { id: '5'.repeat(24), requestID: 'REQ-20300110-001' }; },
     async review() { return { id: '5'.repeat(24), status: 'APPROVED' }; },
@@ -73,6 +74,12 @@ test('Change request API scopes staff creation, returns safe field errors, and r
   const base = `http://127.0.0.1:${http.address().port}/api/change-requests`;
   const request = (user, path = '', method = 'GET', body) => fetch(base + path, { method, headers: { ...(user ? { Authorization: `Bearer ${auth.issue(user).accessToken}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
   try {
+    const managerList = await request(manager, '?page=1&pageSize=10&status=PENDING');
+    assert.equal(managerList.status, 200);
+    assert.deepEqual(await managerList.json(), { items: [], page: 1, pageSize: 10, total: 4 });
+    assert.equal(listed.actor.id, manager.id);
+    assert.equal(listed.query.status, 'PENDING');
+    assert.equal((await request(manager, '?page=1&pageSize=5&status=PENDING')).status, 400);
     assert.equal((await request(manager, '', 'POST', { requestType: 'OTHER', requestDescription: 'Review', reason: 'Reason' })).status, 403);
     const bad = await request(staff, '', 'POST', { requestType: 'OTHER', requestDescription: 'Review', reason: ' ', reviewedBy: manager.id });
     assert.equal(bad.status, 400); assert.deepEqual((await bad.json()).error.details, [{ field: 'reviewedBy', message: 'Field is not permitted' }]);

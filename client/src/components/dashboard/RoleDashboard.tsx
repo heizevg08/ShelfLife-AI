@@ -134,8 +134,8 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     Promise.all([getInventoryBatchSummary(controller.signal), listInventoryBatches({ page: 1, pageSize: 5, status: 'Near Expiry', sort: 'fefo' }, controller.signal)])
       .then(([nextSummary, records]) => { if (!controller.signal.aborted) { setSummary(nextSummary); setExpirations(records.items); } })
       .catch(() => { if (!controller.signal.aborted) setInventoryError(true); });
-    listChangeRequests({ page: 1, pageSize: 5, status: 'PENDING' }, controller.signal)
-      .then(result => { if (!controller.signal.aborted) setRequests(result.items); })
+    listChangeRequests({ page: 1, pageSize: 10, status: 'PENDING' }, controller.signal)
+      .then(result => { if (!controller.signal.aborted) setRequests(result.items.slice(0, 5)); })
       .catch(() => { if (!controller.signal.aborted) setRequestError(true); });
     return () => controller.abort();
   }, []);
