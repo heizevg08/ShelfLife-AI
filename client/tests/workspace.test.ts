@@ -24,3 +24,15 @@ test('Manager Change Requests is selected inside the stable route outlet', () =>
   assert.doesNotMatch(layout, /usePathname|ConnectedManagerChangeRequestsPage/);
   assert.match(route, /user\.role === 'Manager' \? <ConnectedManagerChangeRequestsPage \/>/);
 });
+
+test('Manager Change Request presentation is opt-in and Staff modal keeps its protected structure', () => {
+  const details = readFileSync(new URL('../src/components/application/ChangeRequestDetailsDialog.tsx', import.meta.url), 'utf8');
+  const manager = readFileSync(new URL('../src/components/application/ManagerChangeRequestsPage.tsx', import.meta.url), 'utf8');
+  const route = readFileSync(new URL('../src/app/(administration)/ChangeRequests.tsx', import.meta.url), 'utf8');
+  assert.match(details, /manager = false/);
+  assert.match(manager, /<ChangeRequestDetailsDialog manager /);
+  assert.match(route, /<ChangeRequestDetailsDialog request=\{detail\}/);
+  assert.match(route, /sl-application-modal sl-staff-my-request-dialog/);
+  assert.match(route, /sl-staff-my-request-form-grid/);
+  assert.match(route, /currentOnly:true/);
+});

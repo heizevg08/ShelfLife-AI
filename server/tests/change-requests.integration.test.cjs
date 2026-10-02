@@ -74,6 +74,7 @@ test('real Change Request creation persists server-owned state, audit, and uniqu
   const actionable = await service.list({ id: manager._id.toString(), name: 'Development Manager', role: 'Manager' }, { page: 1, pageSize: 10, status: 'PENDING', currentOnly: true });
   assert.equal(actionable.total, 0);
   assert.ok(actionable.items.every(item => !item.requestType.startsWith('QUANTITY_')));
+  assert.deepEqual(await service.summary(actor), { totalRequests: 2, approved: 1, pending: 0, rejected: 1 });
   await assert.rejects(() => service.review({ id: manager._id.toString(), name: 'Development Manager', role: 'Manager' }, legacy._id.toString(), 'APPROVED'), error => error.code === 'CONFLICT' && /Legacy requests/.test(error.message));
   assert.equal((await Requests.findById(legacy._id).lean()).status, 'PENDING');
 });
