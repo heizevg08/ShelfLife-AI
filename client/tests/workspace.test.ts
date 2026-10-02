@@ -49,6 +49,6 @@ test('Manager Change Request presentation is opt-in and Staff modal keeps its pr
   assert.match(route, /\.\.\.period,currentOnly:true/);
   assert.match(route, /const reset=\(\)=>\{setSearch\(''\);setType\(''\);setStatus\(''\);setRange\('All dates'\);setFrom\(''\);setTo\(''\);setPage\(1\)\}/);
   assert.match(route, /filtered\?'No matching records':'No requests yet'/);
-  assert.match(route, /filtered\?'Try adjusting your search or filters\.':'Submitted requests will appear here\.'/);
+  assert.match(route, /filtered\?'Try adjusting your search or filters\.':'Your submitted change requests will appear here\.'/);
   assert.match(route, /currentOnly:true/);
 });

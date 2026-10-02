@@ -16,45 +16,32 @@ function InventoryStaffChangeRequestDetails({ request, onDismiss, returnFocus }:
   const current = formatStaffChangeRequestValue(request, request.currentValue);
   const requested = formatStaffChangeRequestValue(request, request.requestedValue);
   const target = isCurrentChangeRequest(request) ? CHANGE_REQUEST_TARGET_LABELS[request.targetField] : 'Requested Change';
-  const hasReviewInformation = request.status !== 'PENDING' && Boolean(request.reviewedBy || request.reviewedAt || request.reviewNote);
   return <Dialog
     open
     showClose={false}
-    title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><FileInput size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Change Request Details</span><small>View your submitted change request and its review status.</small></span></span>}
+    title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><FileInput size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Change Request Details</span><small>View your submitted request.</small></span></span>}
     onDismiss={onDismiss}
     returnFocus={returnFocus}
     actions={<button type="button" className="sl-button" onClick={onDismiss}>Close</button>}
     className="sl-add-user-dialog sl-account-reference-dialog sl-admin-ingredient-dialog sl-ingredient-view-dialog sl-staff-change-request-details-dialog"
   >
     <div className="sl-staff-change-request-details">
-      <section aria-labelledby="sl-staff-request-information-title">
-        <h3 id="sl-staff-request-information-title">Request Information</h3>
-        <dl className="sl-staff-change-request-information">
-          <div><dt>Request ID</dt><dd>{request.requestID}</dd></div>
-          <div><dt>Submitted</dt><dd><time dateTime={request.createdAt}>{formatDateTime(request.createdAt)}</time></dd></div>
-          <div><dt>Ingredient</dt><dd className="sl-emphasized-value">{request.ingredient?.name ?? '—'}</dd></div>
-          <div className="sl-staff-change-request-status"><dt>Status</dt><dd><Status tone={statusTone(request.status)}>{statusLabel(request.status)}</Status>{request.status === 'PENDING' && <small>Awaiting manager review</small>}</dd></div>
-        </dl>
+      <section className="sl-staff-change-request-identity" aria-label="Request identity">
+        <div><h3>{request.ingredient?.name ?? '—'}</h3><Status tone={statusTone(request.status)}>{statusLabel(request.status)}</Status></div>
+        <p><span>{request.requestID}</span><span aria-hidden="true"> · </span><time dateTime={request.createdAt}>{formatDateTime(request.createdAt)}</time></p>
       </section>
-      <section aria-labelledby="sl-staff-request-change-title">
-        <h3 id="sl-staff-request-change-title">Requested Change</h3>
-        <h4>{target}</h4>
+      <section className="sl-staff-change-request-content" aria-labelledby="sl-staff-request-change-title">
+        <h3 id="sl-staff-request-change-title">{target}</h3>
         <div className={`sl-staff-change-request-comparison${request.targetField === 'description' ? ' sl-staff-change-request-comparison--long' : ''}`}>
           <div><strong>{current}</strong><span>Current</span></div>
           <span className="sl-staff-change-request-arrow" aria-hidden="true">→</span>
           <div><strong>{requested}</strong><span>Requested</span></div>
         </div>
         <div className="sl-staff-change-request-reason"><h4>Reason</h4><p>{request.reason}</p></div>
+        {request.status === 'PENDING' && <p className="sl-staff-change-request-outcome">Awaiting manager review</p>}
+        {request.status !== 'PENDING' && request.reviewedAt && <p className="sl-staff-change-request-outcome"><strong>{statusLabel(request.status)}</strong> <time dateTime={request.reviewedAt}>{formatDateTime(request.reviewedAt)}</time></p>}
+        {request.status !== 'PENDING' && request.reviewNote && <div className="sl-staff-change-request-manager-note"><h4>Manager Note</h4><p>{request.reviewNote}</p></div>}
       </section>
-      {hasReviewInformation && <section aria-labelledby="sl-staff-request-review-title">
-        <h3 id="sl-staff-request-review-title">Review Information</h3>
-        <dl className="sl-staff-change-request-review">
-          <div><dt>Decision</dt><dd><Status tone={statusTone(request.status)}>{statusLabel(request.status)}</Status></dd></div>
-          {request.reviewedBy && <div><dt>Reviewed By</dt><dd>{request.reviewedBy.name}</dd></div>}
-          {request.reviewedAt && <div><dt>Reviewed At</dt><dd><time dateTime={request.reviewedAt}>{formatDateTime(request.reviewedAt)}</time></dd></div>}
-          {request.reviewNote && <div className="sl-staff-change-request-review-note"><dt>Review Notes</dt><dd>{request.reviewNote}</dd></div>}
-        </dl>
-      </section>}
     </div>
   </Dialog>;
 }
