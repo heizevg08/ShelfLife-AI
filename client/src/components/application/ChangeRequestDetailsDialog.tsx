@@ -23,7 +23,7 @@ function InventoryStaffChangeRequestDetails({ request, onDismiss, returnFocus }:
     onDismiss={onDismiss}
     returnFocus={returnFocus}
     actions={<button type="button" className="sl-button" onClick={onDismiss}>Close</button>}
-    className="sl-add-user-dialog sl-account-reference-dialog sl-admin-ingredient-dialog sl-ingredient-view-dialog sl-staff-change-request-details-dialog"
+    className="sl-account-reference-dialog sl-staff-change-request-details-dialog"
   >
     <div className="sl-staff-change-request-details">
       <section className="sl-staff-change-request-identity" aria-label="Request identity">

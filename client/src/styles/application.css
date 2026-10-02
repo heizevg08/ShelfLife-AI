@@ -33596,7 +33596,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   grid-column:1/-1;
   min-height:0;
 }
-.sl-area-dialog.sl-admin-ingredient-dialog.sl-ingredient-view-dialog.sl-staff-change-request-details-dialog { width:min(35rem,calc(100vw - 2rem))!important; max-width:35rem!important; }
 .sl-staff-change-request-details-dialog .sl-dialog-content { padding:0!important; }
 .sl-staff-change-request-details { min-width:0; padding:24px; }
 .sl-staff-change-request-details > section { min-width:0; }
@@ -33627,13 +33626,12 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-change-request-reason h4 { margin-bottom:6px; }
 .sl-staff-change-request-reason p,
 .sl-staff-change-request-manager-note p { margin:0; overflow-wrap:anywhere; white-space:pre-wrap; font:var(--sl-font-body); }
-.sl-staff-change-request-outcome { margin:12px 0 0; color:var(--sl-muted); font:var(--sl-font-supporting); }
+.sl-staff-change-request-outcome { margin:20px 0 0; color:var(--sl-muted); font:var(--sl-font-supporting); }
 .sl-staff-change-request-outcome strong { color:var(--sl-text); font-weight:600; }
 .sl-staff-change-request-manager-note { margin-top:14px; }
 .sl-staff-change-request-manager-note h4 { margin-bottom:6px; }
 .sl-staff-change-request-details .sl-status { width:max-content; }
 .sl-staff-change-request-details .sl-status-dot { display:none; }
-.sl-staff-change-request-details-dialog > .sl-dialog-actions { min-height:58px; margin-top:0; padding-block:8px!important; }
 .sl-staff-requests-v162 .sl-staff-my-requests-table { table-layout:fixed; min-width:58rem; }
 .sl-staff-requests-v162 .sl-staff-my-requests-table :is(thead th,tbody td) { text-align:left!important; }
 .sl-staff-requests-v162 .sl-staff-my-requests-table .sl-staff-request-col-standard { width:20%; }
@@ -33660,7 +33658,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 @media (width<=540px) {
   .sl-staff-change-request-details { padding:20px 16px; }
-  .sl-staff-change-request-identity > div { align-items:flex-start; }
   .sl-staff-change-request-identity > p { line-height:1.55; }
   .sl-staff-change-request-comparison { gap:10px; padding:14px; }
   .sl-staff-change-request-comparison--long { grid-template-columns:minmax(0,1fr); }

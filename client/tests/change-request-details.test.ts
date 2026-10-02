@@ -52,6 +52,8 @@ test('Inventory Staff details are role-specific while Manager presentation remai
   assert.match(staff, /request\.status !== 'PENDING' && request\.reviewNote/);
   assert.match(staff, /Manager Note/);
   assert.doesNotMatch(staff, /Edit|Delete|Approve|Reject/);
+  assert.match(staff, /className="sl-account-reference-dialog sl-staff-change-request-details-dialog"/);
+  assert.doesNotMatch(staff, /sl-admin-ingredient-dialog|sl-ingredient-view-dialog/);
   assert.match(source, /managerRows=request\?/);
   assert.match(source, /subtitle="Review the submitted master-data change and decision\."/);
 });
@@ -83,8 +85,7 @@ test('My Requests keeps its protected create modal, date range, and current-only
   assert.match(styles, /\.sl-staff-change-request-details \.sl-status-dot \{ display:none; \}/);
   assert.match(styles, /\.sl-staff-change-request-content \{ margin-top:18px; \}/);
   assert.match(styles, /\.sl-staff-change-request-reason \{ margin-top:16px; \}/);
-  assert.match(styles, /\.sl-staff-change-request-outcome \{ margin:12px 0 0;/);
-  assert.match(styles, /\.sl-staff-change-request-details-dialog > \.sl-dialog-actions \{ min-height:58px; margin-top:0; padding-block:8px!important; \}/);
+  assert.match(styles, /\.sl-staff-change-request-outcome \{ margin:20px 0 0;/);
   assert.match(styles, /\.sl-staff-requests-v162 \.sl-staff-my-requests-table \{ table-layout:fixed; min-width:58rem; \}/);
   assert.match(source, /<span>Date Range<\/span>/);
   assert.match(source, /currentOnly:true/);
