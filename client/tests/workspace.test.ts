@@ -31,7 +31,7 @@ test('Manager Change Request presentation is opt-in and Staff modal keeps its pr
   const route = readFileSync(new URL('../src/app/(administration)/ChangeRequests.tsx', import.meta.url), 'utf8');
   assert.match(details, /manager = false/);
   assert.match(manager, /<ChangeRequestDetailsDialog manager /);
-  assert.match(route, /<ChangeRequestDetailsDialog request=\{detail\}/);
+  assert.match(route, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
   assert.match(route, /<PageHeader eyebrow="Follow-up" title="My Requests"/);
   assert.match(route, /<InventoryStaffModal open=\{open\}/);
   assert.match(route, /<InventoryStaffModalForm formId="new-change-request"/);
