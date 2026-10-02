@@ -31319,8 +31319,14 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   grid-template-columns: minmax(14rem,1.6fr) repeat(2,minmax(8.5rem,.72fr)) auto;
 }
 .sl-staff-requests-v162 .sl-sa-account-pattern-records .sl-staff-requests-toolbar {
-  grid-template-columns: minmax(14rem,1.6fr) repeat(3,minmax(8rem,.72fr)) auto;
+  grid-template-columns: minmax(12rem,1.6fr) repeat(3,minmax(8rem,.72fr)) auto;
 }
+.sl-staff-requests-v162 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone=success] {
+  border-color:color-mix(in oklab,var(--sl-success) 24%,var(--sl-border));
+  border-top-color:var(--sl-success);
+  background:linear-gradient(180deg,color-mix(in oklab,var(--sl-success-bg) 82%,white),white 42%);
+}
+.sl-staff-requests-v162 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone=success] .sl-sa-kpi-icon { color:var(--sl-success); background:var(--sl-success-bg); }
 .sl-inventory-staff-modal-form {
   grid-template-columns: repeat(2,minmax(0,1fr));
   gap: clamp(.75rem,1.2vw,1rem);
@@ -33629,6 +33635,24 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-change-request-review dd { margin:.25rem 0 0; overflow-wrap:anywhere; white-space:pre-wrap; font:var(--sl-font-body); }
 .sl-staff-change-request-review-note { grid-column:1/-1; }
 .sl-staff-change-request-details .sl-status { width:max-content; }
+.sl-staff-change-request-details .sl-status-dot { display:none; }
+.sl-staff-change-request-details > section[aria-labelledby="sl-staff-request-change-title"] { padding-bottom:14px; }
+.sl-staff-change-request-details-dialog > .sl-dialog-actions { min-height:66px; padding-block:14px!important; }
+.sl-staff-requests-v162 .sl-staff-my-requests-table { min-width:58rem; }
+.sl-staff-requests-v162 .sl-staff-my-requests-table :is(th,td) { text-align:left!important; }
+.sl-staff-requests-v162 .sl-staff-my-requests-table :is(th,td):nth-child(1) { width:18%; }
+.sl-staff-requests-v162 .sl-staff-my-requests-table :is(th,td):nth-child(2) { width:18%; }
+.sl-staff-requests-v162 .sl-staff-my-requests-table :is(th,td):nth-child(3) { width:34%; }
+.sl-staff-requests-v162 .sl-staff-my-requests-table :is(th,td):nth-child(4) { width:18%; }
+.sl-staff-requests-v162 .sl-staff-my-requests-table :is(th,td):nth-child(5) { width:12%; }
+.sl-staff-request-change-summary {
+  overflow:hidden;
+  overflow-wrap:anywhere;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records > .sl-application-records-footer { min-height:62px; padding-block:8px; }
 @media (width<=1100px) {
   .sl-inventory-staff-preview-grid { grid-template-columns:minmax(0,1fr); }
   .sl-inventory-staff-preview-grid > :is(.sl-inventory-staff-analytics,.sl-inventory-staff-bottom) > .sl-card { height:auto; }

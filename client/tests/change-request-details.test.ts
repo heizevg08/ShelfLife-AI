@@ -48,8 +48,25 @@ test('Inventory Staff details are role-specific while Manager presentation remai
 
 test('My Requests keeps its protected create modal, date range, and current-only query', () => {
   const source = readFileSync(new URL('../src/app/(administration)/ChangeRequests.tsx', import.meta.url), 'utf8');
+  const styles = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
   assert.match(source, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
-  assert.match(source, /<span>Date range<\/span>/);
+  assert.match(source, /description="Submit and track your ingredient change requests\."/);
+  assert.match(source, /placeholder="Search by request ID or ingredient\.\.\."/);
+  assert.doesNotMatch(source, /Search by request ID, ingredient, or batch ID/);
+  assert.match(source, /\['Request ID','Ingredient','Requested Change','Submitted On','Status'\]/);
+  assert.doesNotMatch(source, /\['Request ID','Type','Ingredient'/);
+  assert.match(source, /const requestedChange=.*formatStaffChangeRequestValue\(record,record\.currentValue\).*→.*formatStaffChangeRequestValue\(record,record\.requestedValue\)/);
+  assert.match(source, /\[FileInput,'brand','Total Requests'/);
+  assert.match(source, /\[Clock3,'attention','Pending'/);
+  assert.match(source, /\[CheckCircle2,'success','Approved'/);
+  assert.match(source, /\[XCircle,'critical','Rejected'/);
+  assert.doesNotMatch(source, />Pending Review</);
+  assert.match(source, /getChangeRequestSummary\(signal\)/);
+  assert.match(source, /summaryFailed\|\|summary===null\?'—':value/);
+  assert.doesNotMatch(source, /items\.reduce/);
+  assert.match(styles, /\.sl-staff-requests-v162 \.sl-staff-my-requests-table :is\(th,td\) \{ text-align:left!important; \}/);
+  assert.match(styles, /\.sl-staff-change-request-details \.sl-status-dot \{ display:none; \}/);
+  assert.match(source, /<span>Date Range<\/span>/);
   assert.match(source, /currentOnly:true/);
   assert.match(source, /<span>Request Type<\/span><select/);
   assert.match(source, /<span>Ingredient<\/span><select/);

@@ -32,7 +32,7 @@ test('Manager Change Request presentation is opt-in and Staff modal keeps its pr
   assert.match(details, /manager = false/);
   assert.match(manager, /<ChangeRequestDetailsDialog manager /);
   assert.match(route, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
-  assert.match(route, /<PageHeader eyebrow="Follow-up" title="My Requests"/);
+  assert.match(route, /<PageHeader eyebrow="Follow-up" title="My Requests" description="Submit and track your ingredient change requests\."/);
   assert.match(route, /<InventoryStaffModal open=\{open\}/);
   assert.match(route, /<InventoryStaffModalForm formId="new-change-request"/);
   assert.match(route, /sl-staff-my-request-form-grid/);
@@ -44,7 +44,7 @@ test('Manager Change Request presentation is opt-in and Staff modal keeps its pr
   assert.match(route, /secondaryLabel="Cancel"/);
   assert.match(route, /primaryLabel="Submit Request"/);
   assert.match(route, /const DATE_RANGES=\['All dates','Today','Last 7 Days','Last 30 Days','Custom range'\]/);
-  assert.match(route, /<span>Date range<\/span><select value=\{range\}/);
+  assert.match(route, /<span>Date Range<\/span><select value=\{range\}/);
   assert.match(route, /range==='Custom range'&&<div className="sl-v219-custom-date-range">/);
   assert.match(route, /\.\.\.period,currentOnly:true/);
   assert.match(route, /const reset=\(\)=>\{setSearch\(''\);setType\(''\);setStatus\(''\);setRange\('All dates'\);setFrom\(''\);setTo\(''\);setPage\(1\)\}/);
