@@ -31321,13 +31321,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-requests-v162 .sl-sa-account-pattern-records .sl-staff-requests-toolbar {
   grid-template-columns:minmax(12rem,2.2fr) repeat(3,minmax(8rem,1fr)) auto;
 }
-.sl-staff-requests-v162 .sl-staff-usage-kpis .sl-inventory-staff-kpi { min-height:7.25rem; padding-block:.8rem; }
-.sl-staff-requests-v162 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone=success] {
-  border-color:color-mix(in oklab,var(--sl-success) 24%,var(--sl-border));
-  border-top-color:var(--sl-success);
-  background:linear-gradient(180deg,color-mix(in oklab,var(--sl-success-bg) 82%,white),white 42%);
-}
-.sl-staff-requests-v162 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone=success] .sl-sa-kpi-icon { color:var(--sl-success); background:var(--sl-success-bg); }
 .sl-inventory-staff-modal-form {
   grid-template-columns: repeat(2,minmax(0,1fr));
   gap: clamp(.75rem,1.2vw,1rem);

@@ -69,9 +69,11 @@ test('My Requests keeps its protected create modal, date range, and current-only
   assert.doesNotMatch(source, /\['Request ID','Type','Ingredient'/);
   assert.match(source, /const requestedChange=.*formatStaffChangeRequestValue\(record,record\.currentValue\).*→.*formatStaffChangeRequestValue\(record,record\.requestedValue\)/);
   assert.match(source, /\[FileInput,'brand','Total Requests'/);
-  assert.match(source, /\[Clock3,'attention','Pending'/);
-  assert.match(source, /\[CheckCircle2,'success','Approved'/);
+  assert.match(source, /\[Clock3,'info','Pending'/);
+  assert.match(source, /\[CheckCircle2,'attention','Approved'/);
   assert.match(source, /\[XCircle,'critical','Rejected'/);
+  assert.match(source, /<div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201">/);
+  assert.doesNotMatch(styles, /\.sl-staff-requests-v162 \.sl-staff-usage-kpis \.sl-inventory-staff-kpi \{/);
   assert.doesNotMatch(source, />Pending Review</);
   assert.match(source, /getChangeRequestSummary\(signal\)/);
   assert.match(source, /summaryFailed\|\|summary===null\?'—':value/);
