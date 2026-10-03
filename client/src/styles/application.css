@@ -33589,8 +33589,17 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   grid-column:1/-1;
   min-height:0;
 }
+.sl-area-dialog.sl-staff-change-request-details-dialog {
+  width:min(40rem,calc(100vw - 2rem))!important;
+  max-width:40rem!important;
+  overflow:auto;
+}
+.sl-staff-change-request-details-dialog > .sl-popover-header { min-height:64px; padding:12px 20px; }
+.sl-staff-change-request-details-dialog .sl-account-dialog-heading { grid-template-columns:36px minmax(0,1fr); column-gap:12px; }
+.sl-staff-change-request-details-dialog .sl-account-dialog-icon { width:36px; height:36px; }
+.sl-staff-change-request-details-dialog .sl-account-dialog-title { font-size:1rem; }
 .sl-staff-change-request-details-dialog .sl-dialog-content { padding:0!important; }
-.sl-staff-change-request-details { min-width:0; padding:24px; }
+.sl-staff-change-request-details { min-width:0; padding:20px 22px; }
 .sl-staff-change-request-details > section { min-width:0; }
 .sl-staff-change-request-details h3 { margin:0; font:var(--sl-font-card-title); }
 .sl-staff-change-request-details h4 { margin:0 0 12px; font:var(--sl-font-body); font-weight:600; }
@@ -33598,33 +33607,35 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-change-request-identity > div > h3 { min-width:0; overflow-wrap:anywhere; font:var(--sl-font-section-title); }
 .sl-staff-change-request-identity > p { margin:6px 0 0; color:var(--sl-muted); font:var(--sl-font-supporting); }
 .sl-staff-change-request-identity > p > span:first-child { white-space:nowrap; }
-.sl-staff-change-request-content { margin-top:18px; }
-.sl-staff-change-request-content > h3 { margin-bottom:10px; }
+.sl-staff-change-request-content { margin-top:14px; }
+.sl-staff-change-request-content > h3 { margin-bottom:8px; }
 .sl-staff-change-request-comparison {
   grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
   align-items:center;
-  gap:16px;
+  gap:12px;
   min-width:0;
-  padding:16px;
+  padding:12px 14px;
   border-radius:var(--sl-radius);
   background:var(--sl-surface-subtle);
   display:grid;
 }
 .sl-staff-change-request-comparison > div { min-width:0; }
 .sl-staff-change-request-comparison > div:last-child { text-align:right; }
-.sl-staff-change-request-comparison strong { overflow-wrap:anywhere; font:var(--sl-font-section-title); }
+.sl-staff-change-request-comparison strong { overflow-wrap:anywhere; font:var(--sl-font-card-title); }
 .sl-staff-change-request-comparison > div > span { color:var(--sl-muted); font:var(--sl-font-supporting); display:block; }
-.sl-staff-change-request-arrow { color:var(--sl-brand); font-size:1.3rem; font-weight:700; }
-.sl-staff-change-request-reason { margin-top:16px; }
+.sl-staff-change-request-arrow { color:var(--sl-brand); font-size:1.1rem; font-weight:700; }
+.sl-staff-change-request-reason { margin-top:14px; }
 .sl-staff-change-request-reason h4 { margin-bottom:6px; }
 .sl-staff-change-request-reason p,
 .sl-staff-change-request-manager-note p { margin:0; overflow-wrap:anywhere; white-space:pre-wrap; font:var(--sl-font-body); }
-.sl-staff-change-request-outcome { margin:20px 0 0; color:var(--sl-muted); font:var(--sl-font-supporting); }
+.sl-staff-change-request-outcome { margin:12px 0 0; color:var(--sl-muted); font:var(--sl-font-supporting); }
 .sl-staff-change-request-outcome strong { color:var(--sl-text); font-weight:600; }
 .sl-staff-change-request-manager-note { margin-top:14px; }
 .sl-staff-change-request-manager-note h4 { margin-bottom:6px; }
 .sl-staff-change-request-details .sl-status { width:max-content; }
 .sl-staff-change-request-details .sl-status-dot { display:none; }
+.sl-staff-change-request-details-dialog > .sl-dialog-actions { min-height:0; padding:8px 20px!important; }
+.sl-staff-change-request-details-dialog > .sl-dialog-actions .sl-button { min-height:38px; padding-block:6px; }
 .sl-staff-requests-v162 .sl-staff-my-requests-table { table-layout:fixed; min-width:58rem; }
 .sl-staff-requests-v162 .sl-staff-my-requests-table :is(thead th,tbody td) { text-align:left!important; }
 .sl-staff-requests-v162 .sl-staff-my-requests-table .sl-staff-request-col-standard { width:20%; }
@@ -33650,9 +33661,11 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-inventory-staff-quick-actions .sl-button { justify-content:center; width:100%; }
 }
 @media (width<=540px) {
-  .sl-staff-change-request-details { padding:20px 16px; }
+  .sl-area-dialog.sl-staff-change-request-details-dialog { width:calc(100vw - 1rem)!important; max-width:calc(100vw - 1rem)!important; }
+  .sl-staff-change-request-details-dialog > .sl-popover-header { padding-inline:16px; }
+  .sl-staff-change-request-details { padding:16px; }
   .sl-staff-change-request-identity > p { line-height:1.55; }
-  .sl-staff-change-request-comparison { gap:10px; padding:14px; }
+  .sl-staff-change-request-comparison { gap:10px; padding:12px; }
   .sl-staff-change-request-comparison--long { grid-template-columns:minmax(0,1fr); }
   .sl-staff-change-request-comparison--long > div:last-child { text-align:left; }
   .sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell--left { border-right:0; }

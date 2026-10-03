@@ -38,9 +38,8 @@ function InventoryStaffChangeRequestDetails({ request, onDismiss, returnFocus }:
           <div><strong>{requested}</strong><span>Requested</span></div>
         </div>
         <div className="sl-staff-change-request-reason"><h4>Reason</h4><p>{request.reason}</p></div>
-        {request.status === 'PENDING' && <p className="sl-staff-change-request-outcome">Awaiting manager review</p>}
         {request.status !== 'PENDING' && request.reviewedAt && <p className="sl-staff-change-request-outcome"><strong>{statusLabel(request.status)}</strong> <time dateTime={request.reviewedAt}>{formatDateTime(request.reviewedAt)}</time></p>}
-        {request.status !== 'PENDING' && request.reviewNote && <div className="sl-staff-change-request-manager-note"><h4>Manager Note</h4><p>{request.reviewNote}</p></div>}
+        {request.status !== 'PENDING' && request.reviewNote?.trim() && <div className="sl-staff-change-request-manager-note"><h4>Manager Note</h4><p>{request.reviewNote}</p></div>}
       </section>
     </div>
   </Dialog>;

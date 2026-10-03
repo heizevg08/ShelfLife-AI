@@ -46,12 +46,14 @@ test('Inventory Staff details are role-specific while Manager presentation remai
   assert.match(staff, />Current</);
   assert.match(staff, />Requested</);
   assert.match(staff, /<p>\{request\.reason\}<\/p>/);
-  assert.match(staff, /Awaiting manager review/);
+  assert.doesNotMatch(staff, /Awaiting manager review/);
   assert.match(staff, /request\.status !== 'PENDING' && request\.reviewedAt/);
   assert.match(staff, /formatDateTime\(request\.reviewedAt\)/);
-  assert.match(staff, /request\.status !== 'PENDING' && request\.reviewNote/);
+  assert.match(staff, /request\.status !== 'PENDING' && request\.reviewNote\?\.trim\(\)/);
   assert.match(staff, /Manager Note/);
+  assert.doesNotMatch(staff, /reviewedBy/);
   assert.doesNotMatch(staff, /Edit|Delete|Approve|Reject/);
+  assert.doesNotMatch(staff, /Chicken Breast|₱555|₱67|57 kg|80 kg/);
   assert.match(staff, /className="sl-account-reference-dialog sl-staff-change-request-details-dialog"/);
   assert.doesNotMatch(staff, /sl-admin-ingredient-dialog|sl-ingredient-view-dialog/);
   assert.match(source, /managerRows=request\?/);
@@ -85,9 +87,10 @@ test('My Requests keeps its protected create modal, date range, and current-only
   assert.match(styles, /\.sl-staff-requests-v162 \.sl-staff-my-requests-table \.sl-staff-request-col-status \{ width:10%; \}/);
   assert.match(styles, /\.sl-staff-requests-v162 \.sl-staff-my-requests-table \.sl-canonical-identifier \{ font-weight:600; \}/);
   assert.match(styles, /\.sl-staff-change-request-details \.sl-status-dot \{ display:none; \}/);
-  assert.match(styles, /\.sl-staff-change-request-content \{ margin-top:18px; \}/);
-  assert.match(styles, /\.sl-staff-change-request-reason \{ margin-top:16px; \}/);
-  assert.match(styles, /\.sl-staff-change-request-outcome \{ margin:20px 0 0;/);
+  assert.match(styles, /\.sl-area-dialog\.sl-staff-change-request-details-dialog \{[\s\S]*?max-width:40rem!important;/);
+  assert.match(styles, /\.sl-staff-change-request-content \{ margin-top:14px; \}/);
+  assert.match(styles, /\.sl-staff-change-request-reason \{ margin-top:14px; \}/);
+  assert.match(styles, /\.sl-staff-change-request-outcome \{ margin:12px 0 0;/);
   assert.match(styles, /\.sl-staff-requests-v162 \.sl-staff-my-requests-table \{ table-layout:fixed; min-width:58rem; \}/);
   assert.match(source, /<span>Date Range<\/span>/);
   assert.match(source, /currentOnly:true/);
@@ -111,4 +114,13 @@ test('My Requests keeps its protected create modal, date range, and current-only
   assert.match(source, /<span>Reason<\/span><textarea/);
   assert.match(source, /secondaryLabel="Cancel"/);
   assert.match(source, /primaryLabel="Submit Request"/);
+});
+
+test('Inventory Staff dashboard and My Requests share the same Staff details path', () => {
+  const dashboard = readFileSync(new URL('../src/components/dashboard/RoleDashboard.tsx', import.meta.url), 'utf8');
+  const myRequests = readFileSync(new URL('../src/app/(administration)/ChangeRequests.tsx', import.meta.url), 'utf8');
+  const manager = readFileSync(new URL('../src/components/application/ManagerChangeRequestsPage.tsx', import.meta.url), 'utf8');
+  assert.match(dashboard, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
+  assert.match(myRequests, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
+  assert.match(manager, /<ChangeRequestDetailsDialog manager request=\{selected\}/);
 });

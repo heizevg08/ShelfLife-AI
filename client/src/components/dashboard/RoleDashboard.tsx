@@ -237,7 +237,7 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
         </Card>
       </section></div>
       <InventoryBatchDetailsDialog batch={batchDetail} onDismiss={() => setBatchDetail(null)} returnFocus={batchTrigger} />
-      <ChangeRequestDetailsDialog request={detail} onDismiss={() => setDetail(null)} returnFocus={requestTrigger} />
+      <ChangeRequestDetailsDialog inventoryStaff request={detail} onDismiss={() => setDetail(null)} returnFocus={requestTrigger} />
     </div>;
 }
 
