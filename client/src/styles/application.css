@@ -33534,6 +33534,10 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   max-width:40rem!important;
   overflow:auto;
 }
+.sl-area-dialog.sl-staff-my-requests-change-request-details-dialog {
+  width:min(38rem,calc(100vw - 2rem))!important;
+  max-width:38rem!important;
+}
 .sl-staff-change-request-details-dialog > .sl-popover-header { min-height:64px; padding:12px 20px; }
 .sl-staff-change-request-details-dialog .sl-account-dialog-heading { grid-template-columns:36px minmax(0,1fr); column-gap:12px; }
 .sl-staff-change-request-details-dialog .sl-account-dialog-icon { width:36px; height:36px; }
@@ -33563,6 +33567,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-change-request-comparison > div:last-child { text-align:right; }
 .sl-staff-change-request-comparison strong { overflow-wrap:anywhere; font:var(--sl-font-card-title); }
 .sl-staff-change-request-comparison > div > span { color:var(--sl-muted); font:var(--sl-font-supporting); display:block; }
+.sl-staff-my-requests-change-request-details-dialog .sl-staff-change-request-requested > strong { color:var(--sl-success); }
 .sl-staff-change-request-arrow { color:var(--sl-brand); font-size:1.1rem; font-weight:700; }
 .sl-staff-change-request-reason { margin-top:14px; }
 .sl-staff-change-request-reason h4 { margin-bottom:6px; }
@@ -33601,7 +33606,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-inventory-staff-quick-actions .sl-button { justify-content:center; width:100%; }
 }
 @media (width<=540px) {
-  .sl-area-dialog.sl-staff-change-request-details-dialog { width:calc(100vw - 1rem)!important; max-width:calc(100vw - 1rem)!important; }
+  .sl-area-dialog:is(.sl-staff-change-request-details-dialog,.sl-staff-my-requests-change-request-details-dialog) { width:calc(100vw - 1rem)!important; max-width:calc(100vw - 1rem)!important; }
   .sl-staff-change-request-details-dialog > .sl-popover-header { padding-inline:16px; }
   .sl-staff-change-request-details { padding:16px; }
   .sl-staff-change-request-identity > p { line-height:1.55; }
@@ -34172,5 +34177,95 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   }
   .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table :is(th,td):is(:nth-child(2),:nth-child(3)) {
     white-space:normal;
+  }
+}
+
+/* My Requests keeps its custom-range controls and actions in one adaptive layout. */
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar {
+  align-items:end;
+  flex-wrap:wrap;
+  display:flex;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-sa-ingredients-search {
+  flex:1.55 1 14rem;
+  min-width:14rem;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > label:nth-child(2) {
+  flex:.7 1 8.5rem;
+  min-width:8.5rem;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > label:nth-child(3) {
+  flex:.65 1 8rem;
+  min-width:8rem;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > label:nth-child(4) {
+  flex:.8 1 10rem;
+  min-width:10rem;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-v219-custom-date-range {
+  display:contents;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-v219-custom-date-range > label {
+  flex:0 1 9.25rem;
+  min-width:8.75rem;
+  max-width:10rem;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-sa-ingredients-filter-actions {
+  flex:0 0 auto;
+  margin-left:auto;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > :is(label,.sl-v219-custom-date-range > label) {
+  align-self:stretch;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar :is(select,input) {
+  width:100%;
+  min-width:0;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-table :is(thead th,tbody td):first-child {
+  text-align:left!important;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-table :is(thead th,tbody td):not(:first-child) {
+  text-align:center!important;
+}
+.sl-staff-requests-v162 .sl-staff-my-requests-table tbody td:last-child .sl-status {
+  margin-inline:auto;
+}
+@media (width<=900px) {
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    display:grid;
+  }
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-sa-ingredients-search {
+    grid-column:1 / -1;
+    min-width:0;
+  }
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-v219-custom-date-range {
+    display:contents;
+  }
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-v219-custom-date-range > label {
+    max-width:none;
+    min-width:0;
+  }
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-sa-ingredients-filter-actions {
+    grid-column:1 / -1;
+    margin-left:0;
+    justify-self:end;
+  }
+}
+@media (width<=600px) {
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-sa-ingredients-search,
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-sa-ingredients-filter-actions {
+    grid-column:auto;
+  }
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-sa-ingredients-filter-actions {
+    align-items:stretch;
+    flex-direction:column;
+    justify-self:stretch;
+  }
+  .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar > .sl-sa-ingredients-filter-actions > * {
+    width:100%;
   }
 }

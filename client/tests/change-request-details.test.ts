@@ -45,6 +45,8 @@ test('Inventory Staff details are role-specific while Manager presentation remai
   assert.match(staff, /changeRequestStatusLabel\(request\.status\)/);
   assert.match(staff, />Current</);
   assert.match(staff, />Requested</);
+  assert.match(staff, /<div><strong>\{current\}<\/strong><span>Current<\/span><\/div>/);
+  assert.match(staff, /className="sl-staff-change-request-requested"/);
   assert.match(staff, /<p>\{request\.reason\}<\/p>/);
   assert.doesNotMatch(staff, /Awaiting manager review/);
   assert.match(staff, /request\.status !== 'PENDING' && request\.reviewedAt/);
@@ -54,7 +56,7 @@ test('Inventory Staff details are role-specific while Manager presentation remai
   assert.doesNotMatch(staff, /reviewedBy/);
   assert.doesNotMatch(staff, /Edit|Delete|Approve|Reject/);
   assert.doesNotMatch(staff, /Chicken Breast|₱555|₱67|57 kg|80 kg/);
-  assert.match(staff, /className="sl-account-reference-dialog sl-staff-change-request-details-dialog"/);
+  assert.match(staff, /sl-staff-my-requests-change-request-details-dialog/);
   assert.doesNotMatch(staff, /sl-admin-ingredient-dialog|sl-ingredient-view-dialog/);
   assert.match(source, /managerRows=request\?/);
   assert.match(source, /subtitle="Review the submitted master-data change and decision\."/);
@@ -63,7 +65,7 @@ test('Inventory Staff details are role-specific while Manager presentation remai
 test('My Requests keeps its protected create modal, date range, and current-only query', () => {
   const source = readFileSync(new URL('../src/app/(administration)/ChangeRequests.tsx', import.meta.url), 'utf8');
   const styles = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
-  assert.match(source, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
+  assert.match(source, /<ChangeRequestDetailsDialog inventoryStaff inventoryStaffMyRequests request=\{detail\}/);
   assert.match(source, /description="Submit and track your ingredient change requests\."/);
   assert.match(source, /placeholder="Search by request ID or ingredient\.\.\."/);
   assert.doesNotMatch(source, /Search by request ID, ingredient, or batch ID/);
@@ -87,7 +89,15 @@ test('My Requests keeps its protected create modal, date range, and current-only
   assert.match(styles, /\.sl-staff-requests-v162 \.sl-staff-my-requests-table \.sl-staff-request-col-status \{ width:10%; \}/);
   assert.match(styles, /\.sl-staff-requests-v162 \.sl-staff-my-requests-table \.sl-canonical-identifier \{ font-weight:600; \}/);
   assert.match(styles, /\.sl-staff-change-request-details \.sl-status-dot \{ display:none; \}/);
-  assert.match(styles, /\.sl-area-dialog\.sl-staff-change-request-details-dialog \{[\s\S]*?max-width:40rem!important;/);
+  assert.match(styles, /\.sl-area-dialog\.sl-staff-my-requests-change-request-details-dialog \{\s*width:min\(38rem,calc\(100vw - 2rem\)\)!important;\s*max-width:38rem!important;/);
+  assert.match(styles, /\.sl-staff-change-request-comparison \{[\s\S]*?background:var\(--sl-surface-subtle\);[\s\S]*?\}/);
+  assert.doesNotMatch(styles, /\.sl-staff-my-requests-change-request-details-dialog \.sl-staff-change-request-comparison > \.sl-staff-change-request-requested \{/);
+  assert.doesNotMatch(styles, /\.sl-staff-my-requests-change-request-details-dialog[^{}]*\.sl-staff-change-request-requested[^{}]*\{[^}]*?(?:background|border|outline|box-shadow|gradient):/);
+  assert.match(styles, /\.sl-staff-my-requests-change-request-details-dialog \.sl-staff-change-request-requested > strong \{ color:var\(--sl-success\); \}/);
+  assert.match(styles, /\.sl-staff-change-request-comparison > div > span \{ color:var\(--sl-muted\);/);
+  assert.doesNotMatch(styles, /\.sl-staff-my-requests-change-request-details-dialog[^{}]*\.sl-staff-change-request-requested > span \{/);
+  assert.doesNotMatch(styles, /\.sl-staff-my-requests-change-request-details-dialog[^{}]*first-child[^{}]*strong[^{}]*\{[^}]*color:/);
+  assert.match(styles, /@media \(width<=540px\) \{[\s\S]*?\.sl-area-dialog:is\(\.sl-staff-change-request-details-dialog,\.sl-staff-my-requests-change-request-details-dialog\) \{ width:calc\(100vw - 1rem\)!important; max-width:calc\(100vw - 1rem\)!important; \}/);
   assert.match(styles, /\.sl-staff-change-request-content \{ margin-top:14px; \}/);
   assert.match(styles, /\.sl-staff-change-request-reason \{ margin-top:14px; \}/);
   assert.match(styles, /\.sl-staff-change-request-outcome \{ margin:12px 0 0;/);
@@ -123,6 +133,8 @@ test('Inventory Staff dashboard and My Requests share the same Staff details pat
   const myRequests = readFileSync(new URL('../src/app/(administration)/ChangeRequests.tsx', import.meta.url), 'utf8');
   const manager = readFileSync(new URL('../src/components/application/ManagerChangeRequestsPage.tsx', import.meta.url), 'utf8');
   assert.match(dashboard, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
-  assert.match(myRequests, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
+  assert.match(myRequests, /<ChangeRequestDetailsDialog inventoryStaff inventoryStaffMyRequests request=\{detail\}/);
+  assert.match(dashboard, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
+  assert.doesNotMatch(dashboard, /inventoryStaffMyRequests/);
   assert.match(manager, /<ChangeRequestDetailsDialog manager request=\{selected\}/);
 });
