@@ -21,6 +21,7 @@ export type InventoryBatchSummary = {
   totalIngredients: number;
   totalBatches: number;
   lowStockItems: number;
+  /** Active ingredients excluded from low-stock evaluation because legacy minimumStock is not safely convertible to a 3-decimal value. */
   lowStockExcludedCount: number;
   statusCounts: Record<'Normal' | 'Approaching Expiry' | 'Critical' | 'Expired', number>;
   categoryCounts: Array<{ category: string; batchCount: number; quantity: string; inventoryValue: string }>;
