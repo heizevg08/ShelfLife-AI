@@ -17,7 +17,7 @@ const staff = { ...admin, id: '6'.repeat(24), _id: '6'.repeat(24), email: 'staff
 test('inventory batch recorder identity requires a legitimate first and last name', () => {
   assert.equal(inventoryBatchRecorderName({ firstName: 'Jamie', lastName: 'Santos' }), 'Jamie Santos');
   assert.equal(inventoryBatchRecorderName({ firstName: 'Jamie' }), '—');
-  assert.equal(inventoryBatchRecorderName({ firstName: 'Development', lastName: 'InventoryStaff' }), '—');
+  assert.equal(inventoryBatchRecorderName({ firstName: 'Development', lastName: 'InventoryStaff' }), 'Development InventoryStaff');
   assert.equal(inventoryBatchRecorderName(null), '—');
 });
 

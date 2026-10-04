@@ -18,7 +18,7 @@ type Resolved = { row: BatchRow; ingredient: IngredientRow; totalStock: number; 
 export function inventoryBatchRecorderName(user: Pick<CreatorRow, 'firstName' | 'lastName'> | null | undefined): string {
   const firstName = typeof user?.firstName === 'string' ? user.firstName.trim() : '';
   const lastName = typeof user?.lastName === 'string' ? user.lastName.trim() : '';
-  if (!firstName || !lastName || firstName.toLocaleLowerCase() === 'development') return '—';
+  if (!firstName || !lastName) return '—';
   return `${firstName} ${lastName}`;
 }
 

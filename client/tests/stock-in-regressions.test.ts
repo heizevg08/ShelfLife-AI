@@ -36,7 +36,7 @@ test('Stock-In large-dataset Ingredient uses a bounded control matching the nati
 test('Stock-In recorder presentation requires persisted first and last names', () => {
   assert.equal(inventoryBatchRecorderLabel({ id:'1', name:'ignored', firstName:'Juan', lastName:'Dela Cruz' }), 'Juan Dela Cruz');
   assert.equal(inventoryBatchRecorderLabel({ id:'1', name:'Current Viewer', firstName:'', lastName:'' }), '—');
-  assert.equal(inventoryBatchRecorderLabel({ id:'1', name:'Development InventoryStaff', firstName:'Development', lastName:'InventoryStaff' }), '—');
+  assert.equal(inventoryBatchRecorderLabel({ id:'1', name:'Development InventoryStaff', firstName:'Development', lastName:'InventoryStaff' }), 'Development InventoryStaff');
   const source = readFileSync(new URL('../src/components/application/ModulePage.tsx', import.meta.url), 'utf8');
   const details = readFileSync(new URL('../src/components/application/InventoryBatchDetailsDialog.tsx', import.meta.url), 'utf8');
   assert.match(source, /inventoryBatchRecorderLabel\(batch\.createdBy\)/);
