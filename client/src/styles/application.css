@@ -33536,6 +33536,18 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   font:inherit;
   font-weight:500;
 }
+/* Keep My Pending Requests aligned to the Dashboard FEFO table typography tokens. */
+#inventory-staff-my-pending-requests .sl-change-request-preview-table thead th {
+  font:var(--sl-font-label);
+}
+#inventory-staff-my-pending-requests .sl-change-request-preview-table tbody td:not(:last-child) {
+  font:var(--sl-font-body);
+  font-weight:400;
+}
+#inventory-staff-my-pending-requests .sl-change-request-preview-table tbody td:first-child .sl-record-identifier-link {
+  font:var(--sl-font-body);
+  font-weight:400;
+}
 .sl-detail-enabled-row { cursor:pointer; transition:background-color var(--sl-motion); }
 .sl-detail-enabled-row:hover { background:var(--sl-brand-subtle); }
 .sl-detail-enabled-row:focus-visible { background:var(--sl-brand-subtle); outline:2px solid var(--sl-focus); outline-offset:-2px; }
@@ -33962,17 +33974,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 @media (width<=600px) {
   .sl-staff-requests-v162 .sl-sa-account-pattern-records .sl-staff-requests-toolbar { grid-template-columns:minmax(0,1fr); }
   .sl-staff-requests-v162 .sl-sa-account-pattern-records :is(.sl-sa-ingredients-search,.sl-v219-custom-date-range,.sl-sa-ingredients-filter-actions) { grid-column:auto; }
-}
-
-.sl-inventory-staff-dashboard-v140 .sl-dashboard-source-kpis .sl-dashboard-usage-value {
-  min-width:0;
-  max-width:100%;
-  white-space:normal;
-  overflow-wrap:break-word;
-}
-.sl-inventory-staff-dashboard-v140 .sl-dashboard-source-kpis .sl-dashboard-usage-value[data-density="compact"] {
-  font-size:clamp(1.15rem,1rem + .35vw,1.45rem);
-  line-height:1.18;
 }
 
 /* Repeated operational records remain compact while reading as complete sections. */
