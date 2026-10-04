@@ -32,7 +32,7 @@ test('Manager Change Request presentation is opt-in and Staff modal keeps its pr
   const dashboard = readFileSync(new URL('../src/components/dashboard/RoleDashboard.tsx', import.meta.url), 'utf8');
   assert.match(details, /manager = false/);
   assert.match(manager, /<ChangeRequestDetailsDialog manager /);
-  assert.match(route, /<ChangeRequestDetailsDialog inventoryStaff inventoryStaffMyRequests request=\{detail\}/);
+  assert.match(route, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
   assert.equal((dashboard.match(/<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/g) ?? []).length, 1);
   assert.match(dashboard, /<ChangeRequestDetailsDialog request=\{requestDetail\}/);
   assert.match(route, /<PageHeader eyebrow="Follow-up" title="My Requests" description="Submit and track your ingredient change requests\."/);

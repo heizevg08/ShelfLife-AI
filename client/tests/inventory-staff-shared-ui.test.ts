@@ -66,7 +66,7 @@ test('My Requests retains Reset behavior, adaptive Custom Range, details semanti
   assert.match(requests, /const reset=\(\)=>\{setSearch\(''\);setType\(''\);setStatus\(''\);setRange\('All dates'\);setFrom\(''\);setTo\(''\);setPage\(1\)\}/);
   assert.match(requests, />Reset<\/button>/);
   assert.match(requests, /range==='Custom range'&&<div className="sl-v219-custom-date-range">/);
-  assert.match(requests, /<ChangeRequestDetailsDialog inventoryStaff inventoryStaffMyRequests request=\{detail\}/);
+  assert.match(requests, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
   assert.match(requests, /<Pagination compact page=\{page\} pageSize=\{rows\} total=\{total\}/);
   assert.match(styles, /\.sl-staff-my-requests-toolbar \{[\s\S]*?flex-wrap:wrap;[\s\S]*?display:flex;/);
 });

@@ -33367,13 +33367,9 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   min-height:0;
 }
 .sl-area-dialog.sl-staff-change-request-details-dialog {
-  width:min(40rem,calc(100vw - 2rem))!important;
-  max-width:40rem!important;
-  overflow:auto;
-}
-.sl-area-dialog.sl-staff-my-requests-change-request-details-dialog {
   width:min(38rem,calc(100vw - 2rem))!important;
   max-width:38rem!important;
+  overflow:auto;
 }
 .sl-staff-change-request-details-dialog > .sl-popover-header { min-height:64px; padding:12px 20px; }
 .sl-staff-change-request-details-dialog .sl-account-dialog-heading { grid-template-columns:36px minmax(0,1fr); column-gap:12px; }
@@ -33404,7 +33400,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-change-request-comparison > div:last-child { text-align:right; }
 .sl-staff-change-request-comparison strong { overflow-wrap:anywhere; font:var(--sl-font-card-title); }
 .sl-staff-change-request-comparison > div > span { color:var(--sl-muted); font:var(--sl-font-supporting); display:block; }
-.sl-staff-my-requests-change-request-details-dialog .sl-staff-change-request-requested > strong { color:var(--sl-success); }
+.sl-staff-change-request-details-dialog .sl-staff-change-request-requested > strong { color:var(--sl-success); }
 .sl-staff-change-request-arrow { color:var(--sl-brand); font-size:1.1rem; font-weight:700; }
 .sl-staff-change-request-reason { margin-top:14px; }
 .sl-staff-change-request-reason h4 { margin-bottom:6px; }
@@ -33439,7 +33435,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-inventory-staff-quick-actions .sl-button { justify-content:center; width:100%; }
 }
 @media (width<=540px) {
-  .sl-area-dialog:is(.sl-staff-change-request-details-dialog,.sl-staff-my-requests-change-request-details-dialog) { width:calc(100vw - 1rem)!important; max-width:calc(100vw - 1rem)!important; }
+  .sl-area-dialog.sl-staff-change-request-details-dialog { width:calc(100vw - 1rem)!important; max-width:calc(100vw - 1rem)!important; }
   .sl-staff-change-request-details-dialog > .sl-popover-header { padding-inline:16px; }
   .sl-staff-change-request-details { padding:16px; }
   .sl-staff-change-request-identity > p { line-height:1.55; }

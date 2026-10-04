@@ -62,6 +62,6 @@ test('current bulk shell split is characterized as accidental drift, not canonic
 test('Inventory Staff dialogs retain viewport-safe dimensions and established scroll ownership', () => {
   assert.match(styles, /\.sl-area-dialog\.sl-inventory-staff-bulk-dialog \{[\s\S]*?width: min\(45rem,calc\(100vw - 2rem\)\)!important;[\s\S]*?max-height:min\(92vh,820px\);[\s\S]*?overflow:hidden;/);
   assert.match(styles, /\.sl-area-dialog\.sl-inventory-staff-bulk-dialog > \.sl-dialog-content \{[\s\S]*?overflow-y:auto;[\s\S]*?overflow-x:hidden;/);
-  assert.match(styles, /\.sl-area-dialog\.sl-staff-my-requests-change-request-details-dialog \{[\s\S]*?width:min\(38rem,calc\(100vw - 2rem\)\)!important;/);
+  assert.match(styles, /\.sl-area-dialog\.sl-staff-change-request-details-dialog \{[\s\S]*?width:min\(38rem,calc\(100vw - 2rem\)\)!important;/);
   assert.match(styles, /@media \(width<=520px\)[\s\S]*?\.sl-staff-inventory-batch-details-dialog > \.sl-dialog-actions \{ align-items:stretch; flex-direction:column-reverse; \}/);
 });
