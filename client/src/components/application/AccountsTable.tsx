@@ -11,6 +11,7 @@ const blank = { firstName: '', lastName: '', email: '', password: '' };
 type ManagedRole = 'Admin' | 'Inventory Manager' | 'Inventory Staff';
 const NAME_LIMIT = 25;
 const EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/;
+const PERSON_NAME_PATTERN = /^[\p{L}\p{M}]+(?:[ '\-][\p{L}\p{M}]+)*$/u;
 const PASSWORD_MAX_UTF8_BYTES = 1024;
 const REQUIRED_ERROR = 'This field is required.';
 
@@ -172,7 +173,8 @@ export function AccountsTable() {
     if (key === 'firstName' || key === 'lastName') {
       const trimmed = value.trim();
       if (!trimmed) return REQUIRED_ERROR;
-      return trimmed.length > NAME_LIMIT ? `Enter 1–${NAME_LIMIT} characters.` : '';
+      if (trimmed.length > NAME_LIMIT) return `Enter 1–${NAME_LIMIT} characters.`;
+      return PERSON_NAME_PATTERN.test(trimmed) ? '' : 'Use letters, spaces, apostrophes, or hyphens.';
     }
     if (!value.trim()) return REQUIRED_ERROR;
     if (key === 'email') return !validShelfLifeEmail(value) ? 'Enter a valid shelflife.com email.' : '';
@@ -417,7 +419,7 @@ export function AccountsTable() {
                 autoComplete={key === 'password' ? 'new-password' : 'off'}
                 disabled={busy}
                 value={fields[key]}
-                maxLength={key === 'firstName' || key === 'lastName' ? NAME_LIMIT : undefined}
+                maxLength={key === 'firstName' || key === 'lastName' ? NAME_LIMIT : key === 'email' ? 254 : key === 'password' ? PASSWORD_MAX_UTF8_BYTES : undefined}
                 aria-invalid={touched[key] && !!errors[key] ? true : undefined}
                 aria-describedby={[touched[key] && errors[key] ? `admin-${key}-error` : '', key === 'password' ? 'admin-password-help' : ''].filter(Boolean).join(' ') || undefined}
                                 onBlur={() => { setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, fields[key]) })); }}
