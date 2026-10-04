@@ -12,6 +12,9 @@ test('Inventory Staff recording forms share one repeatable row implementation an
   assert.match(form, /index > 0 && <button/);
   assert.match(form, /className="sl-bulk-recording-header"/);
   assert.match(form, /aria-labelledby=\{`\$\{row\.key\}-title`\}/);
+  assert.equal((form.match(/className="sl-creation-form-grid"/g) ?? []).length, 3);
+  assert.equal((form.match(/className="sl-creation-form-row(?: sl-bulk-recording-row--full)?"/g) ?? []).length, 8);
+  assert.doesNotMatch(form, /sl-bulk-waste-item|sl-staff-waste-form-row/);
   assert.match(form, /setTouched/);
   assert.match(form, /const MAX_ITEMS = 25/);
   assert.match(form, /const reset = \(\) => \{ interacted\.current = \{\}; setRows\(\[blank\(\)\]\);/);
@@ -23,9 +26,17 @@ test('Inventory Staff recording forms share one repeatable row implementation an
   assert.match(form, /createStockIns\(rows\.map/);
   assert.match(form, /createUsageRecords\(rows\.map/);
   assert.match(form, /createWasteRecords\(rows\.map/);
+  assert.match(form, /subtitle="Record one or more discarded ingredients\."/);
   assert.match(form, /className="sl-staff-derived-unit"/);
-  assert.match(form, /aria-describedby=\{unitHelpId\}/);
-  assert.match(form, /Auto-filled from ingredient/);
+  assert.match(form, /const selectedUnit = mode === 'stock' \? ingredient\?\.unitOfMeasure : batch\?\.unit;/);
+  assert.match(form, /className="sl-bulk-quantity-input"[\s\S]*?<output className="sl-staff-derived-unit" aria-label=\{selectedUnit/);
+  assert.doesNotMatch(form, /const unitField|<span>Unit<\/span>|Auto-filled from ingredient/);
+  const stockFields = form.slice(form.indexOf("{mode === 'stock' ?"), form.indexOf(": mode === 'usage' ?"));
+  const usageFields = form.slice(form.indexOf(": mode === 'usage' ?"), form.indexOf(" : <div className=\"sl-creation-form-grid\">", form.indexOf(": mode === 'usage' ?")));
+  const wasteFields = form.slice(form.lastIndexOf(" : <div className=\"sl-creation-form-grid\">"), form.indexOf("\n        </fieldset>"));
+  assert.ok(stockFields.indexOf('{ingredientField}') < stockFields.indexOf('{quantityField}') && stockFields.indexOf('{quantityField}') < stockFields.indexOf('{dateField}') && stockFields.indexOf('{dateField}') < stockFields.indexOf("'expirationDate'") && stockFields.indexOf("'expirationDate'") < stockFields.indexOf("'unitCost'"));
+  assert.ok(usageFields.indexOf('{ingredientField}') < usageFields.indexOf('{batchField}') && usageFields.indexOf('{batchField}') < usageFields.indexOf('{quantityField}') && usageFields.indexOf('{quantityField}') < usageFields.indexOf('{dateField}'));
+  assert.ok(wasteFields.indexOf('{ingredientField}') < wasteFields.indexOf('{batchField}') && wasteFields.indexOf('{batchField}') < wasteFields.indexOf('{quantityField}') && wasteFields.indexOf('{quantityField}') < wasteFields.indexOf('{dateField}') && wasteFields.indexOf('{dateField}') < wasteFields.indexOf("'reason'"));
   assert.match(form, /field === 'ingredientId' \? \{ batchId: '' \}/);
   assert.match(form, /reset\(\); onDismiss\(\); await onSaved\(\)/);
   assert.match(form, /catch \(error\) \{/);
@@ -34,13 +45,39 @@ test('Inventory Staff recording forms share one repeatable row implementation an
 
 test('repeatable recording rows use responsive contained modal geometry', () => {
   const styles = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
-  assert.match(styles, /\.sl-area-dialog\.sl-inventory-staff-bulk-dialog \{[\s\S]*?max-width: 960px;/);
-  assert.match(styles, /\.sl-bulk-recording-grid \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(styles, /@media \(max-width: 760px\)[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(styles, /@media \(max-width: 520px\)[\s\S]*?\.sl-bulk-recording-grid \{ grid-template-columns: minmax\(0, 1fr\); \}/);
-  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-dialog-content \{[\s\S]*?overflow-y: auto;/);
+  assert.match(styles, /\.sl-area-dialog\.sl-inventory-staff-bulk-dialog \{[\s\S]*?width: min\(45rem,calc\(100vw - 2rem\)\)!important;[\s\S]*?max-width:45rem!important/);
+  const sharedWidthRule = styles.lastIndexOf('.sl-area-dialog.sl-inventory-staff-bulk-dialog {');
+  assert.ok(sharedWidthRule > styles.lastIndexOf('.sl-area-dialog.sl-stockin-entry-modal {'));
+  assert.ok(sharedWidthRule > styles.lastIndexOf('.sl-area-dialog.sl-usage-entry-modal {'));
+  assert.ok(sharedWidthRule > styles.lastIndexOf('.sl-staff-waste-dialog {'));
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-creation-form-grid \{[\s\S]*?grid-template-columns:minmax\(0,1fr\)!important;[\s\S]*?gap:18px!important/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-creation-form-row \{[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\);[\s\S]*?gap:20px/);
+  assert.match(styles, /@media \(width<=600px\)[\s\S]*?\.sl-bulk-recording-row \.sl-creation-form-row \{ grid-template-columns:minmax\(0,1fr\); \}/);
+  assert.match(styles, /\.sl-area-dialog\.sl-inventory-staff-bulk-dialog > \.sl-dialog-content \{[\s\S]*?overflow-y:auto/);
   assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row[\s\S]*?border:1px solid/);
   assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-add \{[\s\S]*?width:100%;[\s\S]*?border:1px dashed/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-creation-form-grid \{[\s\S]*?gap:18px!important/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-creation-form-row \{[\s\S]*?gap:20px/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row label \{[\s\S]*?gap:\.45rem/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row :is\(input,select\) \{[\s\S]*?background-color:var\(--sl-surface\)!important/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row :is\(input,select\):disabled \{[\s\S]*?background-color:var\(--sl-surface-subtle\)!important/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row output\.sl-staff-derived-unit \{[\s\S]*?background-color:var\(--sl-surface\)!important/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-bulk-quantity-input output\.sl-staff-derived-unit \{[\s\S]*?border-left:1px solid var\(--sl-border\);[\s\S]*?color:var\(--sl-muted\)/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-bulk-quantity-input output\.sl-staff-derived-unit \{[\s\S]*?width:max-content;[\s\S]*?min-width:64px/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-bulk-quantity-input \{[\s\S]*?height:48px;[\s\S]*?background:var\(--sl-surface\)!important/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row :is\(input,select,output\.sl-staff-derived-unit\) \{[\s\S]*?height:48px/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-stockin-currency-input \{[\s\S]*?height:48px;[\s\S]*?background:var\(--sl-surface\)!important/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-stockin-currency-input > span:first-child \{[\s\S]*?background:var\(--sl-surface\)!important/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-stockin-currency-input > span:first-child \{[\s\S]*?flex-basis:40px/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-bulk-quantity-input:focus-within \{[\s\S]*?box-shadow:0 0 0 3px/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row \.sl-bulk-quantity-input input:focus \{\s*background:var\(--sl-surface\)!important/);
+  assert.match(styles, /\.sl-creation-form :is\(input,select,textarea\)\[aria-invalid="true"\],[\s\S]*?border-color:\s*var\(--sl-critical\)!important/);
+  assert.match(styles, /:is\([^\n]*\.sl-creation-form\) :is\(input,select,textarea\):focus[\s\S]*?box-shadow:\s*0 0 0 3px/);
+  assert.match(styles, /\.sl-area-dialog\.sl-inventory-staff-bulk-dialog > \.sl-dialog-content \{[\s\S]*?overflow-y:auto;[\s\S]*?overflow-x:hidden;[\s\S]*?overscroll-behavior:contain/);
+  assert.match(styles, /\.sl-area-dialog\.sl-inventory-staff-bulk-dialog > \.sl-popover-header \{[\s\S]*?position:sticky/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog > \.sl-dialog-actions \{[\s\S]*?position:sticky/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog\.sl-staff-waste-dialog \.sl-application-modal-actions \{[\s\S]*?position:sticky;[\s\S]*?bottom:0/);
+  assert.match(styles, /@media \(width<=600px\)[\s\S]*?\.sl-area-dialog\.sl-inventory-staff-bulk-dialog > \.sl-dialog-content \{[\s\S]*?max-height:calc\(94vh - 220px\)/);
 });
 
 test('bulk frontend services submit canonical items envelopes to dedicated endpoints', () => {
