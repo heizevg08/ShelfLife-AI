@@ -115,10 +115,10 @@ test('My Requests keeps its protected create modal, date range, and current-only
   assert.ok(toolbar.indexOf('Search records') < toolbar.indexOf('<span>Type</span>'));
   assert.ok(toolbar.indexOf('<span>Type</span>') < toolbar.indexOf('<span>Status</span>'));
   assert.ok(toolbar.indexOf('<span>Status</span>') < toolbar.indexOf('<span>Date Range</span>'));
-  assert.ok(toolbar.indexOf('<span>Date Range</span>') < toolbar.indexOf('>Clear filters</button>'));
-  assert.ok(toolbar.indexOf('>Clear filters</button>') < toolbar.indexOf('>New Request</button>'));
-  assert.match(toolbar, /\{filtered&&<button[^>]*>Clear filters<\/button>\}/);
-  assert.doesNotMatch(toolbar, />Reset<\/button>/);
+  assert.ok(toolbar.indexOf('<span>Date Range</span>') < toolbar.indexOf('>Reset</button>'));
+  assert.ok(toolbar.indexOf('>Reset</button>') < toolbar.indexOf('>New Request</button>'));
+  assert.match(toolbar, /\{filtered&&<button[^>]*onClick=\{reset\}>Reset<\/button>\}/);
+  assert.doesNotMatch(toolbar, />Clear filters<\/button>/);
   assert.match(source, /<span>Request Type<\/span><select/);
   assert.match(source, /<span>Ingredient<\/span><select/);
   assert.match(source, /<span>Current Value<\/span><output/);

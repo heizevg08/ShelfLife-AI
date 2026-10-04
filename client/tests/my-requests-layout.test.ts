@@ -13,6 +13,7 @@ test('Inventory Staff My Requests follows Inventory Batches search proportions a
   assert.match(route, /sl-staff-requests-toolbar sl-staff-my-requests-toolbar">/);
   assert.doesNotMatch(route, /data-custom-range=/);
   assert.match(route, /range==='Custom range'&&<div className="sl-v219-custom-date-range"><label><span>From<\/span><input type="date"[\s\S]*?<label><span>To<\/span><input type="date"/);
+  assert.match(route, /\{filtered&&<button type="button" className="sl-button sl-staff-clear-filters" onClick=\{reset\}>Reset<\/button>\}/);
   assert.match(route, /\['Request ID','Ingredient','Requested Change','Submitted On','Status'\]/);
   assert.match(route, /<td><span className="sl-canonical-identifier">\{record\.requestID\}<\/span><\/td>/);
 
