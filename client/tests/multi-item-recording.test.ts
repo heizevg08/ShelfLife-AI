@@ -17,7 +17,8 @@ test('Inventory Staff recording forms share one repeatable row implementation an
   assert.doesNotMatch(form, /sl-bulk-waste-item|sl-staff-waste-form-row/);
   assert.match(form, /setTouched/);
   assert.match(form, /const MAX_ITEMS = 25/);
-  assert.match(form, /const reset = \(\) => \{ interacted\.current = \{\}; setRows\(\[blank\(\)\]\);/);
+  assert.match(form, /const reset = \(\) => \{ interacted\.current = \{\}; setRows\(\[blank\(initialIngredientId && initialBatchId \? \{ ingredientId: initialIngredientId, batchId: initialBatchId \} : undefined\)\]\);/);
+  assert.match(form, /const initialIngredientId = initialSelection\?\.ingredientId \?\? '', initialBatchId = initialSelection\?\.batchId \?\? '';/);
   assert.match(form, /setRows\(current => current\.filter\(item => item\.key !== key\)\)/);
   assert.match(form, /delete interacted\.current\[key\]/);
   assert.match(form, /delete next\[key\]/);

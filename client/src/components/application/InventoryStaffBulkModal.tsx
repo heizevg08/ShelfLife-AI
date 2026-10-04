@@ -17,7 +17,7 @@ type RowErrors = Partial<Record<Field, string>>;
 const MAX_ITEMS = 25;
 const reasons: WasteReason[] = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'];
 let nextKey = 0;
-const blank = (): Draft => ({ key: `recording-${++nextKey}`, ingredientId: '', batchId: '', quantity: '', date: '', expirationDate: '', unitCost: '', reason: '' });
+const blank = (initial?: { ingredientId: string; batchId: string }): Draft => ({ key: `recording-${++nextKey}`, ingredientId: initial?.ingredientId ?? '', batchId: initial?.batchId ?? '', quantity: '', date: '', expirationDate: '', unitCost: '', reason: '' });
 
 const labels = {
   stock: { title: 'Add Stock-In', subtitle: 'Record one or more received inventory batches.', quantity: 'Quantity Received', date: 'Date Received', primary: 'Save Stock-In', Icon: PackagePlus },
@@ -42,7 +42,7 @@ function validate(mode: Mode, row: Draft, today: string): RowErrors {
   return errors;
 }
 
-export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, ingredients, onDismiss, onSaved, returnFocus }: { mode: Mode; open: boolean; busy?: boolean; ingredients: StockInIngredient[]; onDismiss: () => void; onSaved: () => Promise<void> | void; returnFocus: RefObject<HTMLElement | null> }) {
+export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, ingredients, onDismiss, onSaved, returnFocus, initialSelection }: { mode: Mode; open: boolean; busy?: boolean; ingredients: StockInIngredient[]; onDismiss: () => void; onSaved: () => Promise<void> | void; returnFocus: RefObject<HTMLElement | null>; initialSelection?: { ingredientId: string; batchId: string } }) {
   const config = labels[mode], Icon = config.Icon, form = useRef<HTMLFormElement>(null);
   const interacted = useRef<Record<string, Partial<Record<Field, boolean>>>>({});
   const [rows, setRows] = useState<Draft[]>([blank()]);
@@ -51,8 +51,13 @@ export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, i
   const [errors, setErrors] = useState<Record<string, RowErrors>>({});
   const [busy, setBusy] = useState(false), [message, setMessage] = useState('');
   const today = localDateInputValue();
-  const reset = () => { interacted.current = {}; setRows([blank()]); setBatches({}); setTouched({}); setErrors({}); setMessage(''); };
-  useEffect(() => { if (open) reset(); }, [open, mode]);
+  const initialIngredientId = initialSelection?.ingredientId ?? '', initialBatchId = initialSelection?.batchId ?? '';
+  const reset = () => { interacted.current = {}; setRows([blank(initialIngredientId && initialBatchId ? { ingredientId: initialIngredientId, batchId: initialBatchId } : undefined)]); setBatches({}); setTouched({}); setErrors({}); setMessage(''); };
+  useEffect(() => {
+    if (!open) return;
+    reset();
+    if (mode !== 'stock' && initialIngredientId) void listInventoryBatches({ page: 1, pageSize: 150, ingredientId: initialIngredientId, sort: 'fefo' }).then(result => setBatches({ [initialIngredientId]: result.items })).catch(() => setBatches({ [initialIngredientId]: [] }));
+  }, [open, mode, initialIngredientId, initialBatchId]);
   const update = (key: string, field: Field, value: string) => {
     interacted.current[key] = { ...interacted.current[key], [field]: true };
     setRows(current => current.map(row => {

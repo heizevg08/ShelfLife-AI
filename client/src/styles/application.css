@@ -33282,6 +33282,65 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-batch-details-content dd small { display:block; margin-top:3px; color:var(--sl-text-muted,#66756d); font-weight:400; }
 .sl-batch-details-secondary { grid-template-columns:minmax(0,1fr); gap:12px; padding-top:2px; }
 .sl-batch-details-secondary dd { font-weight:400; }
+.sl-staff-inventory-batch-details-dialog.sl-area-dialog {
+  width:min(38rem,calc(100vw - 32px));
+  max-width:38rem;
+}
+.sl-staff-inventory-batch-details-dialog .sl-application-modal-card { padding:16px 22px; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-content { gap:12px; padding:0; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-identity { align-items:center; gap:12px; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-identity h3 {
+  margin:0 0 4px;
+  color:var(--sl-text);
+  font-size:1.3125rem;
+  font-weight:700;
+  line-height:1.25;
+}
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-identity .sl-canonical-identifier {
+  color:var(--sl-text-muted);
+  font-size:.8125rem;
+  font-weight:400;
+  line-height:1.35;
+}
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-identity .sl-status {
+  gap:0;
+  padding:.25rem .55rem;
+  font-size:.75rem;
+  font-weight:600;
+  line-height:1.2;
+}
+.sl-staff-inventory-batch-details-dialog .sl-staff-batch-expired-warning {
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  padding:9px 12px;
+  border:1px solid color-mix(in srgb,var(--sl-critical) 24%,var(--sl-border));
+  border-radius:var(--sl-radius);
+  background:var(--sl-critical-bg);
+  color:var(--sl-critical);
+  font:var(--sl-font-supporting);
+  font-weight:400;
+  line-height:1.35;
+}
+.sl-staff-inventory-batch-details-dialog .sl-staff-batch-expired-warning strong { font-weight:700; }
+.sl-staff-inventory-batch-details-dialog .sl-staff-batch-expired-warning svg { flex:0 0 auto; margin-top:1px; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-primary { gap:8px 22px; padding:12px 0; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-secondary { grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; padding-top:0; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-content dt { margin-bottom:4px; font-size:.6875rem; line-height:1.25; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-content dd { color:var(--sl-text); font-size:.9375rem; font-weight:650; line-height:1.35; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-primary dd { font-size:1rem; font-weight:700; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-content dd small { margin-top:2px; font-size:.75rem; line-height:1.3; }
+.sl-staff-inventory-batch-details-dialog .sl-batch-details-secondary dd { overflow-wrap:anywhere; }
+.sl-staff-inventory-batch-details-dialog > .sl-dialog-actions { justify-content:flex-end; gap:10px; padding:12px 24px 14px; }
+.sl-staff-inventory-batch-details-dialog > .sl-dialog-actions .sl-button { min-height:34px; padding:5px 12px; font-size:.8125rem; }
+.sl-staff-inventory-batch-details-dialog > .sl-dialog-actions .sl-button-danger {
+  border-color:var(--sl-critical);
+  background:var(--sl-critical-bg);
+  color:var(--sl-critical);
+  font-weight:600;
+}
+.sl-staff-inventory-batch-details-dialog > .sl-dialog-actions .sl-button-danger:hover:not(:disabled) { background:color-mix(in srgb,var(--sl-critical-bg) 90%,var(--sl-critical) 10%); }
+.sl-staff-inventory-batch-details-dialog > .sl-dialog-actions .sl-button-danger:active:not(:disabled) { background:color-mix(in srgb,var(--sl-critical-bg) 82%,var(--sl-critical) 18%); }
 
 .sl-staff-requests-v162 .sl-staff-requests-toolbar { grid-template-columns:minmax(260px,1.5fr) minmax(150px,.7fr) minmax(150px,.7fr) auto; }
 .sl-staff-request-status-filter { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:6px; }
@@ -33305,7 +33364,10 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 @media (max-width:520px) {
   .sl-batch-details-primary,.sl-batch-details-secondary { grid-template-columns:minmax(0,1fr); }
+  .sl-staff-inventory-batch-details-dialog .sl-batch-details-secondary { grid-template-columns:minmax(0,1fr); }
   .sl-inventory-batch-details-dialog .sl-application-modal-card { padding:16px; }
+  .sl-staff-inventory-batch-details-dialog > .sl-dialog-actions { align-items:stretch; flex-direction:column-reverse; }
+  .sl-staff-inventory-batch-details-dialog > .sl-dialog-actions .sl-button { justify-content:center; width:100%; }
 }
 @media (width <= 620px) {
   .sl-admin-report-records .sl-application-records-toolbar[data-layout="reports"] { grid-template-columns: minmax(0,1fr); }

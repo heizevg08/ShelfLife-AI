@@ -1,4 +1,4 @@
-import { Link, type Href } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, FileText, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Ruler, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, Truck, ClipboardCheck, PackageCheck } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { AccountsTable } from './AccountsTable';
@@ -102,6 +102,9 @@ function FormPreview({ id }: { id: PreviewId }) {
 
 
 function InventoryStaffWastePage() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ recordWaste?: string; ingredientId?: string; batchId?: string }>();
+  const handoff = params.recordWaste === '1' && typeof params.ingredientId === 'string' && typeof params.batchId === 'string';
   const [addOpen, setAddOpen] = useState(false), addButton = useRef<HTMLButtonElement>(null);
   const [search, setSearch] = useState(''), [reasonFilter, setReasonFilter] = useState<WasteReason | 'All Reasons'>('All Reasons'), [range, setRange] = useState('All dates'), [dateFrom, setDateFrom] = useState(''), [dateTo, setDateTo] = useState(''), [rows, setRows] = useState(10), [page, setPage] = useState(1);
   const [ingredients, setIngredients] = useState<StockInIngredient[]>([]);
@@ -119,6 +122,7 @@ function InventoryStaffWastePage() {
     setData(records); setSummary(nextSummary);
   };
   useEffect(() => { const controller = new AbortController(); listStockInIngredients(controller.signal).then(result => setIngredients(result.ingredients)).catch(() => { if (!controller.signal.aborted) setIngredients([]); }); return () => controller.abort(); }, []);
+  useEffect(() => { if (handoff) setAddOpen(true); }, [handoff, params.ingredientId, params.batchId]);
   useEffect(() => { const controller = new AbortController(); setLoading(true); setLoadError(false); load(controller.signal).catch(() => { if (!controller.signal.aborted) setLoadError(true); }).finally(() => { if (!controller.signal.aborted) setLoading(false); }); return () => controller.abort(); }, [search, reasonFilter, range, dateFrom, dateTo, rows, page]);
   const metric = (value: number | string | undefined) => loadError && !summary ? 'Unavailable' : loading && !summary ? '—' : (value ?? '—');
   return <>
@@ -138,7 +142,7 @@ function InventoryStaffWastePage() {
             <footer className="sl-records-footer sl-staff-waste-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>{setRows(Number(e.target.value));setPage(1)}}>{[10,15,50,100,150].map(n=><option key={n}>{n}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={data?.total??0} itemLabel="waste records" onPageChange={setPage} /></footer>
       </section>
     </div>
-    <InventoryStaffBulkModal mode="waste" open={addOpen} ingredients={ingredients} onDismiss={()=>setAddOpen(false)} returnFocus={addButton} onSaved={async()=>{setPage(1);await load(new AbortController().signal)}} />
+    <InventoryStaffBulkModal mode="waste" open={addOpen} ingredients={ingredients} initialSelection={handoff ? { ingredientId: params.ingredientId!, batchId: params.batchId! } : undefined} onDismiss={()=>{setAddOpen(false);if(handoff)router.replace('/WasteRecording')}} returnFocus={addButton} onSaved={async()=>{setPage(1);if(handoff)router.replace('/WasteRecording');await load(new AbortController().signal)}} />
   </>;
 }
 
@@ -323,6 +327,7 @@ function InventoryStaffStockInPage() {
 }
 
 function InventoryStaffInventoryBatchesPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
@@ -414,7 +419,7 @@ function InventoryStaffInventoryBatchesPage() {
 
       </div>
     </div>
-    <InventoryBatchDetailsDialog batch={viewBatch} onDismiss={()=>setViewBatch(null)} returnFocus={viewBatchTrigger} />
+    <InventoryBatchDetailsDialog batch={viewBatch} inventoryStaff onDismiss={()=>setViewBatch(null)} onRecordWaste={batch=>{setViewBatch(null);router.push({pathname:'/WasteRecording',params:{recordWaste:'1',ingredientId:batch.ingredient.id,batchId:batch.id}})}} returnFocus={viewBatchTrigger} />
   </>;
 }
 
