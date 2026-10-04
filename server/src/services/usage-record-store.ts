@@ -56,18 +56,37 @@ export function createUsageRecordStore(driver: Mongoose, records: ReturnType<typ
       && (!query.from || item.row.dateUsed >= query.from)
       && (!query.to || item.row.dateUsed <= query.to));
   };
-  const createWithin = async (session: ClientSession, actor: Actor, input: UsageCreateInput) => {
-    const ingredient = await ingredients.findById(input.ingredientId).select('_id name unitOfMeasure').session(session).lean().exec() as IngredientRow | null;
-    if (!ingredient) throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found');
-    const batch = await batches.findById(input.batchId).select('_id ingredientId batchID quantity unit').session(session).lean().exec() as BatchRow | null;
-    if (!batch) throw new AdministrationError(404, 'NOT_FOUND', 'Inventory batch not found');
-    if (batch.ingredientId.toString() !== ingredient._id.toString()) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: 'batchId', message: 'Selected batch does not belong to the ingredient' }]);
-    const deducted = await batches.findOneAndUpdate({ _id: input.batchId, ingredientId: input.ingredientId, quantity: { $gte: input.quantityUsed } }, { $inc: { quantity: -input.quantityUsed } }, { new: true, session }).lean().exec() as BatchRow | null;
-    if (!deducted) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: 'quantityUsed', message: 'Quantity used exceeds the available batch quantity' }]);
-    const created = await records.create([{ batchId: input.batchId, ingredientId: input.ingredientId, quantityUsed: input.quantityUsed, unit: batch.unit, dateUsed: input.dateUsed, staffId: new driver.Types.ObjectId(actor.id) }], { session });
-    const row = created[0] as unknown as UsageRow;
-    await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined, action: 'CREATE', targetType: 'UsageRecord', targetId: row._id.toString(), targetName: batch.batchID, module: 'Usage Recording', status: 'Success', details: 'Inventory usage recorded and batch quantity deducted' }], { session });
-    return row._id.toString();
+  const createManyWithin = async (session: ClientSession, actor: Actor, inputs: UsageCreateInput[]) => {
+    const ingredientIds = [...new Set(inputs.map(input => input.ingredientId))];
+    const batchIds = [...new Set(inputs.map(input => input.batchId))];
+    const ingredientRows = await ingredients.find({ _id: { $in: ingredientIds } }).select('_id name unitOfMeasure').session(session).lean().exec() as IngredientRow[];
+    const batchRows = await batches.find({ _id: { $in: batchIds } }).select('_id ingredientId batchID quantity unit').session(session).lean().exec() as BatchRow[];
+    const ingredientsById = new Map(ingredientRows.map(row => [row._id.toString(), row]));
+    const batchesById = new Map(batchRows.map(row => [row._id.toString(), row]));
+    const deductions = new Map<string, number>();
+    const firstRowByBatch = new Map<string, number>();
+    inputs.forEach((input, index) => {
+      const ingredient = ingredientsById.get(input.ingredientId);
+      const batch = batchesById.get(input.batchId);
+      if (!ingredient) throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found', [{ field: `items.${index}.ingredientId`, message: 'Ingredient not found' }]);
+      if (!batch) throw new AdministrationError(404, 'NOT_FOUND', 'Inventory batch not found', [{ field: `items.${index}.batchId`, message: 'Inventory batch not found' }]);
+      if (batch.ingredientId.toString() !== ingredient._id.toString()) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: `items.${index}.batchId`, message: 'Selected batch does not belong to the ingredient' }]);
+      if (!firstRowByBatch.has(input.batchId)) firstRowByBatch.set(input.batchId, index);
+      deductions.set(input.batchId, (deductions.get(input.batchId) ?? 0) + input.quantityUsed);
+    });
+    for (const [batchId, quantity] of deductions) {
+      const deducted = await batches.findOneAndUpdate({ _id: batchId, quantity: { $gte: quantity } }, { $inc: { quantity: -quantity } }, { new: true, session }).lean().exec() as BatchRow | null;
+      if (!deducted) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: `items.${firstRowByBatch.get(batchId) ?? 0}.quantityUsed`, message: 'Combined usage exceeds the available quantity for the selected batch' }]);
+    }
+    const ids: string[] = [];
+    for (const input of inputs) {
+      const batch = batchesById.get(input.batchId)!;
+      const created = await records.create([{ batchId: input.batchId, ingredientId: input.ingredientId, quantityUsed: input.quantityUsed, unit: batch.unit, dateUsed: input.dateUsed, staffId: new driver.Types.ObjectId(actor.id) }], { session });
+      const row = created[0] as unknown as UsageRow;
+      ids.push(row._id.toString());
+      await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined, action: 'CREATE', targetType: 'UsageRecord', targetId: row._id.toString(), targetName: batch.batchID, module: 'Usage Recording', status: 'Success', details: 'Inventory usage recorded and batch quantity deducted' }], { session });
+    }
+    return ids;
   };
   return {
     async ready() { await Promise.all([records.collection.createIndex({ dateUsed: -1, _id: -1 }, { name: 'dateUsed_-1__id_-1' }), records.collection.createIndex({ ingredientId: 1, dateUsed: -1 }, { name: 'ingredientId_1_dateUsed_-1' })]); },
@@ -81,6 +100,13 @@ export function createUsageRecordStore(driver: Mongoose, records: ReturnType<typ
       // A cross-unit "most used" ranking is invalid until the product defines unit normalization.
       return { totalUsageToday, usageRecordsToday: todayItems.length, mostUsedIngredient: null, ingredientsUsedThisWeek: new Set(items.filter(item => item.row.dateUsed >= weekStart && item.row.dateUsed < today.end).map(item => item.row.ingredientId.toString())).size } satisfies UsageSummary;
     },
-    async create(actor, input) { const id = await driver.connection.transaction(session => createWithin(session, actor, input)); const record = await this.detail(id); if (!record) throw new AdministrationError(500, 'REQUEST_FAILED', 'Usage record could not be loaded'); return record; },
+    async create(actor, input) {
+      try { return (await this.createMany(actor, [input]))[0]!; }
+      catch (error) {
+        if (error instanceof AdministrationError) throw new AdministrationError(error.status, error.code, error.message, error.details.map(detail => ({ ...detail, field: detail.field.replace(/^items\.0\.?/, '') || 'quantityUsed' })));
+        throw error;
+      }
+    },
+    async createMany(actor, inputs) { const ids = await driver.connection.transaction(session => createManyWithin(session, actor, inputs)); const created = await Promise.all(ids.map(id => this.detail(id))); if (created.some(record => !record)) throw new AdministrationError(500, 'REQUEST_FAILED', 'Usage records could not be loaded'); return created as UsageRecordView[]; },
   };
 }

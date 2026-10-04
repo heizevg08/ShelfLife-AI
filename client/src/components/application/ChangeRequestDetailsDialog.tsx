@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 import { FileInput } from 'lucide-react';
-import { CHANGE_REQUEST_TARGET_LABELS, changeRequestTypeLabel, changeRequestValue, isCurrentChangeRequest, type ChangeRequest } from '../../services/change-requests';
+import { CHANGE_REQUEST_TARGET_LABELS, changeRequestStatusLabel, changeRequestTypeLabel, changeRequestValue, isCurrentChangeRequest, type ChangeRequest } from '../../services/change-requests';
 import { formatStaffChangeRequestValue } from '../../utils/change-request-format';
 import { formatDateTime } from '../../utils/date-time';
 import { ApplicationDetailsDialog } from './ApplicationDetailsDialog';
@@ -9,7 +9,6 @@ import { Status } from './primitives';
 
 export const formatChangeRequestSummary = (request: ChangeRequest) => request.reason;
 
-const statusLabel = (status: ChangeRequest['status']) => status === 'PENDING' ? 'Pending' : status === 'APPROVED' ? 'Approved' : 'Rejected';
 const statusTone = (status: ChangeRequest['status']) => status === 'PENDING' ? 'attention' : status === 'APPROVED' ? 'success' : 'critical';
 
 function InventoryStaffChangeRequestDetails({ request, onDismiss, returnFocus }: { request: ChangeRequest; onDismiss:()=>void; returnFocus:RefObject<HTMLElement|null> }) {
@@ -27,7 +26,7 @@ function InventoryStaffChangeRequestDetails({ request, onDismiss, returnFocus }:
   >
     <div className="sl-staff-change-request-details">
       <section className="sl-staff-change-request-identity" aria-label="Request identity">
-        <div><h3>{request.ingredient?.name ?? '—'}</h3><Status tone={statusTone(request.status)}>{statusLabel(request.status)}</Status></div>
+        <div><h3>{request.ingredient?.name ?? '—'}</h3><Status tone={statusTone(request.status)}>{changeRequestStatusLabel(request.status)}</Status></div>
         <p><span>{request.requestID}</span><span aria-hidden="true"> · </span><time dateTime={request.createdAt}>{formatDateTime(request.createdAt)}</time></p>
       </section>
       <section className="sl-staff-change-request-content" aria-labelledby="sl-staff-request-change-title">
@@ -38,7 +37,7 @@ function InventoryStaffChangeRequestDetails({ request, onDismiss, returnFocus }:
           <div><strong>{requested}</strong><span>Requested</span></div>
         </div>
         <div className="sl-staff-change-request-reason"><h4>Reason</h4><p>{request.reason}</p></div>
-        {request.status !== 'PENDING' && request.reviewedAt && <p className="sl-staff-change-request-outcome"><strong>{statusLabel(request.status)}</strong> <time dateTime={request.reviewedAt}>{formatDateTime(request.reviewedAt)}</time></p>}
+        {request.status !== 'PENDING' && request.reviewedAt && <p className="sl-staff-change-request-outcome"><strong>{changeRequestStatusLabel(request.status)}</strong> <time dateTime={request.reviewedAt}>{formatDateTime(request.reviewedAt)}</time></p>}
         {request.status !== 'PENDING' && request.reviewNote?.trim() && <div className="sl-staff-change-request-manager-note"><h4>Manager Note</h4><p>{request.reviewNote}</p></div>}
       </section>
     </div>
@@ -47,7 +46,7 @@ function InventoryStaffChangeRequestDetails({ request, onDismiss, returnFocus }:
 
 export function ChangeRequestDetailsDialog({ request, onDismiss, returnFocus, actions, title = 'Change Request Details', manager = false, inventoryStaff = false }: { request: ChangeRequest|null; onDismiss:()=>void; returnFocus:RefObject<HTMLElement|null>; actions?:ReactNode; title?:string; manager?:boolean; inventoryStaff?:boolean }) {
   if (request && inventoryStaff) return <InventoryStaffChangeRequestDetails request={request} onDismiss={onDismiss} returnFocus={returnFocus}/>;
-  const status=request?.status==='PENDING'?'Pending Review':request?.status==='APPROVED'?'Approved':'Rejected';
+  const status=request?changeRequestStatusLabel(request.status):'Rejected';
   const defaultRows=request?[{label:'Request ID',value:request.requestID},{label:'Submitted By',value:request.requestedBy.name},{label:'Submitted At',value:formatDateTime(request.createdAt)},{label:'Ingredient',value:request.ingredient?.name??'—'},{label:'Request Type',value:changeRequestTypeLabel(request.requestType)},{label:'Status',value:status},{label:'Field',value:isCurrentChangeRequest(request)?CHANGE_REQUEST_TARGET_LABELS[request.targetField]:'Legacy request field'},{label:'Current Value',value:changeRequestValue(request,request.currentValue)},{label:'Requested Value',value:changeRequestValue(request,request.requestedValue)},{label:'Reason',value:request.reason,wide:true},...(request.reviewedBy?[{label:'Reviewed By',value:request.reviewedBy.name}]:[]),...(request.reviewedAt?[{label:'Reviewed On',value:formatDateTime(request.reviewedAt)}]:[]),...(request.reviewNote?[{label:'Review Notes',value:request.reviewNote,wide:true}]:[]),...(!isCurrentChangeRequest(request)?[{label:'Compatibility',value:'Legacy request record',wide:true}]:[])]:[];
   const managerRows=request?[{label:'Request ID',value:request.requestID},{label:'Ingredient',value:request.ingredient?.name??'—'},{label:'Requested By',value:request.requestedBy.name},{label:'Submitted',value:formatDateTime(request.createdAt)},{label:'Request Type',value:changeRequestTypeLabel(request.requestType)},{label:'Detail to Change',value:isCurrentChangeRequest(request)?CHANGE_REQUEST_TARGET_LABELS[request.targetField]:'Legacy request field'},{label:'Current Value',value:changeRequestValue(request,request.currentValue)},{label:'Requested Value',value:changeRequestValue(request,request.requestedValue)},{label:'Reason',value:request.reason,wide:true},...(request.status!=='PENDING'?[...(request.reviewedBy?[{label:'Reviewed By',value:request.reviewedBy.name}]:[]),...(request.reviewedAt?[{label:'Reviewed',value:formatDateTime(request.reviewedAt)}]:[]),...(request.reviewNote?[{label:'Review Notes',value:request.reviewNote,wide:true}]:[]),{label:'Final Status',value:status}]:[]),...(!isCurrentChangeRequest(request)?[{label:'Compatibility',value:'Legacy request record',wide:true}]:[])]:[];
   const rows=manager?managerRows:defaultRows;

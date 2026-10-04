@@ -26,6 +26,7 @@ export interface InventoryBatchStore {
   summary(now: Date): Promise<InventoryBatchSummary>;
   stockInSummary(now: Date): Promise<StockInSummary>;
   create(actor: Actor, input: StockInInput): Promise<InventoryBatch | null>;
+  createMany(actor: Actor, inputs: StockInInput[]): Promise<InventoryBatch[]>;
 }
 export function createInventoryBatches(store: InventoryBatchStore, now: () => Date = () => new Date()) {
   return {
@@ -34,6 +35,7 @@ export function createInventoryBatches(store: InventoryBatchStore, now: () => Da
     summary: () => store.summary(now()),
     stockInSummary: () => store.stockInSummary(now()),
     create: (actor: Actor, input: StockInInput) => store.create(actor, input),
+    createMany: (actor: Actor, inputs: StockInInput[]) => store.createMany(actor, inputs),
     ready: () => store.ready(),
   };
 }

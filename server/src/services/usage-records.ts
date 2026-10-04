@@ -24,6 +24,7 @@ export interface UsageRecordStore {
   detail(id: string): Promise<UsageRecordView | null>;
   summary(now: Date): Promise<UsageSummary>;
   create(actor: Actor, input: UsageCreateInput): Promise<UsageRecordView>;
+  createMany(actor: Actor, inputs: UsageCreateInput[]): Promise<UsageRecordView[]>;
 }
 export function createUsageRecords(store: UsageRecordStore, now: () => Date = () => new Date()) {
   return {
@@ -35,6 +36,14 @@ export function createUsageRecords(store: UsageRecordStore, now: () => Date = ()
       const current = now();
       if (input.dateUsed >= new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate() + 1))) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: 'dateUsed', message: 'Date used cannot be in the future' }]);
       return store.create(actor, input);
+    },
+    createMany: (actor: Actor, inputs: UsageCreateInput[]) => {
+      const current = now();
+      const tomorrow = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate() + 1));
+      inputs.forEach((input, index) => {
+        if (input.dateUsed >= tomorrow) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: `items.${index}.dateUsed`, message: 'Date used cannot be in the future' }]);
+      });
+      return store.createMany(actor, inputs);
     },
   };
 }

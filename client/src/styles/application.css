@@ -33883,3 +33883,73 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-application-records-toolbar[data-filter-layout="records-four"] { grid-template-columns: minmax(0,1fr); }
   .sl-application-records-toolbar[data-filter-layout="records-four"] .sl-application-records-search { grid-column: auto; }
 }
+/* Multi-item operational entry keeps repeated rows inside the established modal shell. */
+.sl-area-dialog.sl-inventory-staff-bulk-dialog {
+  width: min(960px, calc(100vw - 32px));
+  max-width: 960px;
+}
+.sl-inventory-staff-bulk-dialog .sl-dialog-content {
+  max-height: min(68vh, 720px);
+  overflow-y: auto;
+}
+.sl-inventory-staff-bulk-form {
+  grid-template-columns: minmax(0, 1fr);
+}
+.sl-inventory-staff-bulk-form > :is(.sl-bulk-recording-list,.sl-bulk-recording-add,.sl-application-modal-message,.sl-application-modal-actions) {
+  grid-column: 1 / -1;
+}
+.sl-inventory-staff-bulk-form .sl-application-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sl-space-3);
+}
+.sl-bulk-recording-list {
+  display: grid;
+  gap: 16px;
+}
+.sl-bulk-recording-row {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  padding: 18px;
+  border: 1px solid var(--sl-border, #dfe6e2);
+  border-radius: 12px;
+}
+.sl-bulk-recording-row legend {
+  padding: 0 6px;
+  color: var(--sl-text, #17251f);
+  font-weight: 600;
+}
+.sl-bulk-recording-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+.sl-bulk-recording-grid label {
+  min-width: 0;
+}
+.sl-bulk-recording-remove {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--sl-danger, #c42b42);
+  cursor: pointer;
+}
+.sl-bulk-recording-add {
+  justify-self: start;
+  margin-top: 16px;
+}
+@media (max-width: 760px) {
+  .sl-bulk-recording-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .sl-area-dialog.sl-inventory-staff-bulk-dialog { width: calc(100vw - 20px); }
+  .sl-bulk-recording-grid { grid-template-columns: minmax(0, 1fr); }
+  .sl-bulk-recording-row { padding: 16px 12px; }
+}

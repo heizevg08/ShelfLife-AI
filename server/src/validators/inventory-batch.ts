@@ -1,5 +1,6 @@
 import { invalid, objectId } from './administration';
 import { calendarDate } from './date';
+import { bulkItems } from './bulk';
 
 export const INVENTORY_BATCH_DISPLAY_STATUSES = ['In Stock', 'Low Stock', 'Near Expiry', 'Expired'] as const;
 export type InventoryBatchDisplayStatus = typeof INVENTORY_BATCH_DISPLAY_STATUSES[number];
@@ -58,3 +59,5 @@ export function stockInInput(body: unknown): StockInInput {
   const unitCost = number('unitCost', false); if (unitCost !== undefined) result.unitCost = unitCost;
   return result;
 }
+
+export const stockInBulkInput = (body: unknown) => bulkItems(body, stockInInput);

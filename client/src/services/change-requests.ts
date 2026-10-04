@@ -14,6 +14,7 @@ export interface ChangeRequestIngredientOption { id:string; name:string; minimum
 export interface ChangeRequestQuery { page:number; pageSize:number; search?:string; type?:ChangeRequestType; status?:ChangeRequestStatus; from?:string; to?:string; currentOnly?:boolean }
 export const isCurrentChangeRequest = (value: ChangeRequest): value is ChangeRequest & { requestType: ChangeRequestType; targetField: ChangeRequestTargetField } => CHANGE_REQUEST_TYPES.includes(value.requestType as ChangeRequestType) && Boolean(value.targetField);
 export const changeRequestTypeLabel = (value: ChangeRequest['requestType']) => CHANGE_REQUEST_TYPE_LABELS[value as ChangeRequestType] ?? `Legacy · ${value.split('_').map(word=>word[0]+word.slice(1).toLowerCase()).join(' ')}`;
+export const changeRequestStatusLabel = (value: ChangeRequestStatus) => value === 'PENDING' ? 'Pending' : value === 'APPROVED' ? 'Approved' : 'Rejected';
 export const changeRequestValue = (record: ChangeRequest, value: string | undefined) => { if (value === undefined || value === '') return '—'; if (record.targetField === 'standardUnitCost') return `₱${Number(value).toFixed(2)}`; if (record.targetField === 'defaultShelfLifeDays') return `${value} days`; return value; };
 export const changeRequestComparison = (record: ChangeRequest) => {
   const format = (value: string | undefined) => record.targetField === 'minimumStock' && value !== undefined && value !== '' && record.ingredient?.unitOfMeasure ? `${value} ${record.ingredient.unitOfMeasure}` : changeRequestValue(record, value);

@@ -6,7 +6,7 @@ const { randomBytes } = require('node:crypto');
 const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createWasteRecords } = require('../dist/services/waste-records');
-const { wasteInput, wastePagination } = require('../dist/validators/waste-record');
+const { wasteBulkInput, wasteInput, wastePagination } = require('../dist/validators/waste-record');
 
 const staff = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Staff', email: 'staff@shelflife.com', role: 'Inventory Staff', isActive: true, authVersion: 0 };
 const admin = { ...staff, id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Admin', email: 'admin@shelflife.com', role: 'Admin' };
@@ -29,6 +29,13 @@ test('Waste input accepts only client-owned fields and canonical reasons', () =>
   assert.deepEqual(wastePagination({ page: '2', pageSize: '15', reason: 'Spoiled', ingredientId: record.ingredient.id, from: '2030-01-01', to: '2030-01-31' }), { page: 2, pageSize: 15, reason: 'Spoiled', ingredientId: record.ingredient.id, from: new Date('2030-01-01T00:00:00.000Z'), to: new Date('2030-01-31T23:59:59.999Z') });
 });
 
+test('Waste bulk input validates a strict bounded items contract', () => {
+  const item = { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 1, reason: 'Spoiled' };
+  assert.equal(wasteBulkInput({ items: [item, item] }).length, 2);
+  assert.throws(() => wasteBulkInput({ items: [] }));
+  assert.throws(() => wasteBulkInput({ items: [item], wasteCost: 1 }));
+});
+
 test('Waste API permits authorized Manager and Inventory Staff operations and preserves list, summary, and count-breakdown contracts', async () => {
   let received;
   const store = {
@@ -38,6 +45,7 @@ test('Waste API permits authorized Manager and Inventory Staff operations and pr
     async summary() { return { totalWasteToday: { quantity: 2, unit: 'L' }, wasteRecordsToday: 1, mostWastedIngredient: 'Milk', commonWasteReason: 'Spoiled', totalWasteCostToday: 24 }; },
     async reasonBreakdown() { return { period: 'Last 30 Days', counts: { Expired: 0, Spoiled: 1, Damaged: 0, 'Over-prepared': 0, Other: 0 }, total: 1 }; },
     async create(actor, input) { return { ...record, quantityWasted: input.quantityWasted, dateWasted: input.dateWasted.toISOString(), reason: input.reason, recordedBy: { id: actor.id, name: actor.name } }; },
+    async createMany(actor, inputs) { return Promise.all(inputs.map(input => this.create(actor, input))); },
   };
   const auth = createAuth({ byId: async id => [staff, admin, manager].find(user => user.id === id) || null, byEmail: async () => null }, randomBytes(48).toString('hex'));
   const app = createApp([], () => true, auth, undefined, undefined, undefined, undefined, undefined, createWasteRecords(store, () => new Date('2030-01-10T12:00:00.000Z')));
@@ -54,6 +62,8 @@ test('Waste API permits authorized Manager and Inventory Staff operations and pr
     assert.equal((await request(staff, '/reason-breakdown')).status, 200);
     const created = await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 2, reason: 'Spoiled' });
     assert.equal(created.status, 201); assert.equal((await created.json()).record.unit, 'L');
+    const bulk = await request(staff, '/bulk', 'POST', { items: [{ ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 1, reason: 'Spoiled' }, { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 2, reason: 'Damaged' }] }); assert.equal(bulk.status, 201); assert.equal((await bulk.json()).count, 2);
+    assert.equal((await request(manager, '/bulk', 'POST', { items: [{ ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 1, reason: 'Spoiled' }] })).status, 403);
     assert.equal((await request(manager, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 2, reason: 'Spoiled' })).status, 201);
     assert.equal((await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 1, reason: 'Spoiled', recordedBy: admin.id })).status, 400);
     const futureWaste = await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-11', quantityWasted: 1, reason: 'Spoiled' });

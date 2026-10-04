@@ -1,6 +1,7 @@
 import { WASTE_REASONS } from '../models/waste-record';
 import { invalid, objectId } from './administration';
 import { calendarDate } from './date';
+import { bulkItems } from './bulk';
 
 export type WasteReason = typeof WASTE_REASONS[number];
 export type WasteCreateInput = { ingredientId: string; batchId: string; quantityWasted: number; reason: WasteReason; dateWasted: Date };
@@ -14,6 +15,8 @@ export function wasteInput(body: unknown): WasteCreateInput {
   if (typeof input.reason !== 'string' || !WASTE_REASONS.includes(input.reason as WasteReason)) invalid('reason', 'Select a valid waste reason');
   return { ingredientId: objectId(input.ingredientId), batchId: objectId(input.batchId), quantityWasted: input.quantityWasted, reason: input.reason as WasteReason, dateWasted: calendarDate('dateWasted', input.dateWasted) };
 }
+
+export const wasteBulkInput = (body: unknown) => bulkItems(body, wasteInput);
 
 export function wastePagination(query: Record<string, unknown>): WastePageQuery {
   for (const key of Object.keys(query)) if (!['page', 'pageSize', 'search', 'reason', 'ingredientId', 'from', 'to'].includes(key)) invalid(key);

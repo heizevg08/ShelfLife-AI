@@ -1,5 +1,6 @@
 import { invalid, objectId } from './administration';
 import { calendarDate } from './date';
+import { bulkItems } from './bulk';
 
 export type UsageCreateInput = { ingredientId: string; batchId: string; dateUsed: Date; quantityUsed: number };
 export type UsagePageQuery = { page: number; pageSize: number; search?: string; ingredientId?: string; from?: Date; to?: Date };
@@ -11,6 +12,8 @@ export function usageInput(body: unknown): UsageCreateInput {
   if (typeof input.quantityUsed !== 'number' || !Number.isFinite(input.quantityUsed) || input.quantityUsed <= 0) invalid('quantityUsed', 'Enter a quantity greater than 0');
   return { ingredientId: objectId(input.ingredientId), batchId: objectId(input.batchId), dateUsed: calendarDate('dateUsed', input.dateUsed), quantityUsed: input.quantityUsed };
 }
+
+export const usageBulkInput = (body: unknown) => bulkItems(body, usageInput);
 
 export function usagePagination(query: Record<string, unknown>): UsagePageQuery {
   for (const key of Object.keys(query)) if (!['page', 'pageSize', 'search', 'ingredientId', 'from', 'to'].includes(key)) invalid(key);

@@ -42,7 +42,7 @@ test('Inventory Staff details are role-specific while Manager presentation remai
   assert.match(staff, /request\.ingredient\?\.name/);
   assert.match(staff, /request\.requestID/);
   assert.match(staff, /formatDateTime\(request\.createdAt\)/);
-  assert.match(staff, /statusLabel\(request\.status\)/);
+  assert.match(staff, /changeRequestStatusLabel\(request\.status\)/);
   assert.match(staff, />Current</);
   assert.match(staff, />Requested</);
   assert.match(staff, /<p>\{request\.reason\}<\/p>/);

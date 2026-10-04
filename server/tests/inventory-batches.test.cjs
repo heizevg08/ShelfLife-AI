@@ -7,7 +7,7 @@ const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createInventoryBatches } = require('../dist/services/inventory-batches');
 const { deriveInventoryBatchDisplayStatus, formatInventoryBatchID, reserveInventoryBatchID, resolveInventoryValue } = require('../dist/services/inventory-batch-store');
-const { inventoryBatchPagination, stockInInput } = require('../dist/validators/inventory-batch');
+const { inventoryBatchPagination, stockInBulkInput, stockInInput } = require('../dist/validators/inventory-batch');
 
 const admin = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Admin', email: 'admin@shelflife.com', role: 'Admin', isActive: true, authVersion: 0 };
 const superAdmin = { ...admin, id: '2'.repeat(24), _id: '2'.repeat(24), email: 'super@shelflife.com', role: 'Super Admin' };
@@ -46,6 +46,14 @@ test('Stock-In validation and generated Batch ID contract reject client-owned fi
   ]) assert.throws(() => stockInInput(body));
 });
 
+test('bulk Stock-In validates a strict bounded items contract', () => {
+  const item = { ingredientId: '5'.repeat(24), dateReceived: '2030-01-10', quantity: 2, expirationDate: '2030-01-20' };
+  assert.equal(stockInBulkInput({ items: [item, item] }).length, 2);
+  assert.throws(() => stockInBulkInput({ items: [] }));
+  assert.throws(() => stockInBulkInput({ items: Array.from({ length: 26 }, () => item) }));
+  assert.throws(() => stockInBulkInput({ items: [item], createdBy: staff.id }));
+});
+
 test('concurrent Batch ID reservations remain unique within a receipt date', async () => {
   let sequence = 0;
   const ids = await Promise.all(Array.from({ length: 25 }, () => reserveInventoryBatchID(new Date('2030-01-10T00:00:00.000Z'), async () => ++sequence)));
@@ -74,6 +82,7 @@ test('inventory batch API permits authorized Manager and Inventory Staff Stock-I
     async summary() { return { totalIngredients: 1, totalBatches: 1, lowStockItems: 1, nearExpiry: 0, expiredItems: 0, inventoryValue: 32, statusCounts: { 'In Stock': 0, 'Low Stock': 1, 'Near Expiry': 0, Expired: 0 }, categories: ['Dairy'], categoryCounts: [{ label: 'Dairy', value: 1 }] }; },
     async stockInSummary() { return { totalBatches: 1, stockInToday: 1, ingredientsReceivedToday: 1, batchesReceivedThisMonth: 1, expiringSoonBatches: 0 }; },
     async create(actor, input) { return { ...batch, quantity: input.quantity, createdBy: { id: actor.id, name: actor.name } }; },
+    async createMany(actor, inputs) { return inputs.map(input => ({ ...batch, quantity: input.quantity, createdBy: { id: actor.id, name: actor.name } })); },
     async ready() {},
   };
   const users = [admin, superAdmin, manager, staff];
@@ -97,6 +106,8 @@ test('inventory batch API permits authorized Manager and Inventory Staff Stock-I
     assert.equal((await request(admin, '', 'POST', input)).status, 403);
     const managerCreated = await request(manager, '', 'POST', input); assert.equal(managerCreated.status, 201); assert.equal((await managerCreated.json()).batch.createdBy.id, manager.id);
     const created = await request(staff, '', 'POST', input); assert.equal(created.status, 201); assert.equal((await created.json()).batch.batchID, batch.batchID);
+    const bulk = await request(staff, '/bulk', 'POST', { items: [input, input] }); assert.equal(bulk.status, 201); assert.equal((await bulk.json()).count, 2);
+    assert.equal((await request(manager, '/bulk', 'POST', { items: [input] })).status, 403);
     assert.equal((await request(staff, '', 'POST', { ...input, createdBy: admin.id })).status, 400);
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });

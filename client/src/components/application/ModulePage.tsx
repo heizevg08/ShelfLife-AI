@@ -5,7 +5,8 @@ import { AccountsTable } from './AccountsTable';
 import { APPLICATION_RECORD_PAGE_SIZES, ApplicationPendingState } from './ApplicationPatterns';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
-import { InventoryStaffAddButton, InventoryStaffModal, InventoryStaffModalForm } from './InventoryStaffModal';
+import { InventoryStaffAddButton } from './InventoryStaffModal';
+import { InventoryStaffBulkModal } from './InventoryStaffBulkModal';
 import { ingredientUnitCostApiValue, ingredientUnitCostError, ingredientUnitCostFormError, normalizeIngredientUnitCostEditingValue } from './ingredient-unit-cost';
 import { moduleContent, previewFields, type PreviewId } from './module-content';
 import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSummaryCards, PlaceholderTable, Status, SummaryCards } from './primitives';
@@ -13,10 +14,10 @@ import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { createIngredient, deleteIngredient, getIngredientSummary, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type Ingredient, type IngredientInput, type StockInIngredient } from '../../services/ingredients';
-import { createStockIn, getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
-import { createUsageRecord, getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
-import { createWasteRecord, getWasteSummary, listWasteRecords, type WasteReason, type WasteRecord, type WasteSummary } from '../../services/waste-records';
-import { formatDate, formatDateTime, isValidDateOnlyInput, localDateInputValue } from '../../utils/date-time';
+import { getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
+import { getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
+import { getWasteSummary, listWasteRecords, type WasteReason, type WasteRecord, type WasteSummary } from '../../services/waste-records';
+import { formatDate, formatDateTime, localDateInputValue } from '../../utils/date-time';
 import { ConnectedManagerInventoryPage } from './ManagerInventoryPage';
 import { ConnectedManagerUsageWastePage } from './ManagerUsageWastePage';
 import { ConnectedManagerChangeRequestsPage } from './ManagerChangeRequestsPage';
@@ -29,37 +30,11 @@ const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', '
 const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
 const STOCK_IN_DATE_RANGES = ['All dates', 'Today', 'Last 7 Days', 'Last 30 Days', 'Custom range'] as const;
 const INVENTORY_STAFF_WASTE_REASONS = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'] as const;
-type WasteField = 'ingredientId' | 'batchId' | 'quantityWasted' | 'dateWasted' | 'reason';
-type WasteDraft = Record<WasteField, string>;
 type IngredientDraft = { name: string; brand: string; category: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
 const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
 type IngredientField = keyof IngredientDraft;
 const ingredientApiField: Record<string, IngredientField | undefined> = { name: 'name', brand: 'brand', category: 'category', unitOfMeasure: 'unit', minimumStock: 'minStock', standardUnitCost: 'unitCost', defaultShelfLifeDays: 'shelfLife', description: 'description' };
 const validShelfLife = (value: number | undefined) => value !== undefined && Number.isSafeInteger(value) && value >= 1 && value <= 3650;
-
-function wasteFieldError(field: WasteField, draft: WasteDraft, today: string) {
-  if (field === 'ingredientId') return draft.ingredientId ? undefined : 'Select an ingredient.';
-  if (field === 'batchId') return draft.batchId ? undefined : 'Select a batch ID.';
-  if (field === 'dateWasted') {
-    if (!draft.dateWasted) return 'Select the date the ingredient was wasted.';
-    if (!isValidDateOnlyInput(draft.dateWasted)) return 'Enter a valid waste date.';
-    return draft.dateWasted > today ? 'Date wasted cannot be in the future.' : undefined;
-  }
-  if (field === 'reason') return draft.reason ? undefined : 'Select a waste reason.';
-  const quantity = draft.quantityWasted.trim();
-  if (!quantity) return 'Enter the quantity wasted.';
-  const numericQuantity = Number(quantity);
-  if (!Number.isFinite(numericQuantity)) return 'Enter a numeric quantity.';
-  return numericQuantity > 0 ? undefined : 'Quantity wasted must be greater than 0.';
-}
-
-function wasteFormErrors(draft: WasteDraft, today: string) {
-  return (Object.keys(draft) as WasteField[]).reduce<Partial<Record<WasteField, string>>>((errors, field) => {
-    const error = wasteFieldError(field, draft, today);
-    if (error) errors[field] = error;
-    return errors;
-  }, {});
-}
 
 function IngredientFields({ form, errors, busy, formError, set, setError, canonicalModal = false, showRequiredIndicators = true, reserveErrorSpace = false }: { form: IngredientDraft; errors: Partial<Record<IngredientField, string>>; busy: boolean; formError: string; set: (key: IngredientField, value: string) => void; setError: (key: IngredientField, value?: string) => void; canonicalModal?: boolean; showRequiredIndicators?: boolean; reserveErrorSpace?: boolean }) {
   const field = (key: IngredientField, label: string, control: React.ReactNode, required = true, reserveValidationSlot = reserveErrorSpace) => {
@@ -125,71 +100,23 @@ function FormPreview({ id }: { id: PreviewId }) {
 
 function InventoryStaffWastePage() {
   const [addOpen, setAddOpen] = useState(false), addButton = useRef<HTMLButtonElement>(null);
-  const wasteForm = useRef<HTMLFormElement>(null);
-  const wasteFieldInteractions = useRef<Partial<Record<WasteField, boolean>>>({});
-  const [ingredientId, setIngredientId] = useState(''), [batchId, setBatchId] = useState(''), [quantityWasted, setQuantityWasted] = useState(''), [reason, setReason] = useState<WasteReason | ''>(''), [dateWasted, setDateWasted] = useState('');
   const [search, setSearch] = useState(''), [reasonFilter, setReasonFilter] = useState<WasteReason | 'All Reasons'>('All Reasons'), [range, setRange] = useState('All dates'), [dateFrom, setDateFrom] = useState(''), [dateTo, setDateTo] = useState(''), [rows, setRows] = useState(10), [page, setPage] = useState(1);
-  const [ingredients, setIngredients] = useState<StockInIngredient[]>([]), [batches, setBatches] = useState<InventoryBatch[]>([]);
-  const [data, setData] = useState<{ items: WasteRecord[]; total: number } | null>(null), [summary, setSummary] = useState<WasteSummary | null>(null), [loading, setLoading] = useState(false), [loadError, setLoadError] = useState(false), [busy, setBusy] = useState(false), [formMessage, setFormMessage] = useState(''), [errors, setErrors] = useState<Partial<Record<WasteField, string>>>({}), [touched, setTouched] = useState<Partial<Record<WasteField, boolean>>>({}), [submitAttempted, setSubmitAttempted] = useState(false);
-  const selectedIngredient = ingredients.find(candidate => candidate.id === ingredientId);
-  const selectedBatch = batches.find(candidate => candidate.id === batchId);
-  const asDate = localDateInputValue;
-  const todayBusinessDate = localDateInputValue();
+  const [ingredients, setIngredients] = useState<StockInIngredient[]>([]);
+  const [data, setData] = useState<{ items: WasteRecord[]; total: number } | null>(null), [summary, setSummary] = useState<WasteSummary | null>(null), [loading, setLoading] = useState(false), [loadError, setLoadError] = useState(false);
   const queryDates = () => {
-    const today = new Date(), end = asDate(today);
+    const today = new Date(), end = localDateInputValue(today);
     if (range === 'Today') return { from: end, to: end };
-    if (range === 'Last 7 Days') { const start = new Date(today); start.setDate(today.getDate() - 6); return { from: asDate(start), to: end }; }
-    if (range === 'Last 30 Days') { const start = new Date(today); start.setDate(today.getDate() - 29); return { from: asDate(start), to: end }; }
+    if (range === 'Last 7 Days') { const start = new Date(today); start.setDate(today.getDate() - 6); return { from: localDateInputValue(start), to: end }; }
+    if (range === 'Last 30 Days') { const start = new Date(today); start.setDate(today.getDate() - 29); return { from: localDateInputValue(start), to: end }; }
     return range === 'Custom range' ? { ...(dateFrom ? { from: dateFrom } : {}), ...(dateTo ? { to: dateTo } : {}) } : {};
   };
-  const wasteDraft = { ingredientId, batchId, quantityWasted, dateWasted, reason };
-  const resetForm = () => { wasteFieldInteractions.current = {}; setIngredientId(''); setBatchId(''); setQuantityWasted(''); setReason(''); setDateWasted(''); setErrors({}); setTouched({}); setSubmitAttempted(false); setFormMessage(''); };
-  const openWasteForm = () => { resetForm(); setAddOpen(true); };
-  const closeForm = () => { if (!busy) { resetForm(); setAddOpen(false); } };
-  const load = async (signal: AbortSignal) => {
+  const load = async (signal?: AbortSignal) => {
     const query = { page, pageSize: rows, ...(search.trim() ? { search: search.trim() } : {}), ...(reasonFilter === 'All Reasons' ? {} : { reason: reasonFilter }), ...queryDates() };
     const [records, nextSummary] = await Promise.all([listWasteRecords(query, signal), getWasteSummary(signal)]);
     setData(records); setSummary(nextSummary);
   };
   useEffect(() => { const controller = new AbortController(); listStockInIngredients(controller.signal).then(result => setIngredients(result.ingredients)).catch(() => { if (!controller.signal.aborted) setIngredients([]); }); return () => controller.abort(); }, []);
-  useEffect(() => { setBatchId(''); if (!ingredientId) { setBatches([]); return; } const controller = new AbortController(); listInventoryBatches({ page: 1, pageSize: 150, ingredientId }, controller.signal).then(result => setBatches(result.items)).catch(() => { if (!controller.signal.aborted) setBatches([]); }); return () => controller.abort(); }, [ingredientId]);
   useEffect(() => { const controller = new AbortController(); setLoading(true); setLoadError(false); load(controller.signal).catch(() => { if (!controller.signal.aborted) setLoadError(true); }).finally(() => { if (!controller.signal.aborted) setLoading(false); }); return () => controller.abort(); }, [search, reasonFilter, range, dateFrom, dateTo, rows, page]);
-  const submitWaste = async (event: FormEvent) => {
-    event.preventDefault();
-    const next = wasteFormErrors(wasteDraft, todayBusinessDate);
-    const numericQuantity = Number(quantityWasted);
-    if (Object.keys(next).length) { setSubmitAttempted(true); setErrors(next); requestAnimationFrame(() => wasteForm.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()); return; }
-    if (!reason) return;
-    setBusy(true); setErrors({}); setFormMessage('');
-    try {
-      await createWasteRecord({ ingredientId, batchId, quantityWasted: numericQuantity, reason, dateWasted });
-      closeForm(); setPage(1);
-      const controller = new AbortController(); await load(controller.signal);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        const fields: Partial<Record<WasteField, string>> = {};
-        for (const detail of error.details) if (['ingredientId', 'batchId', 'quantityWasted', 'dateWasted', 'reason'].includes(detail.field)) fields[detail.field as keyof typeof fields] = detail.message;
-        setSubmitAttempted(true); setErrors(fields); setFormMessage(Object.keys(fields).length ? '' : error.message);
-      } else setFormMessage('Unable to save the waste record. Try again.');
-    } finally { setBusy(false); }
-  };
-  const markWasteFieldInteraction = (field: WasteField) => { wasteFieldInteractions.current[field] = true; };
-  const validateWasteFieldOnBlur = (field: WasteField) => { if (!wasteFieldInteractions.current[field]) return; setTouched(current => ({ ...current, [field]: true })); setErrors(current => ({ ...current, [field]: wasteFieldError(field, wasteDraft, todayBusinessDate) })); };
-  const handleWasteQuantityChange = (value: string) => {
-    const error = value.trim() || touched.quantityWasted ? wasteFieldError('quantityWasted', { ...wasteDraft, quantityWasted: value }, todayBusinessDate) : undefined;
-    setQuantityWasted(value);
-    markWasteFieldInteraction('quantityWasted');
-    if (error && value.trim()) setTouched(current => ({ ...current, quantityWasted: true }));
-    setErrors(current => ({ ...current, quantityWasted: error }));
-  };
-  const updateWasteFieldError = (field: Exclude<WasteField, 'quantityWasted'>, value: string) => {
-    const draft = { ...wasteDraft, [field]: value } as WasteDraft;
-    const error = value || touched[field] || submitAttempted ? wasteFieldError(field, draft, todayBusinessDate) : undefined;
-    setErrors(current => ({ ...current, [field]: error }));
-  };
-  const showWasteFieldError = (field: WasteField) => Boolean(errors[field] && (touched[field] || submitAttempted));
-  const fieldError = (field: WasteField) => showWasteFieldError(field) ? <span id={`waste-${field}-error`} className="sl-field-error" role="alert">{errors[field]}</span> : null;
-  const invalid = (field: WasteField) => showWasteFieldError(field) ? { 'aria-invalid': true as const, 'aria-describedby': `waste-${field}-error` } : {};
   const metric = (value: number | string | undefined) => loadError && !summary ? 'Unavailable' : loading && !summary ? '—' : (value ?? '—');
   return <>
     <PageHeader eyebrow="Records" title="Waste Recording" description="Record ingredients that are discarded or no longer usable. Help us reduce food waste." />
@@ -203,12 +130,12 @@ function InventoryStaffWastePage() {
       </section>
       </div>
       <section className="sl-application-records sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-waste-card sl-staff-waste-records"><header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><Clock3/></span><h2>Recent Waste Records</h2></header>
-            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-waste-toolbar"><label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16}/><input type="search" value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="Search by ingredient or Batch ID..."/></div></label><label><span>Reason</span><select value={reasonFilter} onChange={e=>{setReasonFilter(e.target.value as WasteReason | 'All Reasons');setPage(1)}}><option>All Reasons</option>{INVENTORY_STAFF_WASTE_REASONS.map(value=><option key={value}>{value}</option>)}</select></label><label><span>Date range</span><select value={range} onChange={e=>{setRange(e.target.value);setPage(1)}}>{STOCK_IN_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>{range==='Custom range'&&<div className="sl-v219-custom-date-range" aria-label="Custom waste date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo||undefined} onChange={e=>{setDateFrom(e.target.value);setPage(1)}}/></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom||undefined} onChange={e=>{setDateTo(e.target.value);setPage(1)}}/></label></div>}<div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setReasonFilter('All Reasons');setRange('All dates');setDateFrom('');setDateTo('');setPage(1)}}>Reset</button><InventoryStaffAddButton buttonRef={addButton} label="Record Waste" onClick={openWasteForm} /></div></div></div>
+            <div className="sl-sa-ingredients-table-filters"><div className="sl-sa-ingredients-filter-card sl-staff-waste-toolbar"><label className="sl-sa-ingredients-search"><span>Search records</span><div><Search size={16}/><input type="search" value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="Search by ingredient or Batch ID..."/></div></label><label><span>Reason</span><select value={reasonFilter} onChange={e=>{setReasonFilter(e.target.value as WasteReason | 'All Reasons');setPage(1)}}><option>All Reasons</option>{INVENTORY_STAFF_WASTE_REASONS.map(value=><option key={value}>{value}</option>)}</select></label><label><span>Date range</span><select value={range} onChange={e=>{setRange(e.target.value);setPage(1)}}>{STOCK_IN_DATE_RANGES.map(value=><option key={value}>{value}</option>)}</select></label>{range==='Custom range'&&<div className="sl-v219-custom-date-range" aria-label="Custom waste date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo||undefined} onChange={e=>{setDateFrom(e.target.value);setPage(1)}}/></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom||undefined} onChange={e=>{setDateTo(e.target.value);setPage(1)}}/></label></div>}<div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{setSearch('');setReasonFilter('All Reasons');setRange('All dates');setDateFrom('');setDateTo('');setPage(1)}}>Reset</button><InventoryStaffAddButton buttonRef={addButton} label="Record Waste" onClick={()=>setAddOpen(true)} /></div></div></div>
             <div className="sl-sa-ingredients-table-scroll sl-staff-waste-table-shell"><table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-waste-table"><thead><tr>{['Date & Time','Ingredient','Batch ID','Quantity Wasted','Reason','Recorded By'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{loading&&!data?<tr><td colSpan={6}><DataState kind="loading" title="Loading waste records" description="Retrieving recorded waste transactions."/></td></tr>:loadError?<tr><td colSpan={6}><DataState kind="error" title="Waste records unavailable" description="The waste service could not be reached."/></td></tr>:!data?.items.length?<tr><td colSpan={6}><DataState kind="empty" title={summary?.wasteRecordsToday || search || reasonFilter !== 'All Reasons' || range !== 'All dates' ? 'No matching records' : 'No live records yet'} description={summary?.wasteRecordsToday || search || reasonFilter !== 'All Reasons' || range !== 'All dates' ? 'No waste records match the current search and filters.' : 'Waste records will appear here after discarded inventory is recorded.'}/></td></tr>:data.items.map(record=><tr key={record.id}><td><time dateTime={record.createdAt}>{formatDateTime(record.createdAt)}</time></td><td className="sl-emphasized-value" title={record.ingredient.name}>{record.ingredient.name}</td><td>{record.batch.batchID}</td><td>{record.quantityWasted} {record.unit}</td><td>{record.reason}</td><td>{record.recordedBy.name}</td></tr>)}</tbody></table></div>
             <footer className="sl-records-footer sl-staff-waste-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={rows} onChange={e=>{setRows(Number(e.target.value));setPage(1)}}>{[10,15,50,100,150].map(n=><option key={n}>{n}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={data?.total??0} itemLabel="waste records" onPageChange={setPage} /></footer>
       </section>
     </div>
-    <InventoryStaffModal open={addOpen} busy={busy} showClose={false} className="sl-staff-waste-dialog" title="Record Waste" subtitle="Enter the details of the discarded ingredient." Icon={Trash2} onDismiss={closeForm} returnFocus={addButton}><InventoryStaffModalForm formRef={wasteForm} onSubmit={submitWaste} message={formMessage} secondaryLabel="Cancel" onSecondary={closeForm} primaryLabel="Save Waste Record" busy={busy} className="sl-staff-waste-form"><div className="sl-staff-waste-form-row"><label><span>Ingredient</span><select value={ingredientId} onPointerDown={()=>markWasteFieldInteraction('ingredientId')} onKeyDown={()=>markWasteFieldInteraction('ingredientId')} onBlur={()=>validateWasteFieldOnBlur('ingredientId')} onChange={e=>{const value=e.target.value;markWasteFieldInteraction('ingredientId');setIngredientId(value);setBatchId('');updateWasteFieldError('ingredientId',value);setErrors(current=>({...current,batchId:touched.batchId||submitAttempted?wasteFieldError('batchId',{...wasteDraft,ingredientId:value,batchId:''},todayBusinessDate):undefined}))}} {...invalid('ingredientId')}><option value="">Search or select ingredient...</option>{ingredients.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>{fieldError('ingredientId')}</label><label><span>Batch ID</span><select value={batchId} disabled={!ingredientId} onPointerDown={()=>markWasteFieldInteraction('batchId')} onKeyDown={()=>markWasteFieldInteraction('batchId')} onBlur={()=>validateWasteFieldOnBlur('batchId')} onChange={e=>{const value=e.target.value;markWasteFieldInteraction('batchId');setBatchId(value);updateWasteFieldError('batchId',value)}} {...invalid('batchId')}><option value="">Select batch ID...</option>{batches.filter(item=>item.quantity>0).map(item=><option key={item.id} value={item.id}>{item.batchID}</option>)}</select>{fieldError('batchId')}</label></div><div className="sl-staff-waste-form-row"><label><span>Quantity Wasted</span><input inputMode="decimal" value={quantityWasted} onPointerDown={()=>markWasteFieldInteraction('quantityWasted')} onKeyDown={()=>markWasteFieldInteraction('quantityWasted')} onBlur={()=>validateWasteFieldOnBlur('quantityWasted')} onChange={e=>handleWasteQuantityChange(e.target.value)} placeholder="Enter quantity" {...invalid('quantityWasted')}/>{fieldError('quantityWasted')}</label><label><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedBatch ? 'Unit derived from selected inventory batch' : selectedIngredient ? 'Unit derived from selected ingredient' : 'Unit will be derived from the selected inventory batch'}>{selectedBatch?.unit ?? selectedIngredient?.unitOfMeasure ?? '—'}</output></label></div><div className="sl-staff-waste-form-row"><label><span>Date Wasted</span><input type="date" value={dateWasted} max={todayBusinessDate} onPointerDown={()=>markWasteFieldInteraction('dateWasted')} onKeyDown={()=>markWasteFieldInteraction('dateWasted')} onBlur={()=>validateWasteFieldOnBlur('dateWasted')} onChange={e=>{const value=e.target.value;markWasteFieldInteraction('dateWasted');setDateWasted(value);updateWasteFieldError('dateWasted',value)}} {...invalid('dateWasted')}/>{fieldError('dateWasted')}</label><label><span>Reason</span><select value={reason} onPointerDown={()=>markWasteFieldInteraction('reason')} onKeyDown={()=>markWasteFieldInteraction('reason')} onBlur={()=>validateWasteFieldOnBlur('reason')} onChange={e=>{const value=e.target.value as WasteReason | '';markWasteFieldInteraction('reason');setReason(value);updateWasteFieldError('reason',value)}} {...invalid('reason')}><option value="">Select reason...</option>{INVENTORY_STAFF_WASTE_REASONS.map(value=><option key={value}>{value}</option>)}</select>{fieldError('reason')}</label></div></InventoryStaffModalForm></InventoryStaffModal>
+    <InventoryStaffBulkModal mode="waste" open={addOpen} ingredients={ingredients} onDismiss={()=>setAddOpen(false)} returnFocus={addButton} onSaved={async()=>{setPage(1);await load(new AbortController().signal)}} />
   </>;
 }
 
@@ -259,101 +186,24 @@ function ManagerUsageWastePage() {
 
 
 function InventoryStaffUsagePage() {
-  type UsageField = 'ingredientId' | 'batchId' | 'dateUsed' | 'quantity';
-  const [rowsPerPage, setRowsPerPage] = useState('10');
-  const [usagePage, setUsagePage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [range, setRange] = useState('All dates');
-  const [usageDateFrom, setUsageDateFrom] = useState('');
-  const [usageDateTo, setUsageDateTo] = useState('');
-  const [ingredientFilter, setIngredientFilter] = useState('All Ingredients');
+  const [rowsPerPage, setRowsPerPage] = useState('10'), [usagePage, setUsagePage] = useState(1), [search, setSearch] = useState(''), [range, setRange] = useState('All dates'), [usageDateFrom, setUsageDateFrom] = useState(''), [usageDateTo, setUsageDateTo] = useState(''), [ingredientFilter, setIngredientFilter] = useState('All Ingredients');
   const [usageIngredients, setUsageIngredients] = useState<StockInIngredient[]>([]);
-  const [usageBatches, setUsageBatches] = useState<InventoryBatch[]>([]);
-  const [usageData, setUsageData] = useState<{ items: UsageRecord[]; total: number }>();
-  const [usageSummary, setUsageSummary] = useState<UsageSummary>();
-  const [usageLoading, setUsageLoading] = useState(true);
-  const [usageError, setUsageError] = useState(false);
-  const [ingredientId, setIngredientId] = useState('');
-  const [batchId, setBatchId] = useState('');
-  const [dateUsed, setDateUsed] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [usageMessage, setUsageMessage] = useState('');
-  const [usageErrors, setUsageErrors] = useState<Partial<Record<UsageField, string>>>({});
-  const [addUsageOpen, setAddUsageOpen] = useState(false);
+  const [usageData, setUsageData] = useState<{ items: UsageRecord[]; total: number }>(), [usageSummary, setUsageSummary] = useState<UsageSummary>(), [usageLoading, setUsageLoading] = useState(true), [usageError, setUsageError] = useState(false), [addUsageOpen, setAddUsageOpen] = useState(false);
   const addUsageButton = useRef<HTMLButtonElement>(null);
-  const usageForm = useRef<HTMLFormElement>(null);
-  const selectedUsageIngredient = usageIngredients.find(value => value.id === ingredientId);
-  const selectedUsageBatch = usageBatches.find(value => value.id === batchId);
-  const clearUsageError = (field: UsageField) => {
-    setUsageErrors(current => ({ ...current, [field]: undefined }));
-    setUsageMessage('');
-  };
-  const usageValidation = (field: UsageField) => ({
-    'aria-invalid': usageErrors[field] ? true as const : undefined,
-    'aria-describedby': usageErrors[field] ? `usage-${field}-error` : undefined,
-  });
-  const renderUsageError = (field: UsageField) => usageErrors[field] ? <span id={`usage-${field}-error`} className="sl-field-error">{usageErrors[field]}</span> : null;
-  const clearForm = () => { setIngredientId(''); setBatchId(''); setDateUsed(''); setQuantity(''); setUsageBatches([]); setUsageErrors({}); setUsageMessage(''); };
   const resolveUsageRange = () => {
-    const today = new Date();
-    const format = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    const today = new Date(), format = (value: Date) => localDateInputValue(value);
     if (range === 'Today') { const value = format(today); return { from: value, to: value }; }
     if (range === 'Last 7 Days') { const from = new Date(today); from.setDate(today.getDate() - 6); return { from: format(from), to: format(today) }; }
     if (range === 'Last 30 Days') { const from = new Date(today); from.setDate(today.getDate() - 29); return { from: format(from), to: format(today) }; }
-    return { ...(usageDateFrom ? { from: usageDateFrom } : {}), ...(usageDateTo ? { to: usageDateTo } : {}) };
+    return range === 'Custom range' ? { ...(usageDateFrom ? { from: usageDateFrom } : {}), ...(usageDateTo ? { to: usageDateTo } : {}) } : {};
   };
   const loadUsage = async (signal?: AbortSignal) => {
     const dateRange = resolveUsageRange();
-    const [data, summary] = await Promise.all([listUsageRecords({ page: usagePage, pageSize: Number(rowsPerPage), ...(search.trim() ? { search: search.trim() } : {}), ...(ingredientFilter !== 'All Ingredients' ? { ingredientId: ingredientFilter } : {}), ...dateRange }, signal), getUsageSummary(signal)]);
-    setUsageData(data); setUsageSummary(summary);
+    const [records, summary] = await Promise.all([listUsageRecords({ page: usagePage, pageSize: Number(rowsPerPage), ...(search.trim() ? { search: search.trim() } : {}), ...(ingredientFilter !== 'All Ingredients' ? { ingredientId: ingredientFilter } : {}), ...dateRange }, signal), getUsageSummary(signal)]);
+    setUsageData(records); setUsageSummary(summary);
   };
-  const submitUsage = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const next: Partial<Record<UsageField, string>> = {};
-    if (!ingredientId) next.ingredientId = 'Select an ingredient.';
-    if (!batchId) next.batchId = 'Select a batch.';
-    if (!dateUsed) next.dateUsed = 'Select the date used.';
-    if (!quantity) next.quantity = 'Enter the quantity used.';
-    const numericQuantity = Number(quantity);
-    if (quantity && (!Number.isFinite(numericQuantity) || numericQuantity <= 0)) next.quantity = 'Enter a quantity greater than 0.';
-    if (Object.keys(next).length) {
-      setUsageErrors(next);
-      setUsageMessage('');
-      requestAnimationFrame(() => usageForm.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
-      return;
-    }
-    setUsageErrors({});
-    try {
-      await createUsageRecord({ ingredientId, batchId, dateUsed, quantityUsed: numericQuantity });
-      clearForm(); setAddUsageOpen(false); setUsagePage(1); await loadUsage();
-    } catch (error) {
-      if (error instanceof ApiError) {
-        const fieldErrors: Partial<Record<UsageField, string>> = {};
-        for (const detail of error.details) if (['ingredientId', 'batchId', 'dateUsed', 'quantityUsed'].includes(detail.field)) fieldErrors[detail.field === 'quantityUsed' ? 'quantity' : detail.field as UsageField] = detail.message;
-        setUsageErrors(fieldErrors); setUsageMessage(Object.keys(fieldErrors).length ? '' : error.message);
-      } else setUsageMessage('Unable to save usage. Try again.');
-    }
-  };
-  useEffect(() => {
-    const controller = new AbortController();
-    listStockInIngredients(controller.signal).then(result => setUsageIngredients(result.ingredients)).catch(() => {
-      if (!controller.signal.aborted) setUsageIngredients([]);
-    });
-    return () => controller.abort();
-  }, []);
-  useEffect(() => {
-    if (!ingredientId) { setUsageBatches([]); return; }
-    const controller = new AbortController();
-    listInventoryBatches({ page: 1, pageSize: 150, ingredientId }, controller.signal).then(result => setUsageBatches(result.items)).catch(() => {
-      if (!controller.signal.aborted) setUsageBatches([]);
-    });
-    return () => controller.abort();
-  }, [ingredientId]);
-  useEffect(() => {
-    const controller = new AbortController(); setUsageLoading(true); setUsageError(false);
-    loadUsage(controller.signal).catch(() => { if (!controller.signal.aborted) setUsageError(true); }).finally(() => { if (!controller.signal.aborted) setUsageLoading(false); });
-    return () => controller.abort();
-  }, [search, ingredientFilter, range, usageDateFrom, usageDateTo, rowsPerPage, usagePage]);
+  useEffect(() => { const controller = new AbortController(); listStockInIngredients(controller.signal).then(result => setUsageIngredients(result.ingredients)).catch(() => { if (!controller.signal.aborted) setUsageIngredients([]); }); return () => controller.abort(); }, []);
+  useEffect(() => { const controller = new AbortController(); setUsageLoading(true); setUsageError(false); loadUsage(controller.signal).catch(() => { if (!controller.signal.aborted) setUsageError(true); }).finally(() => { if (!controller.signal.aborted) setUsageLoading(false); }); return () => controller.abort(); }, [search, ingredientFilter, range, usageDateFrom, usageDateTo, rowsPerPage, usagePage]);
   const usageMetric = (value: number | string | undefined) => usageError && !usageSummary ? 'Unavailable' : usageLoading && !usageSummary ? '—' : (value ?? '—');
 
   return <>
@@ -401,9 +251,9 @@ function InventoryStaffUsagePage() {
                 <thead><tr><th data-usage-column="date-time">Date &amp; Time</th><th data-usage-column="ingredient">Ingredient</th><th data-usage-column="batch-id">Batch ID</th><th data-usage-column="quantity">Quantity Used</th><th data-usage-column="recorded-by">Recorded By</th></tr></thead>
                 <tbody>
                   {usageData?.items.map(record => <tr key={record.id}><td data-usage-column="date-time"><time dateTime={record.createdAt}>{formatDateTime(record.createdAt)}</time></td><td data-usage-column="ingredient" className="sl-emphasized-value" title={record.ingredient.name}>{record.ingredient.name}</td><td data-usage-column="batch-id">{record.batch.batchID}</td><td data-usage-column="quantity">{record.quantityUsed} {record.unit}</td><td data-usage-column="recorded-by">{record.recordedBy.name}</td></tr>)}
-                  {!usageLoading && !usageError && (!usageData || usageData.items.length === 0) && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:5}).map((_,index)=><td key={index}>—</td>)}</tr>}
-                  {usageLoading && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:5}).map((_,index)=><td key={index}>Loading…</td>)}</tr>}
-                  {usageError && <tr className="sl-sa-records-dash-row sl-staff-records-dash-row">{Array.from({length:5}).map((_,index)=><td key={index}>Data unavailable</td>)}</tr>}
+                  {!usageLoading && !usageError && (!usageData || usageData.items.length === 0) && <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="empty" title={search || ingredientFilter !== 'All Ingredients' || range !== 'All dates' ? 'No matching records' : 'No live records yet'} description={search || ingredientFilter !== 'All Ingredients' || range !== 'All dates' ? 'No usage records match the current search and filters.' : 'Usage records will appear here after inventory consumption is recorded.'}/></td></tr>}
+                  {usageLoading && <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="loading" title="Loading usage records" description="Retrieving recorded usage transactions."/></td></tr>}
+                  {usageError && <tr><td colSpan={5} className="sl-empty-cell"><DataState kind="error" title="Usage records unavailable" description="The usage service could not be reached."/></td></tr>}
                 </tbody>
               </table>
             </div>
@@ -415,22 +265,7 @@ function InventoryStaffUsagePage() {
       </div>
     </div>
 
-    <Dialog open={addUsageOpen} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><FileInput size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Record Usage</span><small>Record ingredient consumption from an inventory batch.</small></span></span>} className="sl-add-user-dialog sl-account-reference-dialog sl-usage-entry-modal" onDismiss={()=>{clearForm();setAddUsageOpen(false)}} returnFocus={addUsageButton} actions={<span className="sl-creation-form-actions"><button type="button" className="sl-button" onClick={()=>{clearForm();setAddUsageOpen(false)}}>Cancel</button><button type="submit" form="sl-usage-entry-form" className="sl-button sl-button-primary">Save Usage Record</button></span>}>
-      <form id="sl-usage-entry-form" ref={usageForm} className="sl-usage-entry-form sl-creation-form" noValidate onSubmit={submitUsage}>
-        <div className="sl-creation-form-grid">
-          <div className="sl-creation-form-row">
-            <label className="sl-creation-form-field"><span>Ingredient</span><select value={ingredientId} onChange={event=>{setIngredientId(event.target.value);setBatchId('');clearUsageError('ingredientId');clearUsageError('batchId')}} {...usageValidation('ingredientId')}><option value="">Search or select ingredient...</option>{usageIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select>{renderUsageError('ingredientId')}</label>
-            <label className="sl-creation-form-field"><span>Batch ID</span><select value={batchId} disabled={!ingredientId} onChange={event=>{setBatchId(event.target.value);clearUsageError('batchId')}} {...usageValidation('batchId')}><option value="">Select batch...</option>{usageBatches.map(value=><option key={value.id} value={value.id}>{value.batchID}</option>)}</select>{renderUsageError('batchId')}</label>
-          </div>
-          <div className="sl-creation-form-row">
-            <label className="sl-creation-form-field"><span>Date Used</span><input type="date" value={dateUsed} onChange={event=>{setDateUsed(event.target.value);clearUsageError('dateUsed')}} {...usageValidation('dateUsed')} />{renderUsageError('dateUsed')}</label>
-            <label className="sl-creation-form-field"><span>Quantity Used</span><input inputMode="decimal" value={quantity} onChange={event=>{setQuantity(event.target.value);clearUsageError('quantity')}} placeholder="Enter quantity" {...usageValidation('quantity')} />{renderUsageError('quantity')}</label>
-          </div>
-          <div className="sl-creation-form-row"><label className="sl-creation-form-field sl-usage-entry-unit"><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedUsageBatch ? 'Unit derived from selected inventory batch' : selectedUsageIngredient ? 'Unit derived from selected ingredient' : 'Unit will be derived from the selected inventory batch'}>{selectedUsageBatch?.unit ?? selectedUsageIngredient?.unitOfMeasure ?? '—'}</output></label></div>
-        </div>
-        {usageMessage&&<p className="sl-inline-notice sl-usage-entry-message" role="status">{usageMessage}</p>}
-      </form>
-    </Dialog>
+    <InventoryStaffBulkModal mode="usage" open={addUsageOpen} ingredients={usageIngredients} onDismiss={()=>setAddUsageOpen(false)} returnFocus={addUsageButton} onSaved={async()=>{setUsagePage(1);await loadUsage()}} />
   </>;
 }
 
@@ -438,41 +273,11 @@ function InventoryStaffUsagePage() {
 const inventoryBatchStatusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired' ? 'critical' as const : status === 'Near Expiry' || status === 'Low Stock' ? 'attention' as const : 'success' as const;
 
 function InventoryStaffStockInPage() {
-  type StockInField = 'dateReceived' | 'ingredientId' | 'quantity' | 'expirationDate' | 'unitCost';
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [stockSearch, setStockSearch] = useState('');
-  const [stockIngredient, setStockIngredient] = useState('All Ingredients');
-  const [stockIngredients, setStockIngredients] = useState<StockInIngredient[]>([]);
-  const [stockDateRange, setStockDateRange] = useState('All dates');
-  const [stockDateFrom, setStockDateFrom] = useState('');
-  const [stockDateTo, setStockDateTo] = useState('');
-  const [stockRows, setStockRows] = useState(10);
-  const [stockPage, setStockPage] = useState(1);
-  const [stockData, setStockData] = useState<{items:InventoryBatch[];total:number}|null>(null);
-  const [stockSummary, setStockSummary] = useState<StockInSummary|null>(null);
-  const [stockLoading, setStockLoading] = useState(true);
-  const [stockError, setStockError] = useState(false);
-  const [stockFormMessage, setStockFormMessage] = useState('');
-  const [stockErrors, setStockErrors] = useState<Partial<Record<StockInField, string>>>({});
-  const [stockBusy, setStockBusy] = useState(false);
-  const [dateReceived, setDateReceived] = useState('');
-  const [ingredientId, setIngredientId] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [expirationDate, setExpirationDate] = useState('');
-  const [unitCost, setUnitCost] = useState('');
+  const [addModalOpen, setAddModalOpen] = useState(false), [stockSearch, setStockSearch] = useState(''), [stockIngredient, setStockIngredient] = useState('All Ingredients'), [stockIngredients, setStockIngredients] = useState<StockInIngredient[]>([]), [stockDateRange, setStockDateRange] = useState('All dates'), [stockDateFrom, setStockDateFrom] = useState(''), [stockDateTo, setStockDateTo] = useState(''), [stockRows, setStockRows] = useState(10), [stockPage, setStockPage] = useState(1);
+  const [stockData, setStockData] = useState<{items:InventoryBatch[];total:number}|null>(null), [stockSummary, setStockSummary] = useState<StockInSummary|null>(null), [stockLoading, setStockLoading] = useState(true), [stockError, setStockError] = useState(false);
   const addStockInButton = useRef<HTMLButtonElement>(null);
-  const stockForm = useRef<HTMLFormElement>(null);
-  const selectedIngredient = stockIngredients.find(item => item.id === ingredientId);
-  const dateValue = (date: Date) => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-  const minimumExpiryDate = dateReceived ? (() => { const value=new Date(`${dateReceived}T00:00:00`);value.setDate(value.getDate()+1);return dateValue(value); })() : undefined;
+  const dateValue = (date: Date) => localDateInputValue(date);
   const range = (() => { if(stockDateRange==='All dates') return {}; if(stockDateRange==='Custom range') return {from:stockDateFrom,to:stockDateTo}; const days=stockDateRange==='Today'?1:stockDateRange==='Last 30 Days'?30:7; const to=new Date(),from=new Date();from.setDate(from.getDate()-(days-1));return {from:dateValue(from),to:dateValue(to)}; })();
-  const clearForm=()=>{setDateReceived('');setIngredientId('');setQuantity('');setExpirationDate('');setUnitCost('');setStockErrors({});setStockFormMessage('')};
-  const clearStockError=(field:StockInField)=>{setStockErrors(current=>({...current,[field]:undefined}));setStockFormMessage('')};
-  const stockValidation=(field:StockInField)=>({
-    'aria-invalid':stockErrors[field]?true as const:undefined,
-    'aria-describedby':stockErrors[field]?`stockin-${field}-error`:undefined,
-  });
-  const renderStockError=(field:StockInField)=>stockErrors[field]?<span id={`stockin-${field}-error`} className="sl-field-error">{stockErrors[field]}</span>:null;
   useEffect(() => { const controller=new AbortController(); listStockInIngredients(controller.signal).then(result=>setStockIngredients(result.ingredients)).catch(()=>{if(!controller.signal.aborted)setStockIngredients([])}); return()=>controller.abort(); }, []);
   useEffect(() => {
     const controller=new AbortController();setStockLoading(true);setStockError(false);
@@ -480,9 +285,6 @@ function InventoryStaffStockInPage() {
       .then(([data,summary])=>{setStockData(data);setStockSummary(summary)}).catch(()=>{if(!controller.signal.aborted)setStockError(true)}).finally(()=>{if(!controller.signal.aborted)setStockLoading(false)});
     return()=>controller.abort();
   },[stockSearch,stockIngredient,stockDateRange,stockDateFrom,stockDateTo,stockRows,stockPage]);
-  useEffect(()=>{ if(!dateReceived||!selectedIngredient?.defaultShelfLifeDays)return; const suggested=new Date(`${dateReceived}T00:00:00`);suggested.setDate(suggested.getDate()+selectedIngredient.defaultShelfLifeDays);setExpirationDate(dateValue(suggested));setStockErrors(current=>({...current,expirationDate:undefined})); },[dateReceived,ingredientId]);
-  useEffect(()=>{setUnitCost(selectedIngredient?.standardUnitCost===undefined?'':String(selectedIngredient.standardUnitCost));setStockErrors(current=>({...current,unitCost:undefined}))},[ingredientId]);
-  const submitStockIn=async(event:FormEvent<HTMLFormElement>)=>{event.preventDefault();setStockFormMessage('');const next:Partial<Record<StockInField,string>>={};if(!dateReceived)next.dateReceived='Select the date received.';if(!ingredientId)next.ingredientId='Select an ingredient.';if(!quantity)next.quantity='Enter the quantity received.';if(!expirationDate)next.expirationDate='Select the expiration date.';const numericQuantity=Number(quantity),numericCost=unitCost===''?undefined:Number(unitCost);if(quantity&&(!Number.isFinite(numericQuantity)||numericQuantity<=0))next.quantity='Enter a quantity greater than 0.';if(unitCost!==''&&!Number.isFinite(numericCost))next.unitCost='Enter a valid unit cost.';else if(numericCost!==undefined&&numericCost<0)next.unitCost='Enter a unit cost of 0 or more.';if(Object.keys(next).length){setStockErrors(next);requestAnimationFrame(()=>stockForm.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());return}setStockBusy(true);setStockErrors({});try{const batch=await createStockIn({ingredientId,dateReceived,quantity:numericQuantity,expirationDate,...(numericCost===undefined?{}:{unitCost:numericCost})});setStockFormMessage(`Stock-In saved. Batch ID: ${batch.batchID}`);clearForm();setAddModalOpen(false);const [data,summary]=await Promise.all([listInventoryBatches({page:1,pageSize:stockRows,from:range.from,to:range.to}),getStockInSummary()]);setStockPage(1);setStockData(data);setStockSummary(summary)}catch(error){if(error instanceof ApiError){const fieldErrors:Partial<Record<StockInField,string>>={};for(const detail of error.details){if(['dateReceived','ingredientId','quantity','expirationDate','unitCost'].includes(detail.field))fieldErrors[detail.field as StockInField]=detail.field==='expirationDate'&&detail.message==='Expiration date must be after date received'?'Expiration date must be after the date received.':detail.message}setStockErrors(fieldErrors);setStockFormMessage(Object.keys(fieldErrors).length?'':error.message)}else setStockFormMessage('Unable to save Stock-In. Try again.')}finally{setStockBusy(false)}};
   const stockSummaryUnavailable = stockError && !stockSummary;
   const stockSummaryPending = stockLoading && !stockSummary;
   const metric=(value:number|undefined)=>stockSummaryUnavailable||stockSummaryPending?'—':(value??0).toLocaleString();
@@ -512,25 +314,7 @@ function InventoryStaffStockInPage() {
         <footer className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer"><label><span>Rows per page</span><select value={stockRows} onChange={event=>{setStockRows(Number(event.target.value));setStockPage(1)}}>{[10,15,50,100,150].map(value=><option key={value}>{value}</option>)}</select></label><Pagination compact page={stockPage} pageSize={stockRows} total={stockData?.total??0} itemLabel="stock-in records" onPageChange={setStockPage}/></footer>
       </section></main></div>
     </div>
-    <Dialog open={addModalOpen} showClose={false} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><PackagePlus size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">Add Stock-In</span><small>Record a received inventory batch.</small></span></span>} busy={stockBusy} className="sl-add-user-dialog sl-account-reference-dialog sl-stockin-entry-modal" onDismiss={()=>{if(!stockBusy){clearForm();setAddModalOpen(false)}}} returnFocus={addStockInButton} actions={<span className="sl-creation-form-actions"><button type="button" className="sl-button" disabled={stockBusy} onClick={()=>{clearForm();setAddModalOpen(false)}}>Cancel</button><button type="submit" form="sl-stockin-entry-form" className="sl-button sl-button-primary" disabled={stockBusy}>Save Stock-In</button></span>}>
-      <form id="sl-stockin-entry-form" ref={stockForm} className="sl-stockin-entry-form sl-creation-form" noValidate onSubmit={submitStockIn}>
-        <div className="sl-creation-form-grid">
-          <div className="sl-creation-form-row">
-            <label className="sl-creation-form-field"><span>Date Received</span><input type="date" value={dateReceived} onChange={event=>{setDateReceived(event.target.value);clearStockError('dateReceived')}} {...stockValidation('dateReceived')} />{renderStockError('dateReceived')}</label>
-            <label className="sl-creation-form-field"><span>Ingredient</span><select value={ingredientId} onChange={event=>{setIngredientId(event.target.value);clearStockError('ingredientId')}} {...stockValidation('ingredientId')}><option value="">Search or select ingredient...</option>{stockIngredients.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select>{renderStockError('ingredientId')}</label>
-          </div>
-          <div className="sl-creation-form-row">
-            <label className="sl-creation-form-field"><span>Quantity Received</span><input inputMode="decimal" value={quantity} onChange={event=>{setQuantity(event.target.value);clearStockError('quantity')}} placeholder="Enter quantity" {...stockValidation('quantity')} />{renderStockError('quantity')}</label>
-            <label className="sl-creation-form-field"><span>Unit</span><output className="sl-staff-derived-unit" aria-label={selectedIngredient?'Unit derived from selected ingredient':'Unit will be derived from the selected ingredient'}>{selectedIngredient?.unitOfMeasure??'—'}</output></label>
-          </div>
-          <div className="sl-creation-form-row">
-            <label className="sl-creation-form-field"><span>Expiration Date</span><input type="date" min={minimumExpiryDate} value={expirationDate} onChange={event=>{setExpirationDate(event.target.value);clearStockError('expirationDate')}} {...stockValidation('expirationDate')} />{renderStockError('expirationDate')}</label>
-            <label className="sl-creation-form-field"><span>Unit Cost (Optional)</span><span className="sl-currency-input sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" value={unitCost} onChange={event=>{setUnitCost(event.target.value);clearStockError('unitCost')}} placeholder="0.00" aria-label="Unit Cost in Philippine pesos" {...stockValidation('unitCost')} /></span>{renderStockError('unitCost')}</label>
-          </div>
-        </div>
-        {stockFormMessage&&<p className="sl-inline-notice sl-stockin-entry-message" role="status">{stockFormMessage}</p>}
-      </form>
-    </Dialog>
+    <InventoryStaffBulkModal mode="stock" open={addModalOpen} ingredients={stockIngredients} onDismiss={()=>setAddModalOpen(false)} returnFocus={addStockInButton} onSaved={async()=>{setStockPage(1);const [data,summary]=await Promise.all([listInventoryBatches({page:1,pageSize:stockRows,from:range.from,to:range.to}),getStockInSummary()]);setStockData(data);setStockSummary(summary)}} />
   </>;
 }
 
@@ -577,7 +361,7 @@ function InventoryStaffInventoryBatchesPage() {
       .catch(() => { if (!controller.signal.aborted) setBatchSummaryError(true); });
     return () => controller.abort();
   }, [page, rows, search, category, batchStatus, sortBy]);
-  const kpiValue = (value: number | undefined) => batchLoading && !batchSummary ? '—' : batchError && !batchSummary ? '—' : (value ?? 0).toLocaleString();
+  const kpiValue = (value: number | undefined) => batchLoading && !batchSummary ? '—' : batchSummaryError && !batchSummary ? '—' : (value ?? 0).toLocaleString();
   return <>
     <PageHeader eyebrow="Inventory" title="Inventory Batches" description="View and monitor all ingredient batches. Check stock levels, expiration dates, and FEFO order." />
 
@@ -1503,7 +1287,7 @@ function SuperAdminChangeRequestsPage() {
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-sa-change-kpis sl-superadmin-dashboard-kpis-v200" aria-label="Change request summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span><div><span>Total Requests</span><strong>—</strong><small>Awaiting request-summary API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><CheckCircle2 aria-hidden="true" /></span><div><span>Approved</span><strong>—</strong><small>Awaiting approvals API</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Pending Review</span><strong>—</strong><small>Awaiting review queue API</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Pending</span><strong>—</strong><small>Awaiting review queue API</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span><div><span>Rejected</span><strong>—</strong><small>Awaiting decision API</small></div></article>
       </section>
 
@@ -1832,7 +1616,7 @@ function ManagerChangeRequestsPage() {
     <div className="sl-admin-view sl-mgr-cr-page">
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Change request summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput/></span><div><span>Total Requests</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Clock3/></span><div><span>Pending Review</span><strong>—</strong><small>Requires your action</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Clock3/></span><div><span>Pending</span><strong>—</strong><small>Requires your action</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CheckCircle2/></span><div><span>Approved (This Month)</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle/></span><div><span>Rejected (This Month)</span><strong>—</strong><small>Data unavailable</small></div></article>
       </section>

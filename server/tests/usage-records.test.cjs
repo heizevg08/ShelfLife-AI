@@ -6,7 +6,7 @@ const { randomBytes } = require('node:crypto');
 const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createUsageRecords } = require('../dist/services/usage-records');
-const { usageInput, usagePagination } = require('../dist/validators/usage-record');
+const { usageBulkInput, usageInput, usagePagination } = require('../dist/validators/usage-record');
 
 const staff = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Staff', email: 'staff@shelflife.com', role: 'Inventory Staff', isActive: true, authVersion: 0 };
 const admin = { ...staff, id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Admin', email: 'admin@shelflife.com', role: 'Admin' };
@@ -19,6 +19,13 @@ test('Usage input accepts only staff-controlled fields and positive quantities',
   assert.deepEqual(usagePagination({ page: '2', pageSize: '15', ingredientId: record.ingredient.id, from: '2030-01-01', to: '2030-01-31' }), { page: 2, pageSize: 15, ingredientId: record.ingredient.id, from: new Date('2030-01-01T00:00:00.000Z'), to: new Date('2030-01-31T23:59:59.999Z') });
 });
 
+test('Usage bulk input validates a strict bounded items contract', () => {
+  const item = { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 1 };
+  assert.equal(usageBulkInput({ items: [item, item] }).length, 2);
+  assert.throws(() => usageBulkInput({ items: [] }));
+  assert.throws(() => usageBulkInput({ items: [item], unit: 'L' }));
+});
+
 test('Usage API permits authorized Manager and Inventory Staff operations and preserves query contracts', async () => {
   let received;
   const store = {
@@ -27,6 +34,7 @@ test('Usage API permits authorized Manager and Inventory Staff operations and pr
     async detail(id) { return id === record.id ? record : null; },
     async summary() { return { totalUsageToday: { quantity: 2, unit: 'L' }, usageRecordsToday: 1, mostUsedIngredient: null, ingredientsUsedThisWeek: 1 }; },
     async create(actor, input) { return { ...record, quantityUsed: input.quantityUsed, dateUsed: input.dateUsed.toISOString(), recordedBy: { id: actor.id, name: actor.name } }; },
+    async createMany(actor, inputs) { return Promise.all(inputs.map(input => this.create(actor, input))); },
   };
   const auth = createAuth({ byId: async id => [staff, admin, manager].find(user => user.id === id) || null, byEmail: async () => null }, randomBytes(48).toString('hex'));
   const app = createApp([], () => true, auth, undefined, undefined, undefined, undefined, createUsageRecords(store, () => new Date('2030-01-10T12:00:00.000Z')));
@@ -45,6 +53,8 @@ test('Usage API permits authorized Manager and Inventory Staff operations and pr
     assert.equal((await request(staff, '/' + '9'.repeat(24))).status, 404);
     const created = await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 2 });
     assert.equal(created.status, 201); assert.equal((await created.json()).record.unit, 'L');
+    const bulk = await request(staff, '/bulk', 'POST', { items: [{ ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 1 }, { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 2 }] }); assert.equal(bulk.status, 201); assert.equal((await bulk.json()).count, 2);
+    assert.equal((await request(manager, '/bulk', 'POST', { items: [{ ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 1 }] })).status, 403);
     assert.equal((await request(manager, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 2 })).status, 201);
     assert.equal((await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 0 })).status, 400);
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }

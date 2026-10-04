@@ -33,3 +33,8 @@ export async function createUsageRecord(input: UsageInput) {
   publishActionFeedback({ kind: 'success', message: 'Usage record saved successfully.' });
   return result.record;
 }
+export async function createUsageRecords(items: UsageInput[]) {
+  const result = await apiClient<{ count: number; records: UsageRecord[] }>('/usage-records/bulk', { method: 'POST', body: JSON.stringify({ items }), successMessage: false });
+  publishActionFeedback({ kind: 'success', message: `${result.count} usage ${result.count === 1 ? 'record' : 'records'} saved successfully.` });
+  return result.records;
+}

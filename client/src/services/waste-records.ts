@@ -27,3 +27,8 @@ export async function createWasteRecord(input: WasteInput) {
   publishActionFeedback({ kind: 'success', message: 'Waste record saved successfully.' });
   return result.record;
 }
+export async function createWasteRecords(items: WasteInput[]) {
+  const result = await apiClient<{ count: number; records: WasteRecord[] }>('/waste-records/bulk', { method: 'POST', body: JSON.stringify({ items }), successMessage: false });
+  publishActionFeedback({ kind: 'success', message: `${result.count} waste ${result.count === 1 ? 'record' : 'records'} saved successfully.` });
+  return result.records;
+}

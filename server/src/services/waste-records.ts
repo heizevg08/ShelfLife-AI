@@ -21,6 +21,7 @@ export interface WasteRecordStore {
   summary(now: Date): Promise<WasteSummary>;
   reasonBreakdown(now: Date): Promise<WasteReasonBreakdown>;
   create(actor: Actor, input: WasteCreateInput): Promise<WasteRecordView>;
+  createMany(actor: Actor, inputs: WasteCreateInput[]): Promise<WasteRecordView[]>;
 }
 export function createWasteRecords(store: WasteRecordStore, now: () => Date = () => new Date()) {
   return {
@@ -33,6 +34,14 @@ export function createWasteRecords(store: WasteRecordStore, now: () => Date = ()
       const current = now();
       if (input.dateWasted >= new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate() + 1))) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: 'dateWasted', message: 'Date wasted cannot be in the future' }]);
       return store.create(actor, input);
+    },
+    createMany: (actor: Actor, inputs: WasteCreateInput[]) => {
+      const current = now();
+      const tomorrow = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate() + 1));
+      inputs.forEach((input, index) => {
+        if (input.dateWasted >= tomorrow) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: `items.${index}.dateWasted`, message: 'Date wasted cannot be in the future' }]);
+      });
+      return store.createMany(actor, inputs);
     },
   };
 }

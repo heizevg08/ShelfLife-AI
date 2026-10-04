@@ -8,6 +8,7 @@ import type { InventoryBatch, InventoryBatchStore } from './inventory-batches';
 import type { InventoryBatchDisplayStatus, InventoryBatchPageQuery, StockInInput } from '../validators/inventory-batch';
 import type { Actor } from './administration';
 import { normalizeUserRole } from '../models/user';
+import { AdministrationError } from '../middleware/administration.middleware';
 
 type BatchRow = { _id: { toString(): string }; ingredientId: { toString(): string }; batchID: string; quantity: number; unit: string; dateReceived: Date; expirationDate: Date; unitCost?: number; status?: string; createdBy: { toString(): string }; createdAt: Date; updatedAt: Date };
 type IngredientRow = { _id: { toString(): string }; name: string; category: string; unitOfMeasure: string; minimumStock?: number; standardUnitCost?: number };
@@ -110,6 +111,20 @@ export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<
     async create(actor, input) {
       const id = await driver.connection.transaction(session => createWithin(session, actor, input));
       return id ? this.detail(id, new Date()) : null;
+    },
+    async createMany(actor, inputs) {
+      const ids = await driver.connection.transaction(async session => {
+        const created: string[] = [];
+        for (let index = 0; index < inputs.length; index += 1) {
+          const id = await createWithin(session, actor, inputs[index]!);
+          if (!id) throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found', [{ field: `items.${index}.ingredientId`, message: 'Ingredient not found' }]);
+          created.push(id);
+        }
+        return created;
+      });
+      const resolved = await Promise.all(ids.map(id => this.detail(id, new Date())));
+      if (resolved.some(batch => !batch)) throw new AdministrationError(500, 'REQUEST_FAILED', 'Stock-In records could not be loaded');
+      return resolved as InventoryBatch[];
     },
   };
 }

@@ -14,6 +14,7 @@ export function inventoryBatchRoutes(auth: AuthService, service: InventoryBatchS
   router.get('/stock-in-summary', authorizeAdministration(['Manager', 'Inventory Staff']), actions.stockInSummary);
   router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Manager', 'Inventory Staff']), actions.list);
   router.get('/:id', authorizeAdministration(['Super Admin', 'Admin', 'Manager', 'Inventory Staff']), actions.detail);
+  router.post('/bulk', authorizeAdministration(['Inventory Staff']), json({ limit: '100kb' }), actions.createMany);
   router.post('/', authorizeAdministration(['Manager', 'Inventory Staff']), json({ limit: '100kb' }), actions.create);
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });
   const error: ErrorRequestHandler = (value, _req, res, next) => {

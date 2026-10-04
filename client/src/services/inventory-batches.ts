@@ -41,3 +41,8 @@ export async function createStockIn(input: StockInInput) {
   publishActionFeedback({ kind: 'success', message: `Stock-In saved successfully. Batch ID: ${result.batch.batchID}` });
   return result.batch;
 }
+export async function createStockIns(items: StockInInput[]) {
+  const result = await apiClient<{ count: number; batches: InventoryBatch[] }>('/inventory-batches/bulk', { method: 'POST', body: JSON.stringify({ items }), successMessage: false });
+  publishActionFeedback({ kind: 'success', message: `${result.count} Stock-In ${result.count === 1 ? 'record' : 'records'} saved successfully.` });
+  return result.batches;
+}
