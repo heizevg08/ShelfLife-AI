@@ -29,7 +29,7 @@ test('Inventory Staff My Requests follows Inventory Batches search proportions a
   assert.match(myRequestsRules, /> \.sl-v219-custom-date-range > label \{\s*flex:0 1 9\.25rem;\s*min-width:8\.75rem;\s*max-width:10rem;/);
   assert.match(myRequestsRules, /> \.sl-sa-ingredients-filter-actions \{\s*flex:0 0 auto;\s*margin-left:auto;/);
   assert.doesNotMatch(myRequestsRules, /data-custom-range|grid-row:\s*[12]|grid-column:\s*[235] \/ [35]/);
-  assert.match(myRequestsRules, /@container sl-inventory-staff-records \(max-width:56rem\)[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\);\s*display:grid;/);
+  assert.match(myRequestsRules, /@container sl-inventory-staff-records \(max-width:64rem\)[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\);\s*display:grid;/);
   assert.match(myRequestsRules, /@container sl-inventory-staff-records \(max-width:36rem\)[\s\S]*?grid-template-columns:minmax\(0,1fr\)/);
   assert.doesNotMatch(myRequestsRules, /@media \(width<=(?:900|600)px\)[\s\S]*?\.sl-staff-my-requests-toolbar/);
 

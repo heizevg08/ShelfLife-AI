@@ -58,11 +58,13 @@ test('Inventory Staff responsive ownership follows usable module and records con
   assert.match(styles, /\.sl-shell\[data-role="Inventory Staff"\] :is\(\.sl-application-records,\.sl-sa-account-pattern-records\) \{\s*container-name:sl-inventory-staff-records;\s*container-type:inline-size;/);
   assert.match(styles, /@container sl-inventory-staff-page \(max-width:99rem\)[\s\S]*?\.sl-inventory-staff-preview-grid \{\s*grid-template-columns:minmax\(0,1fr\);/);
   assert.doesNotMatch(styles, /@media \(width<=1100px\) \{\s*\.sl-inventory-staff-dashboard-v140 \.sl-inventory-staff-preview-grid/);
-  assert.match(styles, /@container sl-inventory-staff-page \(max-width:75rem\)[\s\S]*?\.sl-inventory-staff-kpis[^}]+grid-template-columns:repeat\(2,minmax\(0,1fr\)\);/);
-  assert.match(styles, /@container sl-inventory-staff-page \(max-width:40rem\)[\s\S]*?grid-template-columns:minmax\(0,1fr\);/);
-  assert.match(styles, /@container sl-inventory-staff-records \(max-width:64rem\)[\s\S]*?grid-template-columns:repeat\(3,minmax\(0,1fr\)\);/);
-  assert.match(styles, /@container sl-inventory-staff-records \(max-width:48rem\)[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\);/);
-  assert.match(styles, /@container sl-inventory-staff-records \(max-width:36rem\)[\s\S]*?grid-template-columns:minmax\(0,1fr\);/);
+  assert.match(styles, /@container sl-inventory-staff-page \(max-width:75rem\)[\s\S]*?\.sl-shell\[data-role="Inventory Staff"\][^{}]+\.sl-superadmin-dashboard-kpis-v201\.sl-staff-usage-kpis[^{}]+\{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\);/);
+  assert.match(styles, /@container sl-inventory-staff-page \(max-width:40rem\)[\s\S]*?\.sl-shell\[data-role="Inventory Staff"\][^{}]+\{ grid-template-columns:minmax\(0,1fr\);/);
+  assert.match(styles, /@container sl-inventory-staff-records \(max-width:64rem\)[\s\S]*?\.sl-shell\[data-role="Inventory Staff"\][^{}]+\.sl-sa-account-pattern-records[^{}]+\{ grid-template-columns:repeat\(3,minmax\(0,1fr\)\);/);
+  assert.match(styles, /@container sl-inventory-staff-records \(max-width:48rem\)[\s\S]*?\.sl-shell\[data-role="Inventory Staff"\][^{}]+\.sl-sa-account-pattern-records[^{}]+\{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\); display:grid; \}/);
+  assert.match(styles, /@container sl-inventory-staff-records \(max-width:36rem\)[\s\S]*?\.sl-shell\[data-role="Inventory Staff"\][^{}]+\.sl-sa-account-pattern-records[^{}]+\{ grid-template-columns:minmax\(0,1fr\); \}/);
+  assert.match(styles, /@container sl-inventory-staff-page \(max-width:48rem\) \{[\s\S]*?\.sl-inventory-staff-quick-actions \{ align-items:stretch; flex-direction:column; \}/);
+  assert.doesNotMatch(styles, /@media \(width<=620px\) \{[\s\S]*?\.sl-inventory-staff-quick-actions/);
   assert.doesNotMatch(styles, /\.sl-shell\[data-role="Inventory Staff"\] :is\(\.sl-workspace,\.sl-main\)[^}]*container-type/);
   assert.doesNotMatch(styles, /\.sl-shell\[data-role="Inventory Staff"\] :is\(\.sl-workspace,\.sl-main\)[^}]*overflow-x:clip/);
   assert.doesNotMatch(styles, /@media \(resolution>=1\.25x\)\{\s*\.sl-staff-inventory-v149/);

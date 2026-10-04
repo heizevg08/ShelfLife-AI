@@ -33429,7 +33429,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-staff-requests-v162 .sl-staff-my-requests-records > .sl-application-records-footer { min-height:62px; padding-block:8px; }
 .sl-main:has(> .sl-page-header + .sl-staff-my-requests) { row-gap:12px; }
-@media (width<=620px) {
+@container sl-inventory-staff-page (max-width:48rem) {
   .sl-inventory-staff-quick-actions { align-items:stretch; flex-direction:column; }
   .sl-inventory-staff-quick-actions > div { display:grid; grid-template-columns:minmax(0,1fr); }
   .sl-inventory-staff-quick-actions .sl-button { justify-content:center; width:100%; }
@@ -33951,7 +33951,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   max-width:100%; min-width:0; overflow-x:auto; overscroll-behavior-inline:contain;
 }
 @container sl-inventory-staff-page (max-width:75rem) {
-  :is(.sl-inventory-staff-kpis,.sl-staff-inventory-kpis,.sl-staff-usage-kpis,.sl-staff-stockin-kpis,.sl-staff-waste-kpis) { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-inventory-staff-dashboard-v140,.sl-staff-inventory-v149,.sl-staff-stockin-v145,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) :is(.sl-superadmin-dashboard-kpis-v201.sl-staff-usage-kpis,.sl-dashboard-source-kpis) { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .sl-staff-inventory-v149 .sl-staff-inventory-rail { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @container sl-inventory-staff-page (max-width:99rem) {
@@ -33959,26 +33959,26 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid > :is(.sl-inventory-staff-analytics,.sl-inventory-staff-bottom) > .sl-card { height:auto; }
 }
 @container sl-inventory-staff-records (max-width:64rem) {
-  :is(.sl-staff-stockin-history-filters,.sl-staff-inventory-record-filters) { grid-template-columns:repeat(3,minmax(0,1fr)); }
-  :is(.sl-staff-usage-toolbar,.sl-staff-waste-toolbar) { grid-template-columns:repeat(3,minmax(0,1fr)); }
-  :is(.sl-staff-stockin-history-filters,.sl-staff-inventory-record-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar) .sl-sa-ingredients-search { grid-column:span 2; }
-  :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar) .sl-v219-custom-date-range { grid-column:span 2; }
-  :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar) .sl-sa-ingredients-filter-actions { grid-column:span 2; justify-content:flex-start; }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-inventory-record-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar) { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-inventory-record-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar) .sl-sa-ingredients-search { grid-column:span 2; }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar) .sl-v219-custom-date-range { grid-column:span 2; }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-usage-v150,.sl-staff-waste-v159) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar) .sl-sa-ingredients-filter-actions { grid-column:span 2; justify-content:flex-start; }
 }
 @container sl-inventory-staff-records (max-width:48rem) {
-  :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) { grid-template-columns:repeat(2,minmax(0,1fr)); display:grid; }
-  :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) :is(.sl-sa-ingredients-search,.sl-v219-custom-date-range,.sl-sa-ingredients-filter-actions) { grid-column:1 / -1; }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) { grid-template-columns:repeat(2,minmax(0,1fr)); display:grid; }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) :is(.sl-sa-ingredients-search,.sl-v219-custom-date-range,.sl-sa-ingredients-filter-actions) { grid-column:1 / -1; }
   .sl-staff-my-requests-toolbar .sl-v219-custom-date-range { display:contents; }
   .sl-staff-my-requests-toolbar .sl-v219-custom-date-range > label { max-width:none; min-width:0; }
 }
 @container sl-inventory-staff-page (max-width:40rem) {
-  :is(.sl-inventory-staff-kpis,.sl-staff-inventory-kpis,.sl-staff-usage-kpis,.sl-staff-stockin-kpis,.sl-staff-waste-kpis,.sl-staff-inventory-v149 .sl-staff-inventory-rail) { grid-template-columns:minmax(0,1fr); }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-inventory-staff-dashboard-v140,.sl-staff-inventory-v149,.sl-staff-stockin-v145,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) :is(.sl-superadmin-dashboard-kpis-v201.sl-staff-usage-kpis,.sl-dashboard-source-kpis),
+  .sl-staff-inventory-v149 .sl-staff-inventory-rail { grid-template-columns:minmax(0,1fr); }
 }
 @container sl-inventory-staff-records (max-width:36rem) {
-  :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) { grid-template-columns:minmax(0,1fr); }
-  :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) :is(.sl-sa-ingredients-search,.sl-v219-custom-date-range,.sl-sa-ingredients-filter-actions) { grid-column:auto; }
-  :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) .sl-sa-ingredients-filter-actions { align-items:stretch; flex-direction:column; }
-  :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) .sl-sa-ingredients-filter-actions > * { width:100%; }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) { grid-template-columns:minmax(0,1fr); }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) :is(.sl-sa-ingredients-search,.sl-v219-custom-date-range,.sl-sa-ingredients-filter-actions) { grid-column:auto; }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) .sl-sa-ingredients-filter-actions { align-items:stretch; flex-direction:column; }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) .sl-sa-ingredients-filter-actions > * { width:100%; }
 }
 @media (width<=600px) {
   .sl-inventory-staff-bulk-dialog .sl-bulk-recording-row,
@@ -34084,7 +34084,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   margin-inline:auto;
 }
 /* My Requests uses the records card's usable width while preserving its approved field order. */
-@container sl-inventory-staff-records (max-width:56rem) {
+@container sl-inventory-staff-records (max-width:64rem) {
   .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar {
     grid-template-columns:repeat(2,minmax(0,1fr));
     display:grid;
