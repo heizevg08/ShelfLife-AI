@@ -39,7 +39,7 @@ test('Inventory Staff details are role-specific while Manager presentation remai
   assert.match(staff, /View your submitted request\./);
   assert.doesNotMatch(staff, /Request Information|Submitted By|Reviewed By/);
   assert.doesNotMatch(staff, /<dt>Request ID|<dt>Submitted|<dt>Ingredient|<dt>Status/);
-  assert.match(staff, /request\.ingredient\?\.name/);
+  assert.match(staff, /formatHumanReadableText\(request\.ingredient\.name\)/);
   assert.match(staff, /request\.requestID/);
   assert.match(staff, /formatDateTime\(request\.createdAt\)/);
   assert.match(staff, /changeRequestStatusLabel\(request\.status\)/);
@@ -69,7 +69,7 @@ test('My Requests keeps its protected create modal, date range, and current-only
   assert.doesNotMatch(source, /Search by request ID, ingredient, or batch ID/);
   assert.match(source, /\['Request ID','Ingredient','Requested Change','Submitted On','Status'\]/);
   assert.doesNotMatch(source, /\['Request ID','Type','Ingredient'/);
-  assert.match(source, /const requestedChange=.*formatStaffChangeRequestValue\(record,record\.currentValue\).*→.*formatStaffChangeRequestValue\(record,record\.requestedValue\)/);
+  assert.match(source, /const requestedChange=\(record:ChangeRequest\)=>changeRequestTypeLabel\(record\.requestType\)/);
   assert.match(source, /\[FileInput,'brand','Total Requests'/);
   assert.match(source, /\[Clock3,'info','Pending'/);
   assert.match(source, /\[CheckCircle2,'attention','Approved'/);
@@ -99,14 +99,16 @@ test('My Requests keeps its protected create modal, date range, and current-only
   assert.match(source, /className="sl-detail-enabled-row" tabIndex=\{0\}/);
   const recordsHeader = source.slice(source.indexOf('<header className="sl-application-records-header'), source.indexOf('</header>', source.indexOf('<header className="sl-application-records-header')));
   const toolbar = source.slice(source.indexOf('<div className="sl-sa-ingredients-table-filters">'), source.indexOf('<div className="sl-sa-ingredients-table-scroll'));
-  assert.match(recordsHeader, />Change Request Records</);
+  assert.match(recordsHeader, /<h2>Requests<\/h2>/);
   assert.doesNotMatch(recordsHeader, />New Request</);
   assert.match(toolbar, />New Request</);
   assert.ok(toolbar.indexOf('Search records') < toolbar.indexOf('<span>Type</span>'));
   assert.ok(toolbar.indexOf('<span>Type</span>') < toolbar.indexOf('<span>Status</span>'));
   assert.ok(toolbar.indexOf('<span>Status</span>') < toolbar.indexOf('<span>Date Range</span>'));
-  assert.ok(toolbar.indexOf('<span>Date Range</span>') < toolbar.indexOf('>Reset</button>'));
-  assert.ok(toolbar.indexOf('>Reset</button>') < toolbar.indexOf('>New Request</button>'));
+  assert.ok(toolbar.indexOf('<span>Date Range</span>') < toolbar.indexOf('>Clear filters</button>'));
+  assert.ok(toolbar.indexOf('>Clear filters</button>') < toolbar.indexOf('>New Request</button>'));
+  assert.match(toolbar, /\{filtered&&<button[^>]*>Clear filters<\/button>\}/);
+  assert.doesNotMatch(toolbar, />Reset<\/button>/);
   assert.match(source, /<span>Request Type<\/span><select/);
   assert.match(source, /<span>Ingredient<\/span><select/);
   assert.match(source, /<span>Current Value<\/span><output/);

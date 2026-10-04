@@ -27,12 +27,12 @@ test('Usage bulk input validates a strict bounded items contract', () => {
 });
 
 test('Usage API permits authorized Manager and Inventory Staff operations and preserves query contracts', async () => {
-  let received;
+  let received, summaryDate;
   const store = {
     async ready() {},
     async list(query) { received = query; return { items: query.search === 'none' ? [] : [record], page: query.page, pageSize: query.pageSize, total: query.search === 'none' ? 0 : 1 }; },
     async detail(id) { return id === record.id ? record : null; },
-    async summary() { return { totalUsageToday: { quantity: 2, unit: 'L' }, usageRecordsToday: 1, mostUsedIngredient: null, ingredientsUsedThisWeek: 1 }; },
+    async summary(date) { summaryDate = date; return { totalUsageToday: { quantity: 2, unit: 'L' }, usageTotalsByUnitToday: [{ quantity: 2, unit: 'L' }], usageRecordsToday: 1, mostUsedIngredient: null, ingredientsUsedThisWeek: 1 }; },
     async create(actor, input) { return { ...record, quantityUsed: input.quantityUsed, dateUsed: input.dateUsed.toISOString(), recordedBy: { id: actor.id, name: actor.name } }; },
     async createMany(actor, inputs) { return Promise.all(inputs.map(input => this.create(actor, input))); },
   };
@@ -48,7 +48,11 @@ test('Usage API permits authorized Manager and Inventory Staff operations and pr
     assert.equal((await request(staff, '?page=2&pageSize=15&ingredientId=' + record.ingredient.id + '&from=2030-01-01&to=2030-01-31')).status, 200);
     assert.equal(received.page, 2); assert.equal(received.pageSize, 15); assert.equal(received.ingredientId, record.ingredient.id);
     assert.equal((await request(staff, '?search=none')).status, 200);
-    assert.equal((await request(staff, '/summary')).status, 200);
+    const summary = await request(staff, '/summary?date=2030-01-11');
+    assert.equal(summary.status, 200);
+    assert.deepEqual((await summary.json()).usageTotalsByUnitToday, [{ quantity: 2, unit: 'L' }]);
+    assert.equal(summaryDate.toISOString(), '2030-01-11T00:00:00.000Z');
+    assert.equal((await request(staff, '/summary?date=not-a-date')).status, 400);
     assert.equal((await request(staff, '/' + record.id)).status, 200);
     assert.equal((await request(staff, '/' + '9'.repeat(24))).status, 404);
     const created = await request(staff, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateUsed: '2030-01-10', quantityUsed: 2 });

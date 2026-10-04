@@ -14,6 +14,7 @@ export interface UsageRecordView {
 }
 export interface UsageSummary {
   totalUsageToday: { quantity: number; unit: string } | null;
+  usageTotalsByUnitToday: Array<{ quantity: number; unit: string }>;
   usageRecordsToday: number;
   mostUsedIngredient: string | null;
   ingredientsUsedThisWeek: number;
@@ -22,7 +23,7 @@ export interface UsageRecordStore {
   ready(): Promise<void>;
   list(query: UsagePageQuery, now: Date): Promise<{ items: UsageRecordView[]; page: number; pageSize: number; total: number }>;
   detail(id: string): Promise<UsageRecordView | null>;
-  summary(now: Date): Promise<UsageSummary>;
+  summary(businessDate: Date): Promise<UsageSummary>;
   create(actor: Actor, input: UsageCreateInput): Promise<UsageRecordView>;
   createMany(actor: Actor, inputs: UsageCreateInput[]): Promise<UsageRecordView[]>;
 }
@@ -31,7 +32,7 @@ export function createUsageRecords(store: UsageRecordStore, now: () => Date = ()
     ready: () => store.ready(),
     list: (query: UsagePageQuery) => store.list(query, now()),
     detail: (id: string) => store.detail(id),
-    summary: () => store.summary(now()),
+    summary: (businessDate?: Date) => store.summary(businessDate ?? now()),
     create: (actor: Actor, input: UsageCreateInput) => {
       const current = now();
       if (input.dateUsed >= new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate() + 1))) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: 'dateUsed', message: 'Date used cannot be in the future' }]);

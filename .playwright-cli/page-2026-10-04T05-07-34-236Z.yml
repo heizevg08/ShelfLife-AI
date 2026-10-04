@@ -1,0 +1,176 @@
+- generic [ref=e13]:
+  - link "Skip to main content" [ref=e14] [cursor=pointer]:
+    - /url: "#sl-main"
+  - complementary "Application sidebar" [ref=e15]:
+    - link "ShelfLife AI home" [ref=e16] [cursor=pointer]:
+      - /url: /InventoryStaffDashboard
+      - img "ShelfLife AI" [ref=e17]
+    - navigation "Workspace navigation" [ref=e20]:
+      - region "Overview" [ref=e21]:
+        - link "Dashboard" [ref=e22] [cursor=pointer]:
+          - /url: /InventoryStaffDashboard
+      - region "Inventory" [ref=e28]:
+        - link "Inventory Batches" [ref=e29] [cursor=pointer]:
+          - /url: /InventoryBatches
+        - link "Stock-In" [ref=e40] [cursor=pointer]:
+          - /url: /StockIn
+      - region "Records" [ref=e45]:
+        - link "Usage Recording" [ref=e46] [cursor=pointer]:
+          - /url: /UsageRecording
+        - link "Waste Recording" [ref=e50] [cursor=pointer]:
+          - /url: /WasteRecording
+      - region "Follow-up" [ref=e54]:
+        - link "My Requests" [ref=e55] [cursor=pointer]:
+          - /url: /MyRequests
+  - generic [ref=e59]:
+    - banner [ref=e60]:
+      - search [ref=e62]:
+        - textbox "Search workspace pages and tools" [ref=e66]:
+          - /placeholder: Search pages and tools...
+      - generic [ref=e67]:
+        - time [ref=e68]: 4 Oct 2026, 1:07 PM
+        - button "Notifications" [ref=e70] [cursor=pointer]
+        - button "Account profile" [ref=e75] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e76]: DI
+    - main [ref=e77]:
+      - generic [ref=e78]:
+        - generic [ref=e79]:
+          - generic [ref=e81]:
+            - paragraph [ref=e82]: Dashboard
+            - heading "Good afternoon, Development InventoryStaff." [level=1] [ref=e83]
+          - paragraph [ref=e84]: Your inventory overview for today. Keep track, record accurately, and help reduce food waste.
+        - region "Inventory staff dashboard summary" [ref=e85]:
+          - article [ref=e86]:
+            - generic [ref=e91]:
+              - generic [ref=e92]: Today's Usage
+              - strong [ref=e93]: 45 pcs · 55 pack
+              - generic [ref=e94]: Usage recorded today by unit
+          - article [ref=e95]:
+            - generic [ref=e107]:
+              - generic [ref=e108]: Total Batches
+              - strong [ref=e109]: "12"
+              - generic [ref=e110]: Live inventory batches
+          - article [ref=e111]:
+            - generic [ref=e115]:
+              - generic [ref=e116]: Expiring Soon
+              - strong [ref=e117]: "0"
+              - generic [ref=e118]: Batches expiring within seven days
+          - article [ref=e119]:
+            - generic [ref=e124]:
+              - generic [ref=e125]: Low Stock
+              - strong [ref=e126]: "1"
+              - generic [ref=e127]: Ingredients at or below minimum stock
+        - navigation "Quick Actions" [ref=e128]:
+          - strong [ref=e129]: Quick Actions
+          - generic [ref=e130]:
+            - link "Add Stock-In" [ref=e131] [cursor=pointer]:
+              - /url: /StockIn
+            - link "Record Usage" [ref=e133] [cursor=pointer]:
+              - /url: /UsageRecording
+            - link "Record Waste" [ref=e135] [cursor=pointer]:
+              - /url: /WasteRecording
+        - generic [ref=e137]:
+          - region "Use first inventory" [ref=e138]:
+            - region [ref=e139]:
+              - generic [ref=e140]:
+                - heading "Use First · FEFO" [level=2] [ref=e141]
+                - link "View All" [ref=e148] [cursor=pointer]:
+                  - /url: /InventoryBatches
+              - region "Use First FEFO" [ref=e152]:
+                - table [ref=e153]:
+                  - rowgroup [ref=e154]:
+                    - row [ref=e155]:
+                      - columnheader "#" [ref=e156]
+                      - columnheader "Ingredient" [ref=e157]
+                      - columnheader "Batch ID" [ref=e158]
+                      - columnheader "Expiration Date" [ref=e159]
+                      - columnheader "Days Left" [ref=e160]
+                  - rowgroup [ref=e161]:
+                    - button [ref=e162] [cursor=pointer]:
+                      - cell "1" [ref=e163]
+                      - cell "Chicken Breast" [ref=e164]
+                      - cell "SL-20260927-003" [ref=e165]
+                      - cell "2 Oct 2026" [ref=e166]
+                      - cell "-2" [ref=e167]
+                    - button [ref=e168] [cursor=pointer]:
+                      - cell "2" [ref=e169]
+                      - cell "Chicken Breast" [ref=e170]
+                      - cell "SL-20260927-002" [ref=e171]
+                      - cell "2 Oct 2026" [ref=e172]
+                      - cell "-2" [ref=e173]
+                    - button [ref=e174] [cursor=pointer]:
+                      - cell "3" [ref=e175]
+                      - cell "BOMBOCLAT" [ref=e176]
+                      - cell "SL-20261004-002" [ref=e177]
+                      - cell "18 Oct 2026" [ref=e178]
+                      - cell "14" [ref=e179]
+                    - button [ref=e180] [cursor=pointer]:
+                      - cell "4" [ref=e181]
+                      - cell "Chicken Breast" [ref=e182]
+                      - cell "SL-20261022-001" [ref=e183]
+                      - cell "27 Oct 2026" [ref=e184]
+                      - cell "23" [ref=e185]
+                    - button [ref=e186] [cursor=pointer]:
+                      - cell "5" [ref=e187]
+                      - cell "Tocino" [ref=e188]
+                      - cell "SL-20260909-001" [ref=e189]
+                      - cell "29 Oct 2026" [ref=e190]
+                      - cell "25" [ref=e191]
+          - region "Inventory staff dashboard records" [ref=e192]:
+            - region [ref=e193]:
+              - generic [ref=e194]:
+                - heading "My Pending Requests" [level=2] [ref=e195]
+                - link "View All" [ref=e202] [cursor=pointer]:
+                  - /url: /MyRequests
+              - region "My Pending Requests" [ref=e206]:
+                - table [ref=e207]:
+                  - rowgroup [ref=e208]:
+                    - row [ref=e209]:
+                      - columnheader "#" [ref=e210]
+                      - columnheader "Request ID" [ref=e211]
+                      - columnheader "Requested Change" [ref=e212]
+                      - columnheader "Submitted On" [ref=e213]
+                      - columnheader "Status" [ref=e214]
+                  - rowgroup [ref=e215]:
+                    - button [ref=e216] [cursor=pointer]:
+                      - cell "1" [ref=e217]
+                      - cell [ref=e218]:
+                        - button "REQ-20261003-001" [ref=e219]
+                      - cell "Standard Unit Cost Change" [ref=e220]
+                      - cell "4 Oct 2026" [ref=e221]
+                      - cell "Pending" [ref=e222]
+                    - button [ref=e224] [cursor=pointer]:
+                      - cell "2" [ref=e225]
+                      - cell [ref=e226]:
+                        - button "REQ-20261002-001" [ref=e227]
+                      - cell "Minimum Stock Change" [ref=e228]
+                      - cell "2 Oct 2026" [ref=e229]
+                      - cell "Pending" [ref=e230]
+        - dialog [ref=e232]:
+          - heading "Inventory Batch Details View inventory batch information." [level=2] [ref=e234]:
+            - generic [ref=e247]:
+              - strong [ref=e248]: Inventory Batch Details
+              - generic [ref=e249]: View inventory batch information.
+          - generic [ref=e252]:
+            - generic [ref=e253]:
+              - generic [ref=e254]:
+                - heading "Chicken Breast" [level=3] [ref=e255]
+                - text: SL-20260927-003
+              - generic [ref=e256]: Expired
+            - generic [ref=e257]:
+              - generic [ref=e258]:
+                - term [ref=e259]: Current Stock
+                - definition [ref=e260]: 0.9 kg
+              - generic [ref=e261]:
+                - term [ref=e262]: Expires
+                - definition [ref=e263]:
+                  - text: 2 Oct 2026
+                  - generic [ref=e264]: Expired 2 days ago
+            - generic [ref=e265]:
+              - generic [ref=e266]:
+                - term [ref=e267]: Received
+                - definition [ref=e268]: 27 Sept 2026
+              - generic [ref=e269]:
+                - term [ref=e270]: Recorded by
+                - definition [ref=e271]: Development InventoryStaff
+          - button "Close" [active] [ref=e273] [cursor=pointer]

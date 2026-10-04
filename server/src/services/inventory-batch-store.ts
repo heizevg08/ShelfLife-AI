@@ -12,7 +12,15 @@ import { AdministrationError } from '../middleware/administration.middleware';
 
 type BatchRow = { _id: { toString(): string }; ingredientId: { toString(): string }; batchID: string; quantity: number; unit: string; dateReceived: Date; expirationDate: Date; unitCost?: number; status?: string; createdBy: { toString(): string }; createdAt: Date; updatedAt: Date };
 type IngredientRow = { _id: { toString(): string }; name: string; category: string; unitOfMeasure: string; minimumStock?: number; standardUnitCost?: number };
+type CreatorRow = { _id: { toString(): string }; firstName?: string; lastName?: string };
 type Resolved = { row: BatchRow; ingredient: IngredientRow; totalStock: number; displayStatus: InventoryBatchDisplayStatus; daysLeft: number; creatorName: string };
+
+export function inventoryBatchRecorderName(user: Pick<CreatorRow, 'firstName' | 'lastName'> | null | undefined): string {
+  const firstName = typeof user?.firstName === 'string' ? user.firstName.trim() : '';
+  const lastName = typeof user?.lastName === 'string' ? user.lastName.trim() : '';
+  if (!firstName || !lastName || firstName.toLocaleLowerCase() === 'development') return '—';
+  return `${firstName} ${lastName}`;
+}
 
 export function deriveInventoryBatchDisplayStatus(expirationDate: Date, totalStock: number, minimumStock: number | undefined, now: Date): InventoryBatchDisplayStatus {
   if (expirationDate < now) return 'Expired';
@@ -42,16 +50,16 @@ export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<
     const ingredientIds = [...new Set(rows.map(row => row.ingredientId.toString()))], creatorIds = [...new Set(rows.map(row => row.createdBy.toString()))];
     const [ingredientRows, creatorRows] = await Promise.all([
       ingredients.find({ _id: { $in: ingredientIds } }).select('_id name category unitOfMeasure minimumStock standardUnitCost').lean().exec() as Promise<IngredientRow[]>,
-      users.find({ _id: { $in: creatorIds } }).select('_id firstName lastName').lean().exec(),
+      users.find({ _id: { $in: creatorIds } }).select('_id firstName lastName').lean().exec() as Promise<CreatorRow[]>,
     ]);
     const byId = new Map(ingredientRows.map(row => [row._id.toString(), row]));
-    const creators = new Map(creatorRows.map(row => [row._id.toString(), `${row.firstName} ${row.lastName}`.trim()]));
+    const creators = new Map(creatorRows.map(row => [row._id.toString(), inventoryBatchRecorderName(row)]));
     const totals = new Map<string, number>();
     for (const row of rows) totals.set(row.ingredientId.toString(), (totals.get(row.ingredientId.toString()) ?? 0) + row.quantity);
     return rows.flatMap(row => {
       const ingredient = byId.get(row.ingredientId.toString()); if (!ingredient) return [];
       const totalStock = totals.get(row.ingredientId.toString()) ?? 0;
-      return [{ row, ingredient, totalStock, displayStatus: deriveInventoryBatchDisplayStatus(row.expirationDate, totalStock, ingredient.minimumStock, now), daysLeft: Math.ceil((row.expirationDate.getTime() - now.getTime()) / 86_400_000), creatorName: creators.get(row.createdBy.toString()) ?? 'Unknown account' }];
+      return [{ row, ingredient, totalStock, displayStatus: deriveInventoryBatchDisplayStatus(row.expirationDate, totalStock, ingredient.minimumStock, now), daysLeft: Math.ceil((row.expirationDate.getTime() - now.getTime()) / 86_400_000), creatorName: creators.get(row.createdBy.toString()) ?? '—' }];
     });
   };
   const serialize = ({ row, ingredient, displayStatus, daysLeft, creatorName }: Resolved): InventoryBatch => ({

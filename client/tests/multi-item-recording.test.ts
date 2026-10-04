@@ -7,18 +7,25 @@ test('Inventory Staff recording forms share one repeatable row implementation an
   const modulePage = readFileSync(new URL('../src/components/application/ModulePage.tsx', import.meta.url), 'utf8');
   assert.match(form, /useState<Draft\[]>\(\[blank\(\)\]\)/);
   assert.match(form, /key=\{row\.key\}/);
-  assert.match(form, /Add Item/);
+  assert.match(form, /Add another item/);
   assert.match(form, /Remove item \$\{index \+ 1\}/);
+  assert.match(form, /index > 0 && <button/);
+  assert.match(form, /className="sl-bulk-recording-header"/);
+  assert.match(form, /aria-labelledby=\{`\$\{row\.key\}-title`\}/);
   assert.match(form, /setTouched/);
   assert.match(form, /const MAX_ITEMS = 25/);
   assert.match(form, /const reset = \(\) => \{ interacted\.current = \{\}; setRows\(\[blank\(\)\]\);/);
-  assert.match(form, /setRows\(current => current\.filter\(item => item\.key !== row\.key\)\)/);
+  assert.match(form, /setRows\(current => current\.filter\(item => item\.key !== key\)\)/);
+  assert.match(form, /delete interacted\.current\[key\]/);
+  assert.match(form, /delete next\[key\]/);
   assert.match(form, /setRows\(current => \[\.\.\.current, blank\(\)\]\)/);
   assert.match(form, /const visibleError = \(row: Draft, field: Field\) => touched\[row\.key\]\?\.\[field\] && errors\[row\.key\]\?\.\[field\]/);
   assert.match(form, /createStockIns\(rows\.map/);
   assert.match(form, /createUsageRecords\(rows\.map/);
   assert.match(form, /createWasteRecords\(rows\.map/);
   assert.match(form, /className="sl-staff-derived-unit"/);
+  assert.match(form, /aria-describedby=\{unitHelpId\}/);
+  assert.match(form, /Auto-filled from ingredient/);
   assert.match(form, /field === 'ingredientId' \? \{ batchId: '' \}/);
   assert.match(form, /reset\(\); onDismiss\(\); await onSaved\(\)/);
   assert.match(form, /catch \(error\) \{/);
@@ -32,6 +39,8 @@ test('repeatable recording rows use responsive contained modal geometry', () => 
   assert.match(styles, /@media \(max-width: 760px\)[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(styles, /@media \(max-width: 520px\)[\s\S]*?\.sl-bulk-recording-grid \{ grid-template-columns: minmax\(0, 1fr\); \}/);
   assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-dialog-content \{[\s\S]*?overflow-y: auto;/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-row[\s\S]*?border:1px solid/);
+  assert.match(styles, /\.sl-inventory-staff-bulk-dialog \.sl-bulk-recording-add \{[\s\S]*?width:100%;[\s\S]*?border:1px dashed/);
 });
 
 test('bulk frontend services submit canonical items envelopes to dedicated endpoints', () => {

@@ -13,6 +13,7 @@ export interface UsageRecord {
 }
 export interface UsageSummary {
   totalUsageToday: { quantity: number; unit: string } | null;
+  usageTotalsByUnitToday: Array<{ quantity: number; unit: string }>;
   usageRecordsToday: number;
   mostUsedIngredient: string | null;
   ingredientsUsedThisWeek: number;
@@ -27,7 +28,7 @@ export function listUsageRecords(query: { page: number; pageSize: number; search
   if (query.to) params.set('to', query.to);
   return apiClient<{ items: UsageRecord[]; page: number; pageSize: number; total: number }>(`/usage-records?${params}`, { signal });
 }
-export const getUsageSummary = (signal?: AbortSignal) => apiClient<UsageSummary>('/usage-records/summary', { signal });
+export const getUsageSummary = (signal?: AbortSignal, businessDate?: string) => apiClient<UsageSummary>(`/usage-records/summary${businessDate ? `?date=${encodeURIComponent(businessDate)}` : ''}`, { signal });
 export async function createUsageRecord(input: UsageInput) {
   const result = await apiClient<{ record: UsageRecord }>('/usage-records', { method: 'POST', body: JSON.stringify(input), successMessage: false });
   publishActionFeedback({ kind: 'success', message: 'Usage record saved successfully.' });

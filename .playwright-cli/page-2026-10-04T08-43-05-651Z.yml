@@ -1,0 +1,34 @@
+- main [ref=e18]:
+  - region [ref=e19]:
+    - link "ShelfLife AI — return to clean login" [ref=e21] [cursor=pointer]:
+      - /url: /ShelfLifeAILogin
+      - img "ShelfLife AI" [ref=e22]
+    - paragraph [ref=e25]: For food-service teams
+    - heading "Intelligent inventory. Less food waste." [level=2] [ref=e26]: Intelligent inventory.Less food waste.
+    - paragraph [ref=e29]: Intelligent Inventory, Expiry and Demand Forecasting System
+  - region [ref=e30]:
+    - generic [ref=e31]:
+      - heading "Welcome Back!" [level=1] [ref=e32]
+      - paragraph [ref=e33]: Please enter your login details below.
+    - form "Welcome Back!" [ref=e34]:
+      - alert [active] [ref=e55]:
+        - paragraph [ref=e58]: Unable to reach ShelfLife AI. Please try again in a moment.
+      - generic [ref=e35]:
+        - generic [ref=e36]: Email
+        - textbox "Email" [ref=e37]:
+          - /placeholder: Enter your email
+          - text: admin@shelflife.com
+      - generic [ref=e38]:
+        - generic [ref=e39]: Password
+        - generic [ref=e40]:
+          - textbox "Password" [ref=e41]:
+            - /placeholder: Enter your password
+            - text: superadmin1234
+          - button "Show password" [ref=e42] [cursor=pointer]
+        - status
+      - generic [ref=e46]:
+        - generic [ref=e47] [cursor=pointer]:
+          - checkbox "Remember me" [ref=e48]
+          - text: Remember me
+        - button "Forgot Password" [ref=e49] [cursor=pointer]
+      - button "Log in" [ref=e50] [cursor=pointer]

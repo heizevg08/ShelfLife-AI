@@ -6,13 +6,20 @@ const { randomBytes } = require('node:crypto');
 const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createInventoryBatches } = require('../dist/services/inventory-batches');
-const { deriveInventoryBatchDisplayStatus, formatInventoryBatchID, reserveInventoryBatchID, resolveInventoryValue } = require('../dist/services/inventory-batch-store');
+const { deriveInventoryBatchDisplayStatus, formatInventoryBatchID, inventoryBatchRecorderName, reserveInventoryBatchID, resolveInventoryValue } = require('../dist/services/inventory-batch-store');
 const { inventoryBatchPagination, stockInBulkInput, stockInInput } = require('../dist/validators/inventory-batch');
 
 const admin = { id: '1'.repeat(24), _id: '1'.repeat(24), name: 'Admin', email: 'admin@shelflife.com', role: 'Admin', isActive: true, authVersion: 0 };
 const superAdmin = { ...admin, id: '2'.repeat(24), _id: '2'.repeat(24), email: 'super@shelflife.com', role: 'Super Admin' };
 const manager = { ...admin, id: '3'.repeat(24), _id: '3'.repeat(24), email: 'manager@shelflife.com', role: 'Manager' };
 const staff = { ...admin, id: '6'.repeat(24), _id: '6'.repeat(24), email: 'staff@shelflife.com', role: 'Inventory Staff' };
+
+test('inventory batch recorder identity requires a legitimate first and last name', () => {
+  assert.equal(inventoryBatchRecorderName({ firstName: 'Jamie', lastName: 'Santos' }), 'Jamie Santos');
+  assert.equal(inventoryBatchRecorderName({ firstName: 'Jamie' }), '—');
+  assert.equal(inventoryBatchRecorderName({ firstName: 'Development', lastName: 'InventoryStaff' }), '—');
+  assert.equal(inventoryBatchRecorderName(null), '—');
+});
 
 test('inventory display status preserves expiration precedence over aggregate low stock', () => {
   const now = new Date('2030-01-10T12:00:00.000Z');

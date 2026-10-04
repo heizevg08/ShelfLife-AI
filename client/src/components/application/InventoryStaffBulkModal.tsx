@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
 import { FileInput, PackagePlus, Plus, Trash2, UtensilsCrossed, X } from 'lucide-react';
 import { ApiError } from '../../services/apiClient';
 import { createStockIns, listInventoryBatches, type InventoryBatch, type StockInInput } from '../../services/inventory-batches';
@@ -6,7 +6,9 @@ import type { StockInIngredient } from '../../services/ingredients';
 import { createUsageRecords, type UsageInput } from '../../services/usage-records';
 import { createWasteRecords, type WasteInput, type WasteReason } from '../../services/waste-records';
 import { isValidDateOnlyInput, localDateInputValue } from '../../utils/date-time';
+import { formatHumanReadableText } from '../../utils/display-text';
 import { InventoryStaffModal, InventoryStaffModalForm } from './InventoryStaffModal';
+import { Dialog } from './Dialog';
 
 type Mode = 'stock' | 'usage' | 'waste';
 type Draft = { key: string; ingredientId: string; batchId: string; quantity: string; date: string; expirationDate: string; unitCost: string; reason: WasteReason | '' };
@@ -41,7 +43,7 @@ function validate(mode: Mode, row: Draft, today: string): RowErrors {
 }
 
 export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, ingredients, onDismiss, onSaved, returnFocus }: { mode: Mode; open: boolean; busy?: boolean; ingredients: StockInIngredient[]; onDismiss: () => void; onSaved: () => Promise<void> | void; returnFocus: RefObject<HTMLElement | null> }) {
-  const config = labels[mode], form = useRef<HTMLFormElement>(null);
+  const config = labels[mode], Icon = config.Icon, form = useRef<HTMLFormElement>(null);
   const interacted = useRef<Record<string, Partial<Record<Field, boolean>>>>({});
   const [rows, setRows] = useState<Draft[]>([blank()]);
   const [batches, setBatches] = useState<Record<string, InventoryBatch[]>>({});
@@ -105,22 +107,27 @@ export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, i
   const errorNode = (row: Draft, field: Field) => visibleError(row, field) ? <span id={`${row.key}-${field}-error`} className="sl-field-error" role="alert">{errors[row.key]?.[field]}</span> : null;
   const validation = (row: Draft, field: Field) => visibleError(row, field) ? { 'aria-invalid': true as const, 'aria-describedby': `${row.key}-${field}-error` } : {};
   const close = () => { if (!busy && !outerBusy) { reset(); onDismiss(); } };
-  return <InventoryStaffModal open={open} busy={busy || outerBusy} showClose={false} className="sl-inventory-staff-bulk-dialog" title={config.title} subtitle={config.subtitle} Icon={config.Icon} onDismiss={close} returnFocus={returnFocus}>
-    <InventoryStaffModalForm formRef={form} onSubmit={submit} message={message} secondaryLabel="Cancel" onSecondary={close} primaryLabel={config.primary} busy={busy || outerBusy} className="sl-inventory-staff-bulk-form">
-      <div className="sl-bulk-recording-list">{rows.map((row, index) => {
+  const removeRow = (key: string) => {
+    delete interacted.current[key];
+    setTouched(current => { const next = { ...current }; delete next[key]; return next; });
+    setErrors(current => { const next = { ...current }; delete next[key]; return next; });
+    setRows(current => current.filter(item => item.key !== key));
+  };
+  const items = <div className="sl-bulk-recording-list">{rows.map((row, index) => {
         const ingredient = ingredients.find(item => item.id === row.ingredientId), rowBatches = batches[row.ingredientId] ?? [], batch = rowBatches.find(item => item.id === row.batchId);
-        return <fieldset key={row.key} className="sl-bulk-recording-row"><legend>Item {index + 1}</legend>{rows.length > 1 && <button type="button" className="sl-bulk-recording-remove" aria-label={`Remove item ${index + 1}`} onClick={() => setRows(current => current.filter(item => item.key !== row.key))}><X size={16} aria-hidden="true"/> Remove</button>}
-          <div className="sl-bulk-recording-grid"><label><span>Ingredient</span><select value={row.ingredientId} onChange={event => update(row.key, 'ingredientId', event.target.value)} onBlur={() => blur(row, 'ingredientId')} {...interaction(row, 'ingredientId')} {...validation(row, 'ingredientId')}><option value="">Search or select ingredient...</option>{ingredients.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{errorNode(row, 'ingredientId')}</label>
-          {mode !== 'stock' && <label><span>Batch ID</span><select value={row.batchId} disabled={!row.ingredientId} onChange={event => update(row.key, 'batchId', event.target.value)} onBlur={() => blur(row, 'batchId')} {...interaction(row, 'batchId')} {...validation(row, 'batchId')}><option value="">Select batch ID...</option>{rowBatches.filter(item => item.quantity > 0).map(item => <option key={item.id} value={item.id}>{item.batchID}</option>)}</select>{errorNode(row, 'batchId')}</label>}
-          <label><span>{config.quantity}</span><input inputMode="decimal" value={row.quantity} onChange={event => update(row.key, 'quantity', event.target.value)} onBlur={() => blur(row, 'quantity')} {...interaction(row, 'quantity')} placeholder="Enter quantity" {...validation(row, 'quantity')}/>{errorNode(row, 'quantity')}</label>
-          <label><span>Unit</span><output className="sl-staff-derived-unit">{batch?.unit ?? ingredient?.unitOfMeasure ?? '—'}</output></label>
-          <label><span>{config.date}</span><input type="date" max={mode === 'stock' ? undefined : today} value={row.date} onChange={event => update(row.key, 'date', event.target.value)} onBlur={() => blur(row, 'date')} {...interaction(row, 'date')} {...validation(row, 'date')}/>{errorNode(row, 'date')}</label>
-          {mode === 'stock' && <label><span>Expiration Date</span><input type="date" min={row.date || undefined} value={row.expirationDate} onChange={event => update(row.key, 'expirationDate', event.target.value)} onBlur={() => blur(row, 'expirationDate')} {...interaction(row, 'expirationDate')} {...validation(row, 'expirationDate')}/>{errorNode(row, 'expirationDate')}</label>}
-          {mode === 'stock' && <label><span>Unit Cost (Optional)</span><span className="sl-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" value={row.unitCost} onChange={event => update(row.key, 'unitCost', event.target.value)} onBlur={() => blur(row, 'unitCost')} {...interaction(row, 'unitCost')} placeholder="0.00" {...validation(row, 'unitCost')}/></span>{errorNode(row, 'unitCost')}</label>}
-          {mode === 'waste' && <label><span>Reason</span><select value={row.reason} onChange={event => update(row.key, 'reason', event.target.value)} onBlur={() => blur(row, 'reason')} {...interaction(row, 'reason')} {...validation(row, 'reason')}><option value="">Select reason...</option>{reasons.map(reason => <option key={reason}>{reason}</option>)}</select>{errorNode(row, 'reason')}</label>}</div>
+        const field = (name: Field, label: string, control: ReactNode, className = '') => <label className={className}><span>{label}</span>{control}{errorNode(row, name)}</label>;
+        const ingredientField = field('ingredientId', 'Ingredient', <select value={row.ingredientId} onChange={event => update(row.key, 'ingredientId', event.target.value)} onBlur={() => blur(row, 'ingredientId')} {...interaction(row, 'ingredientId')} {...validation(row, 'ingredientId')}><option value="">Search or select ingredient...</option>{ingredients.map(item => <option key={item.id} value={item.id}>{formatHumanReadableText(item.name)}</option>)}</select>);
+        const batchField = mode !== 'stock' ? field('batchId', 'Batch ID', <select value={row.batchId} disabled={!row.ingredientId} onChange={event => update(row.key, 'batchId', event.target.value)} onBlur={() => blur(row, 'batchId')} {...interaction(row, 'batchId')} {...validation(row, 'batchId')}><option value="">Select batch ID...</option>{rowBatches.filter(item => item.quantity > 0).map(item => <option key={item.id} value={item.id}>{item.batchID}</option>)}</select>) : null;
+        const quantityField = field('quantity', config.quantity, <input inputMode="decimal" value={row.quantity} onChange={event => update(row.key, 'quantity', event.target.value)} onBlur={() => blur(row, 'quantity')} {...interaction(row, 'quantity')} placeholder="Enter quantity" {...validation(row, 'quantity')}/>);
+        const unitHelpId = `${row.key}-unit-help`;
+        const unitField = <label className="sl-derived-unit-field"><span>Unit</span><output className="sl-staff-derived-unit" aria-describedby={unitHelpId}>{batch?.unit ?? ingredient?.unitOfMeasure ?? '—'}</output><small id={unitHelpId} className="sl-field-helper">Auto-filled from ingredient</small></label>;
+        const dateField = field('date', config.date, <input type="date" max={mode === 'stock' ? undefined : today} value={row.date} onChange={event => update(row.key, 'date', event.target.value)} onBlur={() => blur(row, 'date')} {...interaction(row, 'date')} {...validation(row, 'date')}/>);
+        return <fieldset key={row.key} aria-labelledby={`${row.key}-title`} className={`sl-bulk-recording-row sl-bulk-recording-row--${mode}`}><div className="sl-bulk-recording-header"><h3 id={`${row.key}-title`}>Item {index + 1}</h3>{index > 0 && <button type="button" className="sl-bulk-recording-remove" aria-label={`Remove item ${index + 1}`} onClick={() => removeRow(row.key)}><X size={16} aria-hidden="true"/> Remove</button>}</div>
+          {mode === 'stock' ? <div className="sl-creation-form-grid"><div className="sl-creation-form-row">{dateField}{ingredientField}</div><div className="sl-creation-form-row">{quantityField}{unitField}</div><div className="sl-creation-form-row">{field('expirationDate', 'Expiration Date', <input type="date" min={row.date || undefined} value={row.expirationDate} onChange={event => update(row.key, 'expirationDate', event.target.value)} onBlur={() => blur(row, 'expirationDate')} {...interaction(row, 'expirationDate')} {...validation(row, 'expirationDate')}/>)}{field('unitCost', 'Unit Cost (Optional)', <span className="sl-currency-input sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" value={row.unitCost} onChange={event => update(row.key, 'unitCost', event.target.value)} onBlur={() => blur(row, 'unitCost')} {...interaction(row, 'unitCost')} placeholder="0.00" {...validation(row, 'unitCost')}/></span>)}</div></div> : mode === 'usage' ? <div className="sl-creation-form-grid"><div className="sl-creation-form-row">{ingredientField}{batchField}</div><div className="sl-creation-form-row">{dateField}{quantityField}</div><div className="sl-creation-form-row">{unitField}</div></div> : <div className="sl-bulk-waste-item"><div className="sl-staff-waste-form-row">{ingredientField}{batchField}</div><div className="sl-staff-waste-form-row">{quantityField}{unitField}</div><div className="sl-staff-waste-form-row">{dateField}{field('reason', 'Reason', <select value={row.reason} onChange={event => update(row.key, 'reason', event.target.value)} onBlur={() => blur(row, 'reason')} {...interaction(row, 'reason')} {...validation(row, 'reason')}><option value="">Select reason...</option>{reasons.map(reason => <option key={reason}>{reason}</option>)}</select>)}</div></div>}
         </fieldset>;
-      })}</div>
-      <button type="button" className="sl-button sl-bulk-recording-add" disabled={rows.length >= MAX_ITEMS} onClick={() => setRows(current => [...current, blank()])}><Plus size={16} aria-hidden="true"/>Add Item</button>
-    </InventoryStaffModalForm>
-  </InventoryStaffModal>;
+      })}</div>;
+  const addButton = <button type="button" className="sl-button sl-bulk-recording-add" disabled={rows.length >= MAX_ITEMS} onClick={() => setRows(current => [...current, blank()])}><Plus size={16} aria-hidden="true"/>Add another item</button>;
+  if (mode === 'waste') return <InventoryStaffModal open={open} busy={busy || outerBusy} showClose={false} className="sl-staff-waste-dialog sl-inventory-staff-bulk-dialog" title={config.title} subtitle="Enter the details of the discarded ingredient." Icon={Icon} onDismiss={close} returnFocus={returnFocus}><InventoryStaffModalForm formRef={form} onSubmit={submit} message={message} secondaryLabel="Cancel" onSecondary={close} primaryLabel="Save Waste Records" busy={busy || outerBusy} className="sl-staff-waste-form sl-inventory-staff-bulk-form">{items}{addButton}</InventoryStaffModalForm></InventoryStaffModal>;
+  const entryClass = mode === 'stock' ? 'sl-stockin-entry' : 'sl-usage-entry';
+  return <Dialog open={open} busy={busy || outerBusy} showClose={false} className={`sl-add-user-dialog sl-account-reference-dialog ${entryClass}-modal sl-inventory-staff-bulk-dialog`} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Icon size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">{config.title}</span><small>{config.subtitle}</small></span></span>} onDismiss={close} returnFocus={returnFocus} actions={<span className="sl-creation-form-actions"><button type="button" className="sl-button" disabled={busy || outerBusy} onClick={close}>Cancel</button><button type="submit" form={`${entryClass}-bulk-form`} className="sl-button sl-button-primary" disabled={busy || outerBusy}>{config.primary}</button></span>}><form id={`${entryClass}-bulk-form`} ref={form} className={`${entryClass}-form sl-creation-form sl-inventory-staff-bulk-form`} noValidate onSubmit={submit}>{items}{addButton}{message && <p className="sl-inline-notice" role="status">{message}</p>}</form></Dialog>;
 }

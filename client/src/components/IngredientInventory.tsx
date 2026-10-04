@@ -11,6 +11,7 @@
     X,
     Check,
     } from 'lucide-react';
+    import { formatHumanReadableText } from '../utils/display-text';
 
     interface Ingredient {
     id: string;
@@ -245,10 +246,10 @@
                         className="hover:bg-gray-50/80 transition-colors"
                     >
                         <td className="px-5 py-3.5">
-                        <div className="font-medium text-gray-900">{item.name}</div>
+                        <div className="font-medium text-gray-900">{formatHumanReadableText(item.name)}</div>
                         <div className="text-[10px] text-gray-400">{item.id}</div>
                         </td>
-                        <td className="px-5 py-3.5 text-gray-500">{item.category}</td>
+                        <td className="px-5 py-3.5 text-gray-500">{formatHumanReadableText(item.category)}</td>
                         <td className="px-5 py-3.5 font-medium text-gray-900">
                         {item.quantity} {item.unit}
                         </td>

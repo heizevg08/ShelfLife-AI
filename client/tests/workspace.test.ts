@@ -55,3 +55,12 @@ test('Manager Change Request presentation is opt-in and Staff modal keeps its pr
   assert.match(route, /filtered\?'Try adjusting your search or filters\.':'Your submitted change requests will appear here\.'/);
   assert.match(route, /currentOnly:true/);
 });
+
+test("Inventory Staff Today's Usage keeps truthful totals readable at multiple lengths", () => {
+  const dashboard = readFileSync(new URL('../src/components/dashboard/RoleDashboard.tsx', import.meta.url), 'utf8');
+  const styles = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
+  assert.match(dashboard, /usageTotalsByUnitToday\.map\(total => `\$\{total\.quantity\} \$\{total\.unit\}`\)\.join\(' · '\)/);
+  assert.match(dashboard, /className="sl-dashboard-usage-value" data-density=\{usageValue\.length > 18 \? 'compact' : 'default'\}/);
+  assert.match(styles, /\.sl-inventory-staff-dashboard-v140 \.sl-dashboard-source-kpis \.sl-dashboard-usage-value \{[\s\S]*?white-space:normal;[\s\S]*?overflow-wrap:break-word;/);
+  assert.match(styles, /\.sl-dashboard-usage-value\[data-density="compact"\] \{[\s\S]*?font-size:clamp\(1\.15rem,1rem \+ \.35vw,1\.45rem\);/);
+});

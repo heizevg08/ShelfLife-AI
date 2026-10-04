@@ -1,0 +1,269 @@
+- generic [ref=f5e8]:
+  - link "Skip to main content" [ref=f5e12] [cursor=pointer]:
+    - /url: "#sl-main"
+  - complementary "Application sidebar" [ref=f5e13]:
+    - link "ShelfLife AI home" [ref=f5e14] [cursor=pointer]:
+      - /url: /InventoryStaffDashboard
+      - img "ShelfLife AI" [ref=f5e15]
+    - navigation "Workspace navigation" [ref=f5e18]:
+      - region "Overview" [ref=f5e19]:
+        - link "Dashboard" [ref=f5e20] [cursor=pointer]:
+          - /url: /InventoryStaffDashboard
+      - region "Inventory" [ref=f5e26]:
+        - link "Inventory Batches" [ref=f5e27] [cursor=pointer]:
+          - /url: /InventoryBatches
+        - link "Stock-In" [ref=f5e38] [cursor=pointer]:
+          - /url: /StockIn
+      - region "Records" [ref=f5e43]:
+        - link "Usage Recording" [ref=f5e44] [cursor=pointer]:
+          - /url: /UsageRecording
+        - link "Waste Recording" [ref=f5e48] [cursor=pointer]:
+          - /url: /WasteRecording
+      - region "Follow-up" [ref=f5e52]:
+        - link "My Requests" [ref=f5e53] [cursor=pointer]:
+          - /url: /MyRequests
+  - generic [ref=f5e57]:
+    - banner [ref=f5e58]:
+      - search [ref=f5e60]:
+        - textbox "Search workspace pages and tools" [ref=f5e64]:
+          - /placeholder: Search pages and tools...
+      - generic [ref=f5e65]:
+        - time [ref=f5e66]: 4 Oct 2026, 1:18 PM
+        - button "Notifications" [ref=f5e68] [cursor=pointer]
+        - button "Account profile" [ref=f5e73] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f5e74]: DI
+    - main [ref=f5e75]:
+      - generic [ref=f5e77]:
+        - paragraph [ref=f5e78]: Inventory
+        - heading "Stock-In" [level=1] [ref=f5e79]
+        - paragraph [ref=f5e80]: Receive and record inventory batches for existing ingredients.
+      - generic [ref=f5e81]:
+        - region "Stock-in summary" [ref=f5e83]:
+          - article [ref=f5e84]:
+            - generic [ref=f5e91]:
+              - generic [ref=f5e92]: Stock-In Today
+              - strong [ref=f5e93]: "3"
+              - generic [ref=f5e94]: Batches received today
+          - article [ref=f5e95]:
+            - generic [ref=f5e107]:
+              - generic [ref=f5e108]: Ingredients Received Today
+              - strong [ref=f5e109]: "3"
+              - generic [ref=f5e110]: Distinct ingredients received today
+          - article [ref=f5e111]:
+            - generic [ref=f5e117]:
+              - generic [ref=f5e118]: Batches Received This Month
+              - strong [ref=f5e119]: "6"
+              - generic [ref=f5e120]: Batches received this month
+          - article [ref=f5e121]:
+            - generic [ref=f5e126]:
+              - generic [ref=f5e127]: Expiring Soon Batches
+              - strong [ref=f5e128]: "0"
+              - generic [ref=f5e129]: Non-expired batches within seven days
+        - main [ref=f5e131]:
+          - region [ref=f5e132]:
+            - heading "Stock-In Records" [level=2] [ref=f5e138]
+            - generic [ref=f5e140]:
+              - generic [ref=f5e141]:
+                - generic [ref=f5e142]: Search records
+                - textbox "Search records" [ref=f5e144]:
+                  - /placeholder: Search by ingredient or Batch ID...
+              - generic [ref=f5e145]:
+                - generic [ref=f5e146]: Ingredient
+                - combobox "Ingredient" [ref=f5e147]:
+                  - option "All Ingredients" [selected]
+                  - option "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                  - option "1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                  - option "11111111111111111111111111111111111111111111111111111111111111111111@#$@3423$@#$@#$@#$@#$@#$@#$%@#%#"
+                  - option "1111111111111111111111111111111111111asda11111111111111111111111111111111111111111111111111111111111"
+                  - option "2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222"
+                  - option "BBQ"
+                  - option "BOMBOCLAT"
+                  - option "CHIMIKEN"
+                  - option "Chicken"
+                  - option "Chicken Breast"
+                  - option "Ham"
+                  - option "Milk"
+                  - option "Peach Milk"
+                  - option "Tocino"
+                  - option "beef"
+                  - option "chciken"
+                  - option "cornbeef"
+                  - option "egg"
+                  - option "hotdog"
+                  - option "saasfasf11"
+              - generic [ref=f5e148]:
+                - generic [ref=f5e149]: Date range
+                - combobox "Date range" [ref=f5e150]:
+                  - option "All dates" [selected]
+                  - option "Today"
+                  - option "Last 7 Days"
+                  - option "Last 30 Days"
+                  - option "Custom range"
+              - generic [ref=f5e151]:
+                - button "Reset" [ref=f5e152] [cursor=pointer]
+                - button "Add Stock-In" [ref=f5e153] [cursor=pointer]
+            - table [ref=f5e156]:
+              - rowgroup [ref=f5e157]:
+                - row [ref=f5e158]:
+                  - columnheader "Recorded At" [ref=f5e159]
+                  - columnheader "Date Received" [ref=f5e160]
+                  - columnheader "Ingredient" [ref=f5e161]
+                  - columnheader "Batch ID" [ref=f5e162]
+                  - columnheader "Quantity" [ref=f5e163]
+                  - columnheader "Expiration Date" [ref=f5e164]
+                  - columnheader "Recorded By" [ref=f5e165]
+              - rowgroup [ref=f5e166]:
+                - row [ref=f5e167]:
+                  - cell "4 Oct 2026, 11:32 AM" [ref=f5e168]
+                  - cell "4 Oct 2026" [ref=f5e169]
+                  - cell "egg" [ref=f5e170]
+                  - cell "SL-20261004-003" [ref=f5e171]
+                  - cell "43 pcs" [ref=f5e172]
+                  - cell "11 Jan 2027" [ref=f5e173]
+                  - cell "Development InventoryStaff" [ref=f5e174]
+                - row [ref=f5e175]:
+                  - cell "4 Oct 2026, 11:32 AM" [ref=f5e176]
+                  - cell "4 Oct 2026" [ref=f5e177]
+                  - cell "BOMBOCLAT" [ref=f5e178]
+                  - cell "SL-20261004-002" [ref=f5e179]
+                  - cell "78 kg" [ref=f5e180]
+                  - cell "18 Oct 2026" [ref=f5e181]
+                  - cell "Development InventoryStaff" [ref=f5e182]
+                - row [ref=f5e183]:
+                  - cell "4 Oct 2026, 11:31 AM" [ref=f5e184]
+                  - cell "4 Oct 2026" [ref=f5e185]
+                  - cell "BBQ" [ref=f5e186]
+                  - cell "SL-20261004-001" [ref=f5e187]
+                  - cell "12 pack" [ref=f5e188]
+                  - cell "23 Dec 2026" [ref=f5e189]
+                  - cell "Development InventoryStaff" [ref=f5e190]
+                - row [ref=f5e191]:
+                  - cell "3 Oct 2026, 9:34 PM" [ref=f5e192]
+                  - cell "22 Oct 2026" [ref=f5e193]
+                  - cell "Chicken Breast" [ref=f5e194]
+                  - cell "SL-20261022-001" [ref=f5e195]
+                  - cell "100 kg" [ref=f5e196]
+                  - cell "27 Oct 2026" [ref=f5e197]
+                  - cell "Development InventoryStaff" [ref=f5e198]
+                - row [ref=f5e199]:
+                  - cell "3 Oct 2026, 9:25 PM" [ref=f5e200]
+                  - cell "23 Oct 2026" [ref=f5e201]
+                  - cell "Chicken" [ref=f5e202]
+                  - cell "SL-20261023-001" [ref=f5e203]
+                  - cell "666 kg" [ref=f5e204]
+                  - cell "30 Oct 2026" [ref=f5e205]
+                  - cell "Development InventoryStaff" [ref=f5e206]
+                - row [ref=f5e207]:
+                  - cell "30 Sept 2026, 3:13 PM" [ref=f5e208]
+                  - cell "9 Sept 2026" [ref=f5e209]
+                  - cell "Tocino" [ref=f5e210]
+                  - cell "SL-20260909-001" [ref=f5e211]
+                  - cell "15 g" [ref=f5e212]
+                  - cell "29 Oct 2026" [ref=f5e213]
+                  - cell "Development InventoryStaff" [ref=f5e214]
+                - row [ref=f5e215]:
+                  - cell "27 Sept 2026, 11:45 PM" [ref=f5e216]
+                  - cell "27 Sept 2026" [ref=f5e217]
+                  - cell "Chicken Breast" [ref=f5e218]
+                  - cell "SL-20260927-003" [ref=f5e219]
+                  - cell "0.9 kg" [ref=f5e220]
+                  - cell "2 Oct 2026" [ref=f5e221]
+                  - cell "Development InventoryStaff" [ref=f5e222]
+                - row [ref=f5e223]:
+                  - cell "27 Sept 2026, 8:35 PM" [ref=f5e224]
+                  - cell "27 Sept 2026" [ref=f5e225]
+                  - cell "Chicken Breast" [ref=f5e226]
+                  - cell "SL-20260927-002" [ref=f5e227]
+                  - cell "183 kg" [ref=f5e228]
+                  - cell "2 Oct 2026" [ref=f5e229]
+                  - cell "Development InventoryStaff" [ref=f5e230]
+                - row [ref=f5e231]:
+                  - cell "27 Sept 2026, 7:11 PM" [ref=f5e232]
+                  - cell "30 Sept 2026" [ref=f5e233]
+                  - cell "CHIMIKEN" [ref=f5e234]
+                  - cell "SL-20260930-001" [ref=f5e235]
+                  - cell "39 kg" [ref=f5e236]
+                  - cell "7 Jan 2027" [ref=f5e237]
+                  - cell "Development InventoryStaff" [ref=f5e238]
+                - row [ref=f5e239]:
+                  - cell "27 Sept 2026, 7:10 PM" [ref=f5e240]
+                  - cell "28 Sept 2026" [ref=f5e241]
+                  - cell "CHIMIKEN" [ref=f5e242]
+                  - cell "SL-20260928-001" [ref=f5e243]
+                  - cell "40 kg" [ref=f5e244]
+                  - cell "5 Jan 2027" [ref=f5e245]
+                  - cell "Development InventoryStaff" [ref=f5e246]
+            - generic [ref=f5e247]:
+              - generic [ref=f5e248]:
+                - generic [ref=f5e249]: Rows per page
+                - combobox "Rows per page" [ref=f5e250]:
+                  - option "10" [selected]
+                  - option "15"
+                  - option "50"
+                  - option "100"
+                  - option "150"
+              - navigation "stock-in records pagination" [ref=f5e251]:
+                - generic [ref=f5e252]: Showing 1 to 10 of 12 stock-in records
+                - generic [ref=f5e253]:
+                  - button "Previous page" [disabled] [ref=f5e254]: ‹
+                  - button "1" [ref=f5e256] [cursor=pointer]
+                  - button "2" [ref=f5e258] [cursor=pointer]
+                  - button "Next page" [ref=f5e259] [cursor=pointer]: ›
+      - dialog [ref=f5e260]:
+        - heading "Add Stock-In Record one or more received inventory batches." [level=2] [ref=f5e262]:
+          - generic [ref=f5e269]:
+            - generic [ref=f5e270]: Add Stock-In
+            - generic [ref=f5e271]: Record one or more received inventory batches.
+        - generic [ref=f5e273]:
+          - group "Item 1" [ref=f5e275]:
+            - generic [ref=f5e277]:
+              - generic [ref=f5e278]:
+                - generic [ref=f5e279]:
+                  - text: Date Received
+                  - textbox "Date Received" [ref=f5e280]
+                - generic [ref=f5e281]:
+                  - text: Ingredient
+                  - combobox "Ingredient" [ref=f5e282]:
+                    - option "Search or select ingredient..." [selected]
+                    - option "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                    - option "1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                    - option "11111111111111111111111111111111111111111111111111111111111111111111@#$@3423$@#$@#$@#$@#$@#$@#$%@#%#"
+                    - option "1111111111111111111111111111111111111asda11111111111111111111111111111111111111111111111111111111111"
+                    - option "2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222"
+                    - option "BBQ"
+                    - option "BOMBOCLAT"
+                    - option "CHIMIKEN"
+                    - option "Chicken"
+                    - option "Chicken Breast"
+                    - option "Ham"
+                    - option "Milk"
+                    - option "Peach Milk"
+                    - option "Tocino"
+                    - option "beef"
+                    - option "chciken"
+                    - option "cornbeef"
+                    - option "egg"
+                    - option "hotdog"
+                    - option "saasfasf11"
+              - generic [ref=f5e283]:
+                - generic [ref=f5e284]:
+                  - text: Quantity Received
+                  - textbox "Quantity Received" [ref=f5e285]:
+                    - /placeholder: Enter quantity
+                - generic [ref=f5e286]:
+                  - text: Unit
+                  - status "Unit" [ref=f5e287]: —
+              - generic [ref=f5e288]:
+                - generic [ref=f5e289]:
+                  - text: Expiration Date
+                  - textbox "Expiration Date" [ref=f5e290]
+                - generic [ref=f5e291]:
+                  - text: Unit Cost (Optional)
+                  - generic [ref=f5e292]:
+                    - generic [aria-hidden] [ref=f5e293]: ₱
+                    - textbox "Unit Cost (Optional)" [ref=f5e294]:
+                      - /placeholder: "0.00"
+          - button "Add another item" [active] [ref=f5e295] [cursor=pointer]
+        - generic [ref=f5e298]:
+          - button "Cancel" [ref=f5e299] [cursor=pointer]
+          - button "Save Stock-In" [ref=f5e300] [cursor=pointer]

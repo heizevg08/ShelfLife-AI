@@ -1,0 +1,259 @@
+- generic [ref=f3e8]:
+  - link "Skip to main content" [ref=f3e12] [cursor=pointer]:
+    - /url: "#sl-main"
+  - complementary "Application sidebar" [ref=f3e13]:
+    - link "ShelfLife AI home" [ref=f3e14] [cursor=pointer]:
+      - /url: /InventoryStaffDashboard
+      - img "ShelfLife AI" [ref=f3e15]
+    - navigation "Workspace navigation" [ref=f3e18]:
+      - region "Overview" [ref=f3e19]:
+        - link "Dashboard" [ref=f3e20] [cursor=pointer]:
+          - /url: /InventoryStaffDashboard
+      - region "Inventory" [ref=f3e26]:
+        - link "Inventory Batches" [ref=f3e27] [cursor=pointer]:
+          - /url: /InventoryBatches
+        - link "Stock-In" [ref=f3e38] [cursor=pointer]:
+          - /url: /StockIn
+      - region "Records" [ref=f3e43]:
+        - link "Usage Recording" [ref=f3e44] [cursor=pointer]:
+          - /url: /UsageRecording
+        - link "Waste Recording" [ref=f3e48] [cursor=pointer]:
+          - /url: /WasteRecording
+      - region "Follow-up" [ref=f3e52]:
+        - link "My Requests" [ref=f3e53] [cursor=pointer]:
+          - /url: /MyRequests
+  - generic [ref=f3e57]:
+    - banner [ref=f3e58]:
+      - search [ref=f3e60]:
+        - textbox "Search workspace pages and tools" [ref=f3e64]:
+          - /placeholder: Search pages and tools...
+      - generic [ref=f3e65]:
+        - time [ref=f3e66]: 4 Oct 2026, 1:11 PM
+        - button "Notifications" [ref=f3e68] [cursor=pointer]
+        - button "Account profile" [ref=f3e73] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f3e74]: DI
+    - main [ref=f3e75]:
+      - generic [ref=f3e77]:
+        - paragraph [ref=f3e78]: Records
+        - heading "Usage Recording" [level=1] [ref=f3e79]
+        - paragraph [ref=f3e80]: Record ingredient usage and maintain accurate inventory quantities.
+      - generic [ref=f3e81]:
+        - region "Usage summary" [ref=f3e83]:
+          - article [ref=f3e84]:
+            - generic [ref=f3e91]:
+              - generic [ref=f3e92]: Total Usage Today
+              - strong [ref=f3e93]: —
+              - generic [ref=f3e94]: Usage quantity recorded today
+          - article [ref=f3e95]:
+            - generic [ref=f3e101]:
+              - generic [ref=f3e102]: Usage Records Today
+              - strong [ref=f3e103]: "2"
+              - generic [ref=f3e104]: Usage transactions recorded today
+          - article [ref=f3e105]:
+            - generic [ref=f3e110]:
+              - generic [ref=f3e111]: Most Used Ingredient
+              - strong [ref=f3e112]: —
+              - generic [ref=f3e113]: Based on recorded usage
+          - article [ref=f3e114]:
+            - generic [ref=f3e126]:
+              - generic [ref=f3e127]: Ingredients Used This Week
+              - strong [ref=f3e128]: "3"
+              - generic [ref=f3e129]: Distinct ingredients used this week
+        - region [ref=f3e131]:
+          - heading "Recent Usage Records" [level=2] [ref=f3e137]
+          - generic [ref=f3e139]:
+            - generic [ref=f3e140]:
+              - generic [ref=f3e141]: Search records
+              - searchbox "Search usage records" [ref=f3e143]
+            - generic [ref=f3e144]:
+              - generic [ref=f3e145]: Ingredient
+              - combobox "Filter by ingredient" [ref=f3e146]:
+                - option "All Ingredients" [selected]
+                - option "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                - option "1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                - option "11111111111111111111111111111111111111111111111111111111111111111111@#$@3423$@#$@#$@#$@#$@#$@#$%@#%#"
+                - option "1111111111111111111111111111111111111asda11111111111111111111111111111111111111111111111111111111111"
+                - option "2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222"
+                - option "BBQ"
+                - option "BOMBOCLAT"
+                - option "CHIMIKEN"
+                - option "Chicken"
+                - option "Chicken Breast"
+                - option "Ham"
+                - option "Milk"
+                - option "Peach Milk"
+                - option "Tocino"
+                - option "beef"
+                - option "chciken"
+                - option "cornbeef"
+                - option "egg"
+                - option "hotdog"
+                - option "saasfasf11"
+            - generic [ref=f3e147]:
+              - generic [ref=f3e148]: Date range
+              - combobox "Filter by date range" [ref=f3e149]:
+                - option "All dates" [selected]
+                - option "Today"
+                - option "Last 7 Days"
+                - option "Last 30 Days"
+                - option "Custom range"
+            - generic [ref=f3e150]:
+              - button "Reset" [ref=f3e151] [cursor=pointer]
+              - button "Record Usage" [ref=f3e152] [cursor=pointer]
+          - table [ref=f3e155]:
+            - rowgroup [ref=f3e156]:
+              - row [ref=f3e157]:
+                - columnheader "Date & Time" [ref=f3e158]
+                - columnheader "Ingredient" [ref=f3e159]
+                - columnheader "Batch ID" [ref=f3e160]
+                - columnheader "Quantity Used" [ref=f3e161]
+                - columnheader "Recorded By" [ref=f3e162]
+            - rowgroup [ref=f3e163]:
+              - row [ref=f3e164]:
+                - cell [ref=f3e165]:
+                  - time [ref=f3e166]: 4 Oct 2026, 11:35 AM
+                - cell "egg" [ref=f3e167]
+                - cell "SL-20261004-003" [ref=f3e168]
+                - cell "45 pcs" [ref=f3e169]
+                - cell "Development InventoryStaff" [ref=f3e170]
+              - row [ref=f3e171]:
+                - cell [ref=f3e172]:
+                  - time [ref=f3e173]: 4 Oct 2026, 11:35 AM
+                - cell "BBQ" [ref=f3e174]
+                - cell "SL-20261004-001" [ref=f3e175]
+                - cell "55 pack" [ref=f3e176]
+                - cell "Development InventoryStaff" [ref=f3e177]
+              - row [ref=f3e178]:
+                - cell [ref=f3e179]:
+                  - time [ref=f3e180]: 30 Sept 2026, 3:15 PM
+                - cell "Chicken Breast" [ref=f3e181]
+                - cell "SL-20260927-002" [ref=f3e182]
+                - cell "15 kg" [ref=f3e183]
+                - cell "Development InventoryStaff" [ref=f3e184]
+              - row [ref=f3e185]:
+                - cell [ref=f3e186]:
+                  - time [ref=f3e187]: 27 Sept 2026, 11:59 PM
+                - cell "Chicken Breast" [ref=f3e188]
+                - cell "SL-20260927-003" [ref=f3e189]
+                - cell "0.1 kg" [ref=f3e190]
+                - cell "Development InventoryStaff" [ref=f3e191]
+              - row [ref=f3e192]:
+                - cell [ref=f3e193]:
+                  - time [ref=f3e194]: 27 Sept 2026, 11:47 PM
+                - cell "CHIMIKEN" [ref=f3e195]
+                - cell "SL-20260930-001" [ref=f3e196]
+                - cell "56 kg" [ref=f3e197]
+                - cell "Development InventoryStaff" [ref=f3e198]
+              - row [ref=f3e199]:
+                - cell [ref=f3e200]:
+                  - time [ref=f3e201]: 27 Sept 2026, 11:46 PM
+                - cell "Chicken Breast" [ref=f3e202]
+                - cell "SL-20260927-003" [ref=f3e203]
+                - cell "55 kg" [ref=f3e204]
+                - cell "Development InventoryStaff" [ref=f3e205]
+          - generic [ref=f3e206]:
+            - generic [ref=f3e207]:
+              - generic [ref=f3e208]: Rows per page
+              - combobox "Rows per page" [ref=f3e209]:
+                - option "10" [selected]
+                - option "15"
+                - option "50"
+                - option "100"
+                - option "150"
+            - navigation "usage records pagination" [ref=f3e210]:
+              - generic [ref=f3e211]: Showing 1 to 6 of 6 usage records
+              - generic [ref=f3e212]:
+                - button "Previous page" [disabled] [ref=f3e213]: ‹
+                - button "1" [ref=f3e215] [cursor=pointer]
+                - button "Next page" [disabled] [ref=f3e216]: ›
+      - dialog [ref=f3e217]:
+        - heading "Record Usage Record ingredient consumption from one or more inventory batches." [level=2] [ref=f3e219]:
+          - generic [ref=f3e227]:
+            - strong [ref=f3e228]: Record Usage
+            - generic [ref=f3e229]: Record ingredient consumption from one or more inventory batches.
+        - generic [ref=f3e232]:
+          - generic [ref=f3e233]:
+            - group "Item 1" [ref=f3e298]:
+              - generic [ref=f3e300]:
+                - generic [ref=f3e301]:
+                  - generic [ref=f3e302]: Ingredient
+                  - combobox "Ingredient" [ref=f3e303]:
+                    - option "Search or select ingredient..."
+                    - option "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                    - option "1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                    - option "11111111111111111111111111111111111111111111111111111111111111111111@#$@3423$@#$@#$@#$@#$@#$@#$%@#%#"
+                    - option "1111111111111111111111111111111111111asda11111111111111111111111111111111111111111111111111111111111"
+                    - option "2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222"
+                    - option "BBQ" [selected]
+                    - option "BOMBOCLAT"
+                    - option "CHIMIKEN"
+                    - option "Chicken"
+                    - option "Chicken Breast"
+                    - option "Ham"
+                    - option "Milk"
+                    - option "Peach Milk"
+                    - option "Tocino"
+                    - option "beef"
+                    - option "chciken"
+                    - option "cornbeef"
+                    - option "egg"
+                    - option "hotdog"
+                    - option "saasfasf11"
+                - generic [ref=f3e304]:
+                  - generic [ref=f3e305]: Batch ID
+                  - combobox "Batch ID" [ref=f3e306]:
+                    - option "Select batch ID..." [selected]
+                    - option "SL-20261004-001"
+                - generic [ref=f3e307]:
+                  - generic [ref=f3e308]: Quantity Used
+                  - generic [ref=f3e309]:
+                    - textbox "Quantity Used" [ref=f3e310]:
+                      - /placeholder: Enter quantity
+                    - status [ref=f3e311]: pack
+                - generic [ref=f3e312]:
+                  - generic [ref=f3e313]: Date Used
+                  - textbox "Date Used" [ref=f3e314]
+            - group "Item 2" [ref=f3e315]:
+              - button "Remove item 2" [ref=f3e317] [cursor=pointer]: Remove
+              - generic [ref=f3e321]:
+                - generic [ref=f3e322]:
+                  - generic [ref=f3e323]: Ingredient
+                  - combobox "Ingredient" [ref=f3e324]:
+                    - option "Search or select ingredient..." [selected]
+                    - option "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                    - option "1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+                    - option "11111111111111111111111111111111111111111111111111111111111111111111@#$@3423$@#$@#$@#$@#$@#$@#$%@#%#"
+                    - option "1111111111111111111111111111111111111asda11111111111111111111111111111111111111111111111111111111111"
+                    - option "2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222"
+                    - option "BBQ"
+                    - option "BOMBOCLAT"
+                    - option "CHIMIKEN"
+                    - option "Chicken"
+                    - option "Chicken Breast"
+                    - option "Ham"
+                    - option "Milk"
+                    - option "Peach Milk"
+                    - option "Tocino"
+                    - option "beef"
+                    - option "chciken"
+                    - option "cornbeef"
+                    - option "egg"
+                    - option "hotdog"
+                    - option "saasfasf11"
+                - generic [ref=f3e325]:
+                  - generic [ref=f3e326]: Batch ID
+                  - combobox "Batch ID" [disabled] [ref=f3e327]:
+                    - option "Select batch ID..." [selected]
+                - generic [ref=f3e328]:
+                  - generic [ref=f3e329]: Quantity Used
+                  - generic [ref=f3e330]:
+                    - textbox "Quantity Used" [ref=f3e331]:
+                      - /placeholder: Enter quantity
+                    - status [ref=f3e332]: —
+                - generic [ref=f3e333]:
+                  - generic [ref=f3e334]: Date Used
+                  - textbox "Date Used" [ref=f3e335]
+          - button "Add another item" [active] [ref=f3e251] [cursor=pointer]
+          - generic [ref=f3e253]:
+            - button "Cancel" [ref=f3e254] [cursor=pointer]
+            - button "Save Usage Records" [ref=f3e255] [cursor=pointer]

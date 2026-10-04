@@ -94,11 +94,13 @@ export function createUsageRecordStore(driver: Mongoose, records: ReturnType<typ
     async detail(id) { const item = (await resolve()).find(candidate => candidate.row._id.toString() === id); return item ? serialize(item) : null; },
     async summary(now) {
       const items = await resolve(); const today = dayBounds(now); const todayItems = items.filter(item => item.row.dateUsed >= today.start && item.row.dateUsed < today.end);
-      const units = new Set(todayItems.map(item => item.row.unit));
-      const totalUsageToday = units.size === 1 ? { quantity: todayItems.reduce((total, item) => total + item.row.quantityUsed, 0), unit: todayItems[0]!.row.unit } : null;
+      const totalsByUnit = new Map<string, number>();
+      for (const item of todayItems) totalsByUnit.set(item.row.unit, (totalsByUnit.get(item.row.unit) ?? 0) + item.row.quantityUsed);
+      const usageTotalsByUnitToday = [...totalsByUnit].map(([unit, quantity]) => ({ quantity, unit }));
+      const totalUsageToday = usageTotalsByUnitToday.length === 1 ? usageTotalsByUnitToday[0]! : null;
       const weekStart = new Date(today.start.getTime() - ((today.start.getUTCDay() + 6) % 7) * 86_400_000);
       // A cross-unit "most used" ranking is invalid until the product defines unit normalization.
-      return { totalUsageToday, usageRecordsToday: todayItems.length, mostUsedIngredient: null, ingredientsUsedThisWeek: new Set(items.filter(item => item.row.dateUsed >= weekStart && item.row.dateUsed < today.end).map(item => item.row.ingredientId.toString())).size } satisfies UsageSummary;
+      return { totalUsageToday, usageTotalsByUnitToday, usageRecordsToday: todayItems.length, mostUsedIngredient: null, ingredientsUsedThisWeek: new Set(items.filter(item => item.row.dateUsed >= weekStart && item.row.dateUsed < today.end).map(item => item.row.ingredientId.toString())).size } satisfies UsageSummary;
     },
     async create(actor, input) {
       try { return (await this.createMany(actor, [input]))[0]!; }
