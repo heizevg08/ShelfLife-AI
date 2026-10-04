@@ -21686,6 +21686,22 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
   color: var(--sl-muted);
   background: #fff;
 }
+.sl-stockin-ingredient-filter { position:relative; min-width:0; width:100%; }
+.sl-stockin-ingredient-trigger {
+  box-sizing:border-box; align-items:center; justify-content:space-between; gap:.5rem; width:100%; min-width:0; height:40px; min-height:40px; padding:0 .75rem;
+  border:1px solid var(--sl-border); border-radius:var(--sl-radius); background:var(--sl-surface); color:var(--sl-text); font:var(--sl-font-supporting); display:flex;
+}
+.sl-stockin-ingredient-trigger > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sl-stockin-ingredient-trigger > svg { flex:none; color:var(--sl-muted); }
+.sl-stockin-ingredient-trigger:focus-visible { border-color:var(--sl-focus); outline:2px solid var(--sl-focus); outline-offset:1px; }
+.sl-stockin-ingredient-trigger:disabled { background:var(--sl-surface-subtle); color:var(--sl-muted); cursor:not-allowed; }
+.sl-stockin-ingredient-menu {
+  box-sizing:border-box; position:absolute; z-index:60; top:calc(100% + 6px); left:0; width:100%; max-width:100%; max-height:17rem;
+  overflow-y:auto; overflow-x:hidden; padding:.25rem; border:1px solid var(--sl-border); border-radius:var(--sl-radius); background:var(--sl-surface); box-shadow:var(--sl-shadow);
+}
+.sl-stockin-ingredient-menu > button { box-sizing:border-box; width:100%; min-width:0; padding:.4rem .75rem; border:0; border-radius:var(--sl-radius-sm); background:transparent; color:var(--sl-text); overflow:hidden; text-align:left; text-overflow:ellipsis; white-space:nowrap; font:var(--sl-font-supporting); display:block; }
+.sl-stockin-ingredient-menu > button:is(:hover,:focus-visible,[data-active=true]) { background:var(--sl-surface-subtle); outline:0; }
+.sl-stockin-ingredient-menu > button[aria-selected=true] { color:var(--sl-brand); font-weight:600; }
 .sl-staff-stockin-history-search>div {
   position: relative;
 }

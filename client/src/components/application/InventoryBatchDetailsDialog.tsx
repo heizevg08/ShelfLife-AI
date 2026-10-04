@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import { Boxes } from 'lucide-react';
 import type { InventoryBatch, InventoryBatchDisplayStatus } from '../../services/inventory-batches';
+import { inventoryBatchRecorderLabel } from '../../utils/inventory-batch-recorder';
 import { formatDate } from '../../utils/date-time';
 import { formatHumanReadableText } from '../../utils/display-text';
 import { ApplicationModal } from './ApplicationModal';
@@ -26,7 +27,7 @@ export function InventoryBatchDetailsDialog({ batch, onDismiss, returnFocus }: {
     {batch && <div className="sl-batch-details-content">
       <section className="sl-batch-details-identity"><div><h3>{ingredient}</h3><span className="sl-canonical-identifier">{batch.batchID}</span></div><Status tone={statusTone(batch.displayStatus)}>{batch.displayStatus}</Status></section>
       <dl className="sl-batch-details-primary"><div><dt>Current Stock</dt><dd>{batch.quantity.toLocaleString()} {batch.unit}</dd></div><div><dt>Expires</dt><dd>{formatDate(batch.expirationDate)} <small>{expirationContext(batch.daysLeft)}</small></dd></div></dl>
-      <dl className="sl-batch-details-secondary"><div><dt>Received</dt><dd>{formatDate(batch.dateReceived)}</dd></div><div><dt>Recorded by</dt><dd>{batch.createdBy.name || '—'}</dd></div></dl>
+      <dl className="sl-batch-details-secondary"><div><dt>Received</dt><dd>{formatDate(batch.dateReceived)}</dd></div><div><dt>Recorded by</dt><dd>{inventoryBatchRecorderLabel(batch.createdBy)}</dd></div></dl>
     </div>}
   </ApplicationModal>;
 }

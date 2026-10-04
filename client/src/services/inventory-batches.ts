@@ -14,7 +14,7 @@ export interface InventoryBatch {
   persistedStatus?: string;
   displayStatus: InventoryBatchDisplayStatus;
   daysLeft: number;
-  createdBy: { id: string; name: string };
+  createdBy: { id: string; name: string; firstName?: string; lastName?: string };
   createdAt: string;
   updatedAt: string;
 }

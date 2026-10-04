@@ -21,6 +21,15 @@ test('inventory batch recorder identity requires a legitimate first and last nam
   assert.equal(inventoryBatchRecorderName(null), '—');
 });
 
+test('inventory batch store resolves only safe recorder fields from the persisted createdBy reference', () => {
+  const source = require('node:fs').readFileSync(require('node:path').join(__dirname, '../src/services/inventory-batch-store.ts'), 'utf8');
+  assert.match(source, /createdBy: actor\.id/);
+  assert.match(source, /select\('_id firstName lastName'\)/);
+  assert.match(source, /createdBy: \{ id: row\.createdBy\.toString\(\), name: inventoryBatchRecorderName\(creator\)/);
+  assert.match(source, /firstName: creator\.firstName\.trim\(\), lastName: creator\.lastName\.trim\(\)/);
+  assert.doesNotMatch(source, /createdByName/);
+});
+
 test('inventory display status preserves expiration precedence over aggregate low stock', () => {
   const now = new Date('2030-01-10T12:00:00.000Z');
   assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-01-09T12:00:00.000Z'), 2, 10, now), 'Expired');
