@@ -21152,12 +21152,6 @@ n .sl-manager-reports-v135 .sl-manager-reports-bottom {
 .sl-inventory-staff-dashboard-v140 .sl-placeholder-table .sl-empty-cell {
   height: clamp(13rem,21vw,17rem);
 }
-.sl-inventory-staff-dashboard-v140 #inventory-staff-my-pending-requests .sl-empty-cell {
-  height: clamp(16rem,26vw,20rem);
-}
-.sl-inventory-staff-dashboard-v140 #inventory-staff-my-pending-requests .sl-card-body {
-  align-items: stretch;
-}
 @media (width<=1100px){
   .sl-inventory-staff-kpis {
     grid-template-columns: repeat(2,minmax(0,1fr));
@@ -33497,8 +33491,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-inventory-staff-quick-actions > div { align-items:center; flex-wrap:wrap; gap:.65rem; display:flex; }
 :is(.sl-staff-usage-table,.sl-staff-waste-table,.sl-staff-stockin-table,.sl-staff-inventory-records-table,.sl-staff-my-requests-table,.sl-dashboard-source-table) tbody td { color:var(--sl-text); font-weight:400; }
-.sl-inventory-staff-preview-grid {
-  grid-template-columns:minmax(0,1.72fr) minmax(0,1fr);
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid {
+  grid-template-columns:minmax(0,3fr) minmax(0,2fr);
   align-items:stretch;
   gap:clamp(.8rem,.6rem + .45vw,1rem);
   min-width:0;
@@ -33513,40 +33507,14 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] .sl-inventory-staff-fefo-table,
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid .sl-inventory-staff-bottom .sl-inventory-staff-dashboard-table { overflow-x:auto; overflow-y:hidden; }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid .sl-inventory-staff-analytics > .sl-card[aria-labelledby="inventory-staff-fefo"] .sl-inventory-staff-fefo-table .sl-dashboard-source-table { min-width:42rem; }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid .sl-inventory-staff-bottom .sl-inventory-staff-dashboard-table .sl-dashboard-source-table { min-width:0; table-layout:fixed; }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(1) { width:7%; }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(2) { width:29%; }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(3) { width:23%; }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(4) { width:26%; }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table :is(th,td):nth-child(5) { width:15%; }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(1) { width:8%; }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(2) { width:27%; }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(3) { width:28%; }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(4) { width:20%; }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(5) { width:17%; }
 .sl-inventory-staff-dashboard-v140 .sl-canonical-identifier { white-space:nowrap; }
-.sl-inventory-staff-dashboard-v140 #inventory-staff-my-pending-requests .sl-empty-cell { height:auto; min-height:10rem; }
 .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid .sl-dashboard-source-table td {
   color:var(--sl-text);
-  font:var(--sl-font-body);
-  font-weight:400;
-}
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid .sl-dashboard-source-table .sl-record-identifier-link {
-  color:var(--sl-text);
-  font:inherit;
-  font-weight:500;
-}
-/* Keep My Pending Requests aligned to the Dashboard FEFO table typography tokens. */
-#inventory-staff-my-pending-requests .sl-change-request-preview-table thead th {
-  font:var(--sl-font-label);
-}
-#inventory-staff-my-pending-requests .sl-change-request-preview-table tbody td:not(:last-child) {
-  font:var(--sl-font-body);
-  font-weight:400;
-}
-#inventory-staff-my-pending-requests .sl-change-request-preview-table tbody td:first-child .sl-record-identifier-link {
-  font:var(--sl-font-body);
-  font-weight:400;
 }
 .sl-detail-enabled-row { cursor:pointer; transition:background-color var(--sl-motion); }
 .sl-detail-enabled-row:hover { background:var(--sl-brand-subtle); }
@@ -33624,11 +33592,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-staff-requests-v162 .sl-staff-my-requests-records > .sl-application-records-footer { min-height:62px; padding-block:8px; }
 .sl-main:has(> .sl-page-header + .sl-staff-my-requests) { row-gap:12px; }
 @media (width<=1100px) {
-  .sl-inventory-staff-preview-grid { grid-template-columns:minmax(0,1fr); }
-  .sl-inventory-staff-preview-grid > :is(.sl-inventory-staff-analytics,.sl-inventory-staff-bottom) > .sl-card { height:auto; }
-}
-@media (width<=620px) {
-  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table .sl-dashboard-source-table { min-width:34rem; table-layout:auto; }
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid { grid-template-columns:minmax(0,1fr); }
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-preview-grid > :is(.sl-inventory-staff-analytics,.sl-inventory-staff-bottom) > .sl-card { height:auto; }
 }
 @media (width<=620px) {
   .sl-inventory-staff-quick-actions { align-items:stretch; flex-direction:column; }
@@ -34157,12 +34122,55 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
     max-height:calc(94vh - 120px);
   }
 }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(1) { width:29%; }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(2) { width:31%; }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(3) { width:22%; }
-.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-dashboard-table :is(th,td):nth-child(4) { width:18%; }
 @media (width<=600px) {
   .sl-inventory-staff-bulk-dialog .sl-bulk-recording-row,
   .sl-inventory-staff-bulk-dialog .sl-bulk-recording-row:last-child { padding:14px 12px; }
   .sl-inventory-staff-bulk-dialog .sl-bulk-recording-row .sl-creation-form-row { grid-template-columns:minmax(0,1fr); }
+}
+
+/* Inventory Staff Dashboard: My Pending Requests owns this compact table geometry. */
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table {
+  min-width:0;
+  table-layout:fixed;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table .sl-pending-request-id-column { width:28%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table .sl-pending-request-change-column { width:39%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table .sl-pending-request-date-column { width:19%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table .sl-pending-request-status-column { width:14%; }
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table :is(th,td) {
+  padding-inline:.55rem;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table thead th {
+  font:550 .75rem/1.4 "Inter",sans-serif;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table tbody td:not(.sl-empty-cell) {
+  font:400 .875rem/1.5 "Inter",sans-serif;
+  font-weight:400;
+  padding-block:.7rem;
+  vertical-align:middle;
+}
+.sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table :is(th,td):is(:nth-child(2),:nth-child(3)) {
+  white-space:nowrap;
+}
+@media (width>=769px) {
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table thead th {
+    font:550 .8125rem/1.4 "Inter",sans-serif;
+  }
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table tbody td:not(.sl-empty-cell) {
+    font:400 1rem/1.5 "Inter",sans-serif;
+  }
+}
+@media (width<=620px) {
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table {
+    min-width:34rem;
+    table-layout:auto;
+  }
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table :is(col,th,td) {
+    width:auto;
+  }
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table :is(th,td):is(:nth-child(2),:nth-child(3)) {
+    white-space:normal;
+  }
 }
