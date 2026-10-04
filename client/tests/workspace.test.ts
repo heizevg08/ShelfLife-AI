@@ -32,7 +32,7 @@ test('Manager Change Request presentation is opt-in and Staff modal keeps its pr
   const dashboard = readFileSync(new URL('../src/components/dashboard/RoleDashboard.tsx', import.meta.url), 'utf8');
   assert.match(details, /manager = false/);
   assert.match(manager, /<ChangeRequestDetailsDialog manager /);
-  assert.match(route, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
+  assert.match(route, /<ChangeRequestDetailsDialog inventoryStaff inventoryStaffMyRequests request=\{detail\}/);
   assert.equal((dashboard.match(/<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/g) ?? []).length, 1);
   assert.match(dashboard, /<ChangeRequestDetailsDialog request=\{requestDetail\}/);
   assert.match(route, /<PageHeader eyebrow="Follow-up" title="My Requests" description="Submit and track your ingredient change requests\."/);
@@ -47,7 +47,7 @@ test('Manager Change Request presentation is opt-in and Staff modal keeps its pr
   assert.match(route, /secondaryLabel="Cancel"/);
   assert.match(route, /primaryLabel="Submit Request"/);
   assert.match(route, /const DATE_RANGES=\['All dates','Today','Last 7 Days','Last 30 Days','Custom range'\]/);
-  assert.match(route, /<span>Date Range<\/span><select value=\{range\}/);
+  assert.match(route, /<span>Date Range<\/span><FilterSelect ariaLabel="Filter requests by date range" value=\{range\}/);
   assert.match(route, /range==='Custom range'&&<div className="sl-v219-custom-date-range">/);
   assert.match(route, /\.\.\.period,currentOnly:true/);
   assert.match(route, /const reset=\(\)=>\{setSearch\(''\);setType\(''\);setStatus\(''\);setRange\('All dates'\);setFrom\(''\);setTo\(''\);setPage\(1\)\}/);
