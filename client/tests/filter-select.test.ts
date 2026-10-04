@@ -36,6 +36,10 @@ test('FilterSelect portals its viewport-safe overlay outside clipping ancestors'
   assert.match(source, /getBoundingClientRect\(\)/);
   assert.match(source, /window\.addEventListener\('resize', updatePosition\)/);
   assert.match(source, /window\.addEventListener\('scroll', updatePosition, true\)/);
+  assert.match(source, /naturalHeight <= below[\s\S]*?'below'[\s\S]*?naturalHeight <= above[\s\S]*?'above'/);
+  assert.match(source, /const renderedHeight = Math\.min\(naturalHeight, maxHeight\)/);
   assert.match(source, /placement === 'below' \? rect\.bottom \+ MENU_GAP/);
+  assert.match(source, /rect\.top - MENU_GAP - renderedHeight/);
+  assert.doesNotMatch(source, /rect\.top - MENU_GAP - maxHeight/);
   assert.match(source, /ref=\{menu\}/);
 });

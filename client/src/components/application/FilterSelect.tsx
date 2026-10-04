@@ -70,12 +70,19 @@ export function FilterSelect({ value, options, onChange, ariaLabel, disabled = f
       const left = Math.min(Math.max(VIEWPORT_GUTTER, rect.left), Math.max(VIEWPORT_GUTTER, viewportWidth - width - VIEWPORT_GUTTER));
       const below = Math.max(0, viewportHeight - rect.bottom - MENU_GAP - VIEWPORT_GUTTER);
       const above = Math.max(0, rect.top - MENU_GAP - VIEWPORT_GUTTER);
-      const placement = below >= above ? 'below' as const : 'above' as const;
+      const naturalHeight = Math.min(menu.current?.scrollHeight ?? DEFAULT_MENU_MAX_HEIGHT, DEFAULT_MENU_MAX_HEIGHT);
+      const placement = naturalHeight <= below
+        ? 'below' as const
+        : naturalHeight <= above
+          ? 'above' as const
+          : below >= above ? 'below' as const : 'above' as const;
       const availableHeight = placement === 'below' ? below : above;
       const maxHeight = Math.min(DEFAULT_MENU_MAX_HEIGHT, availableHeight);
-      setMenuPosition({ left, top: placement === 'below' ? rect.bottom + MENU_GAP : rect.top - MENU_GAP - maxHeight, width, maxHeight, placement });
+      const renderedHeight = Math.min(naturalHeight, maxHeight);
+      setMenuPosition({ left, top: placement === 'below' ? rect.bottom + MENU_GAP : rect.top - MENU_GAP - renderedHeight, width, maxHeight, placement });
     };
     updatePosition();
+    const measurementFrame = window.requestAnimationFrame(updatePosition);
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition, true);
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(updatePosition);
@@ -83,9 +90,10 @@ export function FilterSelect({ value, options, onChange, ariaLabel, disabled = f
     return () => {
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
+      window.cancelAnimationFrame(measurementFrame);
       observer?.disconnect();
     };
-  }, [open]);
+  }, [open, options.length]);
 
   const choose = (index: number) => {
     const option = options[index];

@@ -8,7 +8,8 @@ test('Inventory Staff lower grid gives Pending Requests desktop room and stacks 
   const primitives = readFileSync(new URL('../src/components/application/primitives.tsx', import.meta.url), 'utf8');
   const requestService = readFileSync(new URL('../src/services/change-requests.ts', import.meta.url), 'utf8');
   const rulesStart = styles.lastIndexOf('/* Inventory Staff Dashboard: My Pending Requests owns this compact table geometry. */');
-  const effectiveRules = styles.slice(rulesStart);
+  const rulesEnd = styles.indexOf('/* My Requests keeps its custom-range controls and actions in one adaptive layout. */', rulesStart);
+  const effectiveRules = styles.slice(rulesStart, rulesEnd);
   const cardSource = primitives.slice(primitives.indexOf('export function Card('));
 
   assert.match(dashboard, /sl-dashboard-source-table-shell sl-inventory-staff-fefo-table[\s\S]*?table className="sl-data-table sl-dashboard-source-table"/);
@@ -18,7 +19,8 @@ test('Inventory Staff lower grid gives Pending Requests desktop room and stacks 
   assert.doesNotMatch(cardSource, /<section[^>]*\bid=\{id\}/);
 
   assert.match(styles, /\.sl-inventory-staff-dashboard-v140 \.sl-inventory-staff-preview-grid \{\s*grid-template-columns:minmax\(0,3fr\) minmax\(0,2fr\);/);
-  assert.match(styles, /@media \(width<=1100px\) \{\s*\.sl-inventory-staff-dashboard-v140 \.sl-inventory-staff-preview-grid \{ grid-template-columns:minmax\(0,1fr\); \}/);
+  assert.match(styles, /@container sl-inventory-staff-page \(max-width:99rem\)[\s\S]*?\.sl-inventory-staff-dashboard-v140 \.sl-inventory-staff-preview-grid \{ grid-template-columns:minmax\(0,1fr\); \}/);
+  assert.doesNotMatch(styles, /@media \(width<=1100px\) \{\s*\.sl-inventory-staff-dashboard-v140 \.sl-inventory-staff-preview-grid/);
   assert.doesNotMatch(styles, /\.sl-inventory-staff-preview-grid \{\s*grid-template-columns:minmax\(0,1\.72fr\) minmax\(0,1fr\);/);
   assert.match(effectiveRules, /\.sl-inventory-staff-dashboard-v140 \.sl-inventory-staff-pending-requests-table \{\s*min-width:0;\s*table-layout:fixed;/);
   assert.match(effectiveRules, /\.sl-pending-request-id-column \{ width:28%; \}[\s\S]*?\.sl-pending-request-change-column \{ width:39%; \}[\s\S]*?\.sl-pending-request-date-column \{ width:19%; \}[\s\S]*?\.sl-pending-request-status-column \{ width:14%; \}/);
