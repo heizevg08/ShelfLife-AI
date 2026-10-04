@@ -34,12 +34,11 @@ test('Inventory Batches keeps the approved row-to-details-to-Waste handoff', () 
   assert.match(modulePage, /initialSelection=\{handoff \? \{ ingredientId: params\.ingredientId!, batchId: params\.batchId! \}/);
 });
 
-test('known Batch Details appearance divergence remains an explicit migration target', () => {
+test('Dashboard and Inventory Batches share the canonical Inventory Staff Batch Details variant', () => {
   assert.match(modulePage, /<InventoryBatchDetailsDialog batch=\{viewBatch\} inventoryStaff/);
-  assert.match(dashboard, /<InventoryBatchDetailsDialog batch=\{batchDetail\}/);
-  assert.doesNotMatch(dashboard, /<InventoryBatchDetailsDialog batch=\{batchDetail\} inventoryStaff/);
+  assert.match(dashboard, /<InventoryBatchDetailsDialog batch=\{batchDetail\} inventoryStaff/);
+  assert.match(dashboard, /pathname: '\/WasteRecording', params: \{ recordWaste: '1', ingredientId: batch\.ingredient\.id, batchId: batch\.id \}/);
   assert.match(styles, /\.sl-staff-inventory-batch-details-dialog\.sl-area-dialog/);
-  assert.match(styles, /\.sl-inventory-batch-details-dialog\.sl-area-dialog/);
 });
 
 test('modal-specific content remains separate from shared shell semantics', () => {

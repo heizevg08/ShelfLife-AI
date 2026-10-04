@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, Box, Boxes, CalendarClock, ClipboardList, FileText, ListChecks, ListOrdered, PhilippinePeso, Plus, TrendingUp, TriangleAlert, UsersRound, type LucideIcon } from 'lucide-react';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
 import { ApplicationDonutChart, ApplicationPendingState } from '../application/ApplicationPatterns';
 import { Card, DataState, PageHeader, PlaceholderSummaryCards, PlaceholderTable, Status } from '../application/primitives';
@@ -181,6 +181,7 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
 }
 
 function InventoryStaffDashboardContent({ userName }: { userName: string }) {
+  const router = useRouter();
   const requestTrigger = useRef<HTMLButtonElement>(null);
   const batchTrigger = useRef<HTMLTableRowElement>(null);
   const [inventory, setInventory] = useState<InventoryBatch[] | null>(null);
@@ -236,7 +237,7 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
           <div className="sl-inventory-staff-dashboard-table sl-dashboard-source-table-shell" role="region" aria-label="My Pending Requests" tabIndex={0}><table className="sl-data-table sl-dashboard-source-table sl-change-request-preview-table sl-inventory-staff-pending-requests-table"><colgroup><col className="sl-pending-request-id-column" /><col className="sl-pending-request-change-column" /><col className="sl-pending-request-date-column" /><col className="sl-pending-request-status-column" /></colgroup><thead><tr>{['Request ID','Requested Change','Submitted On','Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{pendingRequests?.length ? pendingRequests.map(request => <tr key={request.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event=>{requestTrigger.current=event.currentTarget.querySelector('button');void openRequest(request.id)}} onKeyDown={event=>{if(event.target!==event.currentTarget)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();requestTrigger.current=event.currentTarget.querySelector('button');void openRequest(request.id)}}}><td><button type="button" className="sl-record-identifier-link sl-emphasized-value" onClick={event => { event.stopPropagation(); requestTrigger.current = event.currentTarget; void openRequest(request.id); }}>{request.requestID}</button></td><td>{changeRequestTypeLabel(request.requestType)}</td><td>{formatDate(request.createdAt)}</td><td><Status tone={requestStatusTone(request)}>{requestStatus(request)}</Status></td></tr>) : pendingRequestsFailed ? stateRow(4, 'error', 'Requests unavailable', 'Pending requests could not be loaded.') : pendingRequests === null ? stateRow(4, 'loading', 'Loading pending requests', 'Retrieving your submitted requests.') : stateRow(4, 'empty', 'No pending requests', 'You have no requests awaiting review.')}</tbody></table></div>
         </Card>
       </section></div>
-      <InventoryBatchDetailsDialog batch={batchDetail} onDismiss={() => setBatchDetail(null)} returnFocus={batchTrigger} />
+      <InventoryBatchDetailsDialog batch={batchDetail} inventoryStaff onDismiss={() => setBatchDetail(null)} onRecordWaste={batch => { setBatchDetail(null); router.push({ pathname: '/WasteRecording', params: { recordWaste: '1', ingredientId: batch.ingredient.id, batchId: batch.id } }); }} returnFocus={batchTrigger} />
       <ChangeRequestDetailsDialog inventoryStaff request={detail} onDismiss={() => setDetail(null)} returnFocus={requestTrigger} />
     </div>;
 }
