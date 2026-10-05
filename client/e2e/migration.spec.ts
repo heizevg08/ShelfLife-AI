@@ -250,6 +250,17 @@ test('ingredient text limits block oversized submissions and only required field
   }
 });
 
+test('unchanged ingredient edit shows feedback without issuing a PATCH request', async ({ page }) => {
+  const api = await mockApi(page, 'Inventory Manager');
+  const ingredient = { id: '3'.repeat(24), name: 'Legacy@Milk', version: 0, brand: '', description: '', category: 'Dairy', unitOfMeasure: 'L', standardUnitCost: 10, isActive: true, createdBy: { id: '1'.repeat(24), name: 'Test' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  await page.route('**/api/ingredients?*', route => route.fulfill({ json: { items: [ingredient], total: 1, page: 1, limit: 10 } }));
+  await page.goto('/Ingredients');
+  await page.getByRole('button', { name: 'Edit Legacy@Milk', exact: true }).click();
+  await page.getByRole('button', { name: 'Update Ingredient', exact: true }).click();
+  await expect(page.locator('#sl-ingredient-form').getByText('No changes to save.', { exact: true })).toBeVisible();
+  expect(api.writes.filter(write => write.path === `/api/ingredients/${ingredient.id}`)).toEqual([]);
+});
+
 test('audit retry clears errors after previously loaded data fails to refresh', async ({ page }) => {
   await mockApi(page, 'Admin');
   let fail = false;

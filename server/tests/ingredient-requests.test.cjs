@@ -80,6 +80,8 @@ test('staff ingredient submissions remain pending until a manager or admin revie
   const edited = await request(staff, `/ingredient-requests/${created.id}`, 'PATCH', { name: 'Updated Milk', expectedVersion: 0 });
   assert.equal(edited.status, 200);
   assert.equal((await edited.json()).request.version, 1);
+  assert.equal((await request(staff, `/ingredient-requests/${created.id}`, 'PATCH', { name: 'Updated@Milk', expectedVersion: 1 })).status, 400);
+  assert.equal((await request(staff, `/ingredient-requests/${created.id}`, 'PATCH', { unexpected: true, expectedVersion: 1 })).status, 400);
   assert.equal((await request(manager, `/ingredient-requests/${created.id}`, 'PATCH', { ...input, expectedVersion: 1 })).status, 403);
   assert.equal((await request(staff, `/ingredient-requests/${created.id}/review`, 'PATCH', { decision: 'Approved', expectedVersion: 0 })).status, 403);
   assert.equal(activeIngredients.length, 0);
