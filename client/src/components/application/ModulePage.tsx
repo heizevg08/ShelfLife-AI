@@ -20,6 +20,16 @@ const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', '
 const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
 type IngredientDraft = { name: string; brand: string; category: string; customCategory: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
 const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', customCategory:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
+const forbiddenText = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u200B-\u200D\u2060\uFEFF]/u;
+const catalogueText = /^[\p{L}\p{M}\p{N}\s.,&%'()/+\-]*$/u;
+const proseText = /^[\p{L}\p{M}\p{N}\s.,;:!?'"()&%/+\-]*$/u;
+const ingredientTextError = (value: string, label: string, max: number, required: boolean, prose = false) => {
+  const clean = value.trim();
+  if (required && !clean) return `Enter ${label.toLowerCase()}.`;
+  if (value.length > max) return `Use at most ${max} characters.`;
+  if (forbiddenText.test(value) || (!prose && /[\t\r\n]/u.test(value)) || !(prose ? proseText : catalogueText).test(value)) return 'Use standard text and punctuation only.';
+  return undefined;
+};
 const formatShelfLife = (days?: number) => {
   if (!days) return '—';
   const years = Math.floor(days / 365), remainingDays = days % 365;
@@ -34,14 +44,14 @@ function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit
   const validation = (key: IngredientField) => ({ 'aria-invalid': errors[key] ? true as const : undefined, 'aria-describedby': errors[key] ? `ingredient-${key}-error` : undefined });
   const textChange = (key: IngredientField, label: string, max: number, required = false) => (value: string) => {
     set(key, value);
-    setError(key, required && !value.trim() ? `Enter ${label.toLowerCase()}.` : value.length > max ? `Use at most ${max} characters.` : undefined);
+    setError(key, ingredientTextError(value, label, max, required, key === 'description'));
   };
   const numericChange = (key: 'minStock' | 'unitCost' | 'shelfLife', label: string, whole = false, maxDecimals?: number, minimum = 0) => (value: string) => {
     set(key, value);
     if (!value) { setError(key); return; }
     const validFormat = whole ? /^\d+$/.test(value) : maxDecimals === undefined ? /^\d*(?:\.\d*)?$/.test(value) : new RegExp(`^\\d*(?:\\.\\d{0,${maxDecimals}})?$`).test(value);
     const number = Number(value);
-    setError(key, !validFormat || !Number.isFinite(number) ? `${label} must be a valid number${whole ? ' with no decimals' : maxDecimals ? ` with at most ${maxDecimals} decimal places` : ''}.` : number < minimum ? `${label} must be at least ${minimum}.` : undefined);
+    setError(key, !validFormat || !Number.isFinite(number) || number > 999_999_999_999_999 ? `${label} must be a valid number${whole ? ' with no decimals' : maxDecimals ? ` with at most ${maxDecimals} decimal places` : ''}.` : number < minimum ? `${label} must be at least ${minimum}.` : undefined);
   };
   const chooseCategory = (value: string) => {
     set('category', value);
@@ -53,12 +63,12 @@ function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit
     const value = form[key];
     const adjust = (direction: -1 | 1) => {
       const next = Math.max(0, Number(value || 0) + direction * step);
-      numericChange(key, label, false, key === 'unitCost' ? precision : undefined)(key === 'unitCost' ? next.toFixed(precision) : String(Number(next.toFixed(precision))));
+      numericChange(key, label, false, precision)(key === 'unitCost' ? next.toFixed(precision) : String(Number(next.toFixed(precision))));
     };
     return <div className={`sl-number-stepper${currency ? ' sl-number-stepper-currency' : ''}`}>
       {currency && <span className="sl-number-stepper-prefix" aria-hidden="true">₱</span>}
       <button type="button" className="sl-number-stepper-button" aria-label={`Decrease ${label}`} title={`Decrease ${label}`} disabled={busy || !value || Number(value) <= 0} onClick={() => adjust(-1)}><Minus size={15} aria-hidden="true" /></button>
-      <input id={id} disabled={busy} className="sl-admin-input" type="text" inputMode="decimal" role="spinbutton" aria-valuemin={0} aria-valuestep={step} aria-valuenow={value && Number.isFinite(Number(value)) ? Number(value) : undefined} value={key === 'unitCost' && value !== '' && /^\d+(?:\.\d{0,2})?$/.test(value) ? Number(value).toFixed(2) : value} onChange={event => numericChange(key, label, false, key === 'unitCost' ? precision : undefined)(event.target.value)} onKeyDown={event => { if (event.key === 'ArrowUp') { event.preventDefault(); adjust(1); } else if (event.key === 'ArrowDown') { event.preventDefault(); adjust(-1); } }} {...validation(key)} />
+      <input id={id} disabled={busy} className="sl-admin-input" type="text" inputMode="decimal" role="spinbutton" aria-valuemin={0} aria-valuestep={step} aria-valuenow={value && Number.isFinite(Number(value)) ? Number(value) : undefined} value={key === 'unitCost' && value !== '' && new RegExp(`^\\d+(?:\\.\\d{0,${precision}})?$`).test(value) ? Number(value).toFixed(precision) : value} onChange={event => numericChange(key, label, false, precision)(event.target.value)} onKeyDown={event => { if (event.key === 'ArrowUp') { event.preventDefault(); adjust(1); } else if (event.key === 'ArrowDown') { event.preventDefault(); adjust(-1); } }} {...validation(key)} />
       <button type="button" className="sl-number-stepper-button" aria-label={`Increase ${label}`} title={`Increase ${label}`} disabled={busy} onClick={() => adjust(1)}><Plus size={15} aria-hidden="true" /></button>
     </div>;
   };
@@ -70,8 +80,8 @@ function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit
       {field('category', 'Category', <select disabled={busy} className="sl-admin-input" value={form.category} onChange={e => chooseCategory(e.target.value)} {...validation('category')}><option value="">Select category</option>{INGREDIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select>)}
       {form.category === 'Other' && field('customCategory', 'Specify category', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Condiments" maxLength={50} value={form.customCategory} onChange={e => textChange('customCategory', 'a custom category', 50, true)(e.target.value)} {...validation('customCategory')} />)}
       {field('unit', 'Unit of measure', <select disabled={busy} className="sl-admin-input" value={form.unit} onChange={e => { set('unit', e.target.value); setError('unit', e.target.value ? undefined : 'Select a unit of measure.'); }} {...validation('unit')}><option value="">Select unit</option>{INGREDIENT_UNITS.map(value => <option key={value} value={value}>{value}</option>)}</select>)}
-      {field('minStock', 'Minimum stock', stepper('minStock', 'Minimum stock', 1, 2, 'ingredient-minStock-input'), false)}
-      {field('unitCost', 'Standard unit cost', stepper('unitCost', 'Standard unit cost', 0.01, 2, 'ingredient-unitCost-input', true), false)}
+      {field('minStock', 'Minimum stock', stepper('minStock', 'Minimum stock', 1, 3, 'ingredient-minStock-input'), false)}
+      {field('unitCost', 'Standard unit cost', stepper('unitCost', 'Standard unit cost', 0.0001, 4, 'ingredient-unitCost-input', true), false)}
       {field('shelfLife', 'Default shelf life (days)', <input id="ingredient-shelfLife-input" disabled={busy} className="sl-admin-input" type="text" inputMode="numeric" value={form.shelfLife} onChange={e => numericChange('shelfLife', 'Shelf life', true, undefined, 1)(e.target.value)} {...validation('shelfLife')} />, false)}
       {field('description', 'Description', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Boneless, skinless chicken breast" maxLength={500} value={form.description} onChange={e => textChange('description', 'description', 500)(e.target.value)} {...validation('description')} />, false)}
     </div>
@@ -266,14 +276,13 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
     if (busy || !(editIngredient ? permissions.update : editIngredientRequest ? user.role === 'Inventory Staff' : permissions.create)) return;
     const next: Partial<Record<IngredientField, string>> = {};
     const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), category: form.category.trim(), customCategory: form.customCategory.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
-    for (const [key, limit] of [['name', 100], ['brand', 100], ['description', 500], ['unit', 50]] as const) {
-      if (clean[key].length > limit) next[key] = `Use at most ${limit} characters.`;
+    for (const [key, label, limit, required] of [['name', 'an ingredient name', 100, true], ['brand', 'brand', 100, false], ['description', 'description', 500, false], ['customCategory', 'a custom category', 50, clean.category === 'Other']] as const) {
+      const error = ingredientTextError(clean[key], label, limit, required, key === 'description');
+      if (error) next[key] = error;
     }
-    if (!clean.name) next.name = 'Enter an ingredient name.';
     if (!clean.category) next.category = 'Select a category.';
-    if (clean.category === 'Other' && !clean.customCategory) next.customCategory = 'Specify the category.';
     if (!clean.unit) next.unit = 'Enter a unit of measure.';
-    for (const [key, label] of [['minStock', 'Minimum stock'], ['unitCost', 'Standard unit cost']] as const) if (clean[key] !== '' && (!Number.isFinite(Number(clean[key])) || Number(clean[key]) < 0)) next[key] = `${label} must be 0 or greater.`;
+    for (const [key, label, scale] of [['minStock', 'Minimum stock', 3], ['unitCost', 'Standard unit cost', 4]] as const) if (clean[key] !== '' && (!new RegExp(`^\\d*(?:\\.\\d{1,${scale}})?$`).test(clean[key]) || !Number.isFinite(Number(clean[key])) || Number(clean[key]) < 0 || Number(clean[key]) > 999_999_999_999_999)) next[key] = `${label} must be a nonnegative number with at most ${scale} decimal places.`;
     if (clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1)) next.shelfLife = 'Shelf life must be a whole number of at least 1 day.';
     if (Object.keys(next).length) {
       setErrors(next);
