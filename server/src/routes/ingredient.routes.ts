@@ -13,6 +13,10 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
 
+  const manager = authorizeAdministration(['Inventory Manager']);
+  router.get('/categories', manager, mongoInputGuard, actions.categories);
+  router.get('/summary', manager, mongoInputGuard, actions.summary);
+  router.get('/stock-in-options', manager, mongoInputGuard, actions.stockInOptions);
   router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff']), mongoInputGuard, actions.list);
   router.post('/', authorizeAdministration(['Inventory Manager', 'Inventory Staff']), json({ limit: '100kb' }), actions.create);
   router.patch('/:id', authorizeAdministration(['Inventory Manager']), json({ limit: '100kb' }), actions.update);

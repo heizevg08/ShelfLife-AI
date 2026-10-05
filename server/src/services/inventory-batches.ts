@@ -5,7 +5,7 @@ import type { auditRecordModel } from '../models/audit-record';
 import type { SystemConfigService, SystemConfig } from './system-config';
 import { batchStatus } from './batch-status';
 import { batchCorrection, batchDates, batchInput, batchPagination, batchPatch } from '../validators/inventory-batch';
-import { archiveInput, decimalUnits, storedDecimal, versionConflict } from '../validators/inventory-contract';
+import { archiveInput, decimal, decimalUnits, storedDecimal, versionConflict } from '../validators/inventory-contract';
 import { invalid, objectId } from '../validators/administration';
 import { AdministrationError, forbidden } from '../middleware/administration.middleware';
 import { auditSnapshot } from './audit-snapshot';
@@ -16,6 +16,17 @@ type Row = {
   unit: string; unitCost: Types.Decimal128; currency: string; dateReceived: string; expirationDate: string;
   isActive: boolean; version: number; createdBy: Types.ObjectId; createdAt: Date; updatedAt: Date;
 };
+type IngredientRow = { _id: Types.ObjectId; category: string; minimumStock?: number; isActive?: boolean };
+export type InventoryBatchSummary = {
+  totalIngredients: number;
+  totalBatches: number;
+  lowStockItems: number;
+  /** Active ingredients excluded from low-stock evaluation because legacy minimumStock is not safely convertible to a 3-decimal value. */
+  lowStockExcludedCount: number;
+  statusCounts: Record<'Normal' | 'Approaching Expiry' | 'Critical' | 'Expired', number>;
+  categoryCounts: Array<{ category: string; batchCount: number; quantity: string; inventoryValue: string }>;
+  inventoryValue: string;
+};
 const notFound = () => new AdministrationError(404, 'NOT_FOUND', 'Batch not found');
 function manager(actor: Actor) { if (actor.role !== 'Inventory Manager') throw forbidden(); }
 function record(row: Row) {
@@ -25,6 +36,22 @@ function record(row: Row) {
     isActive: row.isActive, version: row.version, createdBy: row.createdBy.toString(), createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 const response = (row: Row, config: SystemConfig, now: Date) => ({ ...record(row), status: batchStatus(row.expirationDate, config, now) });
+function fixed(units: bigint, scale: number) {
+  const denominator = 10n ** BigInt(scale), whole = units / denominator, fraction = (units % denominator).toString().padStart(scale, '0');
+  return `${whole}.${fraction}`;
+}
+function money(rawUnits: bigint) {
+  // Quantity (3) multiplied by unit cost (4) is rounded only once at the final PHP total (2).
+  return fixed((rawUnits + 50_000n) / 100_000n, 2);
+}
+function minimumStockUnits(value: unknown): bigint | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null;
+  try {
+    // Existing ingredient thresholds are Number values. Convert only the shortest decimal form,
+    // then use fixed-point units so this read-only summary never performs quantity arithmetic in Number.
+    return decimalUnits(decimal(String(value), 3, 'minimumStock'));
+  } catch { return null; }
+}
 
 export function createInventoryBatches(driver: Mongoose, batches: ReturnType<typeof inventoryBatchModel>, ingredients: ReturnType<typeof ingredientModel>, audits: ReturnType<typeof auditRecordModel>, config: Pick<SystemConfigService, 'get'>, now: () => Date = () => new Date()) {
   const mutate = async (actor: Actor, id: string, version: number, action: 'UPDATE' | 'DEACTIVATE', changes: (before: Row) => Record<string, unknown>, reason?: string) => {
@@ -43,6 +70,52 @@ export function createInventoryBatches(driver: Mongoose, batches: ReturnType<typ
     return response(row, thresholds, date);
   };
   return {
+    async summary(): Promise<InventoryBatchSummary> {
+      const [rows, ingredientRows, thresholds] = await Promise.all([
+        batches.find({ isActive: true }).lean().exec() as Promise<Row[]>,
+        ingredients.find({ isActive: { $ne: false } }).select('_id category minimumStock isActive').lean().exec() as Promise<IngredientRow[]>,
+        config.get(),
+      ]);
+      const ingredientsById = new Map(ingredientRows.map(row => [row._id.toString(), row]));
+      const activeRows = rows.filter(row => ingredientsById.has(row.ingredientId.toString()));
+      const statusCounts: InventoryBatchSummary['statusCounts'] = { Normal: 0, 'Approaching Expiry': 0, Critical: 0, Expired: 0 };
+      const categories = new Map<string, { batchCount: number; quantity: bigint; inventoryValue: bigint }>();
+      const availableByIngredient = new Map<string, bigint>();
+      let inventoryValue = 0n;
+      const nowDate = now();
+      for (const row of activeRows) {
+        const ingredient = ingredientsById.get(row.ingredientId.toString())!;
+        statusCounts[batchStatus(row.expirationDate, thresholds, nowDate)] += 1;
+        const quantity = decimalUnits(storedDecimal(row.quantity, 3));
+        const value = quantity * decimalUnits(storedDecimal(row.unitCost, 4));
+        inventoryValue += value;
+        const category = categories.get(ingredient.category) ?? { batchCount: 0, quantity: 0n, inventoryValue: 0n };
+        category.batchCount += 1; category.quantity += quantity; category.inventoryValue += value;
+        categories.set(ingredient.category, category);
+        // Match Usage/Waste availability: active ingredient, active batch, and quantity > 0.000.
+        if (quantity > 0n) availableByIngredient.set(row.ingredientId.toString(), (availableByIngredient.get(row.ingredientId.toString()) ?? 0n) + quantity);
+      }
+      const multiplier = decimalUnits(thresholds.lowStockMultiplier);
+      let lowStockItems = 0, lowStockExcludedCount = 0;
+      for (const ingredient of ingredientRows) {
+        const threshold = minimumStockUnits(ingredient.minimumStock);
+        if (ingredient.minimumStock === undefined) continue;
+        if (threshold === null) { lowStockExcludedCount += 1; continue; }
+        const onHand = availableByIngredient.get(ingredient._id.toString()) ?? 0n;
+        if (onHand * 1000n <= threshold * multiplier) lowStockItems += 1;
+      }
+      return {
+        totalIngredients: new Set(activeRows.map(row => row.ingredientId.toString())).size,
+        totalBatches: activeRows.length,
+        lowStockItems,
+        lowStockExcludedCount,
+        statusCounts,
+        categoryCounts: [...categories.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([category, values]) => ({
+          category, batchCount: values.batchCount, quantity: fixed(values.quantity, 3), inventoryValue: money(values.inventoryValue),
+        })),
+        inventoryValue: money(inventoryValue),
+      };
+    },
     async list(query: Record<string, unknown>) {
       const page = batchPagination(query), filter = { ...(page.includeArchived ? {} : { isActive: true }), ...(page.ingredientId ? { ingredientId: page.ingredientId } : {}) };
       const [rows, total, thresholds] = await Promise.all([

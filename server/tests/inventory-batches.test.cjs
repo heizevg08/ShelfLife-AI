@@ -10,6 +10,7 @@ const { batchInput, batchPatch, batchCorrection, batchPagination } = require('..
 const { batchStatus, manilaDate } = require('../dist/services/batch-status');
 const { inventoryBatchModel } = require('../dist/models/inventory-batch');
 const { decimal, decimalUnits, calendarDate } = require('../dist/validators/inventory-contract');
+const { createInventoryBatches } = require('../dist/services/inventory-batches');
 
 const input = { ingredientId: '1'.repeat(24), batchCode: ' B-001 ', initialQuantity: '10.5', unit: 'kg', unitCost: '123.4567', dateReceived: '2026-09-20', expirationDate: '2026-09-30' };
 test('batch inputs use exact decimal strings, controlled units, immutable identity and allowlisted PATCH', () => {
@@ -68,4 +69,45 @@ test('a duplicate batch code reports the batch conflict rather than an ingredien
   });
   assert.equal(response.status, 409);
   assert.equal((await response.json()).error.message, 'A batch with this code already exists for this ingredient, including archived batches');
+});
+
+test('inventory batch summary is manager-only', async t => {
+  const roles = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'];
+  const users = roles.map((role, index) => ({ id: String(index + 1).repeat(24), _id: String(index + 1).repeat(24), name: role, email: `${index}@shelflife.com`, role, isActive: true, authVersion: 0 }));
+  const auth = createAuth({ byId: async id => users.find(user => user.id === id) || null, byEmail: async () => null }, randomBytes(48).toString('hex'));
+  const server = createServer(createApp([], () => true, auth, undefined, undefined, undefined, undefined, { summary: async () => ({ totalIngredients: 0, totalBatches: 0, lowStockItems: 0, lowStockExcludedCount: 0, statusCounts: { Normal: 0, 'Approaching Expiry': 0, Critical: 0, Expired: 0 }, categoryCounts: [], inventoryValue: '0.00' }) }));
+  t.after(() => { server.closeAllConnections(); server.close(); });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  const call = user => fetch(`http://127.0.0.1:${server.address().port}/api/inventory-batches/summary`, { headers: user ? { Authorization: `Bearer ${auth.issue(user).accessToken}` } : {} });
+  assert.equal((await call()).status, 401);
+  assert.equal((await call(users[2])).status, 200);
+  for (const user of [users[0], users[1], users[3]]) assert.equal((await call(user)).status, 403);
+});
+
+test('inventory batch summary uses active positive on-hand quantities and rounds PHP totals only once', async () => {
+  const id = value => ({ toString: () => value.padEnd(24, value[0]) });
+  const decimalValue = value => ({ toString: () => value });
+  const active = id('1'), second = id('2'), threeDecimals = id('3'), zero = id('4'), tooPrecise = id('5'), binaryFraction = id('6'), exponent = id('7'), invalid = id('8'), infinite = id('9'), negative = id('a');
+  const ingredients = [
+    { _id: active, category: 'Dairy', minimumStock: 0.1 },
+    { _id: second, category: 'Pantry', minimumStock: 2.5 },
+    { _id: threeDecimals, category: 'Produce', minimumStock: 1.005 },
+    { _id: zero, category: 'Beverages', minimumStock: 0 },
+    { _id: tooPrecise, category: 'Frozen', minimumStock: 1.0005 },
+    { _id: binaryFraction, category: 'Bakery', minimumStock: 0.1 + 0.2 },
+    { _id: exponent, category: 'Seafood', minimumStock: 1e-7 },
+    { _id: invalid, category: 'Other', minimumStock: Number.NaN },
+    { _id: infinite, category: 'Other', minimumStock: Number.POSITIVE_INFINITY },
+    { _id: negative, category: 'Meat', minimumStock: -1 },
+  ];
+  const row = (ingredientId, code, quantity, unitCost, expirationDate) => ({ _id: id(code), ingredientId, batchCode: code, initialQuantity: decimalValue(quantity), quantity: decimalValue(quantity), unit: 'kg', unitCost: decimalValue(unitCost), currency: 'PHP', dateReceived: '2026-09-20', expirationDate, isActive: true, version: 0, createdBy: id('9'), createdAt: new Date(), updatedAt: new Date() });
+  const batches = [row(active, 'a', '1.000', '0.0049', '2026-09-23'), row(active, 'b', '1.000', '0.0049', '2026-09-24'), row(second, 'c', '0.000', '1.0000', '2026-09-20')];
+  const query = rows => ({ lean: () => ({ exec: async () => rows }) });
+  const service = createInventoryBatches({}, { find: () => query(batches) }, { find: () => ({ select: () => query(ingredients) }) }, {}, { get: async () => ({ criticalDays: 2, approachingDays: 7, lowStockMultiplier: '1.000', version: 0 }) }, () => new Date('2026-09-21T15:59:59.999Z'));
+  const summary = await service.summary();
+  assert.equal(summary.inventoryValue, '0.01');
+  assert.equal(summary.categoryCounts.find(item => item.category === 'Dairy').inventoryValue, '0.01');
+  assert.equal(summary.lowStockItems, 3);
+  assert.equal(summary.lowStockExcludedCount, 6);
+  assert.deepEqual(summary.statusCounts, { Normal: 0, 'Approaching Expiry': 1, Critical: 1, Expired: 1 });
 });

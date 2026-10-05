@@ -38,6 +38,8 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
 test('ingredient HTTP API authenticates, enforces per-method roles, validates, pages, and returns real writes', async () => {
   const rows = [];
   const store = {
+    async summary() { return { total: rows.filter(row => row.isActive !== false).length, categories: ['Dairy'], units: ['L'], mostCommonIngredient: null }; },
+    async stockInOptions() { return rows.filter(row => row.isActive !== false).map(row => ({ id: row.id, name: row.name, category: row.category, unitOfMeasure: row.unitOfMeasure, defaultShelfLifeDays: row.defaultShelfLifeDays })); },
     async list(query) {
       const found = rows.filter(row => (query.includeArchived || row.isActive !== false) && (!query.category || row.category === query.category) && (!query.search || `${row.name} ${row.brand}`.toLowerCase().includes(query.search.toLowerCase())));
       return { items: found.slice((query.page - 1) * query.limit, query.page * query.limit), page: query.page, limit: query.limit, total: found.length };
@@ -64,6 +66,14 @@ test('ingredient HTTP API authenticates, enforces per-method roles, validates, p
   try {
     assert.equal((await request(undefined)).status, 401);
     for (const role of users) assert.equal((await request(role)).status, 200);
+    for (const path of ['/categories', '/summary', '/stock-in-options']) {
+      assert.equal((await request(undefined, 'GET', undefined, path)).status, 401);
+      assert.equal((await request(manager, 'GET', undefined, path)).status, 200);
+      for (const role of [admin, staff, superAdmin]) assert.equal((await request(role, 'GET', undefined, path)).status, 403);
+    }
+    assert.deepEqual(await (await request(manager, 'GET', undefined, '/categories')).json(), { categories: ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] });
+    assert.deepEqual(await (await request(manager, 'GET', undefined, '/summary')).json(), { total: 0, categories: ['Dairy'], units: ['L'], mostCommonIngredient: null });
+    assert.deepEqual(await (await request(manager, 'GET', undefined, '/stock-in-options')).json(), { ingredients: [] });
     for (const role of [admin, superAdmin]) {
       assert.equal((await request(role, 'POST', input)).status, 403);
       assert.equal((await request(role, 'PATCH', input, '/' + '3'.repeat(24))).status, 403);

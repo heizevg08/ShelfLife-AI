@@ -8,6 +8,7 @@ import { finishInventoryRouter, inventoryRouter } from './inventory-router';
 
 export function inventoryBatchRoutes(auth: AuthService, service: InventoryBatchService) {
   const router = inventoryRouter(auth), manager = authorizeAdministration(['Inventory Manager']), parse = json({ limit: '100kb' });
+  router.get('/summary', manager, mongoInputGuard, async (_req, res) => { res.json(await service.summary()); });
   router.get('/', authorizeAdministration([...ROLES]), mongoInputGuard, async (req, res) => { res.json(await service.list(req.query)); });
   router.get('/:id', authorizeAdministration([...ROLES]), mongoInputGuard, async (req, res) => { res.json({ batch: await service.get(objectId(req.params.id)) }); });
   router.post('/', manager, parse, async (req, res) => { res.status(201).json({ batch: await service.create(res.locals.user, req.body) }); });
