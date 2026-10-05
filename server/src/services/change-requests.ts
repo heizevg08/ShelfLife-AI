@@ -35,7 +35,7 @@ export function createChangeRequests(rows: ReturnType<typeof changeRequestModel>
       if (actor.role !== 'Inventory Staff') throw forbidden();
       const input = changeRequestPatch(body);
       const updated = await rows.findOneAndUpdate({ _id: id, createdBy: actor.id, status: 'Pending', version: input.expectedVersion }, {
-        $set: { target: input.target, type: input.type, proposedCorrection: input.proposedCorrection, reason: input.reason }, $inc: { version: 1 },
+        $set: input.patch, $inc: { version: 1 },
       }, { returnDocument: 'after', runValidators: true }).lean().exec() as Row | null;
       if (!updated) throw notFound();
       return record(updated);

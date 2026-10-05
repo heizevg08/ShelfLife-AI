@@ -1,6 +1,6 @@
-import { expectedVersion } from './inventory-contract';
 import { invalid, objectId } from './administration';
-import { ingredientInput } from './ingredient';
+import { expectedVersion } from './inventory-contract';
+import { ingredientInput, ingredientPatch, type IngredientInput } from './ingredient';
 import { proseText } from './text';
 
 export function ingredientRequestReview(body: unknown) {
@@ -17,13 +17,8 @@ export function ingredientRequestReview(body: unknown) {
 export type IngredientRequestReview = ReturnType<typeof ingredientRequestReview>;
 
 export function ingredientRequestPatch(body: unknown) {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
-  const input = body as Record<string, unknown>;
-  const version = expectedVersion(input.expectedVersion);
-  const { expectedVersion: _expectedVersion, ...fields } = input;
-  const validated = ingredientInput(fields);
-  if (fields.category !== undefined && fields.category !== 'Other' && fields.customCategory === undefined) validated.customCategory = '';
-  return { input: validated, expectedVersion: version };
+  const patch = ingredientPatch(body);
+  return { input: patch.patch as Partial<IngredientInput>, expectedVersion: patch.expectedVersion };
 }
 
 export function ingredientRequestId(value: unknown) { return objectId(value); }

@@ -6,7 +6,7 @@ const { randomBytes } = require('node:crypto');
 const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createIngredientRequests } = require('../dist/services/ingredient-requests');
-const { ingredientRequestReview, ingredientRequestInput } = require('../dist/validators/ingredient-request');
+const { ingredientRequestReview, ingredientRequestInput, ingredientRequestPatch } = require('../dist/validators/ingredient-request');
 const { createIngredients } = require('../dist/services/ingredients');
 
 const input = { name: 'Whole Milk', brand: 'Local', description: '', category: 'Dairy', unitOfMeasure: 'L', minimumStock: 4, standardUnitCost: 82.5, defaultShelfLifeDays: 7 };
@@ -15,6 +15,8 @@ const otherInput = { ...input, category: 'Other', customCategory: 'Snacks' };
 test('ingredient request validators reject approval and lifecycle mass assignment', () => {
   assert.deepEqual(ingredientRequestInput(input), input);
   assert.equal(ingredientRequestInput(otherInput).customCategory, 'Snacks');
+  assert.deepEqual(ingredientRequestPatch({ name: 'Updated Milk', expectedVersion: 0 }), { input: { name: 'Updated Milk' }, expectedVersion: 0 });
+  assert.throws(() => ingredientRequestPatch({ name: 'Updated@Milk', expectedVersion: 0 }));
   assert.throws(() => ingredientRequestInput({ ...input, customCategory: 'Snacks' }));
   assert.deepEqual(ingredientRequestReview({ decision: 'Approved', expectedVersion: 0 }), { decision: 'Approved', expectedVersion: 0, note: '' });
   assert.deepEqual(ingredientRequestReview({ decision: 'Rejected', expectedVersion: 2, note: 'Needs more detail' }), { decision: 'Rejected', expectedVersion: 2, note: 'Needs more detail' });
@@ -75,7 +77,7 @@ test('staff ingredient submissions remain pending until a manager or admin revie
   assert.equal((await request(staff, '/ingredient-requests')).status, 200);
   assert.equal((await request(manager, '/ingredient-requests')).status, 200);
   assert.equal((await request(staff, `/ingredient-requests/${created.id}`, 'DELETE')).status, 403);
-  const edited = await request(staff, `/ingredient-requests/${created.id}`, 'PATCH', { ...otherInput, name: 'Updated Milk', expectedVersion: 0 });
+  const edited = await request(staff, `/ingredient-requests/${created.id}`, 'PATCH', { name: 'Updated Milk', expectedVersion: 0 });
   assert.equal(edited.status, 200);
   assert.equal((await edited.json()).request.version, 1);
   assert.equal((await request(manager, `/ingredient-requests/${created.id}`, 'PATCH', { ...input, expectedVersion: 1 })).status, 403);

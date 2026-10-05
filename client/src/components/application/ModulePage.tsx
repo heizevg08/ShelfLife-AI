@@ -10,8 +10,8 @@ import { Card, DataState, PageHeader, Pagination, PlaceholderSummaryCards, Place
 import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
-import { createIngredient, deleteIngredient, listIngredients, updateIngredient, type Ingredient, type IngredientInput } from '../../services/ingredients';
-import { createChangeRequest, deleteChangeRequest, listChangeRequests, updateChangeRequest, type ChangeRequest, type ChangeRequestInput } from '../../services/changeRequests';
+import { createIngredient, deleteIngredient, ingredientChanges, listIngredients, updateIngredient, type Ingredient, type IngredientInput } from '../../services/ingredients';
+import { changeRequestChanges, createChangeRequest, deleteChangeRequest, listChangeRequests, updateChangeRequest, type ChangeRequest, type ChangeRequestInput } from '../../services/changeRequests';
 import { createIngredientRequest, deleteIngredientRequest, listIngredientRequests, reviewIngredientRequest, updateIngredientRequest, type IngredientRequest } from '../../services/ingredientRequests';
 import { listAccountRequests } from '../../services/accountRequests';
 
@@ -23,7 +23,7 @@ const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', custo
 const forbiddenText = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u200B-\u200D\u2060\uFEFF]/u;
 const catalogueText = /^[\p{L}\p{M}\p{N}\s.,&%'()/+\-]*$/u;
 const proseText = /^[\p{L}\p{M}\p{N}\s.,;:!?'"()&%/+\-]*$/u;
-const ingredientTextError = (value: string, label: string, max: number, required: boolean, prose = false) => {
+export const ingredientTextError = (value: string, label: string, max: number, required: boolean, prose = false) => {
   const clean = value.trim();
   if (required && !clean) return `Enter ${label.toLowerCase()}.`;
   if (value.length > max) return `Use at most ${max} characters.`;
@@ -38,6 +38,17 @@ const formatShelfLife = (days?: number) => {
 };
 type IngredientField = keyof IngredientDraft;
 const ingredientApiField: Record<string, IngredientField | undefined> = { name: 'name', brand: 'brand', category: 'category', customCategory: 'customCategory', unitOfMeasure: 'unit', minimumStock: 'minStock', standardUnitCost: 'unitCost', defaultShelfLifeDays: 'shelfLife', description: 'description' };
+const normalizedIngredientInput = (item: Ingredient | IngredientRequest): IngredientInput => ({
+  name: item.name.trim().replace(/\s+/g, ' '),
+  brand: item.brand.trim().replace(/\s+/g, ' '),
+  description: item.description.trim().replace(/\s+/g, ' '),
+  category: item.category.trim(),
+  ...(item.category === 'Other' ? { customCategory: (item.customCategory || '').trim().replace(/\s+/g, ' ') } : {}),
+  unitOfMeasure: item.unitOfMeasure.trim().replace(/\s+/g, ' '),
+  ...(item.minimumStock === undefined ? {} : { minimumStock: item.minimumStock }),
+  ...(item.standardUnitCost === undefined ? {} : { standardUnitCost: item.standardUnitCost }),
+  ...(item.defaultShelfLifeDays === undefined ? {} : { defaultShelfLifeDays: item.defaultShelfLifeDays }),
+});
 
 function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit }: { form: IngredientDraft; errors: Partial<Record<IngredientField, string>>; busy: boolean; formError: string; set: (key: IngredientField, value: string) => void; setError: (key: IngredientField, value?: string) => void; onSubmit: (event: FormEvent) => void }) {
   const field = (key: IngredientField, label: string, control: React.ReactNode, required = true) => <label><span className="sl-form-label">{label}{required && <span className="sl-required-mark"> *</span>}</span>{control}{errors[key] && <span id={`ingredient-${key}-error`} className="sl-field-error">{errors[key]}</span>}</label>;
@@ -274,27 +285,32 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
   const save = async (event: FormEvent) => {
     event.preventDefault();
     if (busy || !(editIngredient ? permissions.update : editIngredientRequest ? user.role === 'Inventory Staff' : permissions.create)) return;
+    const editTarget = editIngredient ?? editIngredientRequest;
     const next: Partial<Record<IngredientField, string>> = {};
     const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), category: form.category.trim(), customCategory: form.customCategory.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
-    for (const [key, label, limit, required] of [['name', 'an ingredient name', 100, true], ['brand', 'brand', 100, false], ['description', 'description', 500, false], ['customCategory', 'a custom category', 50, clean.category === 'Other']] as const) {
+    const input: IngredientInput = { name: clean.name, brand: clean.brand, description: clean.description, category: clean.category, ...(clean.category === 'Other' ? { customCategory: clean.customCategory } : {}), unitOfMeasure: clean.unit, ...(clean.minStock === '' ? {} : { minimumStock: Number(clean.minStock) }), ...(clean.unitCost === '' ? {} : { standardUnitCost: Number(clean.unitCost) }), ...(clean.shelfLife === '' ? {} : { defaultShelfLifeDays: Number(clean.shelfLife) }) };
+    const patch = editTarget ? ingredientChanges(normalizedIngredientInput(editTarget), input) : input;
+    const changed = new Set(Object.keys(patch));
+    if (editTarget && changed.size === 0) { setFormError('No changes to save.'); return; }
+    for (const [key, inputKey, label, limit, required] of [['name', 'name', 'an ingredient name', 100, true], ['brand', 'brand', 'brand', 100, false], ['description', 'description', 'description', 500, false], ['customCategory', 'customCategory', 'a custom category', 50, clean.category === 'Other']] as const) {
+      if (editTarget && !changed.has(inputKey)) continue;
       const error = ingredientTextError(clean[key], label, limit, required, key === 'description');
       if (error) next[key] = error;
     }
-    if (!clean.category) next.category = 'Select a category.';
-    if (!clean.unit) next.unit = 'Enter a unit of measure.';
-    for (const [key, label, scale] of [['minStock', 'Minimum stock', 3], ['unitCost', 'Standard unit cost', 4]] as const) if (clean[key] !== '' && (!new RegExp(`^\\d*(?:\\.\\d{1,${scale}})?$`).test(clean[key]) || !Number.isFinite(Number(clean[key])) || Number(clean[key]) < 0 || Number(clean[key]) > 999_999_999_999_999)) next[key] = `${label} must be a nonnegative number with at most ${scale} decimal places.`;
-    if (clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1)) next.shelfLife = 'Shelf life must be a whole number of at least 1 day.';
+    if ((!editTarget || changed.has('category')) && !clean.category) next.category = 'Select a category.';
+    if ((!editTarget || changed.has('unitOfMeasure')) && !clean.unit) next.unit = 'Enter a unit of measure.';
+    for (const [key, inputKey, label, scale] of [['minStock', 'minimumStock', 'Minimum stock', 3], ['unitCost', 'standardUnitCost', 'Standard unit cost', 4]] as const) if ((!editTarget || changed.has(inputKey)) && clean[key] !== '' && (!new RegExp(`^\\d*(?:\\.\\d{1,${scale}})?$`).test(clean[key]) || !Number.isFinite(Number(clean[key])) || Number(clean[key]) < 0 || Number(clean[key]) > 999_999_999_999_999)) next[key] = `${label} must be a nonnegative number with at most ${scale} decimal places.`;
+    if ((!editTarget || changed.has('defaultShelfLifeDays')) && clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1)) next.shelfLife = 'Shelf life must be a whole number of at least 1 day.';
     if (Object.keys(next).length) {
       setErrors(next);
       requestAnimationFrame(() => document.querySelector<HTMLElement>('#sl-ingredient-form [aria-invalid="true"]')?.focus());
       return;
     }
-    const input: IngredientInput = { name: clean.name, brand: clean.brand, description: clean.description, category: clean.category, ...(clean.category === 'Other' ? { customCategory: clean.customCategory } : {}), unitOfMeasure: clean.unit, ...(clean.minStock === '' ? {} : { minimumStock: Number(clean.minStock) }), ...(clean.unitCost === '' ? {} : { standardUnitCost: Number(clean.unitCost) }), ...(clean.shelfLife === '' ? {} : { defaultShelfLifeDays: Number(clean.shelfLife) }) };
     setBusy(true); setErrors({}); setFormError('');
     try {
       let savedIngredient: Ingredient | null = null;
-      if (editIngredient) savedIngredient = (await updateIngredient(editIngredient.id, input, editIngredient.version)).ingredient;
-      else if (editIngredientRequest) { await updateIngredientRequest(editIngredientRequest.id, input, editIngredientRequest.version); setSuccessRequestName(input.name); setSuccessRequestUpdated(true); }
+      if (editIngredient) savedIngredient = (await updateIngredient(editIngredient.id, patch, editIngredient.version)).ingredient;
+      else if (editIngredientRequest) { await updateIngredientRequest(editIngredientRequest.id, patch, editIngredientRequest.version); setSuccessRequestName(input.name); setSuccessRequestUpdated(true); }
       else if (user.role === 'Inventory Staff') { await createIngredientRequest(input); setSuccessRequestName(input.name); }
       else savedIngredient = (await createIngredient(input)).ingredient;
       setMessage('');
@@ -1626,9 +1642,12 @@ export function StaffChangeRequestsPage() {
   };
   const dismissForm = () => { if (!busy) { setFormOpen(false); setEditing(null); setForm(emptyChangeRequest); setFormError(''); } };
   const submit = async (event: FormEvent) => {
-    event.preventDefault(); setBusy(true); setFormError('');
+    event.preventDefault();
+    const patch = editing ? changeRequestChanges(editing, form) : form;
+    if (editing && Object.keys(patch).length === 0) { setFormError('No changes to save.'); return; }
+    setBusy(true); setFormError('');
     try {
-      if (editing) await updateChangeRequest(editing.id, form, editing.version);
+      if (editing) await updateChangeRequest(editing.id, patch, editing.version);
       else await createChangeRequest(form);
       setBusy(false); setFormOpen(false); setEditing(null); setForm(emptyChangeRequest); setReload(value => value + 1);
     } catch (error) { setFormError(error instanceof Error ? error.message : 'Could not save your request.'); setBusy(false); }

@@ -92,14 +92,17 @@ test('ingredient HTTP API authenticates, enforces per-method roles, validates, p
     const duplicate = await request(manager, 'POST', input); assert.equal(duplicate.status, 409); assert.equal((await duplicate.json()).error.code, 'CONFLICT');
     const id = body.ingredient.id;
     const updated = await request(manager, 'PATCH', { brand: 'Updated Brand', expectedVersion: 0 }, `/${id}`); assert.equal(updated.status, 200); assert.equal((await updated.json()).ingredient.brand, 'Updated Brand');
+    const partial = await request(manager, 'PATCH', { standardUnitCost: 12.5, expectedVersion: 1 }, `/${id}`); assert.equal(partial.status, 200); assert.equal((await partial.json()).ingredient.standardUnitCost, 12.5);
+    assert.equal((await request(manager, 'PATCH', { name: 'Whole@Milk', expectedVersion: 2 }, `/${id}`)).status, 400);
+    assert.equal((await request(manager, 'PATCH', { unexpected: true, expectedVersion: 2 }, `/${id}`)).status, 400);
     assert.equal((await request(manager, 'PATCH', { brand: 'stale', expectedVersion: 0 }, `/${id}`)).status, 409);
     assert.equal((await request(manager, 'PATCH', { brand: 'missing version' }, `/${id}`)).status, 400);
-    assert.equal((await request(manager, 'DELETE', { expectedVersion: 1 }, `/${id}`)).status, 204);
-    assert.equal((await request(manager, 'DELETE', { expectedVersion: 2 }, `/${id}`)).status, 404);
+    assert.equal((await request(manager, 'DELETE', { expectedVersion: 2 }, `/${id}`)).status, 204);
+    assert.equal((await request(manager, 'DELETE', { expectedVersion: 3 }, `/${id}`)).status, 404);
     assert.equal(rows.length, 2);
     assert.equal(rows.find(row => row.id === id).isActive, false);
     assert.equal((await (await request(manager, 'GET', undefined, '?search=whole')).json()).total, 0);
     assert.equal((await (await request(manager, 'GET', undefined, '?includeArchived=true')).json()).items.find(item => item.id === id).isActive, false);
-    assert.equal((await request(manager, 'PATCH', { ...input, expectedVersion: 2 }, `/${id}`)).status, 404);
+    assert.equal((await request(manager, 'PATCH', { ...input, expectedVersion: 3 }, `/${id}`)).status, 404);
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });
