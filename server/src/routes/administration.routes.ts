@@ -1,10 +1,11 @@
-import { Router, json, type ErrorRequestHandler } from 'express';
+import { Router, type ErrorRequestHandler } from 'express';
 import type { AuthService } from '../services/auth';
 import type { AdministrationService } from '../services/administration';
 import { authenticate } from '../middleware/auth.middleware';
 import { AdministrationError, authorizeAdministration } from '../middleware/administration.middleware';
 import { HttpError } from '../middleware/error.middleware';
 import { administrationControllers } from '../controllers/administration.controller';
+import { secureJson } from '../middleware/request-security.middleware';
 
 export function administrationRoutes(auth: AuthService, service: AdministrationService) {
   const router = Router(), actions = administrationControllers(service);
@@ -12,7 +13,7 @@ export function administrationRoutes(auth: AuthService, service: AdministrationS
   router.use(authenticate(auth));
   router.use('/users', authorizeAdministration(['Super Admin', 'Admin']));
   router.use('/dashboard', authorizeAdministration(['Super Admin']));
-  router.use(json({ limit: '100kb' }));
+  router.use(secureJson({ limit: '100kb' }));
   router.get('/users', actions.list);
   router.get('/users/summary', actions.summary);
   router.get('/users/:id', actions.get);

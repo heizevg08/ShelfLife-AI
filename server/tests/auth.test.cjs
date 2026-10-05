@@ -75,9 +75,11 @@ test('HTTP login/me verify tokens and current user state, with safe responses', 
   assert.equal(JSON.stringify(result).includes('password'),false);assert.equal(JSON.stringify(result).includes(row.passwordHash),false);
   const claims=jwt.verify(result.accessToken,secret,{algorithms:['HS256'],issuer:'shelflifeai',audience:'shelflifeai-client'});
   assert.equal(claims.exp-claims.iat,900);assert.equal(claims.sub,row._id);assert.equal(claims.role,undefined);
-  for(const body of [{email:seedInput.email,password:'wrong'},{email:'missing@shelflife.com',password:seedInput.password},{email:'admin@example.com',password:seedInput.password},{email:{$ne:null},password:seedInput.password},{}]){
+  for(const body of [{email:seedInput.email,password:'wrong'},{email:'missing@shelflife.com',password:seedInput.password},{email:'admin@example.com',password:seedInput.password},{}]){
     const r=await login(body);assert.equal(r.status,401);assert.deepEqual(await r.json(),{error:{message:'Invalid email or password'}});
   }
+  const operatorInjection=await login({email:{$ne:null},password:seedInput.password});assert.equal(operatorInjection.status,400);
+  assert.deepEqual(await operatorInjection.json(),{error:{message:'MongoDB operator and dotted keys are not permitted'}});
   async function me(token){return fetch(base+'/me',{headers:token?{Authorization:'Bearer '+token}:{}})}
   assert.equal((await me(result.accessToken)).status,200);
   for(const token of [null,'malformed',jwt.sign({},'wrong-secret',{subject:row._id}),jwt.sign({},secret,{algorithm:'HS256',issuer:'shelflifeai',audience:'shelflifeai-client',subject:row._id,expiresIn:-1}),jwt.sign({},secret,{algorithm:'HS384',issuer:'shelflifeai',audience:'shelflifeai-client',subject:row._id,expiresIn:900})]) assert.equal((await me(token)).status,401);

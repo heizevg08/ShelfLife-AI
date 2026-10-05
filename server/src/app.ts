@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import { secureJson } from './middleware/request-security.middleware';
+import { requestDiagnostics, requestErrorDiagnostics } from './middleware/request-diagnostics.middleware';
 import { corsOptions } from './config/cors';
 import { healthRoutes } from './routes/health.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
@@ -20,8 +23,17 @@ import { changeRequestRoutes } from './routes/change-request.routes';
 export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any) {
   const app = express();
   app.disable('x-powered-by');
+  app.use(requestDiagnostics);
+  app.use(helmet({
+    strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true },
+    xFrameOptions: { action: 'deny' },
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: { defaultSrc: ["'none'"], baseUri: ["'none'"], frameAncestors: ["'none'"], formAction: ["'none'"] },
+    },
+  }));
   app.use(cors(corsOptions(origins)));
-  const json = express.json({ limit: '100kb' });
+  const json = secureJson({ limit: '100kb' });
   app.use((req, res, next) => {
     // New administration APIs parse only after their authentication/authorization gates.
     if ((administration || ingredients || inventoryBatches || usageRecords || wasteRecords || changeRequests) && /^\/api\/(users|dashboard|audit-records|ingredients|inventory-batches|usage-records|waste-records|change-requests)(\/|$)/.test(req.path)) { next(); return; }
@@ -42,6 +54,7 @@ export function createApp(origins: readonly string[], isReady: () => boolean, au
   if (auth && wasteRecords) app.use('/api/waste-records', wasteRecordRoutes(auth, wasteRecords));
   if (auth && changeRequests) app.use('/api/change-requests', changeRequestRoutes(auth, changeRequests));
   app.use(notFound);
+  app.use(requestErrorDiagnostics);
   app.use(errorHandler);
   return app;
 }

@@ -31,6 +31,9 @@ import { createWasteRecordStore } from './services/waste-record-store';
 import { changeRequestModel } from './models/change-request';
 import { changeRequestCounterModel } from './models/change-request-counter';
 import { createChangeRequests } from './services/change-requests';
+import { loginAttemptModel } from './models/login-attempt';
+import { createLoginLimiter, mongoLoginAttemptStore } from './services/login-limiter';
+import { provisionSecurityIndexes } from './services/security-indexes';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
@@ -135,6 +138,8 @@ if (require.main === module) {
       recordLogin: async (id: string, at: Date) => { await users.updateOne({ _id: id, isActive: true }, { $set: { lastLoginAt: at } }).exec(); },
     };
     const auth = createAuth(userStore, secret);
+    const loginAttempts = loginAttemptModel(driver);
+    const loginLimiter = createLoginLimiter(mongoLoginAttemptStore(loginAttempts));
     const sessions = persistentSessionModel(driver);
     const persistent = createPersistentSessions({
       create: record => sessions.create(record),
@@ -160,7 +165,12 @@ if (require.main === module) {
     const usageRecords = createUsageRecords(createUsageRecordStore(driver, usageRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
     const wasteRecords = createWasteRecords(createWasteRecordStore(driver, wasteRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
     const changeRequests = createChangeRequests(driver, changeRequestModel(driver), changeRequestCounterModel(driver), ingredientModel(driver), inventoryBatchModel(driver), users, audits);
-    const runtime = await startServer(config, createDatabase(driver), 5000, auth, onStage, { sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests);
+    const database = createDatabase(driver);
+    const indexedDatabase = { ...database, connect: async (uri: string) => {
+      await database.connect(uri);
+      await provisionSecurityIndexes(loginAttempts);
+    } };
+    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');
