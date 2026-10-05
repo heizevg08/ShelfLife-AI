@@ -77,6 +77,9 @@ test('HTTP login/me verify tokens and current user state, with safe responses', 
   for(const body of [{email:seedInput.email,password:'wrong'},{email:'missing@shelflife.com',password:seedInput.password},{email:'admin@example.com',password:seedInput.password},{}]){
     const r=await login(body);assert.equal(r.status,401);assert.deepEqual(await r.json(),{error:{message:'Invalid email or password'}});
   }
+  assert.equal((await fetch(base+'/refresh', { method:'POST', headers:{ Origin:'http://localhost:8081', 'Content-Type':'application/json' }, body:JSON.stringify({ extra:true }) })).status, 400);
+  assert.equal((await fetch(base+'/logout', { method:'POST', headers:{ Origin:'http://localhost:8081', 'Content-Type':'application/json' }, body:JSON.stringify({ extra:true }) })).status, 400);
+  assert.equal((await fetch(base+'/password-reset/request', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ email:seedInput.email, role:'Super Admin' }) })).status, 400);
   async function me(token){return fetch(base+'/me',{headers:token?{Authorization:'Bearer '+token}:{}})}
   assert.equal((await me(result.accessToken)).status,200);
   for(const token of [null,'malformed',jwt.sign({},'wrong-secret',{subject:row._id}),jwt.sign({},secret,{algorithm:'HS256',issuer:'shelflifeai',audience:'shelflifeai-client',subject:row._id,expiresIn:-1}),jwt.sign({},secret,{algorithm:'HS384',issuer:'shelflifeai',audience:'shelflifeai-client',subject:row._id,expiresIn:900})]) assert.equal((await me(token)).status,401);
