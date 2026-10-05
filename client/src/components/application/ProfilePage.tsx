@@ -1,7 +1,7 @@
 import { useState, type KeyboardEvent, type ReactNode } from 'react';
 import { Link, type Href } from 'expo-router';
 import { Activity, Bell, CalendarDays, ChevronRight, Clock3, Home, KeyRound, LockKeyhole, Mail, MonitorCog, RefreshCw, Settings2, ShieldCheck, SlidersHorizontal, UserRound, Zap } from 'lucide-react';
-import { sessionDisplayName, sessionInitials } from '../../services/auth';
+import { sessionDisplayName, sessionInitials, type SessionUser } from '../../services/auth';
 import { PageHeader, Status } from './primitives';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { dashboardPaths } from './workspace';
@@ -44,9 +44,58 @@ function PendingPanel({ tab }: { tab: Exclude<ProfileTab, 'profile'> }) {
   </section>;
 }
 
+function InventoryStaffProfileSettings({ user }: { user: SessionUser }) {
+  const displayName = sessionDisplayName(user);
+  const accountStatus = user.isActive ? 'Active' : 'Deactivated';
+  const timestamp = (value?: string) => value && Number.isFinite(new Date(value).getTime())
+    ? <time dateTime={value}>{formatDateTime(value)}</time>
+    : '—';
+  const lastLogin = user.lastLoginAt && Number.isFinite(new Date(user.lastLoginAt).getTime())
+    ? <time dateTime={user.lastLoginAt}>{formatDateTime(user.lastLoginAt)}</time>
+    : 'No recorded login';
+  const accessDetails = [
+    { label: 'Role', value: user.role },
+    { label: 'Account Status', value: <Status tone={user.isActive ? 'success' : 'critical'}>{accountStatus}</Status> },
+    { label: 'Last Login', value: lastLogin },
+    { label: 'Created', value: timestamp(user.createdAt) },
+    { label: 'Last Updated', value: timestamp(user.updatedAt) },
+  ];
+
+  return <>
+    <nav className="sl-profile-breadcrumb" aria-label="Breadcrumb">
+      <Link href={dashboardPaths[user.role] as Href} aria-label="Home"><Home aria-hidden="true" /></Link>
+      <ChevronRight aria-hidden="true" /><span>Account</span><ChevronRight aria-hidden="true" /><span aria-current="page">Profile Settings</span>
+    </nav>
+    <PageHeader eyebrow="Account" title="Profile Settings" description="View your profile information and account access details." />
+    <div className="sl-admin-view sl-profile-page sl-inventory-staff-profile-settings">
+      <ProfileCard icon={<UserRound />} title="Profile Information" description="View your account identity and contact information.">
+        <div className="sl-inventory-staff-profile-identity">
+          <span className="sl-avatar sl-profile-avatar" aria-hidden="true">{sessionInitials(user)}</span>
+          <div className="sl-inventory-staff-profile-identity-copy">
+            <h3>{displayName}</h3>
+            <div><span className="sl-profile-role">{user.role}</span><Status tone={user.isActive ? 'success' : 'critical'}>{accountStatus}</Status></div>
+          </div>
+        </div>
+        <dl className="sl-inventory-staff-profile-information-grid">
+          <div><dt>Full Name</dt><dd>{displayName || 'Unavailable'}</dd></div>
+          <div><dt>Email Address</dt><dd>{user.email || 'Unavailable'}</dd></div>
+        </dl>
+        <p className="sl-inventory-staff-profile-managed-note">Account information is managed by an administrator.</p>
+      </ProfileCard>
+
+      <ProfileCard icon={<ShieldCheck />} title="Account & Access" description="Review your account status and access information.">
+        <dl className="sl-inventory-staff-profile-access-grid">
+          {accessDetails.map(detail => <div key={detail.label}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}
+        </dl>
+      </ProfileCard>
+    </div>
+  </>;
+}
+
 export function ProfilePage() {
   const { user } = useApplicationWorkspace();
   const [activeTab, setActiveTab] = useState<ProfileTab>('profile');
+  if (user.role === 'Inventory Staff') return <InventoryStaffProfileSettings user={user} />;
   const lastLogin = user.lastLoginAt ? new Date(user.lastLoginAt) : null;
   const displayName = sessionDisplayName(user);
   const accountStatus = user.isActive ? 'Active' : 'Deactivated';

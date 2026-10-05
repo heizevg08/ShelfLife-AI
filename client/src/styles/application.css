@@ -33980,6 +33980,81 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) .sl-sa-ingredients-filter-actions { align-items:stretch; flex-direction:column; }
   .sl-shell[data-role="Inventory Staff"] :is(.sl-staff-stockin-v145,.sl-staff-inventory-v149,.sl-staff-usage-v150,.sl-staff-waste-v159,.sl-staff-requests-v162) .sl-sa-account-pattern-records :is(.sl-staff-stockin-history-filters,.sl-staff-usage-toolbar,.sl-staff-waste-toolbar,.sl-staff-inventory-record-filters,.sl-staff-my-requests-toolbar) .sl-sa-ingredients-filter-actions > * { width:100%; }
 }
+
+/* Inventory Staff profile is read-only because self-service account updates are not supported. */
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-settings {
+  container-name:sl-inventory-staff-profile;
+  container-type:inline-size;
+  align-content:start;
+  gap:var(--sl-space-4);
+  width:min(100%,64rem);
+  min-width:0;
+}
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-settings > .sl-profile-card { min-width:0; }
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-identity {
+  align-items:center;
+  gap:var(--sl-space-4);
+  min-width:0;
+  padding:1.25rem;
+  border-bottom:1px solid var(--sl-border-subtle);
+  display:flex;
+}
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-identity-copy { min-width:0; }
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-identity-copy h3 {
+  margin:0;
+  overflow-wrap:anywhere;
+  font:var(--sl-font-section-title);
+}
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-identity-copy > div {
+  align-items:center;
+  flex-wrap:wrap;
+  gap:.5rem;
+  margin-top:.5rem;
+  display:flex;
+}
+.sl-shell[data-role="Inventory Staff"] :is(.sl-inventory-staff-profile-information-grid,.sl-inventory-staff-profile-access-grid) {
+  min-width:0;
+  margin:0;
+  display:grid;
+}
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-information-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-access-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.sl-shell[data-role="Inventory Staff"] :is(.sl-inventory-staff-profile-information-grid,.sl-inventory-staff-profile-access-grid) > div {
+  min-width:0;
+  padding:1rem 1.15rem;
+  border-bottom:1px solid var(--sl-border-subtle);
+}
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-information-grid > div + div,
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-access-grid > div:not(:nth-child(3n + 1)) { border-left:1px solid var(--sl-border-subtle); }
+.sl-shell[data-role="Inventory Staff"] :is(.sl-inventory-staff-profile-information-grid,.sl-inventory-staff-profile-access-grid) dt {
+  color:var(--sl-muted);
+  font:var(--sl-font-supporting);
+}
+.sl-shell[data-role="Inventory Staff"] :is(.sl-inventory-staff-profile-information-grid,.sl-inventory-staff-profile-access-grid) dd {
+  margin:.25rem 0 0;
+  overflow-wrap:anywhere;
+  color:var(--sl-text);
+  font:var(--sl-font-body);
+  font-weight:600;
+}
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-managed-note {
+  margin:0;
+  padding:.8rem 1.15rem;
+  color:var(--sl-muted);
+  background:var(--sl-surface-subtle);
+  font:var(--sl-font-supporting);
+}
+@container sl-inventory-staff-profile (max-width:52rem) {
+  .sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-access-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-access-grid > div:not(:nth-child(3n + 1)) { border-left:0; }
+  .sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-access-grid > div:nth-child(even) { border-left:1px solid var(--sl-border-subtle); }
+}
+@container sl-inventory-staff-profile (max-width:36rem) {
+  .sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-identity { align-items:flex-start; flex-direction:column; }
+  .sl-shell[data-role="Inventory Staff"] :is(.sl-inventory-staff-profile-information-grid,.sl-inventory-staff-profile-access-grid) { grid-template-columns:minmax(0,1fr); }
+  .sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-information-grid > div + div,
+  .sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-profile-access-grid > div:nth-child(even) { border-left:0; }
+}
 @media (width<=600px) {
   .sl-inventory-staff-bulk-dialog .sl-bulk-recording-row,
   .sl-inventory-staff-bulk-dialog .sl-bulk-recording-row:last-child { padding:14px 12px; }
