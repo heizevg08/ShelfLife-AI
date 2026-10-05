@@ -2,7 +2,7 @@ import { expectedVersion as validateVersion, versionConflict, versionFilter } fr
 import type { Mongoose } from 'mongoose';
 import type { ingredientModel } from '../models/ingredient';
 import type { userModel } from '../models/user';
-import type { Ingredient, IngredientStore } from './ingredients';
+import type { Ingredient, IngredientStore, IngredientSummary, StockInIngredientOption } from './ingredients';
 import type { IngredientInput, IngredientPageQuery } from '../validators/ingredient';
 import type { auditRecordModel } from '../models/audit-record';
 import { auditSnapshot } from './audit-snapshot';
@@ -39,6 +39,29 @@ export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<
     };
   };
   return {
+    async summary(): Promise<IngredientSummary> {
+      const filter = { isActive: { $ne: false } };
+      const [total, categories, units] = await Promise.all([
+        ingredients.countDocuments(filter).exec(),
+        ingredients.distinct('category', filter).exec(),
+        ingredients.distinct('unitOfMeasure', filter).exec(),
+      ]);
+      return {
+        total,
+        categories: categories.filter(Boolean).sort((left, right) => left.localeCompare(right)),
+        units: units.filter(Boolean).sort((left, right) => left.localeCompare(right)),
+        // Ingredient master data has no usage frequency, so this value must not imply one.
+        mostCommonIngredient: null,
+      };
+    },
+    async stockInOptions(): Promise<StockInIngredientOption[]> {
+      const rows = await ingredients.find({ isActive: { $ne: false } })
+        .select('_id name category unitOfMeasure defaultShelfLifeDays').sort({ name: 1, _id: 1 }).lean().exec() as Row[];
+      return rows.map(row => ({
+        id: row._id.toString(), name: row.name, category: row.category, unitOfMeasure: row.unitOfMeasure,
+        ...(row.defaultShelfLifeDays !== undefined ? { defaultShelfLifeDays: row.defaultShelfLifeDays } : {}),
+      }));
+    },
     async list(query: IngredientPageQuery) {
       const filter: Record<string, unknown> = {};
       // Documents created before soft archiving have no flag and remain active.

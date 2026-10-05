@@ -57,9 +57,13 @@ async function mockApi(page: Page, role: WorkspaceRole, loggedIn = true) {
     if (path === '/api/auth/me') return json(loggedIn ? { user } : { error: { message: 'Authentication required' } }, loggedIn ? 200 : 401);
     if (path === '/api/auth/refresh') return json(loggedIn ? { accessToken: 'test-token', user } : { error: { message: 'Authentication required' } }, loggedIn ? 200 : 401);
     const allowed = path.startsWith('/api/ingredients') ? request.method() === 'GET' || role === 'Inventory Manager' || (request.method() === 'POST' && role === 'Inventory Staff')
+      : path.startsWith('/api/inventory-batches') ? role === 'Inventory Manager'
       : path.startsWith('/api/dashboard') ? role === 'Super Admin'
       : path.startsWith('/api/users') || path.startsWith('/api/audit-records') ? ['Super Admin', 'Admin'].includes(role) : false;
     if (!allowed) { forbiddenCalls.push(path); return json({ error: { message: 'Forbidden' } }, 403); }
+    if (path === '/api/ingredients/stock-in-options') return json({ ingredients: [{ id: '3'.repeat(24), name: 'Browser Milk', category: 'Dairy', unitOfMeasure: 'L', defaultShelfLifeDays: 7 }] });
+    if (path === '/api/inventory-batches/summary') return json({ totalIngredients: 1, totalBatches: 1, lowStockItems: 0, lowStockExcludedCount: 0, statusCounts: { Normal: 1, 'Approaching Expiry': 0, Critical: 0, Expired: 0 }, categoryCounts: [{ category: 'Dairy', batchCount: 1, quantity: '2.000', inventoryValue: '5.00' }], inventoryValue: '5.00' });
+    if (path === '/api/inventory-batches') return json({ items: [{ id: '4'.repeat(24), ingredientId: '3'.repeat(24), batchCode: 'BROWSER-001', initialQuantity: '2.000', quantity: '2.000', unit: 'L', unitCost: '2.5000', currency: 'PHP', dateReceived: '2026-09-20', expirationDate: '2026-12-31', isActive: true, version: 0, createdBy: '1'.repeat(24), createdAt: '2026-09-20T00:00:00.000Z', updatedAt: '2026-09-20T00:00:00.000Z', status: 'Normal' }], total: 1, page: 1, limit: 25 });
     if (path.endsWith('/summary')) return json({ totalUsers: accounts.length, activeUsers: accounts.length, inactiveUsers: 0, roleCounts: {} });
     if (path === '/api/users' && request.method() === 'POST') {
       const body = request.postDataJSON();
@@ -191,6 +195,17 @@ test('mobile login and navigation remain usable', async ({ page }) => {
   await expect(page.getByRole('dialog').getByRole('link', { name: 'Alerts', exact: true })).toHaveCount(0);
   await page.getByRole('dialog').getByRole('link', { name: 'Stock-In', exact: true }).click();
   await expect(page).toHaveURL('/StockIn');
+});
+
+test('Inventory Manager sees stable inventory reads through the manager-only inventory route', async ({ page }) => {
+  const api = await mockApi(page, 'Inventory Manager');
+  await page.goto('/Inventory');
+  await expect(page.getByRole('heading', { name: 'Inventory', exact: true })).toBeVisible();
+  await expect(page.locator('.sl-table-scroll[aria-label="Inventory records"]')).toContainText('Browser Milk');
+  await expect(page.getByLabel('Inventory summary')).toContainText('₱5.00');
+  await page.locator('.sl-table-scroll[aria-label="Inventory records"]').getByText('BROWSER-001', { exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Browser Milk');
+  expect(api.forbiddenCalls).toEqual([]);
 });
 
 test('anonymous deep links redirect to login and lockout has useful feedback', async ({ page }) => {

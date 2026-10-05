@@ -1,2 +1,2 @@
-import { ModulePage } from '../../components/application/ModulePage';
-export default function Page() { return <ModulePage moduleId="InventoryBatches" />; }
+import { ManagerInventoryPage } from '../../components/application/ManagerInventoryPage';
+export default function Page() { return <ManagerInventoryPage />; }
