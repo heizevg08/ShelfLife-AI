@@ -4,10 +4,12 @@ import type { IngredientRequestService } from '../services/ingredient-requests';
 import { authorizeAdministration } from '../middleware/administration.middleware';
 import { ingredientRequestId, ingredientRequestInput, ingredientRequestPatch, ingredientRequestReview } from '../validators/ingredient-request';
 import { finishInventoryRouter, inventoryRouter } from './inventory-router';
+import { emptyQuery } from '../validators/administration';
 
 export function ingredientRequestRoutes(auth: AuthService, service: IngredientRequestService) {
   const router = inventoryRouter(auth);
-  router.get('/', authorizeAdministration(['Inventory Staff', 'Inventory Manager', 'Admin', 'Super Admin']), async (_req, res) => {
+  router.get('/', authorizeAdministration(['Inventory Staff', 'Inventory Manager', 'Admin', 'Super Admin']), async (req, res) => {
+    emptyQuery(req.query);
     res.json(await service.list(res.locals.user));
   });
   router.post('/', authorizeAdministration(['Inventory Staff']), json({ limit: '100kb' }), async (req, res) => {
