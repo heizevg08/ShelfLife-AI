@@ -10,6 +10,7 @@ import type { SessionUser } from '../../services/auth';
 const blank: AccountRequestInput = { firstName: '', lastName: '', email: '', role: 'Inventory Staff' };
 const requestableRoles: Exclude<SessionUser['role'], 'Super Admin'>[] = ['Admin', 'Inventory Manager', 'Inventory Staff'];
 const emailPattern = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/;
+const personNamePattern = /^[\p{L}\p{M}]+(?:[ '\-][\p{L}\p{M}]+)*$/u;
 
 export default function AccountRequestsPage() {
   const { user } = useApplicationWorkspace();
@@ -45,8 +46,8 @@ export default function AccountRequestsPage() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const errors: Record<string, string> = {};
-    if (!form.firstName.trim() || form.firstName.trim().length > 25) errors.firstName = 'Enter a first name of 1–25 characters.';
-    if (!form.lastName.trim() || form.lastName.trim().length > 25) errors.lastName = 'Enter a last name of 1–25 characters.';
+    if (!form.firstName.trim() || form.firstName.trim().length > 25 || !personNamePattern.test(form.firstName.trim())) errors.firstName = 'Use 1–25 letters, spaces, apostrophes, or hyphens.';
+    if (!form.lastName.trim() || form.lastName.trim().length > 25 || !personNamePattern.test(form.lastName.trim())) errors.lastName = 'Use 1–25 letters, spaces, apostrophes, or hyphens.';
     if (!emailPattern.test(form.email.trim().toLowerCase())) errors.email = 'Enter a valid shelflife.com email.';
     if (user.role !== 'Admin' && !['Inventory Staff', 'Inventory Manager'].includes(form.role)) errors.role = 'Select a staff or manager role.';
     if (Object.keys(errors).length) { setFieldErrors(errors); return; }

@@ -1,6 +1,18 @@
 import { WASTE_REASONS, type RecordKind } from '../models/inventory-record';
 import { invalid, objectId } from './administration';
 import { bodyFields, calendarDate, decimal, decimalUnits, expectedVersion, inventoryPagination } from './inventory-contract';
+import { proseText } from './text';
+
+function manilaToday(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const value = (type: 'year' | 'month' | 'day') => parts.find(part => part.type === type)?.value;
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+function recordedDate(value: unknown) {
+  const date = calendarDate(value, 'recordedAt');
+  if (date > manilaToday()) invalid('recordedAt', 'Use today or an earlier date');
+  return date;
+}
 
 export type CreateRecordInput = { ingredientId: string; batchId: string; quantity: string; recordedAt: string; notes: string; reason?: typeof WASTE_REASONS[number] };
 const ids = ['ingredientId', 'batchId'] as const;
@@ -9,9 +21,8 @@ export function recordCreateInput(kind: RecordKind, body: unknown): CreateRecord
   const ingredientId = objectId(input.ingredientId), batchId = objectId(input.batchId);
   const quantity = decimal(input.quantity, 3, 'quantity');
   if (decimalUnits(quantity) === 0n) invalid('quantity', 'Quantity must be positive');
-  const recordedAt = calendarDate(input.recordedAt, 'recordedAt');
-  if (input.notes !== undefined && (typeof input.notes !== 'string' || input.notes.trim().length > 500)) invalid('notes', 'Use at most 500 characters');
-  const notes = typeof input.notes === 'string' ? input.notes.trim() : '';
+  const recordedAt = recordedDate(input.recordedAt);
+  const notes = proseText(input.notes, 'notes', false, 500);
   if (kind !== 'WasteRecord') return { ingredientId, batchId, quantity, recordedAt, notes };
   if (typeof input.reason !== 'string' || !WASTE_REASONS.includes(input.reason as typeof WASTE_REASONS[number])) invalid('reason', 'Select a valid waste reason');
   if (input.reason === 'Other' && !notes) invalid('notes', 'Notes are required when reason is Other');
@@ -20,8 +31,7 @@ export function recordCreateInput(kind: RecordKind, body: unknown): CreateRecord
 export function recordCorrectionInput(body: unknown) {
   const input = bodyFields(body, ['expectedVersion', 'correctedQuantity', 'reason']);
   const correctedQuantity = decimal(input.correctedQuantity, 3, 'correctedQuantity');
-  if (typeof input.reason !== 'string' || !input.reason.trim() || input.reason.trim().length > 500) invalid('reason', 'Provide a correction reason (1–500 characters)');
-  return { expectedVersion: expectedVersion(input.expectedVersion), correctedQuantity, reason: input.reason.trim() };
+  return { expectedVersion: expectedVersion(input.expectedVersion), correctedQuantity, reason: proseText(input.reason, 'reason', true, 500) };
 }
 export function recordArchiveInput(body: unknown) { return expectedVersion(bodyFields(body, ['expectedVersion']).expectedVersion); }
 export function recordPagination(query: Record<string, unknown>) {

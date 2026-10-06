@@ -4,11 +4,9 @@ import { listIngredients, type Ingredient } from '../../services/ingredients';
 import { batchVersion, correctInventoryRecord, createInventoryRecord, eligibleBatches, listInventoryRecords, voidInventoryRecord, type EligibleBatch, type InventoryRecord, type RecordKind } from '../../services/inventoryRecords';
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 import { DataState, PageHeader, Pagination, Status } from '../../components/application/primitives';
-import { recordFormError } from './recordValidation';
+import { manilaToday, recordFormError } from './recordValidation';
 
 const REASONS = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'];
-const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-
 export function RecordPage({ kind }: { kind: 'usage' | 'waste' }) {
   const endpoint: RecordKind = kind === 'usage' ? 'usage-records' : 'waste-records';
   const { user } = useApplicationWorkspace();
@@ -16,7 +14,7 @@ export function RecordPage({ kind }: { kind: 'usage' | 'waste' }) {
   const canManage = user.role === 'Inventory Manager';
   const canRead = user.role !== 'Inventory Staff';
   const [ingredients, setIngredients] = useState<Ingredient[]>([]), [batches, setBatches] = useState<EligibleBatch[]>([]), [records, setRecords] = useState<InventoryRecord[]>([]);
-  const [ingredientId, setIngredientId] = useState(''), [batchId, setBatchId] = useState(''), [quantity, setQuantity] = useState(''), [recordedAt, setRecordedAt] = useState(today), [reason, setReason] = useState(''), [notes, setNotes] = useState('');
+  const [ingredientId, setIngredientId] = useState(''), [batchId, setBatchId] = useState(''), [quantity, setQuantity] = useState(''), [recordedAt, setRecordedAt] = useState(manilaToday), [reason, setReason] = useState(''), [notes, setNotes] = useState('');
   const [page, setPage] = useState(1), [total, setTotal] = useState(0), [error, setError] = useState(''), [busy, setBusy] = useState(false), [loaded, setLoaded] = useState(false);
   const loadIngredients = () => listIngredients(1, 100).then(result => setIngredients(result.items)).catch(() => setError('Unable to load ingredients.'));
   const loadHistory = () => { if (!canRead) return; setLoaded(false); listInventoryRecords(endpoint, page).then(result => { setRecords(result.items); setTotal(result.total); }).catch(error => setError(error instanceof ApiError ? error.message : 'Unable to load records.')).finally(() => setLoaded(true)); };
@@ -28,7 +26,7 @@ export function RecordPage({ kind }: { kind: 'usage' | 'waste' }) {
   }, [endpoint, ingredientId]);
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setError('');
-    const formError = recordFormError(kind, quantity, reason, notes);
+    const formError = recordFormError(kind, quantity, reason, notes, recordedAt);
     if (!ingredientId || !batchId) { setError('Select an ingredient and an available batch.'); return; }
     if (formError) { setError(formError); return; }
     setBusy(true);
@@ -63,8 +61,8 @@ export function RecordPage({ kind }: { kind: 'usage' | 'waste' }) {
       <form className="sl-form-grid" noValidate onSubmit={submit}>
         <label><span className="sl-form-label">Ingredient</span><select className="sl-admin-input" value={ingredientId} disabled={busy} onChange={event => setIngredientId(event.target.value)}><option value="">Select ingredient</option>{ingredients.map(ingredient => <option value={ingredient.id} key={ingredient.id}>{ingredient.name}</option>)}</select></label>
         <label><span className="sl-form-label">Batch</span><select className="sl-admin-input" value={batchId} disabled={busy || !ingredientId} onChange={event => setBatchId(event.target.value)}><option value="">Select batch</option>{batches.map(batch => <option value={batch.id} key={batch.id}>{batch.id.slice(-8)} · {batch.quantity} {batch.unit}</option>)}</select></label>
-        <label><span className="sl-form-label">Quantity</span><input className="sl-admin-input" inputMode="decimal" value={quantity} disabled={busy} onChange={event => setQuantity(event.target.value)} /></label>
-        <label><span className="sl-form-label">Recorded date</span><input className="sl-admin-input" type="date" value={recordedAt} disabled={busy} onChange={event => setRecordedAt(event.target.value)} /></label>
+        <label><span className="sl-form-label">Quantity</span><input className="sl-admin-input" inputMode="decimal" maxLength={22} value={quantity} disabled={busy} onChange={event => setQuantity(event.target.value)} /></label>
+        <label><span className="sl-form-label">Recorded date</span><input className="sl-admin-input" type="date" max={manilaToday()} value={recordedAt} disabled={busy} onChange={event => setRecordedAt(event.target.value)} /></label>
         {kind === 'waste' && <label><span className="sl-form-label">Reason</span><select className="sl-admin-input" value={reason} disabled={busy} onChange={event => setReason(event.target.value)}><option value="">Select reason</option>{REASONS.map(value => <option key={value}>{value}</option>)}</select></label>}
         <label><span className="sl-form-label">Notes{kind === 'waste' && reason === 'Other' ? ' (required)' : ' (optional)'}</span><input className="sl-admin-input" maxLength={500} value={notes} disabled={busy} onChange={event => setNotes(event.target.value)} /></label>
         {selected && <p className="sl-supporting">Available: {selected.quantity} {selected.unit} · unit cost: ₱{selected.unitCost}</p>}

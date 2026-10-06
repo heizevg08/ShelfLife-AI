@@ -1,6 +1,7 @@
 import { AdministrationError } from '../middleware/administration.middleware';
 import { accountInput, invalid, objectId } from './administration';
 import { expectedVersion } from './inventory-contract';
+import { proseText } from './text';
 
 export function accountRequestInput(body: unknown, requesterRole: string) {
   if (!['Inventory Staff', 'Inventory Manager', 'Admin'].includes(requesterRole)) {
@@ -20,10 +21,7 @@ export function accountRequestReview(body: unknown) {
   if (input.decision !== 'Approved' && input.decision !== 'Rejected') invalid('decision');
   const version = expectedVersion(input.expectedVersion);
   let note = '';
-  if (input.note !== undefined) {
-    if (typeof input.note !== 'string' || input.note.trim().length > 500) invalid('note', 'Use at most 500 characters');
-    note = input.note.trim();
-  }
+  if (input.note !== undefined) note = proseText(input.note, 'note', false, 500);
   if (input.decision === 'Approved') {
     if (typeof input.password !== 'string' || input.password.trim().length < 12 || Buffer.byteLength(input.password, 'utf8') > 1024) invalid('password', 'Use at least 12 non-whitespace characters and at most 1,024 UTF-8 bytes');
     return { decision: input.decision, expectedVersion: version, password: input.password, note };
