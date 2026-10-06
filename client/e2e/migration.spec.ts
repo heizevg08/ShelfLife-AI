@@ -56,6 +56,16 @@ async function mockApi(page: Page, role: WorkspaceRole, loggedIn = true) {
     if (path.endsWith('/password-reset/complete')) return json({ message: 'Password updated' });
     if (path === '/api/auth/me') return json(loggedIn ? { user } : { error: { message: 'Authentication required' } }, loggedIn ? 200 : 401);
     if (path === '/api/auth/refresh') return json(loggedIn ? { accessToken: 'test-token', user } : { error: { message: 'Authentication required' } }, loggedIn ? 200 : 401);
+    if (path.startsWith('/api/change-requests')) {
+      if (role === 'Admin') return json({ error: { message: 'Forbidden' } }, 403);
+      if (path === '/api/change-requests/ingredient-options') return role === 'Inventory Staff' || role === 'Inventory Manager'
+        ? json({ items: [{ id: '3'.repeat(24), name: 'Browser Milk', category: 'Dairy', unitOfMeasure: 'L', version: 0 }] }) : json({ error: { message: 'Forbidden' } }, 403);
+      if (path === '/api/change-requests/summary') return role === 'Inventory Staff' ? json({ total: 1, pending: 1, approved: 0, rejected: 0 }) : json({ error: { message: 'Forbidden' } }, 403);
+      if (path === '/api/change-requests/manager-summary') return role === 'Inventory Manager' ? json({ total: 1, pending: 1, approved: 0, rejected: 0 }) : json({ error: { message: 'Forbidden' } }, 403);
+      if (request.method() === 'POST' && /\/(approve|reject)$/.test(path)) return role === 'Inventory Manager' ? json({ request: { id: '6'.repeat(24) } }) : json({ error: { message: 'Forbidden' } }, 403);
+      if (request.method() === 'POST') return role === 'Inventory Staff' ? json({ request: { id: '6'.repeat(24) } }, 201) : json({ error: { message: 'Forbidden' } }, 403);
+      return json({ items: [{ id: '6'.repeat(24), schemaVersion: 2, requestID: 'REQ-20261007-001', requestType: 'MINIMUM_STOCK_CHANGE', ingredientId: '3'.repeat(24), targetField: 'minimumStock', reason: 'Need a higher threshold.', currentValue: '1', requestedValue: '2.500', ingredientVersion: 0, status: 'PENDING', requestedBy: '1'.repeat(24), version: 0, createdAt: '2026-10-07T00:00:00.000Z', updatedAt: '2026-10-07T00:00:00.000Z', readOnly: false }], page: 1, limit: 25, total: 1 });
+    }
     const allowed = path.startsWith('/api/ingredients') ? request.method() === 'GET' || role === 'Inventory Manager' || (request.method() === 'POST' && role === 'Inventory Staff')
       : path.startsWith('/api/inventory-batches') ? role === 'Inventory Manager'
       : path.startsWith('/api/dashboard') ? role === 'Super Admin'
@@ -285,4 +295,26 @@ test('Security settings disable unconnected controls and identify unenforced pol
   await expect(panel.getByRole('switch')).toHaveCount(10);
   for (const control of await panel.getByRole('switch').all()) await expect(control).toBeDisabled();
   await expect(panel.locator('.sl-v70-linklike[aria-disabled="true"]')).toHaveCount(2);
+});
+
+test('typed change request UI uses the staff submission and manager review contracts', async ({ page }) => {
+  const staff = await mockApi(page, 'Inventory Staff');
+  await page.goto('/ChangeRequests');
+  const form = page.getByRole('region', { name: 'Submit a change request' });
+  await form.locator('select').first().selectOption('3'.repeat(24));
+  await expect(form.locator('select').first()).toHaveValue('3'.repeat(24));
+  await form.locator('input').fill('2.500');
+  await form.locator('textarea').fill('Need a higher threshold.');
+  await expect(form.getByRole('button', { name: 'Submit request', exact: true })).toBeEnabled();
+  await form.getByRole('button', { name: 'Submit request', exact: true }).click();
+  await expect.poll(() => staff.writes.filter(write => write.path === '/api/change-requests').length).toBe(1);
+  expect(staff.writes.find(write => write.path === '/api/change-requests')?.body).toEqual({ requestType: 'MINIMUM_STOCK_CHANGE', ingredientId: '3'.repeat(24), requestedValue: '2.500', reason: 'Need a higher threshold.' });
+
+  await page.unroute('**/api/**');
+  const manager = await mockApi(page, 'Inventory Manager');
+  await page.goto('/ChangeRequests');
+  await page.getByRole('button', { name: 'Review', exact: true }).click();
+  await page.getByRole('button', { name: 'Approve', exact: true }).click();
+  await expect.poll(() => manager.writes.filter(write => write.path.endsWith('/approve')).length).toBe(1);
+  expect(manager.writes.find(write => write.path.endsWith('/approve'))?.body).toEqual({ expectedVersion: 0 });
 });
