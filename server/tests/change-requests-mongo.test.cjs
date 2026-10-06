@@ -16,7 +16,11 @@ test('MongoDB typed requests atomically reject stale, double, edited, archived a
   try {
     // Use an isolated single-node replica set locally when no external Mongo URI is supplied.
     // Transactions require a replica set, and this path never connects to Atlas.
-    const uri = process.env.MONGO_URI || (replicaSet = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: 'wiredTiger' } })).getUri();
+    const configuredUri = process.env.MONGO_URI;
+    if (configuredUri && (/^mongodb\+srv:/i.test(configuredUri) || /\.mongodb\.net/i.test(configuredUri))) {
+      throw new Error('Refusing to run local transaction coverage against Atlas');
+    }
+    const uri = configuredUri || (replicaSet = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: 'wiredTiger' } })).getUri();
     await driver.connect(uri, { dbName: 'shelflifeai', autoIndex: false, autoCreate: false, serverSelectionTimeoutMS: 5000 }); connected = true;
     const ingredients = isolated(ingredientModel), requests = isolated(changeRequestModel), counters = isolated(changeRequestCounterModel), audits = isolated(auditRecordModel);
     for (const model of models) { await model.createCollection(); await model.createIndexes(); }
