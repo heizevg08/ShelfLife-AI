@@ -45,4 +45,5 @@ test('account directory sends literal server-side filters and account PATCH can 
   expect(fetch.mock.calls[0][0]).toContain('status=active');
   await updateAccount('id', { role: 'Inventory Staff' });
   expect(fetch.mock.calls[1][1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ role: 'Inventory Staff' }) });
+  expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toEqual({ role: 'Inventory Staff' });
 });

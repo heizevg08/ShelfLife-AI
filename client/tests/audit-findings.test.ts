@@ -31,3 +31,12 @@ test('security activity uses the protected audit component and unavailable contr
   assert.match(source, /disabled=\{!\['Overview', 'Audit Logs'\]\.includes\(tab\)\}/);
   assert.match(source, /not available yet/);
 });
+
+test('legacy-invalid account names are skipped when a role-only edit is submitted', () => {
+  const table = read('../src/components/application/AccountsTable.tsx');
+  const service = read('../src/services/administration.ts');
+  // The edit form validates changed fields, then builds its PATCH object from the normalized diff.
+  assert.match(table, /mode === 'edit' && selected && key !== 'password' && fields\[key\]\.trim\(\) === String\(selected\[key\]\)\.trim\(\)\) continue/);
+  assert.match(table, /const changes = Object\.fromEntries\(Object\.entries\(input\)\.filter/);
+  assert.match(service, /updateAccount = \(id: string, fields: Partial<AccountFields>\).*JSON\.stringify\(fields\)/s);
+});
