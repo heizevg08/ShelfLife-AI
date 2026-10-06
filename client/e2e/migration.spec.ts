@@ -59,11 +59,16 @@ async function mockApi(page: Page, role: WorkspaceRole, loggedIn = true) {
     const allowed = path.startsWith('/api/ingredients') ? request.method() === 'GET' || role === 'Inventory Manager' || (request.method() === 'POST' && role === 'Inventory Staff')
       : path.startsWith('/api/inventory-batches') ? role === 'Inventory Manager'
       : path.startsWith('/api/dashboard') ? role === 'Super Admin'
+      : path.startsWith('/api/account-requests') || path.startsWith('/api/ingredient-requests') ? true
+      : path.startsWith('/api/usage-records') || path.startsWith('/api/waste-records') ? ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'].includes(role)
       : path.startsWith('/api/users') || path.startsWith('/api/audit-records') ? ['Super Admin', 'Admin'].includes(role) : false;
     if (!allowed) { forbiddenCalls.push(path); return json({ error: { message: 'Forbidden' } }, 403); }
     if (path === '/api/ingredients/stock-in-options') return json({ ingredients: [{ id: '3'.repeat(24), name: 'Browser Milk', category: 'Dairy', unitOfMeasure: 'L', defaultShelfLifeDays: 7 }] });
     if (path === '/api/inventory-batches/summary') return json({ totalIngredients: 1, totalBatches: 1, lowStockItems: 0, lowStockExcludedCount: 0, statusCounts: { Normal: 1, 'Approaching Expiry': 0, Critical: 0, Expired: 0 }, categoryCounts: [{ category: 'Dairy', batchCount: 1, quantity: '2.000', inventoryValue: '5.00' }], inventoryValue: '5.00' });
     if (path === '/api/inventory-batches') return json({ items: [{ id: '4'.repeat(24), ingredientId: '3'.repeat(24), batchCode: 'BROWSER-001', initialQuantity: '2.000', quantity: '2.000', unit: 'L', unitCost: '2.5000', currency: 'PHP', dateReceived: '2026-09-20', expirationDate: '2026-12-31', isActive: true, version: 0, createdBy: '1'.repeat(24), createdAt: '2026-09-20T00:00:00.000Z', updatedAt: '2026-09-20T00:00:00.000Z', status: 'Normal' }], total: 1, page: 1, limit: 25 });
+    if (path === '/api/account-requests') return json({ items: [], total: 0, page: 1, limit: 25 });
+    if (path === '/api/ingredient-requests') return json({ items: [], total: 0, page: 1, limit: 25 });
+    if (path === '/api/usage-records' || path === '/api/waste-records') return json({ items: [], total: 0, page: 1, limit: 25 });
     if (path.endsWith('/summary')) return json({ totalUsers: accounts.length, activeUsers: accounts.length, inactiveUsers: 0, roleCounts: {} });
     if (path === '/api/users' && request.method() === 'POST') {
       const body = request.postDataJSON();
@@ -85,11 +90,11 @@ async function mockApi(page: Page, role: WorkspaceRole, loggedIn = true) {
 for (const role of roles) {
   test(`${role}: ingredient controls match read/create/update/remove permissions`, async ({ page }) => {
     await mockApi(page, role);
-    const ingredient = { id: '3'.repeat(24), name: 'Permission Milk', version: 0, brand: '', description: '', category: 'Dairy', unitOfMeasure: 'L', createdBy: { id: '1'.repeat(24), name: 'Test' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const ingredient = { id: '3'.repeat(24), name: 'Permission Milk', version: 0, isActive: true, brand: '', description: '', category: 'Dairy', unitOfMeasure: 'L', createdBy: { id: '1'.repeat(24), name: 'Test' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     await page.route('**/api/ingredients?*', route => route.fulfill({ json: { items: [ingredient], total: 1, page: 1, limit: 10 } }));
     await page.goto('/Ingredients');
     await expect(page.getByRole('button', { name: 'View Permission Milk', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Add Ingredient', exact: true })).toHaveCount(['Inventory Manager', 'Inventory Staff'].includes(role) ? 1 : 0);
+    await expect(page.getByRole('button', { name: role === 'Inventory Staff' ? 'Request Ingredient' : 'Add Ingredient', exact: true })).toHaveCount(['Inventory Manager', 'Inventory Staff'].includes(role) ? 1 : 0);
     await expect(page.getByRole('button', { name: 'Edit Permission Milk', exact: true })).toHaveCount(role === 'Inventory Manager' ? 1 : 0);
     await expect(page.getByRole('button', { name: 'Archive Permission Milk', exact: true })).toHaveCount(role === 'Inventory Manager' ? 1 : 0);
     await page.getByRole('button', { name: 'View Permission Milk', exact: true }).click();
@@ -160,11 +165,12 @@ for (const role of ['Super Admin', 'Admin'] as const) {
     await dialog.getByLabel('First name', { exact: true }).fill('New');
     await dialog.getByLabel('Last name', { exact: true }).fill('Teammate');
     await dialog.getByLabel('Email', { exact: true }).fill('new@shelflife.com');
-    await dialog.getByLabel('Temporary Password', { exact: true }).fill('temporary-password');
+    if (role === 'Super Admin') await dialog.getByLabel('Temporary Password', { exact: true }).fill('temporary-password');
     await dialog.getByRole('radio', { name: 'Inventory Manager', exact: true }).check();
-    await dialog.getByRole('button', { name: 'Create account' }).click();
+    await dialog.getByRole('button', { name: role === 'Super Admin' ? 'Create account' : 'Submit request' }).click();
     await expect(dialog).not.toBeVisible();
-    expect(api.writes.find(write => write.path === '/api/users')?.body.role).toBe('Inventory Manager');
+    expect(api.writes.find(write => write.path === (role === 'Super Admin' ? '/api/users' : '/api/account-requests'))?.body.role).toBe('Inventory Manager');
+    if (role === 'Admin') return;
     await expect(page.getByText('new@shelflife.com', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'View actions for New Teammate' }).click();
     await dialog.getByRole('button', { name: 'Edit account', exact: true }).click();
