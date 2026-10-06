@@ -9,11 +9,11 @@ const { createAdministration } = require('../dist/services/administration');
 const { verifyPassword } = require('../dist/services/password');
 const { pagination, accountPagination, auditPagination, accountInput } = require('../dist/validators/administration');
 
-function fixture() {
+function fixture(extraRows = []) {
   let rows = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff', 'Super Admin', 'Admin'].map((role, i) => ({
     id: (i + 1).toString(16).padStart(24, '0'), firstName: 'Test', lastName: String(i), name: `Test ${i}`,
     email: `test${i}@shelflife.com`, role, isActive: true, createdAt: new Date(0).toISOString(), updatedAt: new Date(0).toISOString(),
-  }));
+  })).concat(extraRows);
   let records = [], failAudit = false, hash, lastUpdate;
   const store = {
     get: async id => rows.find(row => row.id === id) ?? null,
@@ -68,6 +68,18 @@ test('account listing accepts only bounded literal search, canonical role and ac
   for (const query of [{ status: 'Active' }, { role: 'Manager' }, { search: 'x'.repeat(65) }, { search: { $ne: '' } }, { isActive: 'true' }]) {
     assert.throws(() => accountPagination(query));
   }
+});
+
+test('account search treats regex metacharacters as literal text', async () => {
+  const f = fixture([
+    { id: 'a'.repeat(24), firstName: 'Ada', lastName: 'Lovelace', name: 'Ada Lovelace', email: 'ada@shelflife.com', role: 'Inventory Staff', isActive: true, createdAt: new Date(0).toISOString(), updatedAt: new Date(0).toISOString() },
+    { id: 'b'.repeat(24), firstName: 'Adam', lastName: 'Example', name: 'Adam Example', email: 'adam@shelflife.com', role: 'Inventory Staff', isActive: true, createdAt: new Date(0).toISOString(), updatedAt: new Date(0).toISOString() },
+  ]);
+  const actor = f.rows()[0];
+  const metacharacters = await f.service.list(actor, accountPagination({ search: 'Ada.*' }));
+  assert.equal(metacharacters.total, 0);
+  const literal = await f.service.list(actor, accountPagination({ search: 'Ada' }));
+  assert.deepEqual(literal.items.map(row => row.name).sort(), ['Ada Lovelace', 'Adam Example']);
 });
 
 test('administrative writes enforce all actor/target role combinations and self protection', async () => {
