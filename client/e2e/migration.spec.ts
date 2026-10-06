@@ -3,9 +3,13 @@ import { canonicalWorkspaceAccess, dashboardPaths, type WorkspaceRole } from '..
 
 const roles: WorkspaceRole[] = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'];
 
-test('Super Admin distribution uses canonical roles and refuses incomplete account totals', async ({ page }) => {
+test('Super Admin distribution uses canonical role counts from the dashboard summary', async ({ page }) => {
   await mockApi(page, 'Super Admin');
   let total = 4;
+  let roleCounts = Object.fromEntries(roles.map(role => [role, 1]));
+  await page.route('**/api/dashboard/summary', route => route.fulfill({ json: {
+    totalUsers: total, activeUsers: total, inactiveUsers: 0, roleCounts,
+  } }));
   await page.route('**/api/users?*', route => route.fulfill({ json: {
     items: roles.map((role, index) => ({ id: String(index), role, name: role, isActive: true })),
     page: 1, pageSize: 10, total,
@@ -16,10 +20,12 @@ test('Super Admin distribution uses canonical roles and refuses incomplete accou
   for (const role of roles) {
     await expect(distribution.locator('.sl-sa-role-legend > div').filter({ has: page.getByText(role, { exact: true }) }).locator('strong')).toHaveText('1');
   }
-  total = 20;
+  total = 4;
+  roleCounts = { 'Super Admin': 2, Admin: 1, 'Inventory Manager': 1, 'Inventory Staff': 0 };
   await page.reload();
-  await expect(distribution.getByText('No live records yet')).toBeVisible();
-  await expect(distribution.locator('.sl-sa-role-donut')).toHaveCount(0);
+  await expect(distribution.locator('.sl-sa-role-donut')).toHaveText('4Users');
+  await expect(distribution.locator('.sl-sa-role-legend > div').filter({ has: page.getByText('Super Admin', { exact: true }) }).locator('strong')).toHaveText('2');
+  await expect(distribution.locator('.sl-sa-role-legend > div').filter({ has: page.getByText('Inventory Staff', { exact: true }) }).locator('strong')).toHaveText('0');
 });
 
 test('audit table keeps headings visible during request failure and retry', async ({ page }) => {
