@@ -11,7 +11,6 @@ import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { createIngredient, deleteIngredient, listIngredients, updateIngredient, type Ingredient, type IngredientInput } from '../../services/ingredients';
-import { createChangeRequest, deleteChangeRequest, listChangeRequests, updateChangeRequest, type ChangeRequest, type ChangeRequestInput } from '../../services/changeRequests';
 import { createIngredientRequest, deleteIngredientRequest, listIngredientRequests, reviewIngredientRequest, updateIngredientRequest, type IngredientRequest } from '../../services/ingredientRequests';
 import { listAccountRequests } from '../../services/accountRequests';
 
@@ -1584,83 +1583,6 @@ function SuperAdminForecastingPage() {
   </>;
 }
 
-
-const emptyChangeRequest: ChangeRequestInput = { target: '', type: '', proposedCorrection: '', reason: '' };
-const changeRequestTypes = ['Quantity correction', 'Expiration date', 'Batch details', 'Ingredient details', 'Other'];
-
-export function StaffChangeRequestsPage() {
-  const [items, setItems] = useState<ChangeRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  const [reload, setReload] = useState(0);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<ChangeRequest | null>(null);
-  const [form, setForm] = useState<ChangeRequestInput>(emptyChangeRequest);
-  const [formError, setFormError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [deleting, setDeleting] = useState('');
-
-  useEffect(() => {
-    const abort = new AbortController();
-    setLoading(true); setLoadError('');
-    listChangeRequests(abort.signal).then(result => setItems(result.items)).catch(error => {
-      if (!abort.signal.aborted) setLoadError(error instanceof Error ? error.message : 'Could not load your requests.');
-    }).finally(() => { if (!abort.signal.aborted) setLoading(false); });
-    return () => abort.abort();
-  }, [reload]);
-
-  const openNew = () => { setEditing(null); setForm(emptyChangeRequest); setFormError(''); setBusy(false); setFormOpen(true); };
-  const openEdit = (request: ChangeRequest) => {
-    setEditing(request);
-    setForm({ target: request.target, type: request.type, proposedCorrection: request.proposedCorrection, reason: request.reason });
-    setFormError(''); setBusy(false); setFormOpen(true);
-  };
-  const dismissForm = () => { if (!busy) { setFormOpen(false); setEditing(null); setForm(emptyChangeRequest); setFormError(''); } };
-  const submit = async (event: FormEvent) => {
-    event.preventDefault(); setBusy(true); setFormError('');
-    try {
-      if (editing) await updateChangeRequest(editing.id, form, editing.version);
-      else await createChangeRequest(form);
-      setBusy(false); setFormOpen(false); setEditing(null); setForm(emptyChangeRequest); setReload(value => value + 1);
-    } catch (error) { setFormError(error instanceof Error ? error.message : 'Could not save your request.'); setBusy(false); }
-  };
-  const remove = async (request: ChangeRequest) => {
-    if (!window.confirm('Delete this pending request? This cannot be undone.')) return;
-    setDeleting(request.id);
-    try { await deleteChangeRequest(request.id); setReload(value => value + 1); }
-    catch (error) { setLoadError(error instanceof Error ? error.message : 'Could not delete your request.'); }
-    finally { setDeleting(''); }
-  };
-  const setField = (key: keyof ChangeRequestInput, value: string) => setForm(current => ({ ...current, [key]: value }));
-
-  return <>
-    <PageHeader title="My Change Requests" description="Submit inventory corrections and manage your pending requests." />
-    <div className="sl-admin-view">
-      <Card id="my-change-requests" title="Your requests" action={<button type="button" className="sl-button sl-button-primary" onClick={openNew}><Plus size={16} aria-hidden="true" />New request</button>}>
-        {loading ? <DataState kind="loading" title="Loading requests" description="Fetching your submissions." /> : loadError ? <DataState kind="error" title="Requests unavailable" description={loadError} action={<button className="sl-button" type="button" onClick={() => setReload(value => value + 1)}>Retry</button>} /> : items.length === 0 ? <DataState kind="empty" title="No requests yet" description="Submit a request when an inventory correction needs review." /> :
-          <div className="sl-table-scroll" role="region" aria-label="Your change requests" tabIndex={0}><table className="sl-data-table">
-            <thead><tr><th scope="col">Target</th><th scope="col">Request type</th><th scope="col">Proposed correction</th><th scope="col">Submitted</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
-            <tbody>{items.map(request => <tr key={request.id}>
-              <td>{request.target}</td><td>{request.type}</td><td>{request.proposedCorrection}</td><td>{new Date(request.createdAt).toLocaleDateString()}</td>
-              <td><Status tone={request.status === 'Approved' ? 'success' : request.status === 'Rejected' ? 'critical' : 'attention'}>{request.status}</Status></td>
-              <td>{request.status === 'Pending' ? <div className="sl-row-actions"><button type="button" className="sl-button" aria-label={`Edit request for ${request.target}`} onClick={() => openEdit(request)}><Pencil size={15} aria-hidden="true" />Edit</button><button type="button" className="sl-button" aria-label={`Delete request for ${request.target}`} disabled={deleting === request.id} onClick={() => void remove(request)}><Trash2 size={15} aria-hidden="true" />Delete</button></div> : <span className="sl-supporting">Closed</span>}</td>
-            </tr>)}</tbody>
-          </table></div>}
-      </Card>
-    </div>
-    <Dialog open={formOpen} title={editing ? 'Edit request' : 'New change request'} onDismiss={dismissForm} busy={busy} actions={<><button type="button" className="sl-button" disabled={busy} onClick={dismissForm}>Cancel</button><button type="submit" form="staff-change-request-form" className="sl-button sl-button-primary" disabled={busy}>{busy ? 'Saving…' : editing ? 'Save changes' : 'Submit request'}</button></>}>
-      <form id="staff-change-request-form" className="sl-preview sl-live-ingredient-form" onSubmit={submit}>
-        {formError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{formError}</p>}
-        <div className="sl-form-grid">
-          <label>Target batch / ingredient<input autoFocus required maxLength={160} className="sl-admin-input" value={form.target} onChange={event => setField('target', event.target.value)} disabled={busy} placeholder="e.g. Batch B-104 / Chicken Breast" /></label>
-          <label>Change type<select required className="sl-admin-input" value={form.type} onChange={event => setField('type', event.target.value)} disabled={busy}><option value="">Select type</option>{changeRequestTypes.map(type => <option key={type}>{type}</option>)}</select></label>
-          <label>Proposed correction<textarea required maxLength={500} rows={3} className="sl-admin-input" value={form.proposedCorrection} onChange={event => setField('proposedCorrection', event.target.value)} disabled={busy} /></label>
-          <label>Reason<textarea required maxLength={500} rows={3} className="sl-admin-input" value={form.reason} onChange={event => setField('reason', event.target.value)} disabled={busy} /></label>
-        </div>
-      </form>
-    </Dialog>
-  </>;
-}
 
 function ManagerForecastingPage() {
   const [range, setRange] = useState('Current period');
