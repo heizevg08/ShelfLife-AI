@@ -43,6 +43,9 @@ test('typed change request HTTP roles keep Super Admin read-only, reject Admin, 
   assert.equal((await call(superAdmin)).status, 200);
   assert.equal((await call(superAdmin, 'GET', `/${'9'.repeat(24)}`)).status, 200);
   for (const path of ['', `/${'9'.repeat(24)}`, '/summary', '/manager-summary', '/ingredient-options']) assert.equal((await call(admin, 'GET', path)).status, 403);
+  assert.equal((await call(admin, 'POST', '', staffRequest)).status, 403);
+  assert.equal((await call(admin, 'POST', `/${'9'.repeat(24)}/approve`, { expectedVersion: 0 })).status, 403);
+  assert.equal((await call(admin, 'POST', `/${'9'.repeat(24)}/reject`, { expectedVersion: 0, reviewNote: 'No.' })).status, 403);
   assert.equal((await call(staff, 'POST', '', staffRequest)).status, 201);
   assert.equal((await call(manager, 'POST', '', staffRequest)).status, 403);
   assert.equal((await call(staff, 'POST', `/${'9'.repeat(24)}/approve`, { expectedVersion: 0 })).status, 403);
