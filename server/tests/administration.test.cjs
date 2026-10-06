@@ -17,7 +17,16 @@ function fixture() {
   let records = [], failAudit = false, hash, lastUpdate;
   const store = {
     get: async id => rows.find(row => row.id === id) ?? null,
-    list: async (roles, query) => { const found = rows.filter(row => !roles || roles.includes(row.role)); return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), total: found.length, page: query.page, pageSize: query.pageSize }; },
+    list: async (roles, query) => {
+      let found = rows.filter(row => !roles || roles.includes(row.role));
+      if (query.role) found = found.filter(row => row.role === query.role);
+      if (query.isActive !== undefined) found = found.filter(row => row.isActive === query.isActive);
+      if (query.search) {
+        const needle = query.search.toLowerCase();
+        found = found.filter(row => [row.firstName, row.lastName, row.email, row.role].some(value => value.toLowerCase().includes(needle)));
+      }
+      return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), total: found.length, page: query.page, pageSize: query.pageSize };
+    },
     summary: async () => ({ totalUsers: rows.length, activeUsers: rows.filter(x => x.isActive).length, inactiveUsers: rows.filter(x => !x.isActive).length }),
     audits: async query => {
       const found = records.filter(record => (!query.actorRole || record.actor.role === query.actorRole)
