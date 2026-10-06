@@ -7,7 +7,7 @@ const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createAdministration } = require('../dist/services/administration');
 const { verifyPassword } = require('../dist/services/password');
-const { pagination, auditPagination, accountInput } = require('../dist/validators/administration');
+const { pagination, accountPagination, auditPagination, accountInput } = require('../dist/validators/administration');
 
 function fixture() {
   let rows = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff', 'Super Admin', 'Admin'].map((role, i) => ({
@@ -50,6 +50,15 @@ test('administration validation rejects injection, unknown fields, role strings 
   for (const query of [{ actorRole: 'Staff' }, { action: 'PURGE' }, { from: 'yesterday' }, { targetId: 'x' }]) assert.throws(() => auditPagination(query));
   for (const body of [{ isActive: false }, { password: 'new-password' }, { authVersion: 0 }, { role: 'Staff' }, { email: { $ne: null } }, { firstName: '' }]) assert.throws(() => accountInput(body, false));
   assert.equal(accountInput({ email: ' VALID@SHELFLIFE.COM ' }, false).email, 'valid@shelflife.com');
+});
+
+test('account listing accepts only bounded literal search, canonical role and active-status filters', () => {
+  assert.deepEqual(accountPagination({ search: 'Ada.*', role: 'Admin', status: 'active' }), {
+    page: 1, pageSize: 25, sortBy: 'createdAt', sortOrder: 'desc', search: 'Ada.*', role: 'Admin', isActive: true,
+  });
+  for (const query of [{ status: 'Active' }, { role: 'Manager' }, { search: 'x'.repeat(65) }, { search: { $ne: '' } }, { isActive: 'true' }]) {
+    assert.throws(() => accountPagination(query));
+  }
 });
 
 test('administrative writes enforce all actor/target role combinations and self protection', async () => {
@@ -112,6 +121,7 @@ test('real HTTP administration checks authentication before authorization and va
     assert.equal(malformed.status, 400); assert.equal((await malformed.json()).error.code, 'VALIDATION_ERROR');
     const all = await (await call('/api/users', f.rows()[0])).json(); assert.equal(all.total, 6); assert.ok(all.items.some(x => x.role === 'Super Admin'));
     const scoped = await (await call('/api/users', f.rows()[1])).json(); assert.deepEqual(scoped.items.map(x => x.role), ['Inventory Manager', 'Inventory Staff']);
+    const blockedRoleFilter = await (await call('/api/users?role=Admin', f.rows()[1])).json(); assert.equal(blockedRoleFilter.total, 0);
     assert.equal((await call('/api/users/' + f.rows()[0].id, f.rows()[1])).status, 404);
     assert.equal((await call('/api/users/' + f.rows()[1].id, f.rows()[0], { method: 'DELETE' })).status, 404);
     assert.equal((await call('/api/audit-records', f.rows()[1])).status, 200);

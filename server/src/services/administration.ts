@@ -1,6 +1,6 @@
 import { auditSnapshot, type AuditSnapshot } from './audit-snapshot';
 import { AdministrationError, forbidden } from '../middleware/administration.middleware';
-import type { AccountInput, AuditPageQuery, PageQuery } from '../validators/administration';
+import type { AccountInput, AccountListQuery, AuditPageQuery, PageQuery } from '../validators/administration';
 import { hashPassword } from './password';
 
 export interface Account {
@@ -18,7 +18,7 @@ export interface AccountTransaction {
   audit(actorId: string, action: AuditAction, targetId: string, oldValue: AuditSnapshot, newValue: AuditSnapshot): Promise<void>;
 }
 export interface AdministrationStore {
-  list(roles: string[] | null, query: PageQuery): Promise<Page<Account>>;
+  list(roles: string[] | null, query: AccountListQuery): Promise<Page<Account>>;
   get(id: string): Promise<Account | null>;
   summary(roles?: string[] | null): Promise<{ totalUsers: number; activeUsers: number; inactiveUsers: number; roleCounts: Record<string, number> }>;
   audits(query: AuditPageQuery): Promise<Page<AuditRecord>>;
@@ -32,7 +32,7 @@ function assertWrite(actor: Actor, user: Account) {
 const missing = () => new AdministrationError(404, 'NOT_FOUND', 'Account not found');
 export function createAdministration(store: AdministrationStore) {
   return {
-    list: (actor: Actor, query: PageQuery) => store.list(actor.role === 'Super Admin' ? null : managedRoles(actor.role), query),
+    list: (actor: Actor, query: AccountListQuery) => store.list(actor.role === 'Super Admin' ? null : managedRoles(actor.role), query),
     async get(actor: Actor, id: string) {
       const user = await store.get(id);
       if (!user || !canRead(actor, user)) throw missing();

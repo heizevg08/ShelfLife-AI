@@ -4,7 +4,7 @@ import type { userModel } from '../models/user';
 import { ROLES } from '../models/user';
 import type { auditRecordModel } from '../models/audit-record';
 import type { Account, AdministrationStore } from './administration';
-import type { AuditPageQuery, PageQuery } from '../validators/administration';
+import type { AccountListQuery, AuditPageQuery, PageQuery } from '../validators/administration';
 
 const publicFields = '_id firstName lastName email role isActive createdAt updatedAt';
 type PublicDocument = { _id: { toString(): string }; firstName: string; lastName: string; email: string; role: string; isActive: boolean; createdAt: Date; updatedAt: Date };
@@ -14,6 +14,7 @@ function account(user: PublicDocument): Account {
     createdAt: user.createdAt.toISOString(), updatedAt: user.updatedAt.toISOString() };
 }
 const sorting = (query: PageQuery): Record<string, 1 | -1> => ({ [query.sortBy]: query.sortOrder === 'asc' ? 1 : -1, _id: query.sortOrder === 'asc' ? 1 : -1 });
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export function createAdministrationStore(driver: Mongoose, users: ReturnType<typeof userModel>, audits: ReturnType<typeof auditRecordModel>): AdministrationStore {
   const get = async (id: string, session?: ClientSession) => {
     const user = await users.findById(id).select(publicFields).session(session ?? null).lean().exec();
@@ -22,7 +23,18 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
   return {
     get,
     async list(roles, query) {
-      const filter = roles ? { role: { $in: ROLES.filter(role => roles.includes(role)) } } : {};
+      const filter: Record<string, unknown> = roles ? { role: { $in: ROLES.filter(role => roles.includes(role)) } } : {};
+      if (query.role) {
+        // A narrower role filter can never widen the actor's directory scope.
+        if (roles && !roles.includes(query.role)) filter._id = { $exists: false };
+        else filter.role = query.role;
+      }
+      if (query.isActive !== undefined) filter.isActive = query.isActive;
+      if (query.search) {
+        // Search is literal text, never caller-supplied regular-expression syntax.
+        const literal = new RegExp(escapeRegex(query.search), 'i');
+        filter.$or = [{ firstName: literal }, { lastName: literal }, { email: literal }, { role: literal }];
+      }
       const [rows, total] = await Promise.all([
         users.find(filter).select(publicFields).sort(sorting(query)).skip((query.page - 1) * query.pageSize).limit(query.pageSize).lean().exec(),
         users.countDocuments(filter).exec(),

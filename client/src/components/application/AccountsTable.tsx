@@ -1,5 +1,5 @@
 import { Ban, Check, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus, Activity, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { accountSummary, createAccount, getAccount, listAccounts, listAuditRecords, setAccountActive, updateAccount, type Account, type AuditRecord, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { createAccountRequest, listAccountRequests, reviewAccountRequest, type AccountRequest } from '../../services/accountRequests';
@@ -101,11 +101,15 @@ export function AccountsTable() {
   useEffect(() => {
     const abort = new AbortController();
     setLoadError(false);
-    listAccounts(page, sort, sort === 'createdAt' ? 'desc' : 'asc', abort.signal, pageSize)
+    listAccounts(page, sort, sort === 'createdAt' ? 'desc' : 'asc', abort.signal, pageSize, {
+      search: directorySearch,
+      ...(roleFilter === 'All Roles' ? {} : { role: roleFilter as Account['role'] }),
+      ...(statusFilter === 'All Statuses' ? {} : { status: statusFilter.toLowerCase() as 'active' | 'inactive' }),
+    })
       .then(value => { if (!abort.signal.aborted) setData(value); })
       .catch(() => { if (!abort.signal.aborted) setLoadError(true); });
     return () => abort.abort();
-  }, [page, pageSize, sort, refresh]);
+  }, [page, pageSize, sort, refresh, directorySearch, roleFilter, statusFilter]);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -133,24 +137,7 @@ export function AccountsTable() {
   }, [superAdmin, refresh]);
 
   const mayManage = (account: Account) => account.id !== user.id && (superAdmin ? ['Admin', 'Inventory Manager', 'Inventory Staff'].includes(account.role) : user.role === 'Admin' && (account.role === 'Inventory Manager' || account.role === 'Inventory Staff'));
-  const visibleAccounts = useMemo(() => {
-    if (!data) return [];
-    const query = directorySearch.trim().toLowerCase();
-    const filtered = data.items.filter(account => {
-      const matchesSearch = !query || [account.name, account.email, account.role, account.isActive ? 'active' : 'inactive'].some(value => value.toLowerCase().includes(query));
-      const matchesRole = roleFilter === 'All Roles' || account.role === roleFilter;
-      const matchesStatus = statusFilter === 'All Statuses' || (statusFilter === 'Active' ? account.isActive : !account.isActive);
-      return matchesSearch && matchesRole && matchesStatus;
-    });
-
-    // Keep the visible page deterministic even if the API/database collation differs by environment.
-    const direction = sort === 'createdAt' ? -1 : 1;
-    return filtered.sort((a, b) => {
-      const left = sort === 'createdAt' ? new Date(a.createdAt).getTime() : String(a[sort as keyof Account] ?? '').toLowerCase();
-      const right = sort === 'createdAt' ? new Date(b.createdAt).getTime() : String(b[sort as keyof Account] ?? '').toLowerCase();
-      return left < right ? -1 * direction : left > right ? 1 * direction : 0;
-    });
-  }, [data, directorySearch, roleFilter, statusFilter, sort]);
+  const visibleAccounts = data?.items ?? [];
 
   async function open(account: Account, next: 'view' | 'edit' | 'lifecycle') {
     setBusy(true); setMessage(''); setErrors({});
@@ -200,6 +187,7 @@ export function AccountsTable() {
     const adminRequest = mode === 'create' && user.role === 'Admin';
     const requiredFields = ['firstName', 'lastName', 'email', ...(mode === 'create' && !adminRequest ? ['password'] as const : [])] as const;
     for (const key of requiredFields) {
+      if (mode === 'edit' && selected && key !== 'password' && fields[key].trim() === String(selected[key]).trim()) continue;
       const error = validateField(key, fields[key]);
       if (error) next[key] = error;
     }
@@ -220,7 +208,11 @@ export function AccountsTable() {
         await createAccountRequest(input);
         setMessage('Account request submitted. A Super Admin must approve it before the account is created.');
       } else if (mode === 'create') await createAccount({ ...input, password: fields.password });
-      else await updateAccount(selected!.id, input);
+      else {
+        const changes = Object.fromEntries(Object.entries(input).filter(([key, value]) => value !== selected![key as keyof Account])) as Partial<typeof input>;
+        if (!Object.keys(changes).length) { setMessage('No changes to save.'); return; }
+        await updateAccount(selected!.id, changes);
+      }
       if (!adminRequest) setMessage(mode === 'create' ? 'Account created.' : 'Account updated.');
       setMode(null); setFields(blank); setSelected(null); setShowPassword(false); setRefresh(value => value + 1);
     } catch (error) {
