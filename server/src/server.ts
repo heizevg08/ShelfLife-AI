@@ -35,21 +35,29 @@ import { accountRequestModel } from './models/account-request';
 import { createAccountRequests, type AccountRequestService } from './services/account-requests';
 import { usageRecordModel, wasteRecordModel } from './models/inventory-record';
 import { createInventoryRecords, type InventoryRecordService } from './services/inventory-records';
+import { IndexSetupFailure, provisionModelIndexes } from './services/index-provisioning';
 
-type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
+type StartupStage = 'config-validation' | 'database-connection' | 'index-setup' | 'application-composition' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
 const safeCodes = new Set(['ECONNREFUSED', 'ENOTFOUND', 'ETIMEOUT', 'ETIMEDOUT', 'ESERVFAIL', 'ENODATA', 'ECONNRESET', 'EAI_AGAIN', 'EADDRINUSE', 'EADDRNOTAVAIL', 'EACCES', 'ERR_INVALID_ARG_TYPE', 'ERR_INVALID_ARG_VALUE']);
+const safeMongoCodes = new Set([13, 18, 26, 48, 50, 68, 85, 86, 11000]);
+const safeCodeNames = new Set(['Unauthorized', 'AuthenticationFailed', 'NamespaceNotFound', 'NamespaceExists', 'ExceededTimeLimit', 'IndexAlreadyExists', 'IndexOptionsConflict', 'IndexKeySpecsConflict', 'DuplicateKey']);
+const safeIndexCollections = new Set(['ingredients', 'loginAttempts', 'inventoryBatches', 'usageRecords', 'wasteRecords', 'changeRequests', 'changeRequestCounters', 'ingredientRequests', 'accountRequests']);
+const safeIndexNames = new Set(['name_1', 'expiresAt_1', 'ingredient_batch_code_unique', 'batch_fefo', 'record_ingredient_date', 'record_batch_date', 'record_actor_date', 'record_correction_history', 'requestID_1', 'requestedBy_1_createdAt_-1__id_-1', 'status_1_createdAt_-1__id_-1', 'dateKey_1', 'status_1_createdAt_-1', 'createdBy_1_createdAt_-1']);
 
 // Allowlist metadata rather than redacting arbitrary driver messages or stacks.
 export function startupDiagnostic(stage: StartupStage, error: unknown) {
-  const value = error instanceof Error ? error as Error & { code?: unknown } : undefined;
+  const indexFailure = error instanceof IndexSetupFailure ? error : undefined;
+  const value = (indexFailure?.source ?? error) instanceof Error
+    ? (indexFailure?.source ?? error) as Error & { code?: unknown; codeName?: unknown } : undefined;
   const name = value && safeNames.has(value.name) ? value.name : 'UnknownError';
   const code = typeof value?.code === 'string' && safeCodes.has(value.code) ? value.code
-    : value?.code === 18 ? 'AUTHENTICATION_FAILED' : undefined;
-  const message = stage === 'configuration' && value &&
-    /^Invalid configuration: (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET)(?:, (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET))*$/.test(value.message)
-    ? value.message : undefined;
-  return { stage, name, ...(code ? { code } : {}), ...(message ? { message } : {}) };
+    : typeof value?.code === 'number' && safeMongoCodes.has(value.code) ? value.code : undefined;
+  const codeName = typeof value?.codeName === 'string' && safeCodeNames.has(value.codeName) ? value.codeName : undefined;
+  const collection = indexFailure && safeIndexCollections.has(indexFailure.collection) ? indexFailure.collection : undefined;
+  const index = indexFailure?.index && safeIndexNames.has(indexFailure.index) ? indexFailure.index : undefined;
+  return { stage, name, ...(code !== undefined ? { code } : {}), ...(codeName ? { codeName } : {}),
+    ...(collection ? { collection, ...(index ? { index } : {}) } : {}) };
 }
 
 class StartupFailure extends Error {
@@ -95,6 +103,10 @@ export async function startServer(config: Config, database: Database, shutdownTi
   try {
     stage = 'database-connection'; onStage(stage);
     await database.connect(config.mongoUri);
+    if (database.initialize) {
+      stage = 'index-setup'; onStage(stage);
+      await database.initialize();
+    }
     stage = 'http-listen'; onStage(stage);
     await new Promise<void>((resolve, reject) => {
       http.once('error', reject);
@@ -121,10 +133,10 @@ export function registerShutdown(signals: EventEmitter, stop: () => Promise<numb
 
 // Importing this module is safe: only the executable entry point starts I/O.
 if (require.main === module) {
-  let stage: StartupStage = 'configuration';
+  let stage: StartupStage = 'config-validation';
   const onStage = (next: StartupStage) => { stage = next; };
   void (async () => {
-    onStage('configuration');
+    onStage('config-validation');
     const config = readConfig(process.env);
     const secret = readJwtSecret(process.env);
     onStage('application-composition');
@@ -175,23 +187,22 @@ if (require.main === module) {
     const attempts = loginAttemptModel(driver);
     const loginLimiter = createLoginLimiter(mongoLoginAttemptStore(attempts));
     const database = createDatabase(driver);
-    const indexedDatabase = { ...database, connect: async (uri: string) => {
-      await database.connect(uri);
+    const indexedDatabase = { ...database, initialize: async () => {
       await provisionHardeningIndexes(ingredientRows, attempts);
       await configRows.createCollection();
       await provisionBatchIndexes(batchRows);
       await usageRows.createCollection();
-      await usageRows.createIndexes();
+      await provisionModelIndexes(usageRows);
       await wasteRows.createCollection();
-      await wasteRows.createIndexes();
+      await provisionModelIndexes(wasteRows);
       await changeRequestRows.createCollection();
-      await changeRequestRows.createIndexes();
+      await provisionModelIndexes(changeRequestRows);
       await changeRequestCounters.createCollection();
-      await changeRequestCounters.createIndexes();
+      await provisionModelIndexes(changeRequestCounters);
       await ingredientRequestRows.createCollection();
-      await ingredientRequestRows.createIndexes();
+      await provisionModelIndexes(ingredientRequestRows);
       await accountRequestRows.createCollection();
-      await accountRequestRows.createIndexes();
+      await provisionModelIndexes(accountRequestRows);
     } };
     const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, systemConfig, batches, changeRequests, ingredientRequests, accountRequests, usageRecords, wasteRecords);
     onStage('shutdown-registration');

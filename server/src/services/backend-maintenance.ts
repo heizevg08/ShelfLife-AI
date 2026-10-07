@@ -4,15 +4,16 @@ import type { loginAttemptModel } from '../models/login-attempt';
 import type { userModel } from '../models/user';
 import type { auditRecordModel } from '../models/audit-record';
 import { auditSnapshot } from './audit-snapshot';
+import { IndexSetupFailure, provisionModelIndexes } from './index-provisioning';
 
 export async function provisionHardeningIndexes(ingredients: ReturnType<typeof ingredientModel>, attempts: ReturnType<typeof loginAttemptModel>) {
   // Explicit, additive provisioning: never drop/rebuild unrelated indexes with syncIndexes().
-  await ingredients.createIndexes();
-  await attempts.createIndexes();
+  await provisionModelIndexes(ingredients);
+  await provisionModelIndexes(attempts);
   const indexes = await ingredients.collection.listIndexes().toArray();
   const uniqueName = indexes.find(index => Object.keys(index.key).length === 1 && index.key.name === 1 && index.unique === true
     && index.collation?.locale === 'en' && index.collation?.strength === 2 && !index.partialFilterExpression && !index.sparse);
-  if (!uniqueName) throw new Error('Required ingredient name uniqueness index is missing');
+  if (!uniqueName) throw new IndexSetupFailure(ingredients.collection.name, 'name_1', new Error('Required ingredient name uniqueness index is missing'));
   return { ingredientNameIndex: uniqueName.name, unique: true, collation: { locale: 'en', strength: 2 } };
 }
 
