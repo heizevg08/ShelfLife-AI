@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { IngredientInput } from './ingredients';
+import type { IngredientInput, IngredientPatch } from './ingredients';
 
 export interface IngredientRequest extends IngredientInput {
   id: string;
@@ -15,6 +15,6 @@ export interface IngredientRequest extends IngredientInput {
 
 export const listIngredientRequests = (signal?: AbortSignal) => apiClient<{ items: IngredientRequest[]; total: number }>('/ingredient-requests', { signal });
 export const createIngredientRequest = (input: IngredientInput) => apiClient<{ request: IngredientRequest }>('/ingredient-requests', { method: 'POST', body: JSON.stringify(input) });
-export const updateIngredientRequest = (id: string, input: IngredientInput, expectedVersion: number) => apiClient<{ request: IngredientRequest }>(`/ingredient-requests/${id}`, { method: 'PATCH', body: JSON.stringify({ ...input, expectedVersion }) });
+export const updateIngredientRequest = (id: string, input: IngredientPatch, expectedVersion: number) => apiClient<{ request: IngredientRequest }>(`/ingredient-requests/${id}`, { method: 'PATCH', body: JSON.stringify({ ...input, expectedVersion }) });
 export const reviewIngredientRequest = (id: string, decision: 'Approved' | 'Rejected', expectedVersion: number) => apiClient<{ request: IngredientRequest; ingredientId: string | null }>(`/ingredient-requests/${id}/review`, { method: 'PATCH', body: JSON.stringify({ decision, expectedVersion }) });
 export const deleteIngredientRequest = (id: string) => apiClient<void>(`/ingredient-requests/${id}`, { method: 'DELETE' });

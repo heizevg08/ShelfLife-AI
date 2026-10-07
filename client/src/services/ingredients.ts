@@ -29,6 +29,15 @@ export interface IngredientInput {
   standardUnitCost?: number;
   defaultShelfLifeDays?: number;
 }
+export type IngredientPatch = Partial<IngredientInput>;
+
+export function ingredientChanges(current: IngredientInput, next: IngredientInput): IngredientPatch {
+  const patch: IngredientPatch = {};
+  for (const key of Object.keys(next) as (keyof IngredientInput)[]) {
+    if (next[key] !== current[key]) patch[key] = next[key] as never;
+  }
+  return patch;
+}
 export interface StockInIngredientOption {
   id: string;
   name: string;
@@ -47,7 +56,7 @@ export async function listIngredients(page = 1, pageSize = 25, search = '', cate
 }
 export const createIngredient = (input: IngredientInput) => apiClient<{ ingredient: Ingredient }>('/ingredients', { method: 'POST', body: JSON.stringify(input) });
 
-export const updateIngredient = (id: string, input: IngredientInput, expectedVersion: number) => apiClient<{ ingredient: Ingredient }>(`/ingredients/${id}`, { method: 'PATCH', body: JSON.stringify({ ...input, expectedVersion }) });
+export const updateIngredient = (id: string, input: IngredientPatch, expectedVersion: number) => apiClient<{ ingredient: Ingredient }>(`/ingredients/${id}`, { method: 'PATCH', body: JSON.stringify({ ...input, expectedVersion }) });
 export const deleteIngredient = (id: string, expectedVersion: number) => apiClient<void>(`/ingredients/${id}`, { method: 'DELETE', body: JSON.stringify({ expectedVersion }) });
 export const ingredientCategories = (signal?: AbortSignal) => apiClient<{ categories: string[] }>('/ingredients/categories', { signal });
 export const ingredientSummary = (signal?: AbortSignal) => apiClient<IngredientSummary>('/ingredients/summary', { signal });

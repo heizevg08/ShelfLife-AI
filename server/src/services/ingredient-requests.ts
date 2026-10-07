@@ -16,7 +16,7 @@ export function createIngredientRequests(store: IngredientRequestStore) {
       if (actor.role !== 'Inventory Staff') throw forbidden();
       return store.create(actor.id, input);
     },
-    async update(actor: { id: string; role: string }, id: string, input: IngredientInput, expectedVersion: number) {
+    async update(actor: { id: string; role: string }, id: string, input: Partial<IngredientInput>, expectedVersion: number) {
       if (actor.role !== 'Inventory Staff') throw forbidden();
       return store.update(actor.id, id, input, expectedVersion);
     },

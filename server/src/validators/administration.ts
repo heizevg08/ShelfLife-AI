@@ -10,6 +10,9 @@ export function objectId(value: unknown): string {
   if (typeof value !== 'string' || !/^[a-f0-9]{24}$/i.test(value)) invalid('id');
   return value;
 }
+export function emptyQuery(query: Record<string, unknown>) {
+  for (const key of Object.keys(query)) invalid(key, 'No query parameters are accepted');
+}
 export function pagination(query: Record<string, unknown>, sorts: string[], fallback: string) {
   for (const key of Object.keys(query)) if (!['page', 'pageSize', 'sortBy', 'sortOrder'].includes(key)) invalid(key);
   const integer = (key: string, defaultValue: number, max: number) => {
