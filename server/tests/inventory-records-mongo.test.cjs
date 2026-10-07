@@ -8,7 +8,7 @@ const { usageRecordModel, wasteRecordModel } = require('../dist/models/inventory
 const { auditRecordModel } = require('../dist/models/audit-record');
 const { createInventoryRecords } = require('../dist/services/inventory-records');
 
-test('MongoDB usage and waste records preserve FEFO, Decimal128 snapshots, compensations, archives and audit labels', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' }, async () => {
+test('MongoDB usage and waste records preserve FEFO, Decimal128 snapshots, compensations, archives and audit labels', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' ? true : !process.env.MONGO_URI ? 'RUN_MONGO_HARDENING_TESTS=true requires MONGO_URI' : false }, async () => {
   const driver = new Mongoose(), prefix = `record_test_${randomUUID().replaceAll('-', '')}_`, models = [];
   let connected = false;
   const isolated = factory => { const base = factory(driver); const model = driver.model(`Test${base.modelName}${prefix}`, base.schema.clone(), prefix + base.collection.name); models.push(model); return model; };

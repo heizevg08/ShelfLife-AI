@@ -8,7 +8,7 @@ export interface Account {
   role: string; isActive: boolean; createdAt: string; updatedAt: string;
 }
 export interface Actor { id: string; role: string }
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'DEACTIVATE' | 'REACTIVATE';
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'DEACTIVATE' | 'REACTIVATE' | 'CHANGE_REQUEST_SUBMITTED' | 'CHANGE_REQUEST_APPROVED' | 'CHANGE_REQUEST_REJECTED';
 export interface AuditRecord { reason?: string; id: string; userId: string | null; actorType?: string; oldValue: AuditSnapshot; newValue: AuditSnapshot; actor: { id: string; name: string; role: string }; action: AuditAction; targetType: string; targetId: string; timestamp: string }
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface AccountTransaction {

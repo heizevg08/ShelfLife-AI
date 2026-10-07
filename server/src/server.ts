@@ -26,6 +26,7 @@ import { ingredientModel } from './models/ingredient';
 import { createIngredients, type IngredientService } from './services/ingredients';
 import { createIngredientStore } from './services/ingredient-store';
 import { changeRequestModel } from './models/change-request';
+import { changeRequestCounterModel } from './models/change-request-counter';
 import { createChangeRequests, type ChangeRequestService } from './services/change-requests';
 import { ingredientRequestModel } from './models/ingredient-request';
 import { createIngredientRequestStore } from './services/ingredient-request-store';
@@ -165,7 +166,8 @@ if (require.main === module) {
     const usageRecords = createInventoryRecords(driver, 'UsageRecord', usageRows, batchRows, ingredientRows, audits);
     const wasteRecords = createInventoryRecords(driver, 'WasteRecord', wasteRows, batchRows, ingredientRows, audits);
     const changeRequestRows = changeRequestModel(driver);
-    const changeRequests = createChangeRequests(changeRequestRows);
+    const changeRequestCounters = changeRequestCounterModel(driver);
+    const changeRequests = createChangeRequests(driver, changeRequestRows, changeRequestCounters, ingredientRows, audits);
     const ingredientRequestRows = ingredientRequestModel(driver);
     const ingredientRequests = createIngredientRequests(createIngredientRequestStore(driver, ingredientRequestRows, ingredientRows, users, audits));
     const accountRequestRows = accountRequestModel(driver);
@@ -184,6 +186,8 @@ if (require.main === module) {
       await wasteRows.createIndexes();
       await changeRequestRows.createCollection();
       await changeRequestRows.createIndexes();
+      await changeRequestCounters.createCollection();
+      await changeRequestCounters.createIndexes();
       await ingredientRequestRows.createCollection();
       await ingredientRequestRows.createIndexes();
       await accountRequestRows.createCollection();

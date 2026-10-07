@@ -49,7 +49,7 @@ export function accountPagination(query: Record<string, unknown>): AccountListQu
   }
   return result;
 }
-const auditActions = ['CREATE', 'UPDATE', 'DELETE', 'DEACTIVATE', 'REACTIVATE'] as const;
+const auditActions = ['CREATE', 'UPDATE', 'DELETE', 'DEACTIVATE', 'REACTIVATE', 'CHANGE_REQUEST_SUBMITTED', 'CHANGE_REQUEST_APPROVED', 'CHANGE_REQUEST_REJECTED'] as const;
 export type AuditActionFilter = typeof auditActions[number];
 export type AuditPageQuery = PageQuery & { actorRole?: typeof ROLES[number]; action?: AuditActionFilter; from?: Date; to?: Date };
 function auditDate(value: unknown, field: string): Date {

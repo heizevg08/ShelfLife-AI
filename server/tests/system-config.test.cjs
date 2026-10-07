@@ -37,7 +37,7 @@ test('system config HTTP reads permit all roles, writes only Super Admin, before
   } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });
 
-test('MongoDB singleton defaults do not persist; saves version and audit atomically, including first-save races', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' }, async () => {
+test('MongoDB singleton defaults do not persist; saves version and audit atomically, including first-save races', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' ? true : !process.env.MONGO_URI ? 'RUN_MONGO_HARDENING_TESTS=true requires MONGO_URI' : false }, async () => {
   const driver = new Mongoose(), prefix = `config_test_${randomUUID().replaceAll('-', '')}_`, models = [];
   const isolated = factory => { const base = factory(driver); const model = driver.model(`Test${base.modelName}`, base.schema.clone(), prefix + base.collection.name); models.push(model); return model; };
   try {
