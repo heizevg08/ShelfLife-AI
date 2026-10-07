@@ -239,7 +239,7 @@ function SecurityPanel() {
                 <option value="strong">Strong (recommended)</option>
               </select>
               <small className="sl-supporting">Not connected yet</small>
-              <small>Minimum 8 characters, with uppercase, lowercase, number, and special character.</small>
+              <small>Minimum 12 characters.</small>
             </label>
 
             <label>

@@ -28,6 +28,27 @@ export function pagination(query: Record<string, unknown>, sorts: string[], fall
   return { page, pageSize, sortBy, sortOrder: sortOrder as 'asc' | 'desc' };
 }
 export type PageQuery = ReturnType<typeof pagination>;
+export type AccountListQuery = PageQuery & { search?: string; role?: typeof ROLES[number]; isActive?: boolean };
+export function accountPagination(query: Record<string, unknown>): AccountListQuery {
+  const pageKeys = ['page', 'pageSize', 'sortBy', 'sortOrder'];
+  for (const key of Object.keys(query)) if (![...pageKeys, 'search', 'role', 'status'].includes(key)) invalid(key);
+  const page = pagination(Object.fromEntries(pageKeys.filter(key => query[key] !== undefined).map(key => [key, query[key]])), ['createdAt', 'updatedAt', 'email', 'firstName', 'lastName', 'role', 'isActive'], 'createdAt');
+  const result: AccountListQuery = { ...page };
+  if (query.search !== undefined) {
+    if (typeof query.search !== 'string' || query.search.length > 64) invalid('search', 'Use at most 64 characters');
+    const search = query.search.trim();
+    if (search) result.search = search;
+  }
+  if (query.role !== undefined) {
+    if (typeof query.role !== 'string' || !ROLES.includes(query.role as typeof ROLES[number])) invalid('role');
+    result.role = query.role as typeof ROLES[number];
+  }
+  if (query.status !== undefined) {
+    if (query.status !== 'active' && query.status !== 'inactive') invalid('status');
+    result.isActive = query.status === 'active';
+  }
+  return result;
+}
 const auditActions = ['CREATE', 'UPDATE', 'DELETE', 'DEACTIVATE', 'REACTIVATE'] as const;
 export type AuditActionFilter = typeof auditActions[number];
 export type AuditPageQuery = PageQuery & { actorRole?: typeof ROLES[number]; action?: AuditActionFilter; from?: Date; to?: Date };

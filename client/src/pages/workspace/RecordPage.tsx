@@ -16,28 +16,44 @@ export function RecordPage({ kind }: { kind: 'usage' | 'waste' }) {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]), [batches, setBatches] = useState<EligibleBatch[]>([]), [records, setRecords] = useState<InventoryRecord[]>([]);
   const [ingredientId, setIngredientId] = useState(''), [batchId, setBatchId] = useState(''), [quantity, setQuantity] = useState(''), [recordedAt, setRecordedAt] = useState(manilaToday), [reason, setReason] = useState(''), [notes, setNotes] = useState('');
   const [page, setPage] = useState(1), [total, setTotal] = useState(0), [error, setError] = useState(''), [busy, setBusy] = useState(false), [loaded, setLoaded] = useState(false);
-  const loadIngredients = () => listIngredients(1, 100).then(result => setIngredients(result.items)).catch(() => setError('Unable to load ingredients.'));
-  const loadHistory = () => { if (!canRead) return; setLoaded(false); listInventoryRecords(endpoint, page).then(result => { setRecords(result.items); setTotal(result.total); }).catch(error => setError(error instanceof ApiError ? error.message : 'Unable to load records.')).finally(() => setLoaded(true)); };
+  const loadIngredients = () => {
+    setError('');
+    return listIngredients(1, 100).then(result => { setIngredients(result.items); setError(''); }).catch(() => setError('Unable to load ingredients.'));
+  };
+  const loadHistory = () => {
+    if (!canRead) return Promise.resolve();
+    setError(''); setLoaded(false);
+    return listInventoryRecords(endpoint, page).then(result => { setRecords(result.items); setTotal(result.total); setError(''); }).catch(error => setError(error instanceof ApiError ? error.message : 'Unable to load records.')).finally(() => setLoaded(true));
+  };
+  const loadBatches = (nextIngredientId = ingredientId) => {
+    if (!nextIngredientId) { setBatches([]); setBatchId(''); return Promise.resolve(); }
+    setError('');
+    return eligibleBatches(endpoint, nextIngredientId).then(result => {
+      setBatches(result.items);
+      setBatchId(current => result.items.some(batch => batch.id === current) ? current : result.items[0]?.id ?? '');
+      setError('');
+    }).catch(error => setError(error instanceof ApiError ? error.message : 'Unable to load FEFO batches.'));
+  };
   useEffect(() => { void loadIngredients(); }, []);
   useEffect(() => { void loadHistory(); }, [endpoint, page, canRead]);
-  useEffect(() => {
-    if (!ingredientId) { setBatches([]); setBatchId(''); return; }
-    eligibleBatches(endpoint, ingredientId).then(result => { setBatches(result.items); setBatchId(result.items[0]?.id ?? ''); }).catch(error => setError(error instanceof ApiError ? error.message : 'Unable to load FEFO batches.'));
-  }, [endpoint, ingredientId]);
+  useEffect(() => { void loadBatches(); }, [endpoint, ingredientId]);
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setError('');
     const formError = recordFormError(kind, quantity, reason, notes, recordedAt);
     if (!ingredientId || !batchId) { setError('Select an ingredient and an available batch.'); return; }
     if (formError) { setError(formError); return; }
     setBusy(true);
-    try { await createInventoryRecord(endpoint, { ingredientId, batchId, quantity, recordedAt, notes, ...(kind === 'waste' ? { reason } : {}) }); setQuantity(''); setNotes(''); await loadHistory(); }
+    try {
+      await createInventoryRecord(endpoint, { ingredientId, batchId, quantity, recordedAt, notes, ...(kind === 'waste' ? { reason } : {}) });
+      setQuantity(''); setNotes(''); await Promise.all([loadHistory(), loadBatches()]);
+    }
     catch (failure) { setError(failure instanceof ApiError ? failure.message : 'Unable to save the record.'); }
     finally { setBusy(false); }
   };
   const voidRecord = async (record: InventoryRecord) => {
     if (!window.confirm('Void this record and restore its quantity to the batch?')) return;
     setError(''); setBusy(true);
-    try { const current = await batchVersion(record.batchId); await voidInventoryRecord(endpoint, record.id, current.batch.version); await loadHistory(); }
+    try { const current = await batchVersion(record.batchId); await voidInventoryRecord(endpoint, record.id, current.batch.version); await Promise.all([loadHistory(), loadBatches()]); }
     catch (failure) { setError(failure instanceof ApiError ? failure.message : 'Unable to void the record.'); }
     finally { setBusy(false); }
   };
@@ -49,7 +65,7 @@ export function RecordPage({ kind }: { kind: 'usage' | 'waste' }) {
     const formError = recordFormError(kind, correctedQuantity, record.reason ?? '', reason);
     if (formError || !reason.trim()) { setError(formError || 'Provide a correction reason.'); return; }
     setError(''); setBusy(true);
-    try { const current = await batchVersion(record.batchId); await correctInventoryRecord(endpoint, record.id, current.batch.version, correctedQuantity, reason); await loadHistory(); }
+    try { const current = await batchVersion(record.batchId); await correctInventoryRecord(endpoint, record.id, current.batch.version, correctedQuantity, reason); await Promise.all([loadHistory(), loadBatches()]); }
     catch (failure) { setError(failure instanceof ApiError ? failure.message : 'Unable to correct the record.'); }
     finally { setBusy(false); }
   };

@@ -7,10 +7,17 @@ export interface AuditFilters { actorRole?: SessionUser['role']; action?: 'CREAT
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface DashboardSummary { totalUsers: number; activeUsers: number; inactiveUsers: number; roleCounts?: Partial<Record<SessionUser['role'], number>> }
 export type AccountFields = Pick<Account, 'firstName' | 'lastName' | 'email' | 'role'>;
-export const listAccounts = (page = 1, sortBy = 'createdAt', sortOrder = 'desc', signal?: AbortSignal, pageSize = 10) => apiClient<Page<Account>>(`/users?page=${page}&pageSize=${pageSize}&sortBy=${encodeURIComponent(sortBy)}&sortOrder=${encodeURIComponent(sortOrder)}`, { signal });
+export type AccountFilters = { search?: string; role?: Account['role']; status?: 'active' | 'inactive' };
+export const listAccounts = (page = 1, sortBy = 'createdAt', sortOrder = 'desc', signal?: AbortSignal, pageSize = 10, filters: AccountFilters = {}) => {
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize), sortBy, sortOrder });
+  if (filters.search?.trim()) query.set('search', filters.search.trim());
+  if (filters.role) query.set('role', filters.role);
+  if (filters.status) query.set('status', filters.status);
+  return apiClient<Page<Account>>(`/users?${query}`, { signal });
+};
 export const getAccount = (id: string) => apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}`);
 export const createAccount = (fields: AccountFields & { password: string }) => apiClient<{ user: Account }>('/users', { method: 'POST', body: JSON.stringify(fields) });
-export const updateAccount = (id: string, fields: AccountFields) => apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(fields) });
+export const updateAccount = (id: string, fields: Partial<AccountFields>) => apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(fields) });
 export const setAccountActive = (id: string, active: boolean) => apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}/${active ? 'reactivate' : 'deactivate'}`, { method: 'POST' });
 export const accountSummary = (signal?: AbortSignal) => apiClient<DashboardSummary>('/users/summary', { signal });
 export const dashboardSummary = (signal?: AbortSignal) => apiClient<DashboardSummary>('/dashboard/summary', { signal });

@@ -1,7 +1,8 @@
 import { Link } from '../../routing/navigation';
 import { AlertTriangle, ArrowRight, Box, FileText, LockKeyhole, ShieldCheck, UsersRound } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { dashboardSummary, listAccounts, listAuditRecords, type Account, type AuditRecord, type DashboardSummary } from '../../services/administration';
+import { dashboardSummary, listAuditRecords, type AuditRecord, type DashboardSummary } from '../../services/administration';
+import { getSystemAvailability } from '../../services/system';
 import type { SessionUser } from '../../services/auth';
 import { Card, DataState, Status, PageHeader} from '../application/primitives';
 
@@ -27,28 +28,23 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   const [refresh, setRefresh] = useState(0);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [summaryError, setSummaryError] = useState(false);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [accountsTotal, setAccountsTotal] = useState<number | null>(null);
-  const [accountsError, setAccountsError] = useState(false);
+  const [availability, setAvailability] = useState<'checking' | 'connected' | 'unavailable'>('checking');
   const [audit, setAudit] = useState<{ items: AuditRecord[]; total: number } | null>(null);
   const [auditError, setAuditError] = useState(false);
 
   useEffect(() => {
     const abort = new AbortController();
-    setSummaryError(false); setAccountsError(false); setAuditError(false);
+    setSummaryError(false); setAuditError(false);
     Promise.allSettled([
       dashboardSummary(abort.signal),
-      listAccounts(1, 'createdAt', 'desc', abort.signal),
       listAuditRecords(1, 5, 'desc', {}, abort.signal),
-    ]).then(([summaryResult, accountsResult, auditResult]) => {
+      getSystemAvailability(abort.signal),
+    ]).then(([summaryResult, auditResult, availabilityResult]) => {
       if (abort.signal.aborted) return;
       if (summaryResult.status === 'fulfilled') setSummary(summaryResult.value); else setSummaryError(true);
-      if (accountsResult.status === 'fulfilled') {
-        setAccounts(accountsResult.value.items);
-        setAccountsTotal(accountsResult.value.total);
-      } else { setAccounts([]); setAccountsTotal(null); setAccountsError(true); }
       if (auditResult.status === 'fulfilled') setAudit({ items: auditResult.value.items, total: auditResult.value.total });
       else { setAudit(null); setAuditError(true); }
+      setAvailability(availabilityResult.status === 'fulfilled' && availabilityResult.value.backendAlive && availabilityResult.value.backendReady ? 'connected' : 'unavailable');
     });
     return () => abort.abort();
   }, [refresh]);
@@ -58,10 +54,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     return () => window.clearInterval(interval);
   }, []);
 
-  const completeRoleDistribution = useMemo(() => {
-    if (accountsTotal === null || accounts.length !== accountsTotal) return null;
-    return roleOrder.map(role => ({ role, count: accounts.filter(account => account.role === role).length }));
-  }, [accounts, accountsTotal]);
+  const completeRoleDistribution = useMemo(() => summary ? roleOrder.map(role => ({ role, count: summary.roleCounts?.[role] ?? 0 })) : null, [summary]);
 
   // Adapted from the UI branch: chart only a complete account result, never a
   // single page presented as the system-wide distribution.
@@ -78,14 +71,14 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     ? `radial-gradient(circle at center, white 0 48%, transparent 49%), conic-gradient(${distributionStops.join(',')})`
     : 'radial-gradient(circle at center, white 0 48%, transparent 49%), #e9eef3';
 
-  const totalUsers = summary?.totalUsers ?? accountsTotal;
+  const totalUsers = summary?.totalUsers ?? null;
   return <div className="sl-admin-view sl-superadmin-dashboard sl-superadmin-dashboard-v49">
     <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
       <PageHeader eyebrow="Dashboard" title={`${greeting}, ${user.name?.trim().split(/\s+/)[0] || 'Super Admin'}.`} />
     </div>
     <p className="sl-dashboard-description">Monitor system-wide activity, security, operations and administrative oversight.</p>
     <section className="sl-sa-kpis" aria-label="System overview">
-      <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Total Users</span><strong>{totalUsers?.toLocaleString() ?? (summaryError && accountsError ? 'Unavailable' : 'Loading…')}</strong><small>System-wide accounts</small></div></article>
+      <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Total Users</span><strong>{totalUsers?.toLocaleString() ?? (summaryError ? 'Unavailable' : 'Loading…')}</strong><small>System-wide accounts</small></div></article>
       <article className="sl-sa-kpi" data-tone="success"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Active Accounts</span><strong>{summary?.activeUsers.toLocaleString() ?? (summaryError ? 'Unavailable' : 'Loading…')}</strong><small>{summary ? `${summary.inactiveUsers.toLocaleString()} inactive` : 'Live account status'}</small></div></article>
       <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Ingredients Tracked</span><strong>—</strong><small>Awaiting oversight API</small></div></article>
       <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Active Alerts</span><strong>—</strong><small>Awaiting alert summary API</small></div></article>
@@ -107,8 +100,8 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     </section>
 
     <section className="sl-sa-bottom-row">
-      <Card id="sl-sa-services" title="System Services"><div className="sl-sa-service-list"><div><span><ShieldCheck size={16}/> Application API</span><Status tone="success">Connected through current session</Status></div><div><span><Box size={16}/> Database</span><Status>Detailed health unavailable</Status></div><div><span><FileText size={16}/> File Storage</span><Status>Health unavailable</Status></div><div><span><LockKeyhole size={16}/> Authentication</span><Status tone="success">Session verified</Status></div></div></Card>
-      <Card id="sl-sa-distribution" title="User Distribution (All Roles)">{completeRoleDistribution ? <div className="sl-sa-role-distribution"><div className="sl-sa-role-total sl-sa-role-donut" style={{ background: distributionBackground }} aria-hidden="true"><strong>{accountsTotal}</strong><span>Users</span></div><div className="sl-sa-role-legend">{completeRoleDistribution.map((item, index) => <div key={item.role}><span><i className="sl-sa-role-swatch" style={{ background: roleColors[index] }} aria-hidden="true" />{item.role}</span><strong>{item.count}</strong></div>)}</div></div> : <DataState kind="empty" title="No live records yet" description="User distribution" action={<Status>Preview · data pending</Status>} />}</Card>
+      <Card id="sl-sa-services" title="System Services"><div className="sl-sa-service-list"><div><span><ShieldCheck size={16}/> Application API</span><Status tone={availability === 'connected' ? 'success' : undefined}>{availability === 'checking' ? 'Checking…' : availability === 'connected' ? 'Connected' : 'Unavailable'}</Status></div><div><span><Box size={16}/> Database</span><Status>Detailed health unavailable</Status></div><div><span><FileText size={16}/> File Storage</span><Status>Health unavailable</Status></div><div><span><LockKeyhole size={16}/> Authentication</span><Status tone="success">Session verified</Status></div></div></Card>
+      <Card id="sl-sa-distribution" title="User Distribution (All Roles)">{completeRoleDistribution ? <div className="sl-sa-role-distribution"><div className="sl-sa-role-total sl-sa-role-donut" style={{ background: distributionBackground }} aria-hidden="true"><strong>{totalUsers}</strong><span>Users</span></div><div className="sl-sa-role-legend">{completeRoleDistribution.map((item, index) => <div key={item.role}><span><i className="sl-sa-role-swatch" style={{ background: roleColors[index] }} aria-hidden="true" />{item.role}</span><strong>{item.count}</strong></div>)}</div></div> : <DataState kind="empty" title="No live records yet" description="User distribution" action={<Status>Preview · data pending</Status>} />}</Card>
       <Card id="sl-sa-security" title="Security Overview" action={<Link href="/SecurityActivity" className="sl-text-link">View all <ArrowRight size={14}/></Link>}><div className="sl-sa-security-grid"><div><ShieldCheck/><span>Audit Records</span><strong>{audit?.total.toLocaleString() ?? (auditError ? 'Unavailable' : 'Loading…')}</strong></div><div><LockKeyhole/><span>Security Events</span><UnavailableMetric label="No summary API" /></div><div><AlertTriangle/><span>Failed Login Attempts</span><UnavailableMetric label="No summary API" /></div><div><UsersRound/><span>Active Sessions</span><UnavailableMetric label="No summary API" /></div></div></Card>
     </section>
   </div>;

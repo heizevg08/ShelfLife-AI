@@ -4,6 +4,7 @@ vi.mock('../src/services/session', () => ({ getAccessToken: () => 'test-token' }
 import { apiClient, ApiError } from '../src/services/apiClient';
 import { ingredientChanges, listIngredients, updateIngredient, deleteIngredient, type IngredientInput } from '../src/services/ingredients';
 import { ingredientTextError } from '../src/components/application/ModulePage';
+import { listAccounts, updateAccount } from '../src/services/administration';
 afterEach(() => vi.unstubAllGlobals());
 
 test('204 deletion succeeds without parsing a nonexistent body, with no-store authorization', async () => {
@@ -37,4 +38,17 @@ test('ingredient adapter uses limit, optional includeArchived, PATCH and expecte
   expect(ingredientChanges(legacy, { ...legacy, name: 'Milk' })).toEqual({ name: 'Milk' });
   await deleteIngredient('id', 3);
   expect(fetch.mock.calls[2][1]).toMatchObject({ method: 'DELETE', body: JSON.stringify({ expectedVersion: 3 }) });
+});
+
+test('account directory sends literal server-side filters and account PATCH can be diff-only', async () => {
+  const fetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 10, total: 0 })))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ user: { id: 'id' } })));
+  vi.stubGlobal('fetch', fetch);
+  await listAccounts(1, 'createdAt', 'desc', undefined, 10, { search: 'Ada.*', role: 'Admin', status: 'active' });
+  expect(fetch.mock.calls[0][0]).toContain('search=Ada.*');
+  expect(fetch.mock.calls[0][0]).toContain('role=Admin');
+  expect(fetch.mock.calls[0][0]).toContain('status=active');
+  await updateAccount('id', { role: 'Inventory Staff' });
+  expect(fetch.mock.calls[1][1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ role: 'Inventory Staff' }) });
+  expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toEqual({ role: 'Inventory Staff' });
 });
