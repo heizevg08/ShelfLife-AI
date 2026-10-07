@@ -1,6 +1,7 @@
 import { Schema, type Mongoose } from 'mongoose';
 import { INGREDIENT_UNITS } from './ingredient-options';
 import { calendarDate, decimal, decimalUnits } from '../validators/inventory-contract';
+import { IndexSetupFailure, provisionModelIndexes } from '../services/index-provisioning';
 
 const validDecimal = (scale: number) => (value: { toString(): string }) => { try { decimal(value.toString(), scale, 'decimal'); return true; } catch { return false; } };
 const validDate = (value: string) => { try { calendarDate(value, 'date'); return true; } catch { return false; } };
@@ -32,11 +33,11 @@ schema.index({ expirationDate: 1, dateReceived: 1, _id: 1 }, { name: 'batch_fefo
 export function inventoryBatchModel(driver: Mongoose) { return driver.model('InventoryBatch', schema); }
 
 export async function provisionBatchIndexes(batches: ReturnType<typeof inventoryBatchModel>) {
-  await batches.createIndexes();
+  await provisionModelIndexes(batches);
   const indexes = await batches.collection.listIndexes().toArray();
   const identity = indexes.find(index => index.name === 'ingredient_batch_code_unique');
   if (!identity || identity.unique !== true || identity.partialFilterExpression || identity.sparse || identity.collation
-    || JSON.stringify(identity.key) !== JSON.stringify({ ingredientId: 1, batchCode: 1 })) throw new Error('Required batch identity index is missing or incompatible');
+    || JSON.stringify(identity.key) !== JSON.stringify({ ingredientId: 1, batchCode: 1 })) throw new IndexSetupFailure(batches.collection.name, 'ingredient_batch_code_unique', new Error('Required batch identity index is missing or incompatible'));
   const fefo = indexes.find(index => index.name === 'batch_fefo');
-  if (!fefo || JSON.stringify(fefo.key) !== JSON.stringify({ expirationDate: 1, dateReceived: 1, _id: 1 })) throw new Error('Required FEFO index is missing');
+  if (!fefo || JSON.stringify(fefo.key) !== JSON.stringify({ expirationDate: 1, dateReceived: 1, _id: 1 })) throw new IndexSetupFailure(batches.collection.name, 'batch_fefo', new Error('Required FEFO index is missing'));
 }

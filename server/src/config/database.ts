@@ -2,6 +2,7 @@ import { Mongoose } from 'mongoose';
 
 export interface Database {
   connect(uri: string): Promise<void>;
+  initialize?(): Promise<void>;
   disconnect(): Promise<void>;
   isConnected(): boolean;
 }

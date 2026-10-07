@@ -9,15 +9,19 @@ const { readConfig } = require('../dist/config/env');
 const { createDatabase } = require('../dist/config/database');
 const { createApp } = require('../dist/app');
 const { startServer, registerShutdown, startupDiagnostic } = require('../dist/server');
+const { IndexSetupFailure } = require('../dist/services/index-provisioning');
 
-test('startup diagnostics allowlist metadata and reject secret-bearing fields', () => {
+test('startup diagnostics allowlist metadata and never log connection secrets', () => {
   const error = Object.assign(new Error('mongodb://private:password@host secret-token hash-value'), { code: 'ECONNREFUSED' });
   assert.deepEqual(startupDiagnostic('database-connection', error), { stage: 'database-connection', name: 'Error', code: 'ECONNREFUSED' });
   error.name = 'private-name'; error.code = 'private-code';
   assert.deepEqual(startupDiagnostic('application-composition', error), { stage: 'application-composition', name: 'UnknownError' });
-  assert.deepEqual(startupDiagnostic('configuration', new Error('Invalid configuration: JWT_SECRET')), { stage: 'configuration', name: 'Error', message: 'Invalid configuration: JWT_SECRET' });
-  assert.equal(startupDiagnostic('configuration', new Error('Invalid configuration: JWT_SECRET=private-value')).message, undefined);
-  assert.equal(startupDiagnostic('configuration', 'private-value').name, 'UnknownError');
+  assert.deepEqual(startupDiagnostic('config-validation', new Error('Invalid configuration: JWT_SECRET')), { stage: 'config-validation', name: 'Error' });
+  const indexError = Object.assign(new Error('mongodb://user:password@host/private'), { code: 85, codeName: 'IndexOptionsConflict' });
+  const logged = startupDiagnostic('index-setup', new IndexSetupFailure('changeRequests', 'requestID_1', indexError));
+  assert.deepEqual(logged, { stage: 'index-setup', name: 'Error', code: 85, codeName: 'IndexOptionsConflict', collection: 'changeRequests', index: 'requestID_1' });
+  assert.doesNotMatch(JSON.stringify(logged), /mongodb:|password|private|host|user/i);
+  assert.equal(startupDiagnostic('config-validation', 'private-value').name, 'UnknownError');
   assert.deepEqual(startupDiagnostic('shutdown-registration', new TypeError('private-value')), { stage: 'shutdown-registration', name: 'TypeError' });
 });
 
@@ -45,7 +49,7 @@ test('environment defaults, overrides, validation, and value redaction', () => {
 test('missing URI exits safely before any database connection', () => {
   // Intentionally do not inherit the developer/deployment environment.
   const result = spawnSync(process.execPath, [path.resolve(__dirname, '../dist/server.js')], { env: { NODE_ENV: 'test' }, encoding: 'utf8' });
-  assert.equal(result.status, 1); assert.match(result.stderr, /Invalid configuration: MONGO_URI/);
+  assert.equal(result.status, 1); assert.match(result.stderr, /stage: 'config-validation'/); assert.doesNotMatch(result.stderr, /MONGO_URI/);
   assert.equal(result.stdout, '');
 });
 
@@ -103,6 +107,21 @@ test('connection failure is sanitized and disconnects without listening', async 
   assert.equal(disconnected, 1);
 });
 
+test('index setup failure is separated from database connection and preserves only index metadata', async () => {
+  const stages = [];
+  const source = Object.assign(new Error('mongodb://private:password@host'), { code: 85, codeName: 'IndexOptionsConflict' });
+  await assert.rejects(startServer(config, {
+    connect: async () => {},
+    initialize: async () => { throw new IndexSetupFailure('changeRequests', 'requestID_1', source); },
+    disconnect: async () => {}, isConnected: () => false,
+  }, 5000, undefined, stage => stages.push(stage)), error => {
+    assert.deepEqual(error.diagnostic, { stage: 'index-setup', name: 'Error', code: 85, codeName: 'IndexOptionsConflict', collection: 'changeRequests', index: 'requestID_1' });
+    assert.doesNotMatch(JSON.stringify(error.diagnostic), /mongodb:|password|private|host/i);
+    return true;
+  });
+  assert.deepEqual(stages, ['application-composition', 'database-connection', 'index-setup']);
+});
+
 test('listen failure disconnects the database and exposes no raw socket error', async t => {
   const origin = await serve(t, createApp([], () => false));
   let disconnected = 0;
@@ -120,7 +139,7 @@ test('development TypeScript loader validates configuration without legacy impor
   const result = spawnSync(process.execPath, ['--env-file-if-exists=.env', '--import', 'tsx', 'src/server.ts'], {
     cwd: path.resolve(__dirname, '..'), env: { NODE_ENV: 'test', MONGO_URI: '' }, encoding: 'utf8', timeout: 15000,
   });
-  assert.equal(result.status, 1); assert.match(result.stderr, /Invalid configuration: MONGO_URI/);
+  assert.equal(result.status, 1); assert.match(result.stderr, /stage: 'config-validation'/); assert.doesNotMatch(result.stderr, /MONGO_URI/);
   assert.equal(result.stdout, '');
 });
 
