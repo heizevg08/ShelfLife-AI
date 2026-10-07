@@ -13,7 +13,7 @@ const { migrateManagerRole, provisionHardeningIndexes } = require('../dist/servi
 const { ingredientPagination } = require('../dist/validators/ingredient');
 
 // Opt-in: all writes use randomly named test collections, never application collections.
-test('MongoDB enforces indexes, durable atomic login counters, soft archives, audit transactions and role migration', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' }, async () => {
+test('MongoDB enforces indexes, durable atomic login counters, soft archives, audit transactions and role migration', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' ? true : !process.env.MONGO_URI ? 'RUN_MONGO_HARDENING_TESTS=true requires MONGO_URI' : false }, async () => {
   const driver = new Mongoose();
   const prefix = `hardening_test_${randomUUID().replaceAll('-', '')}_`;
   const models = [];

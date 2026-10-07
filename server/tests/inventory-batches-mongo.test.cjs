@@ -13,7 +13,7 @@ const { systemConfigModel } = require('../dist/models/system-config');
 const { createSystemConfig } = require('../dist/services/system-config');
 const { createInventoryBatches } = require('../dist/services/inventory-batches');
 
-test('MongoDB batch API preserves decimals, FEFO, live status, permissions, versions, quantity integrity and atomic auditing', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' }, async () => {
+test('MongoDB batch API preserves decimals, FEFO, live status, permissions, versions, quantity integrity and atomic auditing', { skip: process.env.RUN_MONGO_HARDENING_TESTS !== 'true' ? true : !process.env.MONGO_URI ? 'RUN_MONGO_HARDENING_TESTS=true requires MONGO_URI' : false }, async () => {
   const driver = new Mongoose(), prefix = `batch_test_${randomUUID().replaceAll('-', '')}_`, models = [];
   let server;
   const isolated = factory => { const base = factory(driver); const model = driver.model(`Test${base.modelName}`, base.schema.clone(), prefix + base.collection.name); models.push(model); return model; };
