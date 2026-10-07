@@ -1,6 +1,7 @@
-import { expectedVersion } from './inventory-contract';
 import { invalid, objectId } from './administration';
-import { ingredientInput } from './ingredient';
+import { expectedVersion } from './inventory-contract';
+import { ingredientInput, ingredientPatch, type IngredientInput } from './ingredient';
+import { proseText } from './text';
 
 export function ingredientRequestReview(body: unknown) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
@@ -9,21 +10,15 @@ export function ingredientRequestReview(body: unknown) {
   if (input.decision !== 'Approved' && input.decision !== 'Rejected') invalid('decision');
   let note = '';
   if (input.note !== undefined) {
-    if (typeof input.note !== 'string' || input.note.trim().length > 500) invalid('note', 'Use at most 500 characters');
-    note = input.note.trim();
+    note = proseText(input.note, 'note', false, 500);
   }
   return { decision: input.decision, expectedVersion: expectedVersion(input.expectedVersion), note } as const;
 }
 export type IngredientRequestReview = ReturnType<typeof ingredientRequestReview>;
 
 export function ingredientRequestPatch(body: unknown) {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
-  const input = body as Record<string, unknown>;
-  const version = expectedVersion(input.expectedVersion);
-  const { expectedVersion: _expectedVersion, ...fields } = input;
-  const validated = ingredientInput(fields);
-  if (fields.category !== undefined && fields.category !== 'Other' && fields.customCategory === undefined) validated.customCategory = '';
-  return { input: validated, expectedVersion: version };
+  const patch = ingredientPatch(body);
+  return { input: patch.patch as Partial<IngredientInput>, expectedVersion: patch.expectedVersion };
 }
 
 export function ingredientRequestId(value: unknown) { return objectId(value); }

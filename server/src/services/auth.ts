@@ -3,7 +3,7 @@ import type { UserRecord } from '../models/user';
 import { ROLES, safeUser } from '../models/user';
 import { hashPassword, verifyPassword } from './password';
 import { HttpError } from '../middleware/error.middleware';
-import { normalizeEmail, validPassword } from '../validators/auth';
+import { loginInput, normalizeEmail } from '../validators/auth';
 
 export interface UserStore {
   byEmail(email: string): Promise<UserRecord | null>;
@@ -20,12 +20,12 @@ export function createAuth(store: UserStore, secret: string) {
   return {
     issue,
     async login(body: unknown) {
-      const input = body && typeof body === 'object' ? body as Record<string, unknown> : {};
-      const email = normalizeEmail(input.email);
-      if (!email || !validPassword(input.password)) throw denied();
+      const input = loginInput(body);
+      if (!input) throw denied();
+      const { email, password } = input;
       const user = await store.byEmail(email);
       const hash = user?.passwordHash || await (dummyHash ??= hashPassword('unused-dummy-password'));
-      const matches = await verifyPassword(input.password, hash);
+      const matches = await verifyPassword(password, hash);
       if (!matches || !eligible(user)) throw denied();
       return issue(user);
     },

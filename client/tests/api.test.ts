@@ -2,7 +2,8 @@ import { afterEach, expect, test, vi } from 'vitest';
 vi.mock('../src/services/auth', () => ({ currentUser: vi.fn().mockResolvedValue({ role: 'Admin' }) }));
 vi.mock('../src/services/session', () => ({ getAccessToken: () => 'test-token' }));
 import { apiClient, ApiError } from '../src/services/apiClient';
-import { listIngredients, updateIngredient, deleteIngredient } from '../src/services/ingredients';
+import { ingredientChanges, listIngredients, updateIngredient, deleteIngredient, type IngredientInput } from '../src/services/ingredients';
+import { ingredientTextError } from '../src/components/application/ModulePage';
 afterEach(() => vi.unstubAllGlobals());
 
 test('204 deletion succeeds without parsing a nonexistent body, with no-store authorization', async () => {
@@ -27,9 +28,13 @@ test('ingredient adapter uses limit, optional includeArchived, PATCH and expecte
   const page = await listIngredients(2, 10, '', '', undefined, true);
   expect(page.pageSize).toBe(10);
   expect(fetch.mock.calls[0][0]).toContain('page=2&limit=10&includeArchived=true');
-  const input = { name: 'Milk', brand: '', description: '', category: 'Dairy', unitOfMeasure: 'L' };
-  await updateIngredient('id', input, 2);
-  expect(fetch.mock.calls[1][1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ ...input, expectedVersion: 2 }) });
+  const legacy: IngredientInput = { name: 'Milk@Legacy', brand: '', description: '', category: 'Dairy', unitOfMeasure: 'L', standardUnitCost: 10 };
+  const unitCostOnly = ingredientChanges(legacy, { ...legacy, standardUnitCost: 12.5 });
+  expect(unitCostOnly).toEqual({ standardUnitCost: 12.5 });
+  await updateIngredient('id', unitCostOnly, 2);
+  expect(fetch.mock.calls[1][1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ standardUnitCost: 12.5, expectedVersion: 2 }) });
+  expect(ingredientTextError('Milk@Legacy', 'an ingredient name', 100, true)).toBe('Use standard text and punctuation only.');
+  expect(ingredientChanges(legacy, { ...legacy, name: 'Milk' })).toEqual({ name: 'Milk' });
   await deleteIngredient('id', 3);
   expect(fetch.mock.calls[2][1]).toMatchObject({ method: 'DELETE', body: JSON.stringify({ expectedVersion: 3 }) });
 });

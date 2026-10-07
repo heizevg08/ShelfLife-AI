@@ -12,10 +12,11 @@ const { inventoryBatchModel } = require('../dist/models/inventory-batch');
 const { decimal, decimalUnits, calendarDate } = require('../dist/validators/inventory-contract');
 const { createInventoryBatches } = require('../dist/services/inventory-batches');
 
-const input = { ingredientId: '1'.repeat(24), batchCode: ' B-001 ', initialQuantity: '10.5', unit: 'kg', unitCost: '123.4567', dateReceived: '2026-09-20', expirationDate: '2026-09-30' };
+const input = { ingredientId: '1'.repeat(24), batchCode: 'B-001', initialQuantity: '10.5', unit: 'kg', unitCost: '123.4567', dateReceived: '2026-09-20', expirationDate: '2026-09-30' };
 test('batch inputs use exact decimal strings, controlled units, immutable identity and allowlisted PATCH', () => {
   assert.equal(batchInput(input).initialQuantity, '10.500');
   assert.equal(batchInput(input).batchCode, 'B-001');
+  assert.throws(() => batchInput({ ...input, batchCode: ' B-001 ' }));
   assert.equal(decimal('999999999999999999.999', 3, 'quantity'), '999999999999999999.999');
   assert.equal(decimalUnits('999999999999999999.999'), 999999999999999999999n);
   for (const value of [1, '1e3', 'NaN', 'Infinity', '-0.001', '1.0001', '1000000000000000000', ' 1.0 ', { $gt: 0 }]) assert.throws(() => batchInput({ ...input, initialQuantity: value }));

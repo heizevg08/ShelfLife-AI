@@ -77,6 +77,23 @@ test('HTTP login responds 429/Retry-After and ignores spoofed X-Forwarded-For', 
   } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });
 
+test('malformed login bodies remain generic failures and consume the login-limit slot', async () => {
+  let calls = 0;
+  const auth = { login: async () => { calls++; throw new HttpError(401, 'Invalid credentials'); } };
+  const server = createServer(createApp([], () => true, auth));
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  try {
+    const call = body => fetch(`http://127.0.0.1:${server.address().port}/api/auth/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const malformed = await call({ email: 'person@shelflife.com', password: 'wrong', role: 'Super Admin' });
+    assert.equal(malformed.status, 401); assert.deepEqual(await malformed.json(), { error: { message: 'Invalid email or password' } });
+    for (let i = 0; i < 4; i++) assert.equal((await call({ email: 'person@shelflife.com', password: 'wrong' })).status, 401);
+    assert.equal((await call({ email: 'person@shelflife.com', password: 'wrong' })).status, 429);
+    assert.equal(calls, 4);
+  } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+});
+
 test('ingredient schema and request validation enforce the same category and unit lists', async () => {
   const model = ingredientModel(new Mongoose());
   const valid = { name: 'Milk', category: 'Dairy', unitOfMeasure: 'L', createdBy: '1'.repeat(24) };
