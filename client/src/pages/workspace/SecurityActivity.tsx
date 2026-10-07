@@ -20,6 +20,7 @@ import {
   Globe2,
 } from 'lucide-react';
 import { DataState, PageHeader } from '../../components/application/primitives';
+import { AuditTable } from '../../components/application/AuditTable';
 
 const tabs = [
   'Overview',
@@ -141,122 +142,7 @@ function OverviewPanel() {
 }
 
 function AuditLogsPanel() {
-  return (
-    <div className="sl-v78-audit-layout">
-      <main className="sl-v78-audit-main">
-        <section className="sl-v78-card sl-v78-audit-workspace">
-          <div className="sl-v78-audit-filters" aria-label="Audit log filters">
-            <label className="sl-v78-search-field">
-              <span>Search logs</span>
-              <div>
-                <Search size={15} aria-hidden="true" />
-                <input type="search" placeholder="User, action, module, or details…" />
-              </div>
-            </label>
-
-            <label>
-              <span>Date Range</span>
-              <input type="text" readOnly value="Data pending" />
-            </label>
-
-            <label>
-              <span>User</span>
-              <select defaultValue="all"><option value="all">All Users</option></select>
-            </label>
-
-            <label>
-              <span>Action</span>
-              <select defaultValue="all"><option value="all">All Actions</option></select>
-            </label>
-
-            <label>
-              <span>Module</span>
-              <select defaultValue="all"><option value="all">All Modules</option></select>
-            </label>
-
-            <div className="sl-v78-filter-actions">
-              <button type="button" className="sl-v78-filter-button"><Filter size={14} aria-hidden="true" /> Filter</button>
-              <button type="button" className="sl-v78-reset-button">Reset</button>
-            </div>
-          </div>
-
-          <div className="sl-v78-audit-toolbar">
-            <span>Audit records</span>
-            <button type="button" disabled>Export</button>
-          </div>
-
-          <div className="sl-v78-audit-placeholder">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Audit-log rows will appear here when the protected audit backend is connected."
-            />
-            <PlaceholderBadge />
-          </div>
-
-          <footer className="sl-v78-audit-footer">
-            <label>
-              <span>Rows per page</span>
-              <select defaultValue="10"><option>10</option></select>
-            </label>
-            <span>Pagination will activate when live records are available.</span>
-          </footer>
-        </section>
-      </main>
-
-      <aside className="sl-v78-audit-rail">
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><FileText size={16} aria-hidden="true" /></span>
-              <div><h2>Audit Log Overview</h2><p>Summary of system activities across all branches.</p></div>
-            </div>
-          </header>
-          <div className="sl-v78-mini-kpis">
-            <article><span>Total Logs</span><strong>—</strong><small>Awaiting audit summary API</small></article>
-            <article><span>Successful Actions</span><strong>—</strong><small>Data pending</small></article>
-            <article><span>Failed Actions</span><strong>—</strong><small>Data pending</small></article>
-            <article><span>Security Events</span><strong>—</strong><small>Data pending</small></article>
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><BarChart3 size={16} aria-hidden="true" /></span>
-              <div><h2>Activity by Module</h2><p>Number of logs per module.</p></div>
-            </div>
-          </header>
-          <div className="sl-v78-state-wrap compact">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Module-level audit distribution will appear here when the audit analytics backend is connected."
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-
-        <section className="sl-v78-card">
-          <header className="sl-v78-card-head compact">
-            <div className="sl-v78-head-left">
-              <span className="sl-v78-round-icon"><Activity size={16} aria-hidden="true" /></span>
-              <div><h2>Recent Security Events</h2></div>
-            </div>
-            <span className="sl-v78-linklike">View all →</span>
-          </header>
-          <div className="sl-v78-state-wrap compact">
-            <DataState
-              kind="empty"
-              title="No live records yet"
-              description="Recent security events will appear here when the event backend is connected."
-            />
-            <PlaceholderBadge />
-          </div>
-        </section>
-      </aside>
-    </div>
-  );
+  return <AuditTable adminOverview />;
 }
 
 function LoginActivityPanel() {
@@ -903,9 +789,11 @@ export default function SecurityActivity() {
             type="button"
             className={activeTab === tab ? 'is-active' : ''}
             aria-current={activeTab === tab ? 'page' : undefined}
+            disabled={!['Overview', 'Audit Logs'].includes(tab)}
+            title={!['Overview', 'Audit Logs'].includes(tab) ? 'Not available yet' : undefined}
             onClick={() => setActiveTab(tab)}
           >
-            {tab}
+            {tab}{!['Overview', 'Audit Logs'].includes(tab) ? ' (not available yet)' : ''}
           </button>
         ))}
       </nav>

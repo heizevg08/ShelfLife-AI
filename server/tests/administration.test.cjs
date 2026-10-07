@@ -7,17 +7,26 @@ const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createAdministration } = require('../dist/services/administration');
 const { verifyPassword } = require('../dist/services/password');
-const { pagination, auditPagination, accountInput } = require('../dist/validators/administration');
+const { pagination, accountPagination, auditPagination, accountInput } = require('../dist/validators/administration');
 
-function fixture() {
+function fixture(extraRows = []) {
   let rows = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff', 'Super Admin', 'Admin'].map((role, i) => ({
     id: (i + 1).toString(16).padStart(24, '0'), firstName: 'Test', lastName: String(i), name: `Test ${i}`,
     email: `test${i}@shelflife.com`, role, isActive: true, createdAt: new Date(0).toISOString(), updatedAt: new Date(0).toISOString(),
-  }));
+  })).concat(extraRows);
   let records = [], failAudit = false, hash, lastUpdate;
   const store = {
     get: async id => rows.find(row => row.id === id) ?? null,
-    list: async (roles, query) => { const found = rows.filter(row => !roles || roles.includes(row.role)); return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), total: found.length, page: query.page, pageSize: query.pageSize }; },
+    list: async (roles, query) => {
+      let found = rows.filter(row => !roles || roles.includes(row.role));
+      if (query.role) found = found.filter(row => row.role === query.role);
+      if (query.isActive !== undefined) found = found.filter(row => row.isActive === query.isActive);
+      if (query.search) {
+        const needle = query.search.toLowerCase();
+        found = found.filter(row => [row.firstName, row.lastName, row.email, row.role].some(value => value.toLowerCase().includes(needle)));
+      }
+      return { items: found.slice((query.page - 1) * query.pageSize, query.page * query.pageSize), total: found.length, page: query.page, pageSize: query.pageSize };
+    },
     summary: async () => ({ totalUsers: rows.length, activeUsers: rows.filter(x => x.isActive).length, inactiveUsers: rows.filter(x => !x.isActive).length }),
     audits: async query => {
       const found = records.filter(record => (!query.actorRole || record.actor.role === query.actorRole)
@@ -50,6 +59,27 @@ test('administration validation rejects injection, unknown fields, role strings 
   for (const query of [{ actorRole: 'Staff' }, { action: 'PURGE' }, { from: 'yesterday' }, { targetId: 'x' }]) assert.throws(() => auditPagination(query));
   for (const body of [{ isActive: false }, { password: 'new-password' }, { authVersion: 0 }, { role: 'Staff' }, { email: { $ne: null } }, { firstName: '' }]) assert.throws(() => accountInput(body, false));
   assert.equal(accountInput({ email: ' VALID@SHELFLIFE.COM ' }, false).email, 'valid@shelflife.com');
+});
+
+test('account listing accepts only bounded literal search, canonical role and active-status filters', () => {
+  assert.deepEqual(accountPagination({ search: 'Ada.*', role: 'Admin', status: 'active' }), {
+    page: 1, pageSize: 25, sortBy: 'createdAt', sortOrder: 'desc', search: 'Ada.*', role: 'Admin', isActive: true,
+  });
+  for (const query of [{ status: 'Active' }, { role: 'Manager' }, { search: 'x'.repeat(65) }, { search: { $ne: '' } }, { isActive: 'true' }]) {
+    assert.throws(() => accountPagination(query));
+  }
+});
+
+test('account search treats regex metacharacters as literal text', async () => {
+  const f = fixture([
+    { id: 'a'.repeat(24), firstName: 'Ada', lastName: 'Lovelace', name: 'Ada Lovelace', email: 'ada@shelflife.com', role: 'Inventory Staff', isActive: true, createdAt: new Date(0).toISOString(), updatedAt: new Date(0).toISOString() },
+    { id: 'b'.repeat(24), firstName: 'Adam', lastName: 'Example', name: 'Adam Example', email: 'adam@shelflife.com', role: 'Inventory Staff', isActive: true, createdAt: new Date(0).toISOString(), updatedAt: new Date(0).toISOString() },
+  ]);
+  const actor = f.rows()[0];
+  const metacharacters = await f.service.list(actor, accountPagination({ search: 'Ada.*' }));
+  assert.equal(metacharacters.total, 0);
+  const literal = await f.service.list(actor, accountPagination({ search: 'Ada' }));
+  assert.deepEqual(literal.items.map(row => row.name).sort(), ['Ada Lovelace', 'Adam Example']);
 });
 
 test('administrative writes enforce all actor/target role combinations and self protection', async () => {
@@ -112,6 +142,7 @@ test('real HTTP administration checks authentication before authorization and va
     assert.equal(malformed.status, 400); assert.equal((await malformed.json()).error.code, 'VALIDATION_ERROR');
     const all = await (await call('/api/users', f.rows()[0])).json(); assert.equal(all.total, 6); assert.ok(all.items.some(x => x.role === 'Super Admin'));
     const scoped = await (await call('/api/users', f.rows()[1])).json(); assert.deepEqual(scoped.items.map(x => x.role), ['Inventory Manager', 'Inventory Staff']);
+    const blockedRoleFilter = await (await call('/api/users?role=Admin', f.rows()[1])).json(); assert.equal(blockedRoleFilter.total, 0);
     assert.equal((await call('/api/users/' + f.rows()[0].id, f.rows()[1])).status, 404);
     assert.equal((await call('/api/users/' + f.rows()[1].id, f.rows()[0], { method: 'DELETE' })).status, 404);
     assert.equal((await call('/api/audit-records', f.rows()[1])).status, 200);
