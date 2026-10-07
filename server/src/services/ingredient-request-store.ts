@@ -53,7 +53,7 @@ export function createIngredientRequestStore(driver: Mongoose, requests: ReturnT
       });
       return (await serialize([row]))[0];
     },
-    async update(actorId: string, id: string, input: IngredientInput, expectedVersion: number) {
+    async update(actorId: string, id: string, input: Partial<IngredientInput>, expectedVersion: number) {
       const row = await driver.connection.transaction(async session => {
         const before = await requests.findById(id).session(session).lean().exec() as RequestRow | null;
         if (!before || before.createdBy.toString() !== actorId || before.status !== 'Pending' || before.isDeleted) throw missing();

@@ -38,7 +38,9 @@ const valid = { target: 'Batch B-1', type: 'Quantity correction', proposedCorrec
 
 test('change request inputs allow only request fields and reject approval/status spoofing', () => {
   assert.deepEqual(changeRequestInput(valid), valid);
-  assert.deepEqual(changeRequestPatch({ ...valid, expectedVersion: 0 }), { ...valid, expectedVersion: 0 });
+  assert.deepEqual(changeRequestPatch({ ...valid, expectedVersion: 0 }), { patch: valid, expectedVersion: 0 });
+  assert.deepEqual(changeRequestPatch({ target: 'Batch B-2', expectedVersion: 0 }), { patch: { target: 'Batch B-2' }, expectedVersion: 0 });
+  assert.throws(() => changeRequestPatch({ expectedVersion: 0 }));
   for (const body of [{ ...valid, status: 'Approved' }, { ...valid, createdBy: '1'.repeat(24) }, { ...valid, version: 4 }, { ...valid, reason: ' ' }]) assert.throws(() => changeRequestInput(body));
   assert.throws(() => changeRequestPatch({ ...valid, expectedVersion: -1 }));
   assert.throws(() => changeRequestId('not-an-id'));

@@ -9,6 +9,7 @@ import { administrationControllers } from '../controllers/administration.control
 import { requestErrorDiagnostics } from '../middleware/request-diagnostics.middleware';
 import type { AccountRequestService } from '../services/account-requests';
 import { accountRequestId, accountRequestInput, accountRequestReview } from '../validators/account-request';
+import { emptyQuery } from '../validators/administration';
 
 export function administrationRoutes(auth: AuthService, service: AdministrationService, accountRequests?: AccountRequestService) {
   const router = Router(), actions = administrationControllers(service);
@@ -23,7 +24,7 @@ export function administrationRoutes(auth: AuthService, service: AdministrationS
   router.get('/users/summary', actions.summary);
   router.get('/users/:id', actions.get);
   if (accountRequests) {
-    router.get('/account-requests', async (_req, res) => { res.json(await accountRequests.list(res.locals.user)); });
+    router.get('/account-requests', async (req, res) => { emptyQuery(req.query); res.json(await accountRequests.list(res.locals.user)); });
     router.post('/account-requests', async (req, res) => { res.status(201).json({ request: await accountRequests.create(res.locals.user, accountRequestInput(req.body, res.locals.user.role)) }); });
     router.patch('/account-requests/:id/review', async (req, res) => { res.json({ request: await accountRequests.review(res.locals.user, accountRequestId(req.params.id), accountRequestReview(req.body)) }); });
     router.delete('/account-requests/:id', authorizeAdministration(['Super Admin', 'Admin']), async (req, res) => { await accountRequests.remove(res.locals.user, accountRequestId(req.params.id)); res.status(204).end(); });

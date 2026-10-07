@@ -4,6 +4,7 @@ const { accountInput } = require('../dist/validators/administration');
 const { accountRequestReview } = require('../dist/validators/account-request');
 const { recordCreateInput } = require('../dist/validators/inventory-record');
 const { personNameInput, catalogueText, proseText, batchCodeInput } = require('../dist/validators/text');
+const { ingredientInput } = require('../dist/validators/ingredient');
 
 const ids = { ingredientId: '1'.repeat(24), batchId: '2'.repeat(24) };
 
@@ -20,13 +21,36 @@ test('text validators allow the intended text and reject unsafe characters', () 
   assert.equal(catalogueText('Food-grade bags (large)', 'name', true, 100), 'Food-grade bags (large)');
   assert.equal(proseText('Prepared for lunch: checked.', 'notes', true, 500), 'Prepared for lunch: checked.');
   assert.equal(batchCodeInput('B-104/2026'), 'B-104/2026');
+  for (const value of ['Sili (Siling Labuyo)', 'Bangus 1/2 kg', 'Coca-Cola 1.5L', 'Knorr Seasoning 8g', "Dela Peña's Fish Sauce", 'Ñoño & Sons', 'Baguio Beans, Grade A', '50% Lean Beef']) {
+    assert.equal(catalogueText(value, 'name', true, 100), value);
+  }
+  assert.equal(proseText('Line one\nLine two\tchecked.', 'notes', true, 500), 'Line one Line two checked.');
   for (const invoke of [
     () => personNameInput('Ana123', 'firstName'),
     () => personNameInput('<script>', 'firstName'),
     () => catalogueText('Chicken <script>', 'name', true, 100),
     () => proseText('@#$@', 'notes', true, 500),
     () => batchCodeInput('BATCH @104'),
+    () => batchCodeInput(' B-104'),
+    () => batchCodeInput('B-104 '),
+    () => personNameInput('Ana\nMaria', 'firstName'),
+    () => catalogueText('Milk\tPowder', 'name', true, 100),
+    () => proseText('safe\u200Btext', 'notes', true, 500),
   ]) assert.throws(invoke);
+});
+
+test('ingredient validators use the text contract and fixed decimal scales', () => {
+  const base = { name: '50% Lean Beef', brand: "Dela Peña's", description: 'Prepared\nfor sale.', category: 'Meat', unitOfMeasure: 'kg' };
+  for (const minimumStock of [0.1, 2.5, 1.005, 0]) assert.equal(ingredientInput({ ...base, minimumStock }).minimumStock, minimumStock);
+  for (const standardUnitCost of [0.1, 2.5, 1.005]) assert.equal(ingredientInput({ ...base, standardUnitCost }).standardUnitCost, standardUnitCost);
+  for (const body of [
+    { ...base, minimumStock: 1.0005 },
+    { ...base, minimumStock: 1e-7 },
+    { ...base, standardUnitCost: 1.00005 },
+    { ...base, minimumStock: Infinity },
+    { ...base, standardUnitCost: Number.NaN },
+    { ...base, name: 'Milk\u0001' },
+  ]) assert.throws(() => ingredientInput(body));
 });
 
 test('account inputs reject disallowed names, unknown fields, and noncanonical roles', () => {

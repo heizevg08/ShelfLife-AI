@@ -29,7 +29,13 @@ export function changeRequestInput(body: unknown) { return requestFields(body); 
 export function changeRequestPatch(body: unknown) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
   const input = body as Record<string, unknown>;
-  if (!Object.hasOwn(input, 'expectedVersion')) invalid('expectedVersion');
-  return requestFields(input, input.expectedVersion) as ChangeRequestInput & { expectedVersion: number };
+  for (const key of Object.keys(input)) if (![...fields, 'expectedVersion'].includes(key as never)) invalid(key, 'Field is not permitted');
+  if (!Number.isSafeInteger(input.expectedVersion) || (input.expectedVersion as number) < 0) invalid('expectedVersion');
+  const patch: Partial<ChangeRequestInput> = {};
+  for (const field of fields) {
+    if (input[field] !== undefined) patch[field] = text(input[field], field, field === 'target' ? 160 : field === 'type' ? 80 : 500);
+  }
+  if (!Object.keys(patch).length) invalid('body', 'Provide at least one request field');
+  return { patch, expectedVersion: input.expectedVersion as number };
 }
 export function changeRequestId(value: unknown) { return objectId(value); }

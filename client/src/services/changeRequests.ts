@@ -13,8 +13,17 @@ export interface ChangeRequest {
   updatedAt: string;
 }
 export type ChangeRequestInput = Pick<ChangeRequest, 'target' | 'type' | 'proposedCorrection' | 'reason'>;
+export type ChangeRequestPatch = Partial<ChangeRequestInput>;
+
+export function changeRequestChanges(current: ChangeRequest, next: ChangeRequestInput): ChangeRequestPatch {
+  const patch: ChangeRequestPatch = {};
+  for (const key of Object.keys(next) as (keyof ChangeRequestInput)[]) {
+    if (next[key] !== current[key]) patch[key] = next[key];
+  }
+  return patch;
+}
 
 export const listChangeRequests = (signal?: AbortSignal) => apiClient<{ items: ChangeRequest[]; total: number }>('/change-requests', { signal });
 export const createChangeRequest = (input: ChangeRequestInput) => apiClient<{ request: ChangeRequest }>('/change-requests', { method: 'POST', body: JSON.stringify(input) });
-export const updateChangeRequest = (id: string, input: ChangeRequestInput, expectedVersion: number) => apiClient<{ request: ChangeRequest }>(`/change-requests/${id}`, { method: 'PATCH', body: JSON.stringify({ ...input, expectedVersion }) });
+export const updateChangeRequest = (id: string, input: ChangeRequestPatch, expectedVersion: number) => apiClient<{ request: ChangeRequest }>(`/change-requests/${id}`, { method: 'PATCH', body: JSON.stringify({ ...input, expectedVersion }) });
 export const deleteChangeRequest = (id: string) => apiClient<void>(`/change-requests/${id}`, { method: 'DELETE' });
