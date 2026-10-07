@@ -10,6 +10,8 @@ const { createDatabase } = require('../dist/config/database');
 const { createApp } = require('../dist/app');
 const { startServer, registerShutdown, startupDiagnostic } = require('../dist/server');
 const { IndexSetupFailure } = require('../dist/services/index-provisioning');
+const { Mongoose } = require('mongoose');
+const { loginAttemptModel } = require('../dist/models/login-attempt');
 
 test('startup diagnostics allowlist metadata and never log connection secrets', () => {
   const error = Object.assign(new Error('mongodb://private:password@host secret-token hash-value'), { code: 'ECONNREFUSED' });
@@ -23,6 +25,12 @@ test('startup diagnostics allowlist metadata and never log connection secrets', 
   assert.doesNotMatch(JSON.stringify(logged), /mongodb:|password|private|host|user/i);
   assert.equal(startupDiagnostic('config-validation', 'private-value').name, 'UnknownError');
   assert.deepEqual(startupDiagnostic('shutdown-registration', new TypeError('private-value')), { stage: 'shutdown-registration', name: 'TypeError' });
+});
+
+test('login-attempt TTL index declares the established deployed name', () => {
+  const model = loginAttemptModel(new Mongoose());
+  const index = model.schema.indexes().find(([keys]) => keys.expiresAt === 1);
+  assert.deepEqual(index, [{ expiresAt: 1 }, { name: 'login_attempt_expiry', expireAfterSeconds: 0 }]);
 });
 
 const config = { ...readConfig({ MONGO_URI: 'mongodb://test.invalid/foundation', NODE_ENV: 'test' }), port: 0 };

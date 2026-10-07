@@ -5,5 +5,7 @@ const schema = new Schema({
   attempts: { type: Number, required: true },
   expiresAt: { type: Date, required: true },
 }, { collection: 'loginAttempts', versionKey: false, strict: 'throw' });
-schema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// Preserve the established Atlas index name; provisioning must reuse it instead of
+// attempting a second equivalent index named by Mongoose's generated default.
+schema.index({ expiresAt: 1 }, { name: 'login_attempt_expiry', expireAfterSeconds: 0 });
 export function loginAttemptModel(driver: Mongoose) { return driver.model('LoginAttempt', schema); }
