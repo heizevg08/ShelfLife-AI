@@ -71,10 +71,10 @@ export function RecordPage({ kind }: { kind: 'usage' | 'waste' }) {
   };
   const selected = batches.find(batch => batch.id === batchId);
   const title = kind === 'usage' ? 'Usage Records' : 'Waste Records';
-  return <main className="sl-admin-view"><PageHeader title={title} description={canRead ? 'Record stock movement and review the available history.' : 'Record stock movement against an active, eligible batch.'} />
+  return <main className="sl-admin-view sl-record-page"><PageHeader title={title} description={canRead ? 'Record stock movement and review the available history.' : 'Record stock movement against an active, eligible batch.'} />
     {error && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{error}</p>}
     {canCreate && <section className="sl-card"><div className="sl-card-header"><h2 className="sl-section-title">Record {kind === 'usage' ? 'usage' : 'waste'}</h2><Status tone="brand">FEFO batch selected by default</Status></div><div className="sl-card-body">
-      <form className="sl-form-grid" noValidate onSubmit={submit}>
+      <form className="sl-form-grid sl-record-form" noValidate onSubmit={submit}>
         <label><span className="sl-form-label">Ingredient</span><select className="sl-admin-input" value={ingredientId} disabled={busy} onChange={event => setIngredientId(event.target.value)}><option value="">Select ingredient</option>{ingredients.map(ingredient => <option value={ingredient.id} key={ingredient.id}>{ingredient.name}</option>)}</select></label>
         <label><span className="sl-form-label">Batch</span><select className="sl-admin-input" value={batchId} disabled={busy || !ingredientId} onChange={event => setBatchId(event.target.value)}><option value="">Select batch</option>{batches.map(batch => <option value={batch.id} key={batch.id}>{batch.id.slice(-8)} · {batch.quantity} {batch.unit}</option>)}</select></label>
         <label><span className="sl-form-label">Quantity</span><input className="sl-admin-input" inputMode="decimal" maxLength={22} value={quantity} disabled={busy} onChange={event => setQuantity(event.target.value)} /></label>
