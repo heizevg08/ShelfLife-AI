@@ -25,9 +25,13 @@ npm run build:web
 npm run preview --workspace client
 # Stop preview before running browser tests (they start their own preview):
 npm run test:e2e --workspace client
+# Use a different preview port when 4173 is unavailable (PowerShell):
+$env:E2E_PORT=4873; npm run test:e2e --workspace client
 ```
 
 Browser tests use installed Microsoft Edge by default, with mocked API responses.
+`E2E_PORT` controls both the preview server and mocked API CORS origin; it defaults
+to `4173`, preserving the standard command above.
 For another installed Playwright browser set `PLAYWRIGHT_CHANNEL`, or install
 Chromium with `npx playwright install chromium` and set that variable to `chromium`.
 Tests exercise all four roles against 22 protected paths, API guard alignment,
