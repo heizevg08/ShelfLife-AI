@@ -33008,7 +33008,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-admin-audit-records th:first-child { width: 3rem; }
   .sl-admin-report-records th:first-child { width: 3rem; }
   .sl-admin-report-records th:nth-child(2) { width: 42%; }
-  .sl-admin-report-records th:nth-child(3) { width: 28%; }
+  .sl-admin-report-records th:nth-child(3) { width: 29%; }
 }
 @media (width < 1000px) {
   .sl-profile-layout { grid-template-columns: minmax(0,1fr); }
@@ -33446,6 +33446,94 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell + .sl-change-request-detail-cell { border-top:1px solid var(--sl-border-subtle); }
   .sl-change-request-details-dialog .sl-ingredient-details-grid > .sl-change-request-detail-cell--full { grid-column:auto; }
 }
+/* Manager review dialog: scoped rules only; no global overrides. The shared
+   identity/heading shells are untouched, so other consumers of the same
+   primitives keep their approved public markup. */
+.sl-area-dialog.sl-account-reference-dialog.sl-ingredient-view-dialog.sl-change-request-review-dialog {
+  width:min(46rem,calc(100vw - 2rem))!important;
+  max-width:46rem!important;
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100dvh - 2rem);
+  overflow:hidden;
+}
+/* Viewport containment: the dialog is a fixed-height flex column, so the header
+   and the decision footer always stay reachable while only the middle content
+   scrolls. The inline rejection form grows the content, never the dialog, so a
+   short screen can no longer push the footer outside the viewport. */
+.sl-change-request-review-dialog.sl-ingredient-view-dialog > .sl-popover-header { flex:0 0 auto; }
+.sl-change-request-review-dialog.sl-ingredient-view-dialog > .sl-dialog-content {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.sl-change-request-review-dialog > .sl-dialog-actions { flex:0 0 auto; }
+.sl-ingredient-details-identity-row { align-items:flex-start; justify-content:space-between; gap:12px; display:flex; }
+.sl-ingredient-details-identity-row > h3 { min-width:0; }
+.sl-ingredient-details-identity-row > .sl-status { flex:0 0 auto; }
+.sl-ingredient-details-information .sl-staff-change-request-comparison { margin:0 0 16px; }
+.sl-ingredient-details-information .sl-staff-change-request-reason { margin:0 0 18px; }
+@media (width <= 560px) {
+  .sl-ingredient-details-identity-row { flex-direction:column; align-items:flex-start; }
+}
+/* Manager Change Requests: final visual-consistency pass (presentation only).
+   Column emphasis, the value-only Requested Change cell, dot-free status badges,
+   a restrained Reject action, and the request-type support line. Every rule is
+   scoped to this module or to this dialog; no shared selector is redefined. */
+/* The summary table no longer carries the comparison, so the ingredient cell owns
+   long-name containment: short names size to their text; only genuine overflow uses an ellipsis,
+   the stored value is untouched, and the full name stays available via the cell
+   tooltip, the accessible name on the preview, and the Review dialog. */
+.sl-manager-change-requests-live .sl-application-records-table .sl-manager-request-ingredient { min-width:0; padding-inline:.5rem!important; }
+.sl-manager-change-requests-live .sl-application-records-table .sl-manager-request-ingredient-preview { display:inline-block; max-width:100%; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sl-manager-change-requests-live .sl-application-records-table .sl-sa-ingredients-actions-cell { white-space:nowrap; }
+.sl-manager-change-requests-live .sl-canonical-identifier-emphasis { font-weight:600; }
+.sl-manager-change-requests-live .sl-application-records-table .sl-status { justify-content:center; gap:0; padding-inline:var(--sl-space-3); }
+.sl-manager-change-requests-live .sl-application-records-table .sl-status-dot { display:none; }
+/* STATUS and ACTIONS are independent columns. Their headings and contents each
+   share a centered axis. Equal 6px inline padding keeps header/body centers
+   identical; 9% + 7% widths leave a moderate gutter at the 76rem minimum and
+   limit unused space after the Eye. Shared table rules remain untouched. */
+.sl-manager-change-requests-live .sl-application-records-table :is(thead th,tbody td):nth-child(6),
+.sl-manager-change-requests-live .sl-application-records-table :is(thead th,tbody td):nth-child(7) { text-align:center!important; padding-inline:.375rem!important; }
+.sl-manager-change-requests-live .sl-application-records-table tbody td:nth-child(7) .sl-staff-waste-row-actions { justify-content:center!important; }
+.sl-change-request-review-dialog .sl-ingredient-details-identity-support { margin:.45rem 0 0; color:var(--sl-muted); font:var(--sl-font-supporting); }
+.sl-change-request-review-dialog .sl-status-dot { display:none; }
+.sl-change-request-review-dialog .sl-staff-change-request-requested > strong { color:var(--sl-success); }
+.sl-change-request-review-dialog .sl-manager-inline-rejection { margin-top:16px; padding-top:16px; border-top:1px solid var(--sl-border-subtle); display:grid; align-content:start; gap:.35rem; }
+.sl-change-request-review-dialog .sl-manager-inline-rejection label { font:var(--sl-font-label); }
+.sl-change-request-review-dialog .sl-manager-inline-rejection p { margin:0; }
+.sl-change-request-review-dialog .sl-manager-inline-rejection textarea { width:100%; min-height:92px; border:1px solid var(--sl-border); border-radius:var(--sl-radius); background:var(--sl-surface); color:var(--sl-text); font:var(--sl-font-supporting); padding:.7rem .75rem; resize:vertical; }
+.sl-change-request-review-dialog .sl-manager-inline-rejection textarea:focus { outline:2px solid var(--sl-focus); outline-offset:1px; border-color:var(--sl-focus); }
+.sl-change-request-review-dialog .sl-manager-inline-rejection textarea[aria-invalid=true] { border-color:var(--sl-critical); }
+.sl-change-request-review-dialog > .sl-dialog-actions .sl-manager-request-reject {
+  border-color:var(--sl-critical);
+  background:var(--sl-critical-bg);
+  color:var(--sl-critical);
+  font-weight:600;
+}
+.sl-change-request-review-dialog > .sl-dialog-actions .sl-manager-request-reject:hover:not(:disabled) { background:color-mix(in srgb,var(--sl-critical-bg) 90%,var(--sl-critical) 10%); }
+.sl-change-request-review-dialog > .sl-dialog-actions .sl-manager-request-reject:active:not(:disabled) { background:color-mix(in srgb,var(--sl-critical-bg) 82%,var(--sl-critical) 18%); }
+.sl-change-request-review-dialog > .sl-dialog-actions .sl-manager-request-reject:focus-visible { outline:2px solid color-mix(in srgb,var(--sl-critical) 72%,var(--sl-focus)); outline-offset:2px; }
+/* Close control: the shared close-button hover is a critical-red fill, which is
+   the destructive cue for dialogs whose action is deletion. Reviewing a change
+   request is not destructive, so this dialog opts in to the established subtle
+   neutral icon-button hover instead. The opt-in class is scoped to this dialog
+   and carries enough specificity to win over the shared red default, so the
+   shared rule and every other dialog keep their exact current behaviour. */
+.sl-app .sl-change-request-review-dialog .sl-close-button--neutral:hover {
+  background:var(--sl-surface-subtle)!important;
+  border-color:var(--sl-border)!important;
+  color:var(--sl-text)!important;
+}
+/* Inline approval confirmation: it follows the inline rejection section's shape,
+   tokens and separation rule, so both decision modes read as one pattern inside
+   the same review dialog rather than as two different designs. */
+.sl-change-request-review-dialog .sl-manager-inline-approval { margin-top:16px; padding-top:16px; border-top:1px solid var(--sl-border-subtle); display:grid; align-content:start; gap:.35rem; }
+.sl-change-request-review-dialog .sl-manager-inline-approval h4 { margin:0; font:var(--sl-font-label); }
+.sl-change-request-review-dialog .sl-manager-inline-approval p { margin:0; }
+.sl-change-request-review-dialog .sl-manager-inline-approval-change { padding:.6rem .75rem; border:1px solid var(--sl-border-subtle); border-radius:var(--sl-radius); background:var(--sl-surface-subtle); color:var(--sl-text); font:var(--sl-font-supporting); overflow-wrap:anywhere; }
 /* Manager modules: scoped layout rules preserve approved role-specific surfaces. */
 .sl-page-header-with-actions {
   display: flex;
@@ -33457,6 +33545,103 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-page-header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .sl-manager-attention-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; }
 .sl-manager-attention-grid > .sl-card { min-width: 0; }
+/* Manager Dashboard presentation pass: align live cards without changing their data semantics. */
+.sl-manager-dashboard-v117 .sl-dashboard-source-kpis { align-items: stretch; }
+.sl-manager-dashboard-v117 .sl-dashboard-source-kpis > .sl-sa-kpi {
+  align-items: center;
+  min-height: clamp(7.75rem,8vw,8.75rem);
+  height: 100%;
+}
+.sl-manager-dashboard-v117 .sl-dashboard-source-kpis > .sl-sa-kpi > div {
+  align-content: center;
+  grid-template-rows: auto auto minmax(2.5rem,auto);
+  min-width: 0;
+  height: 100%;
+}
+.sl-manager-dashboard-v117 .sl-dashboard-source-kpis > .sl-sa-kpi small { align-self: start; }
+.sl-manager-dashboard-v117 .sl-manager-attention-grid {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  align-items: stretch;
+  gap: clamp(.75rem,1.2vw,1.25rem);
+}
+.sl-manager-dashboard-v117 .sl-manager-attention-grid > .sl-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.sl-manager-dashboard-v117 .sl-manager-attention-grid > .sl-card > .sl-card-body { flex: 1; }
+.sl-manager-dashboard-v117 .sl-manager-attention-grid .sl-empty-cell > .sl-application-pending-state { min-height: clamp(12rem,18vw,16rem); }
+.sl-manager-dashboard-v117 .sl-manager-reference-grid-three { grid-template-areas: "value stock" "expiry expiry"; }
+.sl-manager-dashboard-v117 .sl-manager-reference-grid-three > .sl-card:nth-child(1) { grid-area:value; }
+.sl-manager-dashboard-v117 .sl-manager-reference-grid-three > .sl-card:nth-child(2) { grid-area:stock; }
+.sl-manager-dashboard-v117 .sl-manager-reference-grid-three > .sl-card:nth-child(3) { grid-area:expiry; }
+.sl-manager-dashboard-v117 .sl-manager-reference-grid-three > .sl-card:nth-child(-n+2) { min-height:13rem; }
+.sl-shell[data-role=Manager]:has(.sl-manager-dashboard-v117) {
+  height:auto;
+  overflow:visible;
+}
+.sl-shell[data-role=Manager]:has(.sl-manager-dashboard-v117) .sl-workspace { min-height:100dvh; }
+.sl-manager-dashboard-v117 .sl-dashboard-reference-table { overflow-x:auto; overflow-y:hidden; }
+.sl-manager-dashboard-v117 .sl-manager-dashboard-table {
+  table-layout:fixed;
+  min-width:40rem;
+}
+@media (max-width:640px) {
+  .sl-manager-dashboard-v117 .sl-manager-dashboard-table:has(.sl-empty-cell) {
+    min-width:100%;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-dashboard-table:has(.sl-empty-cell) thead th {
+    overflow-wrap:anywhere;
+    white-space:normal;
+  }
+}
+.sl-manager-dashboard-v117 .sl-manager-dashboard-table :is(th,td) { text-align:left!important; }
+.sl-manager-dashboard-v117 .sl-manager-requests-table :is(th,td):not(:first-child) { text-align:center!important; }
+.sl-manager-dashboard-v117 .sl-manager-requests-table td:last-child .sl-status { margin-inline:auto; }
+.sl-manager-dashboard-v117 .sl-manager-dashboard-table tbody td:not(.sl-empty-cell) {
+  font:400 1rem/1.5 "Inter",sans-serif;
+}
+.sl-manager-dashboard-v117 .sl-manager-expirations-table col:nth-child(1) { width:31%; }
+.sl-manager-dashboard-v117 .sl-manager-expirations-table col:nth-child(2) { width:23%; }
+.sl-manager-dashboard-v117 .sl-manager-expirations-table col:nth-child(3) { width:29%; }
+.sl-manager-dashboard-v117 .sl-manager-expirations-table col:nth-child(4) { width:17%; }
+.sl-manager-dashboard-v117 .sl-manager-requests-table col:nth-child(1) { width:24%; }
+.sl-manager-dashboard-v117 .sl-manager-requests-table col:nth-child(2) { width:31%; }
+.sl-manager-dashboard-v117 .sl-manager-requests-table col:nth-child(3) { width:31%; }
+.sl-manager-dashboard-v117 .sl-manager-requests-table col:nth-child(4) { width:14%; }
+.sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) .sl-application-donut-chart {
+  align-content:center;
+  min-height:9.5rem;
+  padding:clamp(.5rem,.75vw,.75rem);
+}
+.sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) .sl-application-donut-visual {
+  justify-content:center;
+  gap:clamp(1.5rem,3vw,2.5rem);
+  width:100%;
+}
+.sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) .sl-application-donut {
+  width:clamp(8rem,10vw,9.5rem);
+}
+.sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) .sl-application-donut-legend { padding-inline:0; }
+/* Stretch the card body to the grid-row height and let the donut chart own the
+   remaining space so its centring rule balances the donut-and-legend group.
+   Presentation only: no counts, categories, colours, or data change. */
+.sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) {
+  flex-direction: column;
+  display: flex;
+}
+.sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) > .sl-card-body { flex: 1; }
+/* The shared donut chart reserves a second row for its optional note. On this
+   card the note is not rendered, and that empty row plus its row-gap would
+   push the group above centre. Collapse it only when no note is present. */
+.sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) .sl-application-donut-chart:not(:has(.sl-application-donut-note)) { grid-template-rows: auto; }
+.sl-manager-dashboard-v117 .sl-card:has(#manager-inventory-value) .sl-manager-reference-state {
+  height:auto;
+  min-height:0;
+  padding:.5rem 1rem;
+}
+.sl-manager-dashboard-v117 .sl-card:has(#manager-inventory-value) .sl-manager-reference-state .sl-application-pending-state { min-height:10rem; }
+.sl-manager-dashboard-v117 .sl-card:has(#manager-inventory-value) .sl-application-pending-state > .sl-state { min-height:0; }
 .sl-manager-reference-state .sl-application-pending-state,
 .sl-manager-usage-live .sl-application-pending-state,
 .sl-manager-reports-live .sl-application-pending-state { min-height: 220px; }
@@ -33528,12 +33713,53 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-manager-report-form > .sl-application-pending-state { grid-column: 1 / -1; min-height: 190px; }
 
 @media (max-width: 1100px) {
+  .sl-manager-dashboard-v117 .sl-manager-attention-grid { grid-template-columns:minmax(0,1fr); }
   .sl-manager-attention-grid,
   .sl-manager-reports-three { grid-template-columns: 1fr; }
   .sl-manager-inventory-live .sl-manager-inventory-filters,
   .sl-manager-change-requests-live .sl-mgr-cr-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sl-manager-inventory-live .sl-manager-inventory-search,
   .sl-manager-change-requests-live .sl-mgr-cr-filters .search { grid-column: 1 / -1; }
+}
+@media (max-width:900px) {
+  .sl-manager-dashboard-v117 .sl-manager-reference-grid-three { grid-template-areas:"value" "stock" "expiry"; }
+}
+@media (max-width:640px) {
+  .sl-manager-dashboard-v117 .sl-manager-requests-table {
+    min-width:0;
+    table-layout:auto;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-requests-table thead,
+  .sl-manager-dashboard-v117 .sl-manager-requests-table colgroup { display:none; }
+  .sl-manager-dashboard-v117 .sl-manager-requests-table :is(tbody,tr,td) { display:block; width:100%; }
+  .sl-manager-dashboard-v117 .sl-manager-requests-table tbody { padding:.25rem .75rem .75rem; }
+  .sl-manager-dashboard-v117 .sl-manager-requests-table tbody tr {
+    border:1px solid var(--sl-border-subtle);
+    border-radius:var(--sl-radius-md);
+    margin-top:.75rem;
+    padding:.35rem .75rem;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-requests-table tbody td:not(.sl-empty-cell) {
+    text-align:right!important;
+    grid-template-columns:minmax(6.75rem,.42fr) minmax(0,1fr);
+    align-items:start;
+    gap:.75rem;
+    border:0;
+    padding:.45rem 0;
+    display:grid;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-requests-table tbody td:not(.sl-empty-cell)::before {
+    content:attr(data-label);
+    color:var(--sl-text-muted);
+    font:550 .75rem/1.5 "Inter",sans-serif;
+    letter-spacing:.045em;
+    text-align:left;
+    text-transform:uppercase;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-requests-table tbody td:last-child .sl-status {
+    justify-self:end;
+    margin-inline:0;
+  }
 }
 @media (max-width: 760px) {
   .sl-page-header-with-actions { align-items: stretch; flex-direction: column; }
@@ -33614,14 +33840,31 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-manager-change-requests-live .sl-application-records-table-shell { min-height: clamp(212px, 26vh, 312px); }
 .sl-manager-change-requests-live .sl-application-records-table { min-width: 76rem; }
-.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(1) { width: 12%; }
+/* Final summary table: seven columns, so the requested change lives in the Review
+   dialog only. Widths total 100% and keep ACTIONS on one line; INGREDIENT owns
+   one point transferred from REQUEST ID while STATUS/ACTIONS retain their approved widths; the table keeps
+   no trailing dead space. */
+.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(1) { width: 13%; }
 .sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(2) { width: 14%; }
-.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(3) { width: 13%; }
-.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(4) { width: 22%; }
+.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(3) { width: 29%; }
+.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(4) { width: 15%; }
 .sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(5) { width: 13%; }
-.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(6) { width: 13%; }
-.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(7) { width: 8%; }
-.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(8) { width: 5%; }
+.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(6) { width: 9%; }
+.sl-manager-change-requests-live .sl-application-records-table :is(th,td):nth-child(7) { width: 7%; }
+/* Manager Forecasting table: the shared records-table rule carries the same
+   specificity class as the Change Requests override, so the forecast table needs
+   its own equal-specificity declaration that comes later in the cascade.
+   Without it the shared `min-width: 0` wins and the seven columns are squeezed
+   instead of scrolling inside .sl-mgr-forecast-tablewrap. Widths total 100% and
+   mirror the actual content: the longest header owns the largest share. */
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table { min-width: 76rem; }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(1) { width: 18%; }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(2) { width: 12%; }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(3) { width: 13%; }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(4) { width: 14%; }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(5) { width: 20%; }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(6) { width: 13%; }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(7) { width: 10%; }
 .sl-application-records-toolbar[data-filter-layout="records-five"]:has(.sl-v219-custom-date-range) {
   grid-template-columns: minmax(14rem,1.45fr) repeat(3,minmax(8rem,.65fr)) minmax(17.5rem,1.25fr) auto;
 }

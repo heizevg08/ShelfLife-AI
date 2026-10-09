@@ -1,6 +1,7 @@
 type DateValue = string | Date;
 
 const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const weekdayFormatter = new Intl.DateTimeFormat('en-GB', { weekday: 'short' });
 const timeFormatter = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
 function dateOnlyValue(value: DateValue) {
@@ -27,6 +28,13 @@ export function formatDate(value: DateValue) {
 
 export function formatDateTime(value: DateValue) {
   return `${formatDate(value)}, ${formatTime(value)}`;
+}
+
+export function formatTopbarDateTime(value: DateValue) {
+  // Derive weekday and calendar date from the same base value so they can
+  // never disagree across timezone conversions; time uses the same instant.
+  const base = dateOnlyValue(value);
+  return `${weekdayFormatter.format(base)}, ${dateFormatter.format(base)}, ${timeFormatter.format(base)}`;
 }
 
 export function formatTime(value: DateValue) {

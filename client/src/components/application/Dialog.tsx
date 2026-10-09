@@ -1,12 +1,17 @@
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react';
 import { X } from 'lucide-react';
 
-export function Dialog({ open, title, onDismiss, children, actions, confirmation, returnFocus, busy = false, showClose = true, className = '' }: {
+export function Dialog({ open, title, onDismiss, children, actions, confirmation, returnFocus, busy = false, showClose = true, closeLabel = 'Close dialog', closeVariant, className = '' }: {
   open: boolean; title: ReactNode; onDismiss: () => void; children?: ReactNode;
   actions?: ReactNode; returnFocus?: RefObject<HTMLElement | null>;
   confirmation?: { icon: ReactNode; description: ReactNode };
   busy?: boolean;
   showClose?: boolean;
+  closeLabel?: string;
+  // Optional close-button treatment. Left undefined, every dialog keeps the
+  // existing control (including its critical-red hover); a dialog that opts in
+  // gets the subtle neutral variant instead.
+  closeVariant?: 'neutral';
   className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -37,7 +42,7 @@ export function Dialog({ open, title, onDismiss, children, actions, confirmation
           <p className="sl-description">{confirmation.description}</p>
         </div>
       </div> : <h2 id={titleId} className="sl-section-title">{title}</h2>}
-      {showClose && <button type="button" disabled={busy} className="sl-button sl-icon-button sl-close-button" aria-label="Close dialog" onClick={onDismiss}><X size={18} aria-hidden="true" /></button>}
+      {showClose && <button type="button" disabled={busy} className={`sl-button sl-icon-button sl-close-button${closeVariant === 'neutral' ? ' sl-close-button--neutral' : ''}`} aria-label={closeLabel} onClick={onDismiss}><X size={18} aria-hidden="true" /></button>}
     </div>
     {children && <div className="sl-dialog-content">{children}</div>}
     {actions && <div className="sl-dialog-actions">{actions}</div>}

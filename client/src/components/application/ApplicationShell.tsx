@@ -1,4 +1,4 @@
-import { usePathname, useRouter, type Href } from 'expo-router';
+import { usePathname, useRouter, type Href } from '../../routing/navigation';
 import {
   ArrowUp,
   CheckCircle2,
@@ -25,7 +25,7 @@ import { administrationAreas, type AdministrationAreaId } from './administration
 import { DataState } from './primitives';
 import { useHoverIntent } from './useHoverIntent';
 import { actionFeedbackEventName, type ActionFeedback } from '../../services/actionFeedback';
-import { formatDateTime } from '../../utils/date-time';
+import { formatTopbarDateTime } from '../../utils/date-time';
 
 import { canOpenWorkspacePath, dashboardPaths, profilePaths, workspaceNavigation } from './workspace';
 
@@ -39,6 +39,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const [systemHealth, setSystemHealth] = useState<'checking' | 'healthy' | 'attention' | 'unavailable'>('checking');
   const [topbarClock, setTopbarClock] = useState(() => new Date());
   const appRef = useRef<HTMLDivElement>(null);
+  const managerDashboardUsesDocumentScroll = user?.role === 'Manager' && pathname === '/ManagerDashboard';
   const dashboardPath = dashboardPaths[user?.role ?? 'Super Admin'];
   const destinations = [{ label: 'Dashboard', Icon: LayoutDashboard, path: dashboardPath }, ...(user?.role === 'Super Admin' ? administrationAreas.filter(area => !('hidden' in area && area.hidden)) : user ? workspaceNavigation(user.role) : [])];
   const superAdminSearchEntries = user?.role === 'Super Admin' ? [
@@ -105,7 +106,15 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
     return () => window.clearInterval(timer);
   }, []);
 
-  const topbarDateTime = formatDateTime(topbarClock);
+  useEffect(() => {
+    if (!managerDashboardUsesDocumentScroll) return;
+    const update = () => setShowBackToTop(window.scrollY > 520);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, [managerDashboardUsesDocumentScroll]);
+
+  const topbarDateTime = formatTopbarDateTime(topbarClock);
 
   useEffect(() => {
     // Resolve identity through the existing auth boundary, never from cached role data.
@@ -495,7 +504,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
           </div>
 
           <div className="sl-topbar-right">
-            <time className="sl-topbar-datetime" dateTime={topbarClock.toISOString()}>{topbarDateTime}</time>
+            <time className="sl-topbar-datetime" dateTime={topbarClock.toISOString()} title={topbarDateTime}>{topbarDateTime}</time>
             {user?.role === 'Super Admin' && <div className="sl-global-health" aria-label={`System status: ${systemHealth}`}>
               <span className="sl-global-health-label">System status</span>
               <span className="sl-global-health-value" data-state={systemHealth}>
@@ -565,7 +574,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
             className="sl-back-to-top"
             type="button"
             aria-label="Back to top"
-            onClick={() => appRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => managerDashboardUsesDocumentScroll ? window.scrollTo({ top: 0, behavior: 'smooth' }) : appRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             <ArrowUp size={19} aria-hidden="true" />
           </button>

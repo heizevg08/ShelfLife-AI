@@ -47,3 +47,16 @@ test('Inventory Staff lower grid gives Pending Requests desktop room and stacks 
   assert.match(styles, /\.sl-emphasized-value \{ font-weight: 600!important; \}/);
   assert.match(styles, /\.sl-status \{[\s\S]*?font: var\(--sl-font-label\);/);
 });
+
+test('Manager Pending Requests keeps desktop alignment and becomes a complete mobile record', () => {
+  const styles = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
+  const dashboard = readFileSync(new URL('../src/components/dashboard/RoleDashboard.tsx', import.meta.url), 'utf8');
+
+  assert.match(styles, /\.sl-manager-dashboard-v117 \.sl-manager-requests-table :is\(th,td\):not\(:first-child\) \{ text-align:center!important; \}/);
+  assert.match(styles, /\.sl-manager-dashboard-v117 \.sl-manager-dashboard-table tbody td:not\(\.sl-empty-cell\) \{\s*font:400 1rem\/1\.5 "Inter",sans-serif;/);
+  assert.match(styles, /@media \(max-width:640px\)[\s\S]*?\.sl-manager-dashboard-v117 \.sl-manager-requests-table thead,[\s\S]*?\.sl-manager-dashboard-v117 \.sl-manager-requests-table colgroup \{ display:none; \}/);
+  assert.match(styles, /content:attr\(data-label\)/);
+  assert.match(dashboard, /<td data-label="Request ID">[\s\S]*?<td data-label="Request Type">[\s\S]*?<td data-label="Submitted By">[\s\S]*?<td data-label="Status">/);
+  assert.match(dashboard, /'Request ID', 'Request Type', 'Submitted By', 'Status'/);
+  assert.match(dashboard, /<td data-label="Request ID"><span className="sl-canonical-identifier sl-emphasized-value">\{request\.requestID\}<\/span><\/td>/);
+});

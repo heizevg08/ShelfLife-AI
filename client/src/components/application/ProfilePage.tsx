@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent, type ReactNode } from 'react';
-import { Link, type Href } from 'expo-router';
+import { Link, type Href } from '../../routing/navigation';
 import { Activity, Bell, CalendarDays, ChevronRight, Clock3, Home, KeyRound, LockKeyhole, Mail, MonitorCog, RefreshCw, Settings2, ShieldCheck, SlidersHorizontal, UserRound, Zap } from 'lucide-react';
 import { sessionDisplayName, sessionInitials, type SessionUser } from '../../services/auth';
 import { PageHeader, Status } from './primitives';

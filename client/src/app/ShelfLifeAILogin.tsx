@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter } from '../routing/navigation';
 import { Eye, EyeOff, LoaderCircle, LogIn, TriangleAlert } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Brand } from '../components/application/Brand';
@@ -37,7 +37,7 @@ export default function ShelfLifeLogin() {
   }, []);
   useEffect(() => {
     // After initialization, clear route state so URL synchronization cannot restore the fragment.
-    if (resetToken) router.setParams({ '#': '' });
+    if (resetToken) router.clearHash();
   }, [router, resetToken]);
 
   const validateForm = () => {

@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient';
+import { apiBaseUrl } from './config';
 import type { SessionUser } from './auth';
 
 export interface Account extends SessionUser { firstName: string; lastName: string; lastLoginAt?: string; createdAt: string; updatedAt: string }
@@ -42,7 +43,7 @@ export async function downloadAuditCsv(filters: AuditFilters, signal?: AbortSign
     const value = filters[key];
     if (value) query.set(key, value);
   }
-  const base = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '') || `http://${typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'localhost' : '127.0.0.1'}:5000`;
+  const base = apiBaseUrl;
   const response = await fetch(`${base}/api/audit-records/export.csv?${query}`, { credentials: 'include', cache: 'no-store', signal, headers: { Authorization: `Bearer ${getAccessToken()}` } });
   if (!response.ok) throw new Error('The audit export could not be prepared.');
   const blob = await response.blob();

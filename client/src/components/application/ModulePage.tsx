@@ -1,4 +1,4 @@
-import { Link, useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter, type Href } from '../../routing/navigation';
 import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, CheckCircle2, Clock3, Download, Eye, FileInput, FileText, Filter, Grid2X2, Info, Leaf, PackageX, Plus, Search, PackagePlus, Pencil, Ruler, Tag, Target, Trash2, TrendingDown, TrendingUp, User, Users, UtensilsCrossed, Truck, ClipboardCheck, PackageCheck } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { AccountsTable } from './AccountsTable';
@@ -8,6 +8,7 @@ import { Dialog } from './Dialog';
 import { InventoryStaffAddButton } from './InventoryStaffModal';
 import { InventoryStaffBulkModal } from './InventoryStaffBulkModal';
 import { ingredientUnitCostApiValue, ingredientUnitCostError, ingredientUnitCostFormError, normalizeIngredientUnitCostEditingValue } from './ingredient-unit-cost';
+import { formatIngredientCurrency, ingredientMinimumStockError, ingredientShelfLifeError } from '../../utils/ingredient-numeric-rules';
 import { moduleContent, previewFields, type PreviewId } from './module-content';
 import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSummaryCards, PlaceholderTable, Status, SummaryCards } from './primitives';
 import { modules, type ModuleId } from './workspace';
@@ -524,15 +525,19 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
     if (busy) return;
     const next: Partial<Record<IngredientField, string>> = {};
     const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
-    if (!clean.name) next.name = 'Enter an ingredient name.';
+    if (!clean.name || clean.name.length > 50) next.name = 'Enter 1–50 characters.';
     if (!clean.category) next.category = 'Select a category.';
     if (!clean.unit) next.unit = 'Enter a unit of measure.';
     if (!editIngredient && clean.minStock === '') next.minStock = 'Enter the minimum stock amount.';
     if (!editIngredient && clean.shelfLife === '') next.shelfLife = 'Enter the default shelf life.';
-    if (clean.minStock !== '' && (!Number.isFinite(Number(clean.minStock)) || Number(clean.minStock) < 0 || Number(clean.minStock) > 1_000_000_000)) next.minStock = 'Minimum stock must be between 0 and 1,000,000,000.';
+    // The same three shared rules the change-request form uses, so this form and
+    // the API accept exactly the same values.
+    const minimumStockValidationError = ingredientMinimumStockError(clean.minStock);
+    if (minimumStockValidationError) next.minStock = minimumStockValidationError;
     const unitCostValidationError = ingredientUnitCostFormError(clean.unitCost, !editIngredient);
     if (unitCostValidationError) next.unitCost = unitCostValidationError;
-    if (clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1 || Number(clean.shelfLife) > 3650)) next.shelfLife = 'Shelf life must be a whole number from 1 to 3,650 days.';
+    const shelfLifeValidationError = ingredientShelfLifeError(clean.shelfLife);
+    if (shelfLifeValidationError) next.shelfLife = shelfLifeValidationError;
     if (Object.keys(next).length) {
       setErrors(next);
       requestAnimationFrame(() => document.querySelector<HTMLElement>('#sl-ingredient-form [aria-invalid="true"]')?.focus());
@@ -597,7 +602,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
           <dl className="sl-ingredient-details-grid">
             <div><dt>Unit of Measure</dt><dd>{viewIngredient.unitOfMeasure}</dd></div>
             <div><dt>Minimum Stock</dt><dd>{viewIngredient.minimumStock === undefined ? '—' : `${viewIngredient.minimumStock} ${viewIngredient.unitOfMeasure}`}</dd></div>
-            <div><dt>Standard Unit Cost</dt><dd>{viewIngredient.standardUnitCost === undefined ? '—' : `₱${viewIngredient.standardUnitCost.toFixed(2)}`}</dd></div>
+            <div><dt>Standard Unit Cost</dt><dd>{formatIngredientCurrency(viewIngredient.standardUnitCost)}</dd></div>
             <div><dt>Default Shelf Life</dt><dd>{viewIngredient.defaultShelfLifeDays === undefined ? '—' : `${viewIngredient.defaultShelfLifeDays} days`}</dd></div>
             <div className="sl-ingredient-details-description"><dt>Description</dt><dd>{viewIngredient.description || '—'}</dd></div>
           </dl>
@@ -688,11 +693,17 @@ function SuperAdminIngredientsPage() {
     if (!editIngredient || actionBusy) return;
     const next: Partial<Record<IngredientField, string>> = {};
     const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
-    if (!clean.name) next.name = 'Enter an ingredient name.';
+    if (!clean.name || clean.name.length > 50) next.name = 'Enter 1–50 characters.';
     if (!clean.category) next.category = 'Select a category.';
     if (!clean.unit) next.unit = 'Enter a unit of measure.';
-    for (const [key, label] of [['minStock', 'Minimum stock'], ['unitCost', 'Standard unit cost']] as const) if (clean[key] !== '' && (!Number.isFinite(Number(clean[key])) || Number(clean[key]) < 0)) next[key] = `${label} must be 0 or greater.`;
-    if (clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1)) next.shelfLife = 'Shelf life must be a whole number of at least 1 day.';
+    // Editing an existing ingredient obeys the same ranges as creating one, so a
+    // value the form accepts can never be refused by the server afterwards.
+    const minimumStockValidationError = ingredientMinimumStockError(clean.minStock);
+    if (minimumStockValidationError) next.minStock = minimumStockValidationError;
+    const unitCostValidationError = ingredientUnitCostError(clean.unitCost);
+    if (unitCostValidationError) next.unitCost = unitCostValidationError;
+    const shelfLifeValidationError = ingredientShelfLifeError(clean.shelfLife);
+    if (shelfLifeValidationError) next.shelfLife = shelfLifeValidationError;
     if (Object.keys(next).length) { setErrors(next); return; }
     const input: IngredientInput = { name: clean.name, brand: clean.brand, description: clean.description, category: clean.category, unitOfMeasure: clean.unit, ...(clean.minStock === '' ? {} : { minimumStock: Number(clean.minStock) }), ...(clean.unitCost === '' ? {} : { standardUnitCost: Number(clean.unitCost) }), ...(clean.shelfLife === '' ? {} : { defaultShelfLifeDays: Number(clean.shelfLife) }) };
     setActionBusy(true); setFormError('');
@@ -924,7 +935,7 @@ function SuperAdminIngredientsPage() {
         <div className="sl-detail-grid">
           <span><small>Unit of Measure</small><strong>{viewIngredient.unitOfMeasure}</strong></span>
           <span><small>Minimum Stock Level</small><strong>{viewIngredient.minimumStock ?? '—'} {viewIngredient.unitOfMeasure}</strong></span>
-          <span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `₱${viewIngredient.standardUnitCost.toFixed(2)} / ${viewIngredient.unitOfMeasure}`}</strong></span>
+          <span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `${formatIngredientCurrency(viewIngredient.standardUnitCost)} / ${viewIngredient.unitOfMeasure}`}</strong></span>
           <span><small>Default Shelf Life</small><strong>{viewIngredient.defaultShelfLifeDays ? `${viewIngredient.defaultShelfLifeDays} days` : '—'}</strong></span>
         </div>
 

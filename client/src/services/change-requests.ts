@@ -1,4 +1,7 @@
 import { apiClient } from './apiClient';
+import { formatStaffChangeRequestValue } from '../utils/change-request-format';
+// Re-exported so existing importers keep one import path for the comparison text.
+export { changeRequestComparison, formatChangeRequestComparisonParts, formatStaffChangeRequestValue } from '../utils/change-request-format';
 
 export const CHANGE_REQUEST_TYPES = ['MINIMUM_STOCK_CHANGE','STANDARD_UNIT_COST_CHANGE','CATEGORY_CHANGE','BRAND_CHANGE','DESCRIPTION_CHANGE','UNIT_OF_MEASURE_CHANGE','DEFAULT_SHELF_LIFE_CHANGE'] as const;
 export const CHANGE_REQUEST_UNITS = ['kg','g','L','mL','pcs','pack','box','bottle','can','tray'] as const;
@@ -15,11 +18,10 @@ export interface ChangeRequestQuery { page:number; pageSize:number; search?:stri
 export const isCurrentChangeRequest = (value: ChangeRequest): value is ChangeRequest & { requestType: ChangeRequestType; targetField: ChangeRequestTargetField } => CHANGE_REQUEST_TYPES.includes(value.requestType as ChangeRequestType) && Boolean(value.targetField);
 export const changeRequestTypeLabel = (value: ChangeRequest['requestType']) => CHANGE_REQUEST_TYPE_LABELS[value as ChangeRequestType] ?? `Legacy · ${value.split('_').map(word=>word[0]+word.slice(1).toLowerCase()).join(' ')}`;
 export const changeRequestStatusLabel = (value: ChangeRequestStatus) => value === 'PENDING' ? 'Pending' : value === 'APPROVED' ? 'Approved' : 'Rejected';
-export const changeRequestValue = (record: ChangeRequest, value: string | undefined) => { if (value === undefined || value === '') return '—'; if (record.targetField === 'standardUnitCost') return `₱${Number(value).toFixed(2)}`; if (record.targetField === 'defaultShelfLifeDays') return `${value} days`; return value; };
-export const changeRequestComparison = (record: ChangeRequest) => {
-  const format = (value: string | undefined) => record.targetField === 'minimumStock' && value !== undefined && value !== '' && record.ingredient?.unitOfMeasure ? `${value} ${record.ingredient.unitOfMeasure}` : changeRequestValue(record, value);
-  return `${record.targetField ? CHANGE_REQUEST_TARGET_LABELS[record.targetField] : 'Requested Change'}: ${format(record.currentValue)} → ${format(record.requestedValue)}`;
-};
+export const changeRequestValue = (record: ChangeRequest, value: string | undefined) => formatStaffChangeRequestValue(record, value);
+// One formatter owns the authoritative value text (currency, unit, precision).
+// `changeRequestComparison` is re-exported from the pure util above so a caller
+// can show the values on their own without the redundant type prefix.
 const query = (value:ChangeRequestQuery) => { const params=new URLSearchParams({page:String(value.page),pageSize:String(value.pageSize)}); Object.entries(value).forEach(([key,item])=>{if(!['page','pageSize'].includes(key)&&item)params.set(key,String(item));}); return params; };
 export const listChangeRequests=(value:ChangeRequestQuery,signal?:AbortSignal)=>apiClient<{items:ChangeRequest[];page:number;pageSize:number;total:number}>(`/change-requests?${query(value)}`,{signal});
 export const getChangeRequestSummary=(signal?:AbortSignal)=>apiClient<{totalRequests:number;approved:number;pending:number;rejected:number}>('/change-requests/summary',{signal});

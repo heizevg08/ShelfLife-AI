@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link } from '../../routing/navigation';
 import { AlertTriangle, ArrowRight, Box, CalendarClock, FileText, Target, Trash2, UsersRound, type LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { dashboardSummary, listAccounts, listAuditRecords, type Account, type AuditRecord, type DashboardSummary } from '../../services/administration';

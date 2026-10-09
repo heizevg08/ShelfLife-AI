@@ -37,7 +37,7 @@ export function ingredientInput(body: unknown): IngredientInput {
   for (const key of Object.keys(input)) if (!fields.includes(key)) invalid(key, 'Field is not permitted');
   if (typeof input.category !== 'string' || !INGREDIENT_CATEGORIES.includes(input.category as typeof INGREDIENT_CATEGORIES[number])) invalid('category', 'Select a valid category');
   const result: IngredientInput = {
-    name: cleanText('name', input.name, true, 100),
+    name: cleanText('name', input.name, true, 50),
     brand: cleanText('brand', input.brand, false, 100),
     description: cleanText('description', input.description, false, 500),
     category: input.category as typeof INGREDIENT_CATEGORIES[number],

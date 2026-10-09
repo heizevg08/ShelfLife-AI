@@ -38,6 +38,14 @@ test('inventory display status preserves expiration precedence over aggregate lo
   assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-02-01T12:00:00.000Z'), 11, 10, now), 'In Stock');
 });
 
+test('near-expiry window includes the seventh day and never excludes depleted batches', () => {
+  const now = new Date('2030-01-10T12:00:00.000Z');
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date(now.getTime()), 5, 10, now), 'Near Expiry');
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date(now.getTime() + 7 * 86400000 + 1), 5, 10, now), 'Low Stock');
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-01-17T12:00:00.000Z'), 0, 10, now), 'Near Expiry');
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-01-09T12:00:00.000Z'), 0, 10, now), 'Expired');
+});
+
 test('inventory query validation accepts supported filters and rejects unsupported values', () => {
   assert.deepEqual(inventoryBatchPagination({ page: '2', pageSize: '150', search: 'milk', category: 'Dairy', status: 'Near Expiry', sort: 'fefo' }), { page: 2, pageSize: 150, search: 'milk', category: 'Dairy', status: 'Near Expiry', sort: 'fefo' });
   assert.throws(() => inventoryBatchPagination({ status: 'Critical' }));

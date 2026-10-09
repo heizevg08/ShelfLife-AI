@@ -15,3 +15,7 @@ export function useApplicationWorkspace() {
   if (!workspace) throw new Error('Application workspace is required');
   return workspace;
 }
+
+export function useOptionalWorkspace() {
+  return useContext(WorkspaceContext);
+}

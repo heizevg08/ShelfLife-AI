@@ -1,3 +1,4 @@
+import { apiBaseUrl } from './config';
 import { currentUser } from './auth';
 import { getAccessToken } from './session';
 import { publishActionFeedback } from './actionFeedback';
@@ -14,7 +15,7 @@ export async function apiClient<T>(path: string, options: ApiClientOptions = {})
   try {
     // Restore through the existing session owner; never retry a write after an ambiguous failure.
     await currentUser();
-    const base = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '') || `http://${typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'localhost' : '127.0.0.1'}:5000`;
+    const base = apiBaseUrl;
     const response = await fetch(`${base}/api${path}`, { ...requestOptions, credentials: 'include', cache: 'no-store',
       headers: { 'Content-Type': 'application/json', ...requestOptions.headers, Authorization: `Bearer ${getAccessToken()}` } });
     const body = response.status === 204 ? undefined : await response.json().catch(() => undefined);

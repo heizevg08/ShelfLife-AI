@@ -31,6 +31,14 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
   assert.deepEqual(ingredientPagination({ page: '2', pageSize: '10', search: 'milk', category: 'Dairy' }), { page: 2, pageSize: 10, sortBy: 'createdAt', sortOrder: 'desc', search: 'milk', category: 'Dairy', unit: '' });
 });
 
+test('ingredient names normalize to 1–50 characters without truncation', () => {
+  const base = { name: 'A', brand: '', description: '', category: 'Dairy', unitOfMeasure: 'liter' };
+  assert.equal(ingredientInput(base).name, 'A');
+  assert.equal(ingredientInput({ ...base, name: '  Whole   Milk  ' }).name, 'Whole Milk');
+  assert.equal(ingredientInput({ ...base, name: 'x'.repeat(50) }).name.length, 50);
+  assert.throws(() => ingredientInput({ ...base, name: 'x'.repeat(51) }), /Check the supplied fields/);
+  assert.throws(() => ingredientInput({ ...base, name: '   ' }), /Check the supplied fields/);
+});
 test('ingredient HTTP API authenticates, authorizes Admin, validates, pages, and returns real writes', async () => {
   const rows = [];
   const store = {

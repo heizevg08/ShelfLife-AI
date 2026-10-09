@@ -1,10 +1,10 @@
 import type { ReactNode, RefObject } from 'react';
 import { FileInput } from 'lucide-react';
-import { CHANGE_REQUEST_TARGET_LABELS, changeRequestStatusLabel, changeRequestTypeLabel, changeRequestValue, isCurrentChangeRequest, type ChangeRequest } from '../../services/change-requests';
+import { CHANGE_REQUEST_TARGET_LABELS, changeRequestStatusLabel, changeRequestTypeLabel, isCurrentChangeRequest, type ChangeRequest } from '../../services/change-requests';
 import { formatStaffChangeRequestValue } from '../../utils/change-request-format';
 import { formatDateTime } from '../../utils/date-time';
 import { formatHumanReadableText } from '../../utils/display-text';
-import { ApplicationDetailsDialog } from './ApplicationDetailsDialog';
+import { ApplicationDetailsDialog, type ApplicationDetailRow } from './ApplicationDetailsDialog';
 import { Dialog } from './Dialog';
 import { Status } from './primitives';
 
@@ -45,12 +45,49 @@ function InventoryStaffChangeRequestDetails({ request, onDismiss, returnFocus }:
   </Dialog>;
 }
 
-export function ChangeRequestDetailsDialog({ request, onDismiss, returnFocus, actions, title = 'Change Request Details', manager = false, inventoryStaff = false }: { request: ChangeRequest|null; onDismiss:()=>void; returnFocus:RefObject<HTMLElement|null>; actions?:ReactNode; title?:string; manager?:boolean; inventoryStaff?:boolean }) {
+export function ChangeRequestDetailsDialog({ request, onDismiss, returnFocus, actions, title = 'Change Request Details', reviewForm, busy = false, manager = false, inventoryStaff = false }: { request: ChangeRequest|null; onDismiss:()=>void; returnFocus:RefObject<HTMLElement|null>; actions?:ReactNode; title?:string; reviewForm?:ReactNode; busy?:boolean; manager?:boolean; inventoryStaff?:boolean }) {
   if (request && inventoryStaff) return <InventoryStaffChangeRequestDetails request={request} onDismiss={onDismiss} returnFocus={returnFocus}/>;
-  const status=request?changeRequestStatusLabel(request.status):'Rejected';
-  const ingredientName=request?.ingredient?formatHumanReadableText(request.ingredient.name):'—';
-  const defaultRows=request?[{label:'Request ID',value:request.requestID},{label:'Submitted By',value:request.requestedBy.name},{label:'Submitted At',value:formatDateTime(request.createdAt)},{label:'Ingredient',value:ingredientName},{label:'Request Type',value:changeRequestTypeLabel(request.requestType)},{label:'Status',value:status},{label:'Field',value:isCurrentChangeRequest(request)?CHANGE_REQUEST_TARGET_LABELS[request.targetField]:'Legacy request field'},{label:'Current Value',value:changeRequestValue(request,request.currentValue)},{label:'Requested Value',value:changeRequestValue(request,request.requestedValue)},{label:'Reason',value:request.reason,wide:true},...(request.reviewedBy?[{label:'Reviewed By',value:request.reviewedBy.name}]:[]),...(request.reviewedAt?[{label:'Reviewed On',value:formatDateTime(request.reviewedAt)}]:[]),...(request.reviewNote?[{label:'Review Notes',value:request.reviewNote,wide:true}]:[]),...(!isCurrentChangeRequest(request)?[{label:'Compatibility',value:'Legacy request record',wide:true}]:[])]:[];
-  const managerRows=request?[{label:'Request ID',value:request.requestID},{label:'Ingredient',value:ingredientName},{label:'Requested By',value:request.requestedBy.name},{label:'Submitted',value:formatDateTime(request.createdAt)},{label:'Request Type',value:changeRequestTypeLabel(request.requestType)},{label:'Detail to Change',value:isCurrentChangeRequest(request)?CHANGE_REQUEST_TARGET_LABELS[request.targetField]:'Legacy request field'},{label:'Current Value',value:changeRequestValue(request,request.currentValue)},{label:'Requested Value',value:changeRequestValue(request,request.requestedValue)},{label:'Reason',value:request.reason,wide:true},...(request.status!=='PENDING'?[...(request.reviewedBy?[{label:'Reviewed By',value:request.reviewedBy.name}]:[]),...(request.reviewedAt?[{label:'Reviewed',value:formatDateTime(request.reviewedAt)}]:[]),...(request.reviewNote?[{label:'Review Notes',value:request.reviewNote,wide:true}]:[]),{label:'Final Status',value:status}]:[]),...(!isCurrentChangeRequest(request)?[{label:'Compatibility',value:'Legacy request record',wide:true}]:[])]:[];
-  const rows=manager?managerRows:defaultRows;
-  return <ApplicationDetailsDialog open={Boolean(request)} title={title} subtitle="Review the submitted master-data change and decision." Icon={FileInput} identityTitle={request?.requestID??'—'} identityBadge={request&&isCurrentChangeRequest(request)?CHANGE_REQUEST_TARGET_LABELS[request.targetField]:'Legacy request'} sectionTitle="Request Information" rows={rows} onDismiss={onDismiss} returnFocus={returnFocus} actions={actions}/>;
+  if (!request) return <Dialog open={false} title={title} onDismiss={onDismiss}/>;
+  const current = formatStaffChangeRequestValue(request, request.currentValue);
+  const requested = formatStaffChangeRequestValue(request, request.requestedValue);
+  const target = isCurrentChangeRequest(request) ? CHANGE_REQUEST_TARGET_LABELS[request.targetField] : 'Requested Change';
+  const history: ApplicationDetailRow[] = request.status !== 'PENDING' ? [
+    ...(request.reviewedBy ? [{ label: 'Reviewed By', value: formatHumanReadableText(request.reviewedBy.name) }] : []),
+    ...(request.reviewedAt ? [{ label: 'Reviewed On', value: formatDateTime(request.reviewedAt) }] : []),
+    ...(request.reviewNote?.trim() ? [{ label: 'Review Notes', value: request.reviewNote, wide: true }] : []),
+  ] : [];
+  const fields: ApplicationDetailRow[] = [
+    ...(isCurrentChangeRequest(request) ? [] : [{ label: 'Compatibility', value: 'Legacy request record', wide: true }]),
+    { label: 'Requested By', value: formatHumanReadableText(request.requestedBy.name) },
+    { label: 'Submitted On', value: formatDateTime(request.createdAt) },
+    ...history,
+  ];
+  return <ApplicationDetailsDialog
+    open
+    title={title}
+    subtitle="Review the submitted master-data change and decision."
+    Icon={FileInput}
+    closeLabel="Close review dialog"
+    // Subtle, neutral dismissal here; the critical-red close hover stays as-is
+    // everywhere else, so no unrelated dialog changes behaviour.
+    closeVariant="neutral"
+    showClose
+    className="sl-change-request-review-dialog"
+    identityTitle={request.ingredient ? formatHumanReadableText(request.ingredient.name) : '—'}
+    identityBadge={<span className="sl-canonical-identifier">{request.requestID}</span>}
+    identitySupport={changeRequestTypeLabel(request.requestType)}
+    identityStatus={<Status tone={statusTone(request.status)}>{changeRequestStatusLabel(request.status)}</Status>}
+    sectionTitle={target}
+    callout={<div className={`sl-staff-change-request-comparison${request.targetField === 'description' ? ' sl-staff-change-request-comparison--long' : ''}`}>
+      <div><strong>{current}</strong><span>Current</span></div>
+      <span className="sl-staff-change-request-arrow" aria-hidden="true">→</span>
+      <div className="sl-staff-change-request-requested"><strong>{requested}</strong><span>Requested</span></div>
+    </div>}
+    lead={<div className="sl-staff-change-request-reason"><h4>Reason for request</h4><p>{request.reason}</p></div>}
+    rows={fields}
+    afterRows={reviewForm}
+    busy={busy}
+    onDismiss={onDismiss}
+    returnFocus={returnFocus}
+    actions={actions}/>;
 }

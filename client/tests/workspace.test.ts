@@ -17,11 +17,12 @@ test('every Source-of-Truth-derived role and canonical route decision is enforce
   assert.equal(checked, 116);
 });
 
-test('Manager Change Requests is selected inside the stable route outlet', () => {
-  const layout = readFileSync('client/src/app/(administration)/_layout.tsx', 'utf8');
-  const route = readFileSync('client/src/app/(administration)/ChangeRequests.tsx', 'utf8');
-  assert.match(layout, /<ApplicationWorkspace><Slot\s*\/><\/ApplicationWorkspace>/);
-  assert.doesNotMatch(layout, /usePathname|ConnectedManagerChangeRequestsPage/);
+test('Manager Change Requests is selected inside the Vite route outlet', () => {
+  const layout = readFileSync(new URL('../src/routing/router.tsx', import.meta.url), 'utf8');
+  const route = readFileSync(new URL('../src/app/(administration)/ChangeRequests.tsx', import.meta.url), 'utf8');
+  assert.match(layout, /<ApplicationWorkspace><Outlet \/><\/ApplicationWorkspace>/);
+  assert.match(layout, /ChangeRequests: \(\) => import\('\.\.\/app\/\(administration\)\/ChangeRequests'\)/);
+  assert.doesNotMatch(layout, /ConnectedManagerChangeRequestsPage/);
   assert.match(route, /user\.role === 'Manager' \? <ConnectedManagerChangeRequestsPage \/>/);
 });
 
@@ -54,6 +55,19 @@ test('Manager Change Request presentation is opt-in and Staff modal keeps its pr
   assert.match(route, /filtered\?'No matching records':'No requests yet'/);
   assert.match(route, /filtered\?'Try adjusting your search or filters\.':'Your submitted change requests will appear here\.'/);
   assert.match(route, /currentOnly:true/);
+});
+
+test('Manager Change Requests Actions column uses the shared Eye action control without unimplemented operations', () => {
+  const manager = readFileSync(new URL('../src/components/application/ManagerChangeRequestsPage.tsx', import.meta.url), 'utf8');
+  assert.match(manager, /import \{[^}]*\bEye\b[^}]*\} from 'lucide-react'/);
+  assert.match(manager, /className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label=\{`\$\{record\.requestID\} actions`\}>/);
+  assert.match(manager, /aria-label=\{record\.status==='PENDING'\?`Review Request \$\{record\.requestID\}`:`View Request \$\{record\.requestID\}`\}/);
+  assert.match(manager, /title=\{record\.status==='PENDING'\?'Review Request':'View Request'\}/);
+  assert.match(manager, /<Eye size=\{16\} aria-hidden="true"\/>/);
+  assert.doesNotMatch(manager, /sl-button-compact/);
+  assert.doesNotMatch(manager, /Pencil|Trash|Escalat|Cancel Request/);
+  assert.match(manager, /approveChangeRequest\(selected\.id\)/);
+  assert.match(manager, /rejectChangeRequest\(selected\.id,reviewNote\.trim\(\)\)/);
 });
 
 test("Inventory Staff Today's Usage displays the authoritative record count", () => {

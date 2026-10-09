@@ -2,7 +2,7 @@ import { Schema, type InferSchemaType, type Mongoose } from 'mongoose';
 import { INGREDIENT_LIMITS } from '../validators/ingredient';
 
 const schema = new Schema({
-  name: { type: String, required: true, trim: true, maxlength: 100 },
+  name: { type: String, required: true, trim: true, maxlength: 50 },
   brand: { type: String, trim: true, maxlength: 100, default: '' },
   description: { type: String, trim: true, maxlength: 500, default: '' },
   category: { type: String, required: true, trim: true, maxlength: 50 },
