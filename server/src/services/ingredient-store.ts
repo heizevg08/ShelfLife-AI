@@ -65,8 +65,10 @@ export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<
     async list(query: IngredientPageQuery) {
       const filter: Record<string, unknown> = {};
       // Documents created before soft archiving have no flag and remain active.
-      if (!query.includeArchived) filter.isActive = { $ne: false };
+      if (query.status === 'archived') filter.isActive = false;
+      else if (query.status === 'active' || (!query.status && !query.includeArchived)) filter.isActive = { $ne: false };
       if (query.category) filter.category = query.category;
+      if (query.unit) filter.unitOfMeasure = query.unit;
       if (query.search) filter.$or = [{ name: { $regex: escape(query.search), $options: 'i' } }, { brand: { $regex: escape(query.search), $options: 'i' } }];
       const [rows, total] = await Promise.all([
         ingredients.find(filter).sort({ createdAt: -1, _id: -1 }).skip((query.page - 1) * query.limit).limit(query.limit).lean().exec() as Promise<Row[]>,

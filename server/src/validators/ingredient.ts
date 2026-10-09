@@ -58,13 +58,17 @@ export function ingredientInput(body: unknown): IngredientInput {
 }
 
 export function ingredientPagination(query: Record<string, unknown>) {
-  for (const key of Object.keys(query)) if (!['page', 'limit', 'search', 'category', 'includeArchived'].includes(key)) invalid(key);
+  for (const key of Object.keys(query)) if (!['page', 'limit', 'search', 'category', 'unit', 'status', 'includeArchived'].includes(key)) invalid(key);
   if (query.includeArchived !== undefined && query.includeArchived !== 'true' && query.includeArchived !== 'false') invalid('includeArchived', 'Use true or false');
   const page = inventoryPagination(query);
   const search = query.search === undefined ? '' : catalogueText(query.search, 'search', false, 100);
   const category = query.category === undefined ? '' : query.category;
   if (typeof category !== 'string' || (category && !INGREDIENT_CATEGORIES.includes(category as typeof INGREDIENT_CATEGORIES[number]))) invalid('category', 'Select a valid category');
-  return { ...page, search, category: category as '' | typeof INGREDIENT_CATEGORIES[number], includeArchived: query.includeArchived === 'true' };
+  const unit = query.unit === undefined ? '' : query.unit;
+  if (typeof unit !== 'string' || (unit && !INGREDIENT_UNITS.includes(unit as typeof INGREDIENT_UNITS[number]))) invalid('unit', 'Select a valid unit');
+  const status = query.status === undefined ? '' : query.status;
+  if (status !== '' && status !== 'active' && status !== 'archived' && status !== 'all') invalid('status', 'Select a valid ingredient status');
+  return { ...page, search, category: category as '' | typeof INGREDIENT_CATEGORIES[number], unit: unit as '' | typeof INGREDIENT_UNITS[number], status: status as '' | 'active' | 'archived' | 'all', includeArchived: query.includeArchived === 'true' };
 }
 export type IngredientPageQuery = ReturnType<typeof ingredientPagination>;
 

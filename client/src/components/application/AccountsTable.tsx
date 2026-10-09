@@ -1,4 +1,4 @@
-import { Ban, Check, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus, Activity, X } from 'lucide-react';
+import { Ban, Check, Download, Eye, EyeOff, Pencil, RotateCcw, Search, UserPlus, Activity, MoreHorizontal, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { accountSummary, createAccount, getAccount, listAccounts, listAuditRecords, setAccountActive, updateAccount, type Account, type AuditRecord, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
@@ -80,7 +80,7 @@ function AccountApprovalPanel() {
   </>;
 }
 
-export function AccountsTable() {
+export function AccountsTable({ hideSummary = false }: { hideSummary?: boolean } = {}) {
   const { user } = useApplicationWorkspace();
   const superAdmin = user.role === 'Super Admin';
   const assignableRoles: ManagedRole[] = superAdmin ? ['Admin', 'Inventory Manager', 'Inventory Staff'] : ['Inventory Manager', 'Inventory Staff'];
@@ -259,7 +259,7 @@ export function AccountsTable() {
   };
 
   return <>
-    {superAdmin && <SummaryCards items={[
+    {superAdmin && !hideSummary && <SummaryCards items={[
       { label: 'Total Users', value: summary ? totalUsers : '—', detail: summary ? 'System-wide accounts' : 'Awaiting account summary', tone: 'brand' },
       { label: 'Active Accounts', value: summary ? activeUsers : '—', detail: summary ? `▲ ${activePercent}% active` : 'Awaiting account summary', tone: 'success' },
       { label: 'Inactive Accounts', value: summary ? inactiveUsers : '—', detail: summary ? `${inactivePercent}% inactive` : 'Awaiting account summary', tone: 'critical' },
@@ -268,6 +268,7 @@ export function AccountsTable() {
 
     <div className={superAdmin ? 'sl-v56-main-grid' : undefined}>
       <section className={superAdmin ? 'sl-v56-directory' : undefined}>
+        {superAdmin && <AccountApprovalPanel />}
         <div className="sl-v56-filter-row">
           <label className="sl-v56-filter sl-v56-search-field">Search users
             <div className="sl-directory-search sl-v56-search" role="search">
@@ -286,14 +287,11 @@ export function AccountsTable() {
               <option>All Statuses</option><option>Active</option><option>Inactive</option>
             </select>
           </label>
-          {!superAdmin && <span className="sl-admin-clear-filters">Clear Filters</span>}
           <button className="sl-button sl-v56-reset" onClick={() => {
             setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
           }}>Reset</button>
           {!superAdmin && <button className="sl-button sl-button-primary sl-admin-users-apply" type="button" onClick={() => setPage(1)}>Apply Filters</button>}
         </div>
-
-        {superAdmin && <AccountApprovalPanel />}
 
         <div className="sl-admin-users-table-toolbar">
           <strong>{data ? `Showing ${data.total ? ((data.page - 1) * data.pageSize) + 1 : 0}–${Math.min(data.page * data.pageSize, data.total)} of ${data.total} users` : 'Loading users…'}</strong>
@@ -327,14 +325,14 @@ export function AccountsTable() {
               : !visibleAccounts.length ? <tr><td colSpan={superAdmin ? 8 : 6} className="sl-empty-cell"><DataState kind="empty" title="No matching accounts" description="Try another search or filter." /></td></tr>
               : visibleAccounts.map((account, index) => <tr key={account.id}>
                 {superAdmin ? <td>{(data.page - 1) * data.pageSize + index + 1}</td> : <td className="sl-admin-users-check"><input type="checkbox" aria-label={`Select ${account.name}`} /></td>}
-                <td className="sl-v56-name"><span className="sl-admin-user-avatar" aria-hidden="true">{account.name.split(/\s+/).map(v=>v[0]).join('').slice(0,2).toUpperCase()}</span><strong>{account.name}</strong></td>
-                <td>{account.email}</td>
+                <td className="sl-v56-name"><span className="sl-admin-user-avatar" aria-hidden="true">{account.name.split(/\s+/).map(v=>v[0]).join('').slice(0,2).toUpperCase()}</span><strong title={account.name}>{account.name}</strong></td>
+                <td className="sl-v56-email" title={account.email}>{account.email}</td>
                 <td><span className="sl-v56-role-pill" data-role={account.role}>{account.role}</span></td>
                 <td><Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status></td>
                 <td><span className="sl-v56-unavailable" title="Last-login data pending">—</span></td>
                 {superAdmin && <td>{new Date(account.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })}</td>}
                 <td><div className="sl-row-actions sl-v56-actions">
-                  <button className="sl-v56-more" disabled={busy} aria-label={`View actions for ${account.name}`} onClick={() => open(account, 'view')}>•••</button>
+                  <button type="button" className="sl-v56-more" disabled={busy} aria-label={`View actions for ${account.name}`} onClick={() => open(account, 'view')}><MoreHorizontal size={18} aria-hidden="true" /></button>
                 </div></td>
               </tr>)}
             </tbody>

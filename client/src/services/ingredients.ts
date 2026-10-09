@@ -46,10 +46,12 @@ export interface StockInIngredientOption {
   defaultShelfLifeDays?: number;
 }
 export interface IngredientSummary { total: number; categories: string[]; units: string[]; mostCommonIngredient: string | null }
-export async function listIngredients(page = 1, pageSize = 25, search = '', category = '', signal?: AbortSignal, includeArchived = false) {
+export async function listIngredients(page = 1, pageSize = 25, search = '', category = '', signal?: AbortSignal, includeArchived = false, unit = '', status: '' | 'active' | 'archived' | 'all' = '') {
   const query = new URLSearchParams({ page: String(page), limit: String(pageSize) });
   if (search) query.set('search', search);
   if (category) query.set('category', category);
+  if (unit) query.set('unit', unit);
+  if (status) query.set('status', status);
   if (includeArchived) query.set('includeArchived', 'true');
   const result = await apiClient<{ items: Ingredient[]; page: number; limit: number; total: number }>(`/ingredients?${query}`, { signal });
   return { ...result, pageSize: result.limit } as Page<Ingredient>;

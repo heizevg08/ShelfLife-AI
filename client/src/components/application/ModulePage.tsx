@@ -206,8 +206,9 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
   const permissions = ingredientPermissions(user.role);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [category, setCategory] = useState('All');
+  const [unit, setUnit] = useState('');
+  const [status, setStatus] = useState<'active' | 'archived' | 'all'>('active');
   const [search, setSearch] = useState('');
-  const [includeArchived, setIncludeArchived] = useState(false);
   const [page, setPage] = useState(1);
   const [refresh, setRefresh] = useState(0);
   const [data, setData] = useState<{ items: Ingredient[]; page: number; pageSize: number; total: number } | null>(null);
@@ -242,12 +243,12 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
     const abort = new AbortController();
     const timer = window.setTimeout(() => {
       setLoadError(false);
-      listIngredients(page, 10, search.trim(), category === 'All' ? '' : category, abort.signal, includeArchived).then(value => {
+      listIngredients(page, 10, search.trim(), category === 'All' ? '' : category, abort.signal, status !== 'active', unit, status).then(value => {
         if (!abort.signal.aborted) setData(value);
       }).catch(() => { if (!abort.signal.aborted) setLoadError(true); });
     }, 250);
     return () => { window.clearTimeout(timer); abort.abort(); };
-  }, [page, search, category, includeArchived, refresh]);
+  }, [page, search, category, unit, status, refresh]);
   useEffect(() => {
     const abort = new AbortController();
     setRequestLoading(true); setRequestLoadError('');
@@ -357,11 +358,13 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
       <section className="sl-admin-ingredient-filter-card" aria-label="Ingredient filters">
         <label className="sl-admin-ingredient-search"><span>Search ingredients</span><div><Search size={17}/><input type="search" placeholder="Search by name, category, or description..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} /></div></label>
         <label><span>Category</span><select value={category} onChange={e => { setCategory(e.target.value); setPage(1); }}><option value="All">All Categories</option>{INGREDIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select></label>
-        <label><span>Unit</span><select disabled title="Unit filtering will activate when supported by the ingredient API"><option>All Units</option></select></label>
-        <label><span>Status</span><select disabled title="Status filtering will activate when ingredient status is available in the API"><option>All Statuses</option></select></label>
-        {permissions.remove && <label className="sl-archived-toggle"><input type="checkbox" checked={includeArchived} onChange={event => { setIncludeArchived(event.target.checked); setPage(1); }} />Show archived ingredients</label>}
-        <button className="sl-button" type="button" onClick={() => { setSearch(''); setCategory('All'); setIncludeArchived(false); setPage(1); }}>Reset</button>
-        <button className="sl-button sl-button-primary" type="button" onClick={() => setRefresh(value => value + 1)}>Apply Filters</button>
+        <label><span>Unit</span><select value={unit} onChange={event => { setUnit(event.target.value); setPage(1); }}><option value="">All Units</option>{INGREDIENT_UNITS.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+        <label><span>Status</span><select value={status} onChange={event => { setStatus(event.target.value as 'active' | 'archived' | 'all'); setPage(1); }}>{permissions.remove && <option value="all">All Statuses</option>}<option value="active">Active</option>{permissions.remove && <option value="archived">Archived</option>}</select></label>
+        {permissions.remove && <button type="button" className="sl-archived-switch" role="switch" aria-checked={status !== 'active'} onClick={() => { setStatus(value => value === 'active' ? 'all' : 'active'); setPage(1); }}><span className="sl-archived-switch-track" aria-hidden="true"><span /></span><span>Show archived ingredients</span></button>}
+        <div className="sl-admin-ingredient-filter-actions">
+          <button className="sl-button" type="button" onClick={() => { setSearch(''); setCategory('All'); setUnit(''); setStatus('active'); setPage(1); }}>Reset</button>
+          <button className="sl-button sl-button-primary" type="button" onClick={() => setRefresh(value => value + 1)}>Apply Filters</button>
+        </div>
       </section>
 
       <section className="sl-admin-ingredient-table-card" aria-label="Ingredients">
@@ -369,7 +372,7 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
           <strong>{data ? `Showing ${visibleStart.toLocaleString()}–${visibleEnd.toLocaleString()} of ${data.total.toLocaleString()} ingredients` : loadError ? 'Ingredient records unavailable' : 'Loading ingredient records'}</strong>
           <div><button className="sl-button" type="button" disabled={!data?.items.length} onClick={exportVisible}><Download size={16}/>Export</button>{permissions.create && <button ref={addButtonRef} className="sl-button sl-button-primary" type="button" onClick={open}><Plus size={16}/>{user.role === 'Inventory Staff' ? 'Request Ingredient' : 'Add Ingredient'}</button>}</div>
         </div>
-        {loadError ? <div className="sl-admin-ingredient-state"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></div> : !data ? <div className="sl-admin-ingredient-state"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></div> : data.items.length ? <div className="sl-admin-ingredient-table-scroll"><table><thead><tr><th aria-label="Select"><input type="checkbox" disabled /></th><th>Ingredient</th><th>Category</th><th>Default Unit</th><th>Typical Shelf Life</th><th>Status</th><th>Date Added</th><th>Actions</th></tr></thead><tbody>{data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{formatShelfLife(item.defaultShelfLifeDays)}</td><td><Status tone={item.isActive ? 'success' : 'neutral'}>{item.isActive ? 'Active' : 'Archived'}</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button>{permissions.update && item.isActive && <button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button>}{permissions.remove && item.isActive && <button type="button" className="sl-icon-button" aria-label={`Archive ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button>}</div></td></tr>)}</tbody></table></div> : <div className="sl-admin-ingredient-state"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} /><span className="sl-admin-data-pending">Preview · data pending</span></div>}
+        {loadError ? <div className="sl-admin-ingredient-state"><DataState kind="error" title="Ingredients could not be loaded" description="The ingredient service is temporarily unavailable." action={<button type="button" className="sl-button" onClick={() => setRefresh(value => value + 1)}>Retry</button>} /></div> : !data ? <div className="sl-admin-ingredient-state"><DataState kind="loading" title="Loading ingredients" description="Retrieving live ingredient records." /></div> : data.items.length ? <div className="sl-admin-ingredient-table-scroll"><table><thead><tr><th aria-label="Select"><input type="checkbox" disabled /></th><th>Ingredient</th><th>Category</th><th>Default Unit</th><th>Typical Shelf Life</th><th>Status</th><th>Date Added</th><th>Actions</th></tr></thead><tbody>{data.items.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`Select ${item.name}`} /></td><td><button className="sl-admin-ingredient-name" type="button" onClick={() => setViewIngredient(item)}><span>{item.name.trim().charAt(0).toUpperCase()}</span><strong>{item.name}</strong></button></td><td>{item.category}</td><td>{item.unitOfMeasure}</td><td>{formatShelfLife(item.defaultShelfLifeDays)}</td><td><Status tone={item.isActive ? 'success' : 'neutral'}>{item.isActive ? 'Active' : 'Archived'}</Status></td><td>{new Date(item.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td><td><div className="sl-admin-ingredient-menu"><button type="button" className="sl-icon-button" aria-label={`View ${item.name}`} onClick={() => setViewIngredient(item)}><Eye size={16}/></button>{permissions.update && item.isActive && <button type="button" className="sl-icon-button" aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Pencil size={16}/></button>}{permissions.remove && item.isActive && <button type="button" className="sl-icon-button" aria-label={`Archive ${item.name}`} onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><MoreVertical size={17}/></button>}</div></td></tr>)}</tbody></table></div> : <div className="sl-admin-ingredient-state"><DataState kind="empty" title="No live records yet" description={search || category !== 'All' || unit || status !== 'active' ? 'No ingredients match the selected filters.' : 'Ingredient records will appear here once they are added.'} /><span className="sl-admin-data-pending">Preview · data pending</span></div>}
         {data && <div className="sl-admin-ingredient-pagination"><label>Rows per page <select value={data.pageSize} disabled><option>{data.pageSize}</option></select></label><Pagination page={data.page} pageSize={data.pageSize} total={data.total} itemLabel="ingredients" onPageChange={setPage} /></div>}
       </section>
     </div>
@@ -1717,7 +1720,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
     const pct = (value: number) => total ? `${Math.round((value / total) * 100)}%` : '0%';
     return <>
       <PageHeader eyebrow={adminUsers ? undefined : 'Administration'} title={adminUsers ? 'Users' : 'User Management'} description={adminUsers ? 'Manage establishment users, their roles, and access within ShelfLife AI.' : 'Control access, manage permissions, and monitor system participants.'} />
-      <div className={`sl-admin-view sl-user-management-view${adminUsers ? ' sl-admin-users-reference' : ''}`}>
+      <div className={`sl-admin-view sl-user-management-view${adminUsers ? ' sl-admin-users-reference' : ' sl-superadmin-users-module'}`}>
         {adminUsers ? <div className="sl-admin-users-kpis" aria-label="User summary">
           {[
             { label:'Total Users', value:liveValue(accountTotals?.totalUsers), detail:accountTotals ? `↑ ${accountTotals.totalUsers} live` : 'Awaiting account summary', tone:'total', Icon:Users },
@@ -1735,7 +1738,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
           { label: 'Deactivated', value: liveValue(accountTotals?.inactiveUsers), detail: 'Inactive account total', tone: 'critical', trend: 'bars' },
         ]} />}
         <section className="sl-user-management-panel" aria-label="User account directory">
-          <AccountsTable />
+          <AccountsTable hideSummary={!adminUsers} />
         </section>
       </div>
     </>;
