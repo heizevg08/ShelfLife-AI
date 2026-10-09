@@ -2596,7 +2596,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 .sl-audit-kpi[data-tone='success'] { border-top-color: var(--sl-success); }
 .sl-audit-kpi[data-tone='attention'] { border-top-color: var(--sl-attention); }
 .sl-audit-kpi[data-tone='critical'] { border-top-color: var(--sl-critical); }
-.sl-audit-results-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--sl-space-4); align-items: start; }
+.sl-audit-results-layout { display: block; width: 100%; min-width: 0; }
 .sl-audit-detail-card { border: 1px solid var(--sl-border); border-radius: var(--sl-radius-lg); background: var(--sl-surface); box-shadow: var(--sl-shadow-sm); overflow: hidden; }
 .sl-audit-detail-header { min-height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 var(--sl-space-4); border-bottom: 1px solid var(--sl-border); }
 .sl-audit-detail-header h2 { margin: 0; font: var(--sl-font-card-title); }
@@ -12429,7 +12429,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   top: auto !important; bottom: 5rem; left: var(--sl-space-2); width: calc(var(--sl-rail-width) - var(--sl-space-4));
   padding: var(--sl-space-2); font: var(--sl-font-label); text-align: center; overflow-wrap: anywhere;
 }
-.sl-archived-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #475569; }
+.sl-archived-switch { display: inline-flex; align-items: center; gap: 8px; color: #475569; font: inherit; font-size: 13px; }
 @media (max-width: 700px) {
   .sl-user-management-view:not(.sl-admin-users-reference) {
     .sl-v56-side { grid-template-columns: minmax(0, 1fr); }
@@ -12438,39 +12438,596 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   }
 }
 
-/* RecordPage form sizing responds to the actual workspace column. */
+/* Keep inventory entry forms compact, aligned, and consistent across Usage and Waste. */
 .sl-record-page {
-  inline-size: 100%;
-  min-width: 0;
+  width: min(100%, 78rem);
+  margin-inline: auto;
+  gap: var(--sl-space-5);
 }
-.sl-record-page > .sl-card > .sl-card-body {
-  padding: 1rem clamp(1rem, 2vw, 1.5rem);
-}
+.sl-record-page > .sl-page-header { padding-bottom: 0; }
+.sl-record-page > .sl-card { width: 100%; }
+.sl-record-card { border-radius: var(--sl-radius-lg); }
+.sl-record-card > .sl-card-header { min-height: 4.25rem; padding: 1rem 1.25rem; }
+.sl-record-card > .sl-card-body { padding: clamp(1rem, 2vw, 1.5rem); }
+.sl-record-form { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.15rem 1.25rem; }
 .sl-record-form > label {
   display: grid;
-  gap: 0.4rem;
+  align-content: start;
+  gap: .45rem;
   min-width: 0;
-  grid-column: auto;
+  font: inherit;
+  color: var(--sl-text);
 }
+.sl-record-form .sl-form-label { color: var(--sl-muted); font: var(--sl-font-label); }
 .sl-record-form .sl-admin-input {
-  inline-size: 100%;
-  min-width: 0;
+  width: 100%;
+  min-height: 46px;
+  margin: 0;
+  padding: .7rem .85rem;
+  border: 1px solid var(--sl-border);
+  border-radius: var(--sl-radius);
+  background: var(--sl-surface);
+  color: var(--sl-text);
+  font: var(--sl-font-body);
+  transition: border-color var(--sl-motion), box-shadow var(--sl-motion);
 }
-.sl-record-form > div {
+.sl-record-form .sl-admin-input:focus-visible {
+  outline: 0;
+  border-color: var(--sl-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sl-focus) 18%, transparent);
+}
+.sl-record-form .sl-admin-input:disabled { background: var(--sl-surface-subtle); }
+.sl-record-form .sl-record-notes,
+.sl-record-form .sl-record-availability,
+.sl-record-form .sl-record-actions { grid-column: 1 / -1; }
+.sl-record-form .sl-record-availability {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  min-width: 0;
-  grid-column: 1 / -1;
+  align-items: center;
+  min-height: 46px;
+  padding: .7rem .85rem;
+  border: 1px solid var(--sl-border-subtle);
+  border-radius: var(--sl-radius);
+  background: var(--sl-brand-subtle);
+  color: var(--sl-brand);
 }
-@container (max-width:44rem) {
-  .sl-record-page .sl-record-form {
+.sl-record-form .sl-record-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sl-border-subtle);
+}
+.sl-record-form .sl-record-actions .sl-button { min-width: 13rem; min-height: 48px; border-radius: var(--sl-radius); font-weight: 600; }
+@container (max-width: 42rem) {
+  .sl-record-form { grid-template-columns: minmax(0, 1fr); }
+  .sl-record-form .sl-record-notes,
+  .sl-record-form .sl-record-availability,
+  .sl-record-form .sl-record-actions { grid-column: 1; }
+  .sl-record-form .sl-record-actions .sl-button { width: 100%; }
+}
+
+/* Account request cards keep comfortable form spacing and contain arbitrary text safely. */
+.sl-account-requests-page > section[aria-labelledby="submit-account-request"] > .sl-card-body {
+  padding: clamp(1rem, 1.5vw, 1.5rem);
+}
+.sl-account-request-form { gap: 1.1rem 1.25rem; }
+.sl-account-request-form > label { gap: .5rem; line-height: 1.4; }
+.sl-account-request-form .sl-admin-input { min-height: 46px; padding: .7rem .8rem; border-radius: var(--sl-radius); }
+.sl-account-request-form > button { justify-self: end; min-height: 44px; padding-inline: 1rem; }
+.sl-account-request-table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.sl-account-request-table { width: 100%; min-width: 1000px; table-layout: fixed; }
+.sl-account-request-table th:nth-child(1) { width: 14%; }
+.sl-account-request-table th:nth-child(2) { width: 20%; }
+.sl-account-request-table th:nth-child(3) { width: 14%; }
+.sl-account-request-table th:nth-child(4) { width: 18%; }
+.sl-account-request-table th:nth-child(5) { width: 11%; }
+.sl-account-request-table th:nth-child(6) { width: 13%; }
+.sl-account-request-table th:nth-child(7) { width: 10%; }
+.sl-admin-view .sl-account-request-table thead th {
+  padding: .8rem .85rem;
+  color: var(--sl-muted);
+  font-size: .72rem;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+.sl-admin-view .sl-account-request-table tbody td {
+  padding: .85rem;
+  vertical-align: middle;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.sl-account-request-table tbody tr:hover { background: var(--sl-surface-subtle); }
+.sl-account-request-table td:nth-child(5) { white-space: nowrap; overflow-wrap: normal; }
+.sl-account-request-table td .sl-supporting { display: block; margin-top: .2rem; line-height: 1.35; overflow-wrap: anywhere; }
+.sl-account-request-table td:last-child .sl-row-actions { flex-wrap: wrap; gap: .4rem; }
+.sl-account-request-table td:last-child .sl-button { min-height: 36px; padding-inline: .6rem; white-space: nowrap; }
+@container (max-width: 42rem) {
+  .sl-account-request-form { grid-template-columns: minmax(0, 1fr); }
+  .sl-account-request-form > button { width: 100%; justify-self: stretch; }
+}
+
+/* Change Requests: align summary cards and give every form field the same rhythm. */
+.sl-change-requests-page { display: grid; gap: clamp(1rem, 1.25vw, 1.4rem); min-width: 0; }
+.sl-change-requests-page > .sl-overview-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(.65rem, .9vw, .9rem);
+  margin: 0;
+}
+.sl-change-requests-page > .sl-overview-cards .sl-overview-card {
+  min-height: 148px;
+  padding: clamp(.9rem, 1.1vw, 1.15rem);
+  border-radius: var(--sl-radius-lg);
+}
+.sl-change-requests-page > section[aria-labelledby="typed-change-request-form"] > .sl-card-body {
+  padding: clamp(1rem, 1.5vw, 1.5rem);
+}
+.sl-change-request-form { display: grid; gap: 1.1rem; }
+.sl-change-request-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1.1rem 1.25rem;
+}
+.sl-change-request-fields > label {
+  display: grid;
+  align-content: start;
+  gap: .5rem;
+  min-width: 0;
+  color: var(--sl-muted);
+  font: var(--sl-font-label);
+}
+.sl-change-request-fields .sl-admin-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  margin: 0;
+  padding: .7rem .85rem;
+  border: 1px solid var(--sl-border);
+  border-radius: var(--sl-radius);
+  background: var(--sl-surface);
+  color: var(--sl-text);
+  font: var(--sl-font-body);
+  transition: border-color var(--sl-motion), box-shadow var(--sl-motion);
+}
+.sl-change-request-fields textarea.sl-admin-input { min-height: 7rem; resize: vertical; }
+.sl-change-request-fields .sl-admin-input:focus-visible {
+  outline: 0;
+  border-color: var(--sl-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sl-focus) 18%, transparent);
+}
+.sl-change-request-form > .sl-button { justify-self: end; min-width: 10rem; min-height: 46px; padding-inline: 1rem; }
+@container (max-width: 58rem) {
+  .sl-change-requests-page > .sl-overview-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (max-width: 40rem) {
+  .sl-change-requests-page > .sl-overview-cards { grid-template-columns: minmax(0, 1fr); }
+  .sl-change-requests-page > .sl-overview-cards .sl-overview-card { min-height: 112px; }
+  .sl-change-request-fields { grid-template-columns: minmax(0, 1fr); }
+  .sl-change-request-form > .sl-button { width: 100%; }
+}
+
+/* Ingredients: keep filters on one balanced row and group the filter actions. */
+.sl-admin-ingredients-reference { gap: clamp(.9rem, 1.05vw, 1.2rem); }
+.sl-admin-ingredient-filter-card {
+  grid-template-columns: minmax(250px, 1.7fr) repeat(3, minmax(145px, .8fr)) auto auto;
+  gap: clamp(.55rem, .75vw, .8rem);
+  padding: clamp(.85rem, 1vw, 1rem);
+  box-shadow: var(--sl-shadow-sm);
+}
+.sl-admin-ingredient-filter-card .sl-archived-switch {
+  display: flex;
+  align-items: center;
+  align-self: end;
+  gap: .5rem;
+  min-height: 42px;
+  margin: 0;
+  padding: 0 .25rem;
+  border: 0;
+  background: transparent;
+  color: #314f43;
+  font: inherit;
+  font-size: .78rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-align: left;
+  cursor: pointer;
+}
+.sl-admin-ingredient-filter-card .sl-archived-switch:focus-visible {
+  outline: 3px solid rgb(11 102 50 / 24%);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.sl-archived-switch-track {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 20px;
+  align-items: center;
+  border-radius: 999px;
+  background: #cbd5d0;
+  transition: background-color .18s ease;
+}
+.sl-archived-switch-track > span {
+  position: absolute;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 24%);
+  transition: transform .18s ease;
+}
+.sl-archived-switch[aria-checked="true"] .sl-archived-switch-track {
+  background: #0b6632;
+}
+.sl-archived-switch[aria-checked="true"] .sl-archived-switch-track > span {
+  transform: translateX(14px);
+}
+.sl-admin-ingredient-filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .55rem;
+}
+.sl-admin-ingredient-filter-actions .sl-button { min-height: 42px; height: 42px; }
+@container (max-width: 76rem) {
+  .sl-admin-ingredient-filter-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sl-admin-ingredient-search,
+  .sl-admin-ingredient-filter-actions { grid-column: 1 / -1; }
+  .sl-admin-ingredient-filter-actions { justify-content: flex-end; }
+}
+@container (max-width: 40rem) {
+  .sl-admin-ingredient-filter-card { grid-template-columns: minmax(0, 1fr); }
+  .sl-admin-ingredient-search,
+  .sl-admin-ingredient-filter-actions { grid-column: auto; }
+  .sl-admin-ingredient-filter-card .sl-archived-switch { white-space: normal; }
+  .sl-admin-ingredient-filter-actions .sl-button { flex: 1 1 0; min-width: 0; }
+}
+
+/* Users directory: keep filters balanced and prevent long account data from crossing columns. */
+.sl-admin-users-reference .sl-v56-filter-row {
+  grid-template-columns: minmax(18rem, 2.15fr) repeat(2, minmax(10rem, .9fr)) auto auto;
+  gap: clamp(.55rem, .75vw, .85rem);
+}
+.sl-admin-users-reference .sl-v56-table {
+  width: 100%;
+  min-width: 58rem;
+  table-layout: fixed;
+}
+.sl-admin-users-reference .sl-v56-table th,
+.sl-admin-users-reference .sl-v56-table td { min-width: 0; vertical-align: middle; }
+.sl-admin-users-reference .sl-v56-table th:nth-child(1) { width: 4%; }
+.sl-admin-users-reference .sl-v56-table th:nth-child(2) { width: 23%; }
+.sl-admin-users-reference .sl-v56-table th:nth-child(3) { width: 26%; }
+.sl-admin-users-reference .sl-v56-table th:nth-child(4) { width: 18%; }
+.sl-admin-users-reference .sl-v56-table th:nth-child(5) { width: 12%; }
+.sl-admin-users-reference .sl-v56-table th:nth-child(6) { width: 10%; }
+.sl-admin-users-reference .sl-v56-table th:nth-child(7) { width: 7%; text-align: center; }
+.sl-admin-users-reference .sl-v56-table td:nth-child(2) { overflow: hidden; }
+.sl-admin-users-reference .sl-v56-name { min-width: 0; }
+.sl-admin-users-reference .sl-v56-name strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sl-admin-users-reference .sl-v56-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sl-admin-users-reference .sl-v56-role-pill {
+  display: inline-flex;
+  max-width: 100%;
+  padding: .28rem .55rem;
+  border-radius: 999px;
+  background: var(--sl-brand-subtle);
+  color: var(--sl-brand-strong, var(--sl-brand));
+  font-size: .75rem;
+  line-height: 1.2;
+  white-space: normal;
+}
+.sl-admin-users-reference .sl-v56-role-pill[data-role="Inventory Manager"] { background: #fff4d6; color: #8a5b00; }
+.sl-admin-users-reference .sl-v56-role-pill[data-role="Inventory Staff"] { background: #f1e8ff; color: #6941b6; }
+.sl-admin-users-reference .sl-admin-users-check input { width: 1rem; height: 1rem; accent-color: var(--sl-brand); }
+.sl-admin-users-reference .sl-v56-actions { justify-content: center; }
+.sl-admin-users-reference .sl-v56-more {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--sl-border);
+  border-radius: .65rem;
+  background: var(--sl-surface);
+  color: var(--sl-muted);
+  cursor: pointer;
+}
+.sl-admin-users-reference .sl-v56-more:hover:not(:disabled) {
+  border-color: var(--sl-brand);
+  background: var(--sl-brand-subtle);
+  color: var(--sl-brand);
+}
+.sl-admin-users-reference .sl-v56-more:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--sl-brand) 25%, transparent);
+  outline-offset: 2px;
+}
+.sl-admin-users-reference .sl-admin-users-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4rem;
+  padding: .65rem .85rem;
+}
+.sl-admin-users-reference .sl-admin-users-toolbar-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .55rem;
+}
+.sl-admin-users-reference .sl-admin-users-toolbar-actions > .sl-admin-users-export,
+.sl-admin-users-reference .sl-admin-users-toolbar-actions > .sl-v56-add-user {
+  display: inline-flex;
+  box-sizing: border-box;
+  height: 42px;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  padding: 0 .85rem;
+  border-radius: .65rem;
+  font-size: .78rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .sl-admin-users-reference .sl-admin-users-table-toolbar { align-items: stretch; flex-direction: column; }
+  .sl-admin-users-reference .sl-admin-users-toolbar-actions { width: 100%; }
+  .sl-admin-users-reference .sl-admin-users-toolbar-actions > button { flex: 1 1 0; }
+}
+@media (max-width: 1180px) {
+  .sl-admin-users-reference .sl-v56-filter-row {
+    grid-template-columns: minmax(14rem, 2fr) repeat(2, minmax(8.5rem, 1fr)) auto auto;
+  }
+}
+@media (max-width: 900px) {
+  .sl-admin-users-reference .sl-v56-filter-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sl-admin-users-reference .sl-v56-search-field { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .sl-admin-users-reference .sl-v56-filter-row { grid-template-columns: minmax(0, 1fr); }
+  .sl-admin-users-reference .sl-v56-search-field { grid-column: auto; }
+  .sl-admin-users-reference .sl-v56-reset,
+  .sl-admin-users-reference .sl-admin-users-apply { width: 100%; }
+}
+
+/* Super Admin user directory: keep approvals, filters, and the account table in a clear order. */
+.sl-superadmin-users-module .sl-user-management-panel {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sl-superadmin-users-module .sl-v56-directory > .sl-card[aria-labelledby="pending-account-approvals"] {
+  margin: 0 0 clamp(.8rem, 1vw, 1rem);
+}
+.sl-superadmin-users-module .sl-v56-filter-row {
+  display: grid;
+  grid-template-columns: minmax(18rem, 2fr) repeat(2, minmax(10rem, 1fr)) auto;
+  align-items: end;
+  gap: clamp(.65rem, .8vw, .9rem);
+  padding: clamp(.8rem, .65rem + .25vw, 1rem);
+  border: 1px solid var(--sl-border);
+  border-radius: var(--sl-radius-lg);
+  background: var(--sl-surface);
+  box-shadow: var(--sl-shadow-sm);
+}
+.sl-superadmin-users-module .sl-v56-filter { min-width: 0; }
+.sl-superadmin-users-module .sl-v56-search,
+.sl-superadmin-users-module .sl-v56-filter select,
+.sl-superadmin-users-module .sl-v56-filter-row > .sl-v56-reset {
+  height: 42px;
+  min-height: 42px;
+}
+.sl-superadmin-users-module .sl-v56-filter-row > .sl-v56-reset { align-self: end; }
+.sl-superadmin-users-module .sl-admin-users-table-toolbar {
+  min-height: 3.5rem;
+  margin-top: clamp(.7rem, .55rem + .3vw, .95rem);
+  padding: .65rem .85rem;
+  border: 1px solid var(--sl-border);
+  border-bottom: 0;
+  border-radius: var(--sl-radius-lg) var(--sl-radius-lg) 0 0;
+  background: var(--sl-surface);
+}
+.sl-superadmin-users-module .sl-admin-users-toolbar-actions { display: flex; align-items: center; justify-content: flex-end; }
+.sl-superadmin-users-module .sl-v56-table-wrap {
+  border: 1px solid var(--sl-border);
+  border-radius: 0 0 var(--sl-radius-lg) var(--sl-radius-lg);
+  overflow-x: auto;
+}
+.sl-superadmin-users-module .sl-v56-table { width: 100%; min-width: 64rem; table-layout: fixed; }
+.sl-superadmin-users-module .sl-v56-table th,
+.sl-superadmin-users-module .sl-v56-table td { min-width: 0; vertical-align: middle; }
+.sl-superadmin-users-module .sl-v56-table th:nth-child(1) { width: 4%; }
+.sl-superadmin-users-module .sl-v56-table th:nth-child(2) { width: 24%; }
+.sl-superadmin-users-module .sl-v56-table th:nth-child(3) { width: 23%; }
+.sl-superadmin-users-module .sl-v56-table th:nth-child(4) { width: 15%; }
+.sl-superadmin-users-module .sl-v56-table th:nth-child(5) { width: 10%; }
+.sl-superadmin-users-module .sl-v56-table th:nth-child(6) { width: 8%; }
+.sl-superadmin-users-module .sl-v56-table th:nth-child(7) { width: 12%; }
+.sl-superadmin-users-module .sl-v56-table th:nth-child(8) { width: 4%; text-align: center; }
+.sl-superadmin-users-module .sl-v56-name { display: flex; align-items: center; gap: .5rem; overflow: hidden; }
+.sl-superadmin-users-module .sl-v56-name .sl-admin-user-avatar { flex: 0 0 auto; margin: 0; }
+.sl-superadmin-users-module .sl-v56-name strong {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sl-superadmin-users-module .sl-v56-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sl-superadmin-users-module .sl-v56-role-pill {
+  display: inline-flex;
+  max-width: 100%;
+  padding: .28rem .55rem;
+  border-radius: 999px;
+  background: var(--sl-brand-subtle);
+  color: var(--sl-brand);
+  font-size: .76rem;
+  line-height: 1.2;
+  white-space: normal;
+}
+.sl-superadmin-users-module .sl-v56-role-pill[data-role="Inventory Manager"] { background: #fff4d6; color: #8a5b00; }
+.sl-superadmin-users-module .sl-v56-role-pill[data-role="Inventory Staff"] { background: #f1e8ff; color: #6941b6; }
+.sl-superadmin-users-module .sl-v56-more {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--sl-border);
+  border-radius: .65rem;
+  background: var(--sl-surface);
+  color: var(--sl-muted);
+  cursor: pointer;
+}
+.sl-superadmin-users-module .sl-v56-more:hover:not(:disabled) {
+  border-color: var(--sl-brand);
+  background: var(--sl-brand-subtle);
+  color: var(--sl-brand);
+}
+.sl-superadmin-users-module .sl-v56-directory > .sl-pagination {
+  margin: 0;
+  padding: .7rem .85rem;
+  border: 1px solid var(--sl-border);
+  border-top: 0;
+  border-radius: 0 0 var(--sl-radius-lg) var(--sl-radius-lg);
+  background: var(--sl-surface);
+}
+@media (max-width: 900px) {
+  .sl-superadmin-users-module .sl-v56-filter-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sl-superadmin-users-module .sl-v56-search-field { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .sl-superadmin-users-module .sl-v56-filter-row { grid-template-columns: minmax(0, 1fr); }
+  .sl-superadmin-users-module .sl-v56-search-field { grid-column: auto; }
+  .sl-superadmin-users-module .sl-v56-filter-row > .sl-v56-reset { width: 100%; }
+}
+
+/* Security Activity: keep the audit table full width and scroll it on narrow workspaces. */
+.sl-security-activity-v78 .sl-audit-overview {
+  width: 100%;
+  min-width: 0;
+  container-type: inline-size;
+}
+.sl-security-activity-v78 .sl-audit-filter-strip {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  align-items: end;
+}
+.sl-security-activity-v78 .sl-audit-apply { justify-self: end; }
+.sl-security-activity-v78 .sl-audit-results-layout {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card {
+  width: 100%;
+  height: auto;
+  min-width: 0;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card > .sl-audit-table-heading {
+  flex-wrap: wrap;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card > .sl-audit-table-heading > .sl-audit-table-controls {
+  flex: 1 1 24rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-audit-search.sl-directory-search {
+  flex: 1 1 12rem;
+  width: auto;
+  min-width: 0;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-card-body {
+  min-width: 0;
+  padding: 0;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-table-scroll {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table {
+  width: 100%;
+  min-width: 900px;
+  table-layout: fixed;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table th,
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table td {
+  padding: .65rem .72rem;
+  vertical-align: middle;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table th {
+  color: var(--sl-muted);
+  text-align: left !important;
+  font-size: .72rem;
+  letter-spacing: .035em;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table tbody td {
+  text-align: left !important;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table tbody tr:hover {
+  background: var(--sl-surface-subtle);
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table td:nth-child(2).sl-record-id {
+  color: var(--sl-text);
+  font: var(--sl-font-body);
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table td:nth-child(5) .sl-record-id {
+  display: block;
+  margin-top: .2rem;
+  color: var(--sl-muted);
+  font: var(--sl-font-supporting);
+}
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table th:nth-child(1) { width: 17%; }
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table th:nth-child(2) { width: 18%; }
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table th:nth-child(3) { width: 11%; }
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table th:nth-child(4) { width: 14%; }
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table th:nth-child(5) { width: 28%; }
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-data-table th:nth-child(6) { width: 12%; }
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-audit-table-footer,
+.sl-security-activity-v78 .sl-admin-audit-table-card .sl-pagination-compact {
+  flex-wrap: wrap;
+}
+@container (max-width: 72rem) {
+  .sl-security-activity-v78 .sl-audit-filter-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .sl-security-activity-v78 .sl-audit-apply { width: 100%; }
+}
+@container (max-width: 42rem) {
+  .sl-security-activity-v78 .sl-audit-filter-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (max-width: 28rem) {
+  .sl-security-activity-v78 .sl-audit-filter-strip {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .sl-record-page .sl-record-form > div {
-    grid-column: 1 / -1;
-  }
-  .sl-record-page .sl-record-form > div > .sl-button {
-    inline-size: auto;
   }
 }

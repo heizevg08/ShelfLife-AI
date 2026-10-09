@@ -40,7 +40,7 @@ export default function ChangeRequests() {
   };
   return <>
     <PageHeader title={staff ? 'My Change Requests' : 'Change Requests'} description={staff ? 'Submit ingredient changes for Inventory Manager review.' : manager ? 'Review typed ingredient change requests.' : 'Read-only typed change request history.'} />
-    <div className="sl-admin-view">
+    <div className="sl-admin-view sl-change-requests-page">
       {summary && <SummaryCards items={[
         { label: 'Total requests', value: String(summary.total), detail: 'Typed requests', tone: 'brand', trend: 'line' },
         { label: 'Pending', value: String(summary.pending), detail: 'Awaiting review', tone: 'attention', trend: 'segments' },
@@ -50,8 +50,8 @@ export default function ChangeRequests() {
       {notice && <p className="sl-inline-notice" role="status">{notice}</p>}
       {error && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{error}</p>}
       {staff && <Card id="typed-change-request-form" title="Submit a change request" action={<FileInput size={18} aria-hidden="true" />}>
-        <form className="sl-live-ingredient-form" onSubmit={submit}>
-          <div className="sl-form-grid">
+        <form className="sl-live-ingredient-form sl-change-request-form" onSubmit={submit}>
+          <div className="sl-form-grid sl-change-request-fields">
             <label>Ingredient<select className="sl-admin-input" value={form.ingredientId} required disabled={busy} onChange={event => setForm(current => ({ ...current, ingredientId: event.target.value }))}><option value="">Select an ingredient</option>{ingredients.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
             <label>Change type<select className="sl-admin-input" value={form.requestType} disabled={busy} onChange={event => setForm(current => ({ ...current, requestType: event.target.value as ChangeRequestInput['requestType'], requestedValue: '' }))}>{types.map(item => <option value={item.value} key={item.value}>{item.label}</option>)}</select></label>
             <label>Requested value<input className="sl-admin-input" value={form.requestedValue} required maxLength={500} disabled={busy} onChange={event => setForm(current => ({ ...current, requestedValue: event.target.value }))} /></label>
