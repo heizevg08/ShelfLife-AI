@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { canonicalWorkspaceAccess, dashboardPaths, type WorkspaceRole } from '../src/components/application/workspace';
 
 const roles: WorkspaceRole[] = ['Super Admin', 'Admin', 'Inventory Manager', 'Inventory Staff'];
+const e2eOrigin = `http://localhost:${process.env.E2E_PORT || '4173'}`;
 
 test('Super Admin distribution uses canonical role counts from the dashboard summary', async ({ page }) => {
   await mockApi(page, 'Super Admin');
@@ -51,8 +52,8 @@ async function mockApi(page: Page, role: WorkspaceRole, loggedIn = true) {
   let accounts: any[] = [];
   await page.route('**/api/**', async route => {
     const request = route.request(), path = new URL(request.url()).pathname;
-    const json = (body: unknown, status = 200) => route.fulfill({ status, json: body, headers: { 'Access-Control-Allow-Origin': 'http://localhost:4173', 'Access-Control-Allow-Credentials': 'true' } });
-    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': 'http://localhost:4173', 'Access-Control-Allow-Credentials': 'true', 'Access-Control-Allow-Headers': 'authorization,content-type', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,PUT,DELETE' } });
+    const json = (body: unknown, status = 200) => route.fulfill({ status, json: body, headers: { 'Access-Control-Allow-Origin': e2eOrigin, 'Access-Control-Allow-Credentials': 'true' } });
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': e2eOrigin, 'Access-Control-Allow-Credentials': 'true', 'Access-Control-Allow-Headers': 'authorization,content-type', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,PUT,DELETE' } });
     if (path.startsWith('/api/health/')) return json({ status: path.endsWith('ready') ? 'ready' : 'alive' });
     if (request.method() !== 'GET') writes.push({ path, body: request.postDataJSON() });
     if (path === '/api/auth/login') { loggedIn = true; return json({ accessToken: 'test-token', user }); }
