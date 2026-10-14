@@ -29,32 +29,12 @@ export const ingredientTextError = (value: string, label: string, max: number, r
   if (forbiddenText.test(value) || (!prose && /[\t\r\n]/u.test(value)) || !(prose ? proseText : catalogueText).test(value)) return 'Use standard text and punctuation only.';
   return undefined;
 };
-const ingredientNameBrandError = (value: string, label: string, required: boolean) => {
-  const clean = value.trim();
-  const letters = (value.match(/[\p{L}\p{M}]/gu) || []).length;
-  const numbers = (value.match(/\p{N}/gu) || []).length;
-  if (required && !clean) return `Enter ${label.toLowerCase()}.`;
-  if (letters > 25) return 'Use at most 25 letters.';
-  if (numbers > 3) return 'Use at most 3 numbers.';
-  if (forbiddenText.test(value) || /[\t\r\n]/u.test(value) || !/^[\p{L}\p{M}\p{N}\s]*$/u.test(value)) return 'Use letters, numbers, and spaces only.';
-  return undefined;
-};
-const ingredientDescriptionError = (value: string) => {
-  const numbers = (value.match(/\p{N}/gu) || []).length;
-  const specialCharacters = (value.match(/[^\p{L}\p{M}\p{N}\s]/gu) || []).length;
-  if (value.length > 100) return 'Use at most 100 characters.';
-  if (specialCharacters > 5) return 'Use at most 5 special characters.';
-  if (numbers > 12) return 'Use at most 12 numbers.';
-  if (forbiddenText.test(value) || !proseText.test(value)) return 'Use standard text and punctuation only.';
-  return undefined;
-};
 const formatShelfLife = (days?: number) => {
   if (!days) return '—';
   const years = Math.floor(days / 365), remainingDays = days % 365;
   if (!years) return `${days} days`;
-  return `${years} ${years === 1 ? 'year' : 'years'}${remainingDays ? ` ${remainingDays} ${remainingDays === 1 ? 'day' : 'days'}` : ''}`;
+  return `${years} ${years === 1 ? 'year' : 'years'}${remainingDays ? ` ${remainingDays} days` : ''}`;
 };
-const formatStandardUnitCost = (cost: number) => cost.toLocaleString(undefined, { maximumFractionDigits: 0 });
 type IngredientField = keyof IngredientDraft;
 const ingredientApiField: Record<string, IngredientField | undefined> = { name: 'name', brand: 'brand', category: 'category', customCategory: 'customCategory', unitOfMeasure: 'unit', minimumStock: 'minStock', standardUnitCost: 'unitCost', defaultShelfLifeDays: 'shelfLife', description: 'description' };
 const normalizedIngredientInput = (item: Ingredient | IngredientRequest): IngredientInput => ({
@@ -74,18 +54,14 @@ function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit
   const validation = (key: IngredientField) => ({ 'aria-invalid': errors[key] ? true as const : undefined, 'aria-describedby': errors[key] ? `ingredient-${key}-error` : undefined });
   const textChange = (key: IngredientField, label: string, max: number, required = false) => (value: string) => {
     set(key, value);
-    const error = key === 'name' || key === 'brand'
-      ? ingredientNameBrandError(value, label, required)
-      : key === 'description' ? ingredientDescriptionError(value)
-      : ingredientTextError(value, label, max, required);
-    setError(key, error);
+    setError(key, ingredientTextError(value, label, max, required, key === 'description'));
   };
-  const numericChange = (key: 'minStock' | 'unitCost' | 'shelfLife', label: string, whole = false, maxDecimals?: number, minimum = 0, maximum = 999_999_999_999_999) => (value: string) => {
+  const numericChange = (key: 'minStock' | 'unitCost' | 'shelfLife', label: string, whole = false, maxDecimals?: number, minimum = 0) => (value: string) => {
     set(key, value);
     if (!value) { setError(key); return; }
     const validFormat = whole ? /^\d+$/.test(value) : maxDecimals === undefined ? /^\d*(?:\.\d*)?$/.test(value) : new RegExp(`^\\d*(?:\\.\\d{0,${maxDecimals}})?$`).test(value);
     const number = Number(value);
-    setError(key, !validFormat || !Number.isFinite(number) ? `${label} must be a valid number${whole ? ' with no decimals' : maxDecimals ? ` with at most ${maxDecimals} decimal places` : ''}.` : number < minimum ? `${label} must be at least ${minimum}.` : number > maximum ? `${label} must not exceed ${maximum.toLocaleString()}.` : undefined);
+    setError(key, !validFormat || !Number.isFinite(number) || number > 999_999_999_999_999 ? `${label} must be a valid number${whole ? ' with no decimals' : maxDecimals ? ` with at most ${maxDecimals} decimal places` : ''}.` : number < minimum ? `${label} must be at least ${minimum}.` : undefined);
   };
   const chooseCategory = (value: string) => {
     set('category', value);
@@ -93,31 +69,31 @@ function IngredientForm({ form, errors, busy, formError, set, setError, onSubmit
     if (value !== 'Other') set('customCategory', '');
     else setError('customCategory', form.customCategory.trim() ? undefined : 'Specify the category.');
   };
-  const stepper = (key: 'minStock' | 'unitCost', label: string, step: number, precision: number, id: string, maximum: number, currency = false) => {
+  const stepper = (key: 'minStock' | 'unitCost', label: string, step: number, precision: number, id: string, currency = false) => {
     const value = form[key];
     const adjust = (direction: -1 | 1) => {
-      const next = Math.min(maximum, Math.max(0, Number(value || 0) + direction * step));
-      numericChange(key, label, currency, precision, 0, maximum)(key === 'unitCost' ? next.toFixed(precision) : String(Number(next.toFixed(precision))));
+      const next = Math.max(0, Number(value || 0) + direction * step);
+      numericChange(key, label, false, precision)(key === 'unitCost' ? next.toFixed(precision) : String(Number(next.toFixed(precision))));
     };
     return <div className={`sl-number-stepper${currency ? ' sl-number-stepper-currency' : ''}`}>
       {currency && <span className="sl-number-stepper-prefix" aria-hidden="true">₱</span>}
       <button type="button" className="sl-number-stepper-button" aria-label={`Decrease ${label}`} title={`Decrease ${label}`} disabled={busy || !value || Number(value) <= 0} onClick={() => adjust(-1)}><Minus size={15} aria-hidden="true" /></button>
-      <input id={id} disabled={busy} className="sl-admin-input" type="text" inputMode={currency ? 'numeric' : 'decimal'} role="spinbutton" aria-valuemin={0} aria-valuemax={maximum} aria-valuestep={step} aria-valuenow={value && Number.isFinite(Number(value)) ? Number(value) : undefined} value={value} onChange={event => numericChange(key, label, currency, precision, 0, maximum)(event.target.value)} onKeyDown={event => { if (event.key === 'ArrowUp') { event.preventDefault(); adjust(1); } else if (event.key === 'ArrowDown') { event.preventDefault(); adjust(-1); } }} {...validation(key)} />
-      <button type="button" className="sl-number-stepper-button" aria-label={`Increase ${label}`} title={`Increase ${label}`} disabled={busy || Number(value || 0) >= maximum} onClick={() => adjust(1)}><Plus size={15} aria-hidden="true" /></button>
+      <input id={id} disabled={busy} className="sl-admin-input" type="text" inputMode="decimal" role="spinbutton" aria-valuemin={0} aria-valuestep={step} aria-valuenow={value && Number.isFinite(Number(value)) ? Number(value) : undefined} value={key === 'unitCost' && value !== '' && new RegExp(`^\\d+(?:\\.\\d{0,${precision}})?$`).test(value) ? Number(value).toFixed(precision) : value} onChange={event => numericChange(key, label, false, precision)(event.target.value)} onKeyDown={event => { if (event.key === 'ArrowUp') { event.preventDefault(); adjust(1); } else if (event.key === 'ArrowDown') { event.preventDefault(); adjust(-1); } }} {...validation(key)} />
+      <button type="button" className="sl-number-stepper-button" aria-label={`Increase ${label}`} title={`Increase ${label}`} disabled={busy} onClick={() => adjust(1)}><Plus size={15} aria-hidden="true" /></button>
     </div>;
   };
   return <form id="sl-ingredient-form" className="sl-preview sl-live-ingredient-form" noValidate onSubmit={onSubmit}>
     {formError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{formError}</p>}
     <div className="sl-form-grid">
-      {field('name', 'Name', <input autoFocus disabled={busy} className="sl-admin-input" placeholder="e.g. Chicken Breast" maxLength={57} title="Up to 25 letters and 3 numbers; spaces allowed, no special characters." value={form.name} onChange={e => textChange('name', 'an ingredient name', 25, true)(e.target.value)} {...validation('name')} />)}
-      {field('brand', 'Brand', <input disabled={busy} className="sl-admin-input" placeholder="e.g. FreshFarm" maxLength={57} title="Up to 25 letters and 3 numbers; spaces allowed, no special characters." value={form.brand} onChange={e => textChange('brand', 'brand', 25)(e.target.value)} {...validation('brand')} />, false)}
+      {field('name', 'Name', <input autoFocus disabled={busy} className="sl-admin-input" placeholder="e.g. Chicken Breast" maxLength={100} value={form.name} onChange={e => textChange('name', 'an ingredient name', 100, true)(e.target.value)} {...validation('name')} />)}
+      {field('brand', 'Brand', <input disabled={busy} className="sl-admin-input" placeholder="e.g. FreshFarm" maxLength={100} value={form.brand} onChange={e => textChange('brand', 'brand', 100)(e.target.value)} {...validation('brand')} />, false)}
       {field('category', 'Category', <select disabled={busy} className="sl-admin-input" value={form.category} onChange={e => chooseCategory(e.target.value)} {...validation('category')}><option value="">Select category</option>{INGREDIENT_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select>)}
       {form.category === 'Other' && field('customCategory', 'Specify category', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Condiments" maxLength={50} value={form.customCategory} onChange={e => textChange('customCategory', 'a custom category', 50, true)(e.target.value)} {...validation('customCategory')} />)}
       {field('unit', 'Unit of measure', <select disabled={busy} className="sl-admin-input" value={form.unit} onChange={e => { set('unit', e.target.value); setError('unit', e.target.value ? undefined : 'Select a unit of measure.'); }} {...validation('unit')}><option value="">Select unit</option>{INGREDIENT_UNITS.map(value => <option key={value} value={value}>{value}</option>)}</select>)}
-      {field('minStock', 'Minimum stock', stepper('minStock', 'Minimum stock', 1, 3, 'ingredient-minStock-input', 99_999), false)}
-      {field('unitCost', 'Standard unit cost', stepper('unitCost', 'Standard unit cost', 1, 0, 'ingredient-unitCost-input', 1_000_000, true), false)}
-      {field('shelfLife', 'Default shelf life (days)', <><input id="ingredient-shelfLife-input" disabled={busy} className="sl-admin-input" type="text" inputMode="numeric" maxLength={4} value={form.shelfLife} onChange={e => numericChange('shelfLife', 'Shelf life', true, undefined, 1, 3650)(e.target.value)} {...validation('shelfLife')} />{Number.isInteger(Number(form.shelfLife)) && Number(form.shelfLife) >= 365 && <span className="sl-supporting" aria-live="polite">Equivalent: {formatShelfLife(Number(form.shelfLife))}</span>}</>, false)}
-      {field('description', 'Description', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Boneless, skinless chicken breast" value={form.description} onChange={e => textChange('description', 'description', 100)(e.target.value)} {...validation('description')} />, false)}
+      {field('minStock', 'Minimum stock', stepper('minStock', 'Minimum stock', 1, 3, 'ingredient-minStock-input'), false)}
+      {field('unitCost', 'Standard unit cost', stepper('unitCost', 'Standard unit cost', 0.0001, 4, 'ingredient-unitCost-input', true), false)}
+      {field('shelfLife', 'Default shelf life (days)', <input id="ingredient-shelfLife-input" disabled={busy} className="sl-admin-input" type="text" inputMode="numeric" value={form.shelfLife} onChange={e => numericChange('shelfLife', 'Shelf life', true, undefined, 1)(e.target.value)} {...validation('shelfLife')} />, false)}
+      {field('description', 'Description', <input disabled={busy} className="sl-admin-input" placeholder="e.g. Boneless, skinless chicken breast" maxLength={500} value={form.description} onChange={e => textChange('description', 'description', 500)(e.target.value)} {...validation('description')} />, false)}
     </div>
   </form>;
 }
@@ -289,8 +265,8 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
   const setFieldError = (key: IngredientField, value?: string) => setErrors(current => ({ ...current, [key]: value }));
   const dismiss = () => { if (!busy) setPreview(null); };
   const open = () => { if (!permissions.create) return; setEditIngredient(null); setEditIngredientRequest(null); setForm(emptyIngredient); setErrors({}); setFormError(''); setPreview('Ingredients'); };
-  const openEdit = (item: Ingredient) => { if (!permissions.update) return; setEditIngredient(item); setEditIngredientRequest(null); setForm({ name:item.name, brand:item.brand || '', category:item.category, customCategory:item.customCategory || '', unit:item.unitOfMeasure, minStock:item.minimumStock === undefined ? '' : String(item.minimumStock), unitCost:item.standardUnitCost === undefined ? '' : String(Math.round(item.standardUnitCost)), shelfLife:item.defaultShelfLifeDays === undefined ? '' : String(item.defaultShelfLifeDays), description:item.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
-  const openEditRequest = (request: IngredientRequest) => { if (user.role !== 'Inventory Staff' || request.status !== 'Pending') return; setEditIngredient(null); setEditIngredientRequest(request); setForm({ name:request.name, brand:request.brand || '', category:request.category, customCategory:request.customCategory || '', unit:request.unitOfMeasure, minStock:request.minimumStock === undefined ? '' : String(request.minimumStock), unitCost:request.standardUnitCost === undefined ? '' : String(Math.round(request.standardUnitCost)), shelfLife:request.defaultShelfLifeDays === undefined ? '' : String(request.defaultShelfLifeDays), description:request.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
+  const openEdit = (item: Ingredient) => { if (!permissions.update) return; setEditIngredient(item); setEditIngredientRequest(null); setForm({ name:item.name, brand:item.brand || '', category:item.category, customCategory:item.customCategory || '', unit:item.unitOfMeasure, minStock:item.minimumStock === undefined ? '' : String(item.minimumStock), unitCost:item.standardUnitCost === undefined ? '' : String(item.standardUnitCost), shelfLife:item.defaultShelfLifeDays === undefined ? '' : String(item.defaultShelfLifeDays), description:item.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
+  const openEditRequest = (request: IngredientRequest) => { if (user.role !== 'Inventory Staff' || request.status !== 'Pending') return; setEditIngredient(null); setEditIngredientRequest(request); setForm({ name:request.name, brand:request.brand || '', category:request.category, customCategory:request.customCategory || '', unit:request.unitOfMeasure, minStock:request.minimumStock === undefined ? '' : String(request.minimumStock), unitCost:request.standardUnitCost === undefined ? '' : String(request.standardUnitCost), shelfLife:request.defaultShelfLifeDays === undefined ? '' : String(request.defaultShelfLifeDays), description:request.description || '' }); setErrors({}); setFormError(''); setPreview('Ingredients'); };
   const removeIngredient = async () => { if (!permissions.remove || !deleteTarget || actionBusy) return; setActionBusy(true); setDeleteError(''); try { await deleteIngredient(deleteTarget.id, deleteTarget.version); setDeleteTarget(null); setRefresh(value => value + 1); } catch (error) { setDeleteError(error instanceof ApiError ? error.message : 'The ingredient could not be archived. Check your connection and try again.'); } finally { setActionBusy(false); } };
   const reviewRequest = async (request: IngredientRequest, decision: 'Approved' | 'Rejected') => {
     if (!canReviewRequests || requestBusy) return;
@@ -316,29 +292,15 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
     const patch = editTarget ? ingredientChanges(normalizedIngredientInput(editTarget), input) : input;
     const changed = new Set(Object.keys(patch));
     if (editTarget && changed.size === 0) { setFormError('No changes to save.'); return; }
-    for (const [key, inputKey, label, required] of [['name', 'name', 'an ingredient name', true], ['brand', 'brand', 'brand', false]] as const) {
+    for (const [key, inputKey, label, limit, required] of [['name', 'name', 'an ingredient name', 100, true], ['brand', 'brand', 'brand', 100, false], ['description', 'description', 'description', 500, false], ['customCategory', 'customCategory', 'a custom category', 50, clean.category === 'Other']] as const) {
       if (editTarget && !changed.has(inputKey)) continue;
-      const error = ingredientNameBrandError(clean[key], label, required);
+      const error = ingredientTextError(clean[key], label, limit, required, key === 'description');
       if (error) next[key] = error;
-    }
-    if (!editTarget || changed.has('description')) {
-      const error = ingredientDescriptionError(clean.description);
-      if (error) next.description = error;
-    }
-    if ((!editTarget || changed.has('customCategory')) && clean.category === 'Other') {
-      const error = ingredientTextError(clean.customCategory, 'a custom category', 50, true);
-      if (error) next.customCategory = error;
     }
     if ((!editTarget || changed.has('category')) && !clean.category) next.category = 'Select a category.';
     if ((!editTarget || changed.has('unitOfMeasure')) && !clean.unit) next.unit = 'Enter a unit of measure.';
-    for (const [key, inputKey, label, scale, maximum, whole] of [['minStock', 'minimumStock', 'Minimum stock', 3, 99_999, false], ['unitCost', 'standardUnitCost', 'Standard unit cost', 0, 1_000_000, true]] as const) {
-      const value = clean[key];
-      const validFormat = whole ? /^\d+$/.test(value) : new RegExp(`^\\d*(?:\\.\\d{1,${scale}})?$`).test(value);
-      if ((!editTarget || changed.has(inputKey)) && value !== '' && (!validFormat || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > maximum)) {
-        next[key] = whole ? `${label} must be a whole number from 0 to ${maximum.toLocaleString()}.` : `${label} must be a nonnegative number no greater than ${maximum.toLocaleString()} with at most ${scale} decimal places.`;
-      }
-    }
-    if ((!editTarget || changed.has('defaultShelfLifeDays')) && clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1 || Number(clean.shelfLife) > 3650)) next.shelfLife = 'Shelf life must be a whole number from 1 to 3,650 days.';
+    for (const [key, inputKey, label, scale] of [['minStock', 'minimumStock', 'Minimum stock', 3], ['unitCost', 'standardUnitCost', 'Standard unit cost', 4]] as const) if ((!editTarget || changed.has(inputKey)) && clean[key] !== '' && (!new RegExp(`^\\d*(?:\\.\\d{1,${scale}})?$`).test(clean[key]) || !Number.isFinite(Number(clean[key])) || Number(clean[key]) < 0 || Number(clean[key]) > 999_999_999_999_999)) next[key] = `${label} must be a nonnegative number with at most ${scale} decimal places.`;
+    if ((!editTarget || changed.has('defaultShelfLifeDays')) && clean.shelfLife !== '' && (!Number.isInteger(Number(clean.shelfLife)) || Number(clean.shelfLife) < 1)) next.shelfLife = 'Shelf life must be a whole number of at least 1 day.';
     if (Object.keys(next).length) {
       setErrors(next);
       requestAnimationFrame(() => document.querySelector<HTMLElement>('#sl-ingredient-form [aria-invalid="true"]')?.focus());
@@ -436,7 +398,7 @@ function IngredientsPage({ preview, setPreview }: { preview: PreviewId | null; s
           <span className="sl-ingredient-detail-copy"><span className="sl-ingredient-name-row"><strong>{viewIngredient.name}</strong><Status tone={viewIngredient.isActive ? 'success' : 'neutral'}>{viewIngredient.isActive ? 'Active' : 'Archived'}</Status></span><small>{viewIngredient.category} · {viewIngredient.brand || 'No brand specified'}</small>{viewIngredient.description && <small>{viewIngredient.description}</small>}</span>
           {permissions.update && viewIngredient.isActive && <div className="sl-ingredient-detail-actions"><button type="button" className="sl-button" onClick={() => { const item=viewIngredient; setViewIngredient(null); openEdit(item); }}><Pencil size={15} aria-hidden="true" /> Edit</button><button type="button" className="sl-icon-button" aria-label="More ingredient actions"><MoreVertical size={18} aria-hidden="true" /></button></div>}
         </div>
-        <div className="sl-detail-grid"><span><small>Unit of Measure</small><strong>{viewIngredient.unitOfMeasure}</strong></span><span><small>Minimum Stock Level</small><strong>{viewIngredient.minimumStock ?? '—'} {viewIngredient.unitOfMeasure}</strong></span><span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `₱${formatStandardUnitCost(viewIngredient.standardUnitCost)} / ${viewIngredient.unitOfMeasure}`}</strong></span><span><small>Default Shelf Life</small><strong>{formatShelfLife(viewIngredient.defaultShelfLifeDays)}</strong></span></div>
+        <div className="sl-detail-grid"><span><small>Unit of Measure</small><strong>{viewIngredient.unitOfMeasure}</strong></span><span><small>Minimum Stock Level</small><strong>{viewIngredient.minimumStock ?? '—'} {viewIngredient.unitOfMeasure}</strong></span><span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `₱${viewIngredient.standardUnitCost.toFixed(2)} / ${viewIngredient.unitOfMeasure}`}</strong></span><span><small>Default Shelf Life</small><strong>{formatShelfLife(viewIngredient.defaultShelfLifeDays)}</strong></span></div>
         <section className="sl-ingredient-statistics"><h4>Statistics</h4><div className="sl-ingredient-stat-grid"><span><small>Total Batches</small><strong>—</strong></span><span><small>Current Stock</small><strong>—</strong></span><span><small>Total Used (This Month)</small><strong>—</strong></span><span><small>Total Waste (This Month)</small><strong>—</strong></span></div><p className="sl-sr-only">Statistics will populate when inventory usage and waste summary data is available.</p></section>
       </div>}
     </Dialog>
@@ -727,7 +689,7 @@ function SuperAdminIngredientsPage() {
         <div className="sl-detail-grid">
           <span><small>Unit of Measure</small><strong>{viewIngredient.unitOfMeasure}</strong></span>
           <span><small>Minimum Stock Level</small><strong>{viewIngredient.minimumStock ?? '—'} {viewIngredient.unitOfMeasure}</strong></span>
-          <span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `₱${formatStandardUnitCost(viewIngredient.standardUnitCost)} / ${viewIngredient.unitOfMeasure}`}</strong></span>
+          <span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `₱${viewIngredient.standardUnitCost.toFixed(2)} / ${viewIngredient.unitOfMeasure}`}</strong></span>
           <span><small>Default Shelf Life</small><strong>{formatShelfLife(viewIngredient.defaultShelfLifeDays)}</strong></span>
         </div>
 

@@ -1727,55 +1727,20 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
 /* Notification center is a real responsive popover rather than an unavailable placeholder. */
 .sl-notification-trigger { position: relative; }
 .sl-notification-badge { position:absolute; top:2px; right:1px; min-width:16px; height:16px; padding:0 4px; display:grid; place-items:center; border-radius:99px; background:var(--sl-critical); color:#fff; font-size:.64rem; font-weight:750; }
-.sl-notification-panel { position:absolute; right:0; top:calc(100% + .55rem); z-index:70; display:flex; flex-direction:column; width:min(430px, calc(100vw - 1.5rem)); max-height:min(590px, calc(100dvh - 90px)); overflow:hidden; background:var(--sl-surface); border:1px solid var(--sl-border); border-radius:18px; box-shadow:var(--sl-shadow-lg); }
-.sl-notification-header { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:1rem 1.1rem .8rem; }
-.sl-notification-heading { min-width:0; }
-.sl-notification-header h2 { margin:0; font-size:1.12rem; font-weight:720; letter-spacing:-.02em; }
-.sl-notification-header p { margin:.2rem 0 0; color:var(--sl-muted); font-size:.76rem; }
-.sl-notification-header-actions { display:flex; align-items:center; gap:.35rem; }
-.sl-notification-mark-all { display:inline-flex; align-items:center; gap:.35rem; padding:.35rem .2rem; border:0; background:transparent; color:var(--sl-brand); font:inherit; font-size:.78rem; font-weight:650; white-space:nowrap; cursor:pointer; }
-.sl-notification-mark-all:disabled { opacity:.48; cursor:default; }
-.sl-notification-header .sl-close-button { flex:0 0 auto; width:1.8rem; height:1.8rem; }
-.sl-notification-tabs { display:flex; gap:3px; margin:0 1rem .7rem; padding:3px; border:1px solid var(--sl-border); border-radius:10px; background:var(--sl-surface-subtle); }
-.sl-notification-tabs button { flex:1; display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:30px; padding:.25rem .5rem; border:0; border-radius:7px; background:transparent; color:var(--sl-muted); font:inherit; font-size:.72rem; font-weight:700; text-transform:uppercase; cursor:pointer; }
-.sl-notification-tabs button.is-active { background:var(--sl-surface); color:var(--sl-text); box-shadow:0 1px 3px rgb(20 30 50 / 12%); }
-.sl-notification-tabs button span { color:inherit; opacity:.72; font-size:.66rem; }
-.sl-notification-list { display:grid; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
-.sl-notification-item { border-top:1px solid var(--sl-border-subtle); background:#fff; transition:background-color 120ms ease; }
-.sl-notification-item[data-read='false'] { background:#f0f3ff; }
-.sl-notification-open { width:100%; display:grid; grid-template-columns:38px minmax(0, 1fr) 22px; align-items:center; gap:.75rem; padding:.78rem 1rem; border:0; background:transparent; color:var(--sl-text); text-align:left; cursor:pointer; }
-.sl-notification-open:hover { background:#e6ebff; }
-.sl-notification-open:focus-visible { outline:2px solid var(--sl-brand); outline-offset:-2px; }
-.sl-notification-review-actions { display:flex; justify-content:flex-end; gap:.45rem; padding:0 1rem .7rem 4.6rem; }
-.sl-notification-review-actions .sl-button { min-height:30px; padding:.28rem .58rem; font-size:.72rem; }
-.sl-notification-reject { border-color:color-mix(in srgb, var(--sl-critical) 35%, var(--sl-border)); color:var(--sl-critical); }
-.sl-notification-reject:hover { background:color-mix(in srgb, var(--sl-critical) 9%, white); }
-.sl-notification-avatar { width:38px; height:38px; display:grid; place-items:center; border-radius:50%; background:#e9eefb; color:#4267a9; }
-.sl-notification-avatar[data-source='account-request'] { background:#e5f1e9; color:#37724d; }
-.sl-notification-avatar[data-source='change-request'] { background:#f2eaf8; color:#79539b; }
-.sl-notification-avatar[data-source='ingredient-request'] { background:#e6f1df; color:#52773b; }
-.sl-notification-avatar[data-source='inventory-batch'], .sl-notification-avatar[data-source='inventory-summary'] { background:#fff0dd; color:#9a6723; }
-.sl-notification-copy { min-width:0; display:grid; gap:.22rem; }
-.sl-notification-copy strong { overflow:hidden; color:var(--sl-text); font-size:.9rem; font-weight:680; text-overflow:ellipsis; white-space:nowrap; }
-.sl-notification-message { display:-webkit-box; overflow:hidden; color:var(--sl-muted); font-size:.81rem; line-height:1.35; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
-.sl-notification-copy time { color:var(--sl-muted); font-size:.7rem; }
-.sl-notification-arrow { color:var(--sl-text); }
-.sl-notification-see-all { flex:0 0 auto; min-height:45px; border:0; border-top:1px solid var(--sl-border-subtle); background:var(--sl-surface); color:var(--sl-text); font:inherit; font-size:.82rem; font-weight:650; cursor:pointer; }
-.sl-notification-see-all:hover { background:var(--sl-surface-subtle); }
-.sl-notification-result { margin:0; padding:.55rem 1rem; border-bottom:1px solid var(--sl-border-subtle); background:var(--sl-surface-subtle); color:var(--sl-success); font-size:.77rem; }
-.sl-notification-review-dialog { width:min(440px, calc(100vw - 2rem)); }
-.sl-notification-review-content { display:grid; gap:.85rem; }
-.sl-notification-review-content > p:first-child { margin:0; color:var(--sl-muted); font-size:.86rem; line-height:1.5; }
-.sl-notification-review-content label { display:grid; gap:.4rem; font-size:.82rem; font-weight:650; }
-.sl-notification-review-content label small { color:var(--sl-muted); font-size:.72rem; font-weight:400; }
-.sl-notification-review-content .sl-inline-notice { margin:0; }
+.sl-notification-panel { position:absolute; right:0; top:calc(100% + .55rem); z-index:70; width:min(390px, calc(100vw - 1.5rem)); max-height:min(560px, calc(100dvh - 90px)); overflow:auto; background:var(--sl-surface); border:1px solid var(--sl-border); border-radius:var(--sl-radius-lg); box-shadow:var(--sl-shadow-lg); }
+.sl-notification-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding:1rem; border-bottom:1px solid var(--sl-border-subtle); }
+.sl-notification-header h2 { margin:0; font:var(--sl-font-card-title); }
+.sl-notification-header p { margin:.2rem 0 0; color:var(--sl-muted); font-size:.8rem; }
+.sl-notification-actions { padding:.65rem 1rem; border-bottom:1px solid var(--sl-border-subtle); }
+.sl-notification-actions .sl-button { display:inline-flex; align-items:center; gap:.4rem; }
+.sl-notification-list { display:grid; }
+.sl-notification-item { padding:.9rem 1rem; border-bottom:1px solid var(--sl-border-subtle); background:var(--sl-brand-light); }
+.sl-notification-item[data-read='true'] { background:var(--sl-surface); }
+.sl-notification-item p { margin:.25rem 0; color:var(--sl-muted); font-size:.84rem; line-height:1.4; }
+.sl-notification-item time { color:var(--sl-muted); font-size:.75rem; }
 .sl-notification-empty { min-height:220px; display:grid; place-items:center; align-content:center; gap:.5rem; padding:2rem 1.25rem; text-align:center; color:var(--sl-muted); }
 .sl-notification-empty strong { color:var(--sl-text); }
 .sl-notification-empty p { max-width:30ch; margin:0; line-height:1.45; font-size:.84rem; }
-.sl-notification-caught-up { min-height:145px; }
-.sl-notification-caught-up > svg { color:var(--sl-brand); }
-.sl-notification-feedback { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.6rem 1rem; border-bottom:1px solid var(--sl-border-subtle); color:var(--sl-muted); font-size:.8rem; }
-.sl-notification-feedback .sl-button, .sl-notification-empty .sl-button { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; }
 
 /* Add-account reference: description belongs under heading, fields are compact, role cards are full-width. */
 .sl-account-form .sl-form-grid { gap:.85rem 1rem; }
@@ -12540,16 +12505,7 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   .sl-record-form .sl-record-actions .sl-button { width: 100%; }
 }
 
-/* Account requests use the same centered content rhythm as the other workspace pages. */
-.sl-account-requests-layout {
-  display: grid;
-  gap: clamp(1rem, 1.25vw, 1.35rem);
-  width: min(100%, 1400px);
-  min-width: 0;
-  align-self: center;
-}
-.sl-account-requests-layout > .sl-page-header { margin: 0; }
-.sl-account-requests-page { gap: clamp(.85rem, 1vw, 1.1rem); }
+/* Account request cards keep comfortable form spacing and contain arbitrary text safely. */
 .sl-account-requests-page > section[aria-labelledby="submit-account-request"] > .sl-card-body {
   padding: clamp(1rem, 1.5vw, 1.5rem);
 }
@@ -12564,14 +12520,14 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
 }
-.sl-account-request-table { width: 100%; min-width: 1180px; table-layout: fixed; }
+.sl-account-request-table { width: 100%; min-width: 1000px; table-layout: fixed; }
 .sl-account-request-table th:nth-child(1) { width: 14%; }
 .sl-account-request-table th:nth-child(2) { width: 20%; }
-.sl-account-request-table th:nth-child(3) { width: 13%; }
-.sl-account-request-table th:nth-child(4) { width: 17%; }
-.sl-account-request-table th:nth-child(5) { width: 10%; }
-.sl-account-request-table th:nth-child(6) { width: 10%; }
-.sl-account-request-table th:nth-child(7) { width: 16%; }
+.sl-account-request-table th:nth-child(3) { width: 14%; }
+.sl-account-request-table th:nth-child(4) { width: 18%; }
+.sl-account-request-table th:nth-child(5) { width: 11%; }
+.sl-account-request-table th:nth-child(6) { width: 13%; }
+.sl-account-request-table th:nth-child(7) { width: 10%; }
 .sl-admin-view .sl-account-request-table thead th {
   padding: .8rem .85rem;
   color: var(--sl-muted);
@@ -12587,8 +12543,6 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   white-space: normal;
 }
 .sl-account-request-table tbody tr:hover { background: var(--sl-surface-subtle); }
-.sl-account-request-table tbody td:first-child { color: var(--sl-text); font-weight: 600; }
-.sl-account-request-table tbody td:nth-child(2) { color: var(--sl-muted); }
 .sl-account-request-table td:nth-child(5) { white-space: nowrap; overflow-wrap: normal; }
 .sl-account-request-table td .sl-supporting { display: block; margin-top: .2rem; line-height: 1.35; overflow-wrap: anywhere; }
 .sl-account-request-table td:last-child .sl-row-actions { flex-wrap: wrap; gap: .4rem; }
