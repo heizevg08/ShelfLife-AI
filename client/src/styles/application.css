@@ -12540,7 +12540,16 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   .sl-record-form .sl-record-actions .sl-button { width: 100%; }
 }
 
-/* Account request cards keep comfortable form spacing and contain arbitrary text safely. */
+/* Account requests use the same centered content rhythm as the other workspace pages. */
+.sl-account-requests-layout {
+  display: grid;
+  gap: clamp(1rem, 1.25vw, 1.35rem);
+  width: min(100%, 1400px);
+  min-width: 0;
+  align-self: center;
+}
+.sl-account-requests-layout > .sl-page-header { margin: 0; }
+.sl-account-requests-page { gap: clamp(.85rem, 1vw, 1.1rem); }
 .sl-account-requests-page > section[aria-labelledby="submit-account-request"] > .sl-card-body {
   padding: clamp(1rem, 1.5vw, 1.5rem);
 }
@@ -12555,14 +12564,14 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
 }
-.sl-account-request-table { width: 100%; min-width: 1000px; table-layout: fixed; }
+.sl-account-request-table { width: 100%; min-width: 1180px; table-layout: fixed; }
 .sl-account-request-table th:nth-child(1) { width: 14%; }
 .sl-account-request-table th:nth-child(2) { width: 20%; }
-.sl-account-request-table th:nth-child(3) { width: 14%; }
-.sl-account-request-table th:nth-child(4) { width: 18%; }
-.sl-account-request-table th:nth-child(5) { width: 11%; }
-.sl-account-request-table th:nth-child(6) { width: 13%; }
-.sl-account-request-table th:nth-child(7) { width: 10%; }
+.sl-account-request-table th:nth-child(3) { width: 13%; }
+.sl-account-request-table th:nth-child(4) { width: 17%; }
+.sl-account-request-table th:nth-child(5) { width: 10%; }
+.sl-account-request-table th:nth-child(6) { width: 10%; }
+.sl-account-request-table th:nth-child(7) { width: 16%; }
 .sl-admin-view .sl-account-request-table thead th {
   padding: .8rem .85rem;
   color: var(--sl-muted);
@@ -12578,6 +12587,8 @@ section.sl-card:has(.sl-filter-popover) { overflow: visible; }
   white-space: normal;
 }
 .sl-account-request-table tbody tr:hover { background: var(--sl-surface-subtle); }
+.sl-account-request-table tbody td:first-child { color: var(--sl-text); font-weight: 600; }
+.sl-account-request-table tbody td:nth-child(2) { color: var(--sl-muted); }
 .sl-account-request-table td:nth-child(5) { white-space: nowrap; overflow-wrap: normal; }
 .sl-account-request-table td .sl-supporting { display: block; margin-top: .2rem; line-height: 1.35; overflow-wrap: anywhere; }
 .sl-account-request-table td:last-child .sl-row-actions { flex-wrap: wrap; gap: .4rem; }
