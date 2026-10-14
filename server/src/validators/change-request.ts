@@ -37,12 +37,16 @@ function integerText(field: string, value: unknown): string {
   if (typeof value !== 'string' || !/^[1-9]\d{0,14}$/.test(value) || !Number.isSafeInteger(Number(value))) invalid(field, 'Use a positive whole-number string');
   return value;
 }
+function standardUnitCostText(field: string, value: unknown): string {
+  if (typeof value !== 'string' || !/^(0|[1-9]\d{0,5}|1000000)$/.test(value)) invalid(field, 'Use a whole number from 0 to 1000000');
+  return value;
+}
 
 export type TypedChangeRequestInput = { requestType: ChangeRequestType; ingredientId: string; targetField: ChangeRequestTargetField; requestedValue: string; reason: string };
 function requestedValue(type: ChangeRequestType, value: unknown) {
   switch (type) {
     case 'MINIMUM_STOCK_CHANGE': return numberText('requestedValue', value, 3);
-    case 'STANDARD_UNIT_COST_CHANGE': return numberText('requestedValue', value, 4);
+    case 'STANDARD_UNIT_COST_CHANGE': return standardUnitCostText('requestedValue', value);
     case 'DEFAULT_SHELF_LIFE_CHANGE': return integerText('requestedValue', value);
     case 'CATEGORY_CHANGE': {
       const clean = catalogue('requestedValue', value, 1, 50);
