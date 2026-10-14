@@ -233,7 +233,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
               key={label}
               href={path}
               className="sl-nav-item"
-              aria-current={pathname === path || (path === '/UsageWaste' && ['/Usage', '/Waste'].includes(pathname)) ? 'page' : undefined}
+              aria-current={pathname === path || (path === '/UsageWaste' && ['/Usage', '/Waste'].includes(pathname)) || (path === '/InventoryBatches' && pathname === '/ExpirationMonitoring') ? 'page' : undefined}
               aria-label={label}
               title={!mobile && railCollapsed && !userManagementTooltip ? label : undefined}
               onMouseEnter={event => !mobile && userManagementTooltip && setFocusedNavigation({ label, top: event.currentTarget.getBoundingClientRect().top })}
@@ -495,7 +495,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
                 {systemHealth === 'checking' ? 'Checking' : systemHealth === 'healthy' ? 'Healthy' : systemHealth === 'attention' ? 'Needs attention' : 'Unavailable'}
               </span>
             </div>
-            <Notifications user={user} open={notificationsOpen} onChange={changeNotifications} />
+            <Notifications open={notificationsOpen} onChange={changeNotifications} />
 
             <div
               className="sl-account"

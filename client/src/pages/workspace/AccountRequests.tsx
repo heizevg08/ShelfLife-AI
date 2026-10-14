@@ -97,9 +97,8 @@ export default function AccountRequestsPage() {
   };
 
   return <>
-    <div className="sl-account-requests-layout">
-      <PageHeader title="Account Requests" description={reviewer ? 'Review proposed accounts before they are created.' : 'Request an account and track its approval status.'} />
-      <div className="sl-admin-view sl-account-requests-page">
+    <PageHeader title="Account Requests" description={reviewer ? 'Review proposed accounts before they are created.' : 'Request an account and track its approval status.'} />
+    <div className="sl-admin-view sl-account-requests-page">
       {message && <p className="sl-inline-notice" role="status">{message}</p>}
       {actionError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{actionError}</p>}
       {requester && <Card id="submit-account-request" title="Request an account">
@@ -118,7 +117,6 @@ export default function AccountRequestsPage() {
             {items.map(request => <tr key={request.id}><td>{request.firstName} {request.lastName}</td><td>{request.email}</td><td>{request.role}</td><td>{request.requestedBy.name} <span className="sl-supporting">({request.requestedBy.role})</span></td><td>{new Date(request.createdAt).toLocaleDateString()}</td><td><Status tone={request.status === 'Approved' ? 'success' : request.status === 'Rejected' ? 'critical' : 'attention'}>{request.status}</Status>{request.reviewedBy && <div className="sl-supporting">By {request.reviewedBy.name}</div>}</td><td>{request.status === 'Pending' && canReview(request) ? <div className="sl-row-actions"><button type="button" className="sl-button sl-button-primary" disabled={busy} onClick={() => beginApproval(request)}><Check size={15} aria-hidden="true" />Approve</button><button type="button" className="sl-button" disabled={busy} onClick={() => reject(request)}><X size={15} aria-hidden="true" />Reject</button></div> : request.status === 'Pending' && reviewer ? <span className="sl-supporting">Super Admin approval required</span> : request.status === 'Approved' && reviewer && canReview(request) ? <div className="sl-row-actions"><span className="sl-supporting">Account created</span><button type="button" className="sl-icon-button" title="Remove approved request from list" aria-label={`Delete approved request for ${request.firstName} ${request.lastName}`} disabled={busy} onClick={() => void remove(request)}><Trash2 size={16} aria-hidden="true" /></button></div> : request.accountId ? <span className="sl-supporting">Account created</span> : <span className="sl-supporting">—</span>}</td></tr>)}
           </tbody></table></div>}
       </Card>
-      </div>
     </div>
     <Dialog open={!!selected} title="Approve account request" onDismiss={() => { if (!busy) setSelected(null); }} busy={busy} actions={<><button type="button" className="sl-button" disabled={busy} onClick={() => setSelected(null)}>Cancel</button><button type="submit" className="sl-button sl-button-primary" form="account-request-approval" disabled={busy}>{busy ? 'Creating account…' : 'Approve and create account'}</button></>}>
       {selected && <form id="account-request-approval" onSubmit={approve} className="sl-account-request-approval"><p>Create {selected.firstName} {selected.lastName} as <strong>{selected.role}</strong>. Set the initial password now; share it with the requester securely.</p>{decisionError && <p role="alert" className="sl-inline-notice sl-inline-notice-error">{decisionError}</p>}<label>Initial password<input className="sl-admin-input" type="password" autoComplete="new-password" minLength={12} maxLength={1024} value={password} disabled={busy} onChange={event => setPassword(event.target.value)} /></label></form>}
