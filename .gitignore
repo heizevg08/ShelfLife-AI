@@ -1,0 +1,76 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+/.env
+/server/.env
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+/client/ios
+/client/android
+
+# Local editor and workspace files
+.vscode/
+project_structure.txt
+
+# Local server files
+/server/.env.test-accounts.local
+
+# Generated server files
+/server/dist/
+/server/node_modules/
+
+# Generated browser-test and QA output
+/.playwright-cli/
+/playwright-report/
+/test-results/
+/output/playwright/
+/output/browser-qa/
+/client/e2e/
+/client/playwright.config.*
+/client/.playwright-cli/
+/client/playwright-report/
+/client/test-results/
+/client/output/
+/client/blob-report/
+/client/e2e/.auth/
+/client/e2e/browser-profiles/
+/client/e2e/recordings/
+/client/e2e/screenshots/
+/client/e2e/traces/
+/client/e2e/videos/

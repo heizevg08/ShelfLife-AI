@@ -1,0 +1,113 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { canOpenWorkspacePath, canonicalWorkspaceAccess, navigation, workspaceNavigation, type WorkspaceRole } from '../src/components/application/workspace';
+
+const roles: WorkspaceRole[] = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'];
+
+// The sidebar is the only place a role learns a module exists, so offering a link the
+// guard then refuses is a dead end the user cannot explain. /Alerts previously carried
+// Inventory Staff in the module metadata while both the navigation list and the route
+// guard excluded them; this keeps the two from drifting apart again.
+test('every module offered in a role sidebar is a path that role may open', () => {
+  let checked = 0;
+  for (const role of roles) {
+    for (const item of workspaceNavigation(role)) {
+      assert.equal(canOpenWorkspacePath(role, item.path), true, `${role} is offered ${item.path} but cannot open it`);
+      checked += 1;
+    }
+  }
+  // Derived from the authoritative sidebar map, not a frozen number: adding or removing a
+  // sidebar entry updates both sides together instead of breaking a brittle constant.
+  const expected = roles.reduce((total, role) => total + navigation[role].length, 0);
+  assert.equal(checked, expected);
+  const staffPaths = workspaceNavigation('Inventory Staff').map(item => item.path);
+  assert.equal(staffPaths.includes('/Alerts'), false);
+});
+
+test('every Source-of-Truth-derived role and canonical route decision is enforced', () => {
+  let checked = 0;
+  for (const [path, permitted] of Object.entries(canonicalWorkspaceAccess)) {
+    for (const role of roles) {
+      assert.equal(canOpenWorkspacePath(role, path), (permitted as readonly WorkspaceRole[]).includes(role), `${role} at ${path}`);
+      checked += 1;
+    }
+  }
+  assert.equal(Object.keys(canonicalWorkspaceAccess).length, 29);
+  assert.equal(checked, 116);
+});
+
+test('Super Admin retains administration duties without operational oversight routes', () => {
+  const removed = ['/Ingredients', '/InventoryBatches', '/Usage', '/Waste', '/ChangeRequests', '/ExpirationMonitoring', '/Forecasting', '/Alerts', '/Reports'];
+  for (const path of removed) assert.equal(canOpenWorkspacePath('Super Admin', path), false, path);
+  for (const path of ['/SuperAdminDashboard', '/UserManagement', '/SecurityActivity', '/SystemSettings', '/AdministrativeAudit']) {
+    assert.equal(canOpenWorkspacePath('Super Admin', path), true, path);
+  }
+  const shell = readFileSync(new URL('../src/components/application/ApplicationShell.tsx', import.meta.url), 'utf8');
+  const dashboard = readFileSync(new URL('../src/components/dashboard/SuperAdminDashboard.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(shell, /System Oversight|Alert Queue|Change Request Queue|Waste & Forecast Reports/);
+  assert.doesNotMatch(dashboard, /ExpirationMonitoring|Critical \/ Expiring Ingredients|Waste Trend|Forecast Accuracy/);
+});
+
+test('Manager Change Requests is selected inside the Vite route outlet', () => {
+  const layout = readFileSync(new URL('../src/routing/router.tsx', import.meta.url), 'utf8');
+  const route = readFileSync(new URL('../src/app/(administration)/ChangeRequests.tsx', import.meta.url), 'utf8');
+  assert.match(layout, /<ApplicationWorkspace><Outlet \/><\/ApplicationWorkspace>/);
+  assert.match(layout, /ChangeRequests: \(\) => import\('\.\.\/app\/\(administration\)\/ChangeRequests'\)/);
+  assert.doesNotMatch(layout, /ConnectedManagerChangeRequestsPage/);
+  assert.match(route, /user\.role === 'Manager' \? <ConnectedManagerChangeRequestsPage \/>/);
+});
+
+test('Manager Change Request presentation is opt-in and Staff modal keeps its protected semantic controls', () => {
+  const details = readFileSync(new URL('../src/components/application/ChangeRequestDetailsDialog.tsx', import.meta.url), 'utf8');
+  const manager = readFileSync(new URL('../src/components/application/ManagerChangeRequestsPage.tsx', import.meta.url), 'utf8');
+  const route = readFileSync(new URL('../src/app/(administration)/ChangeRequests.tsx', import.meta.url), 'utf8');
+  const dashboard = readFileSync(new URL('../src/components/dashboard/RoleDashboard.tsx', import.meta.url), 'utf8');
+  assert.match(details, /manager = false/);
+  assert.match(manager, /<ChangeRequestDetailsDialog manager /);
+  assert.match(route, /<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/);
+  assert.equal((dashboard.match(/<ChangeRequestDetailsDialog inventoryStaff request=\{detail\}/g) ?? []).length, 1);
+  assert.match(dashboard, /<ChangeRequestDetailsDialog request=\{requestDetail\}/);
+  assert.match(route, /<PageHeader eyebrow="Follow-up" title="My Requests" description="Submit and track your ingredient change requests\."/);
+  assert.match(route, /<InventoryStaffModal open=\{open\}/);
+  assert.match(route, /<InventoryStaffModalForm formId="new-change-request"/);
+  assert.match(route, /sl-staff-my-request-form-grid/);
+  assert.match(route, /<span>Request Type<\/span><select/);
+  assert.match(route, /<span>Ingredient<\/span><select/);
+  assert.match(route, /<span>Current Value<\/span><output/);
+  assert.match(route, /Requested Value'[\s\S]*?<input/);
+  assert.match(route, /<span>Reason<\/span><textarea/);
+  assert.match(route, /secondaryLabel="Cancel"/);
+  assert.match(route, /primaryLabel="Submit Request"/);
+  assert.match(route, /const DATE_RANGES=\['All dates','Today','Last 7 Days','Last 30 Days','Custom range'\]/);
+  assert.match(route, /<span>Date Range<\/span><FilterSelect ariaLabel="Filter requests by date range" value=\{range\}/);
+  assert.match(route, /range==='Custom range'&&<div className="sl-v219-custom-date-range">/);
+  assert.match(route, /\.\.\.period,currentOnly:true/);
+  assert.match(route, /const reset=\(\)=>\{setSearch\(''\);setType\(''\);setStatus\(''\);setRange\('All dates'\);setFrom\(''\);setTo\(''\);setPage\(1\)\}/);
+  assert.match(route, /filtered\?'No matching records':'No requests yet'/);
+  assert.match(route, /filtered\?'Try adjusting your search or filters\.':'Your submitted change requests will appear here\.'/);
+  assert.match(route, /currentOnly:true/);
+});
+
+test('Manager Change Requests Actions column uses the shared Eye action control without unimplemented operations', () => {
+  const manager = readFileSync(new URL('../src/components/application/ManagerChangeRequestsPage.tsx', import.meta.url), 'utf8');
+  assert.match(manager, /import \{[^}]*\bEye\b[^}]*\} from 'lucide-react'/);
+  assert.match(manager, /className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label=\{`\$\{record\.requestID\} actions`\}>/);
+  assert.match(manager, /aria-label=\{record\.status==='PENDING'\?`Review Request \$\{record\.requestID\}`:`View Request \$\{record\.requestID\}`\}/);
+  assert.match(manager, /title=\{record\.status==='PENDING'\?'Review Request':'View Request'\}/);
+  assert.match(manager, /<Eye size=\{16\} aria-hidden="true"\/>/);
+  assert.doesNotMatch(manager, /sl-button-compact/);
+  assert.doesNotMatch(manager, /Pencil|Trash|Escalat|Cancel Request/);
+  assert.match(manager, /approveChangeRequest\(selected\.id\)/);
+  assert.match(manager, /rejectChangeRequest\(selected\.id,reviewNote\.trim\(\)\)/);
+});
+
+test("Inventory Staff Today's Usage displays the authoritative record count", () => {
+  const dashboard = readFileSync(new URL('../src/components/dashboard/RoleDashboard.tsx', import.meta.url), 'utf8');
+  const usageStore = readFileSync(new URL('../../server/src/services/usage-record-store.ts', import.meta.url), 'utf8');
+  assert.match(dashboard, /const usageValue = usageSummaryFailed \|\| usageSummary === null \? '\\u2014' : usageSummary\.usageRecordsToday/);
+  assert.match(dashboard, /const usageHelper = usageSummaryFailed \? 'Usage summary unavailable' : usageSummary === null \? 'Loading usage summary' : 'Usage records logged today'/);
+  assert.match(dashboard, /<span>Today&apos;s Usage<\/span><strong>\{usageValue\}<\/strong><small>\{usageHelper\}<\/small>/);
+  assert.doesNotMatch(dashboard, /usageTotalsByUnitToday\.map|totalUsageToday\.quantity|sl-dashboard-usage-value|data-density/);
+  assert.match(usageStore, /usageRecordsToday: todayItems\.length/);
+});

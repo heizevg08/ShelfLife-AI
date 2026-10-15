@@ -1,0 +1,127 @@
+import type { ClientSession, Mongoose } from 'mongoose';
+import type { usageRecordModel } from '../models/usage-record';
+import type { inventoryBatchModel } from '../models/inventory-batch';
+import type { ingredientModel } from '../models/ingredient';
+import type { userModel } from '../models/user';
+import type { auditRecordModel } from '../models/audit-record';
+import { normalizeUserRole } from '../models/user';
+import { AdministrationError } from '../middleware/administration.middleware';
+import type { Actor } from './administration';
+import type { UsageCreateInput, UsagePageQuery } from '../validators/usage-record';
+import type { AnalyticsQuery } from '../validators/analytics';
+import type { UsageAnalytics } from './usage-records';
+import { aggregateRecordCounts } from './analytics';
+import type { UsageRecordStore, UsageRecordView, UsageSummary } from './usage-records';
+import { businessCalendarDate, businessDayBounds } from '../utils/business-day';
+
+type Id = { toString(): string };
+type UsageRow = { _id: Id; batchId: Id; ingredientId: Id; quantityUsed: number; unit: string; dateUsed: Date; staffId: Id; createdAt: Date };
+type IngredientRow = { _id: Id; name: string; unitOfMeasure: string };
+type BatchRow = { _id: Id; ingredientId: Id; batchID: string; quantity: number; unit: string };
+type UserRow = { _id: Id; name?: string; firstName: string; lastName: string };
+type Resolved = { row: UsageRow; ingredient: IngredientRow; batch: BatchRow; staff: UserRow };
+
+const staffIdentity = (staff: UserRow) => ({ name: staff.name?.trim() || `${staff.firstName} ${staff.lastName}`.trim() || 'Unknown account', firstName: staff.firstName, lastName: staff.lastName });
+const serialize = ({ row, ingredient, batch, staff }: Resolved): UsageRecordView => ({
+  id: row._id.toString(), dateUsed: row.dateUsed.toISOString(), ingredient: { id: ingredient._id.toString(), name: ingredient.name },
+  batch: { id: batch._id.toString(), batchID: batch.batchID }, quantityUsed: row.quantityUsed, unit: row.unit,
+  recordedBy: { id: staff._id.toString(), ...staffIdentity(staff) }, createdAt: row.createdAt.toISOString(),
+});
+
+export function createUsageRecordStore(driver: Mongoose, records: ReturnType<typeof usageRecordModel>, batches: ReturnType<typeof inventoryBatchModel>, ingredients: ReturnType<typeof ingredientModel>, users: ReturnType<typeof userModel>, audits: ReturnType<typeof auditRecordModel>): UsageRecordStore {
+  const resolve = async (): Promise<Resolved[]> => {
+    const rows = await records.find({}).sort({ dateUsed: -1, _id: -1 }).lean().exec() as UsageRow[];
+    const ingredientIds = [...new Set(rows.map(row => row.ingredientId.toString()))];
+    const batchIds = [...new Set(rows.map(row => row.batchId.toString()))];
+    const staffIds = [...new Set(rows.map(row => row.staffId.toString()))];
+    const [ingredientRows, batchRows, staffRows] = await Promise.all([
+      ingredients.find({ _id: { $in: ingredientIds } }).select('_id name unitOfMeasure').lean().exec() as Promise<IngredientRow[]>,
+      batches.find({ _id: { $in: batchIds } }).select('_id ingredientId batchID quantity unit').lean().exec() as Promise<BatchRow[]>,
+      users.find({ _id: { $in: staffIds } }).select('_id name firstName lastName').lean().exec() as Promise<UserRow[]>,
+    ]);
+    const ingredientsById = new Map(ingredientRows.map(row => [row._id.toString(), row]));
+    const batchesById = new Map(batchRows.map(row => [row._id.toString(), row]));
+    const staffById = new Map(staffRows.map(row => [row._id.toString(), row]));
+    return rows.flatMap(row => {
+      const ingredient = ingredientsById.get(row.ingredientId.toString());
+      const batch = batchesById.get(row.batchId.toString());
+      const staff = staffById.get(row.staffId.toString());
+      return ingredient && batch && staff ? [{ row, ingredient, batch, staff }] : [];
+    });
+  };
+  const filtered = (items: Resolved[], query: UsagePageQuery) => {
+    const search = query.search?.toLocaleLowerCase();
+    return items.filter(item => (!search || item.ingredient.name.toLocaleLowerCase().includes(search) || item.batch.batchID.toLocaleLowerCase().includes(search))
+      && (!query.ingredientId || item.ingredient._id.toString() === query.ingredientId)
+      && (!query.from || item.row.dateUsed >= query.from)
+      && (!query.to || item.row.dateUsed <= query.to));
+  };
+  const createManyWithin = async (session: ClientSession, actor: Actor, inputs: UsageCreateInput[]) => {
+    const ingredientIds = [...new Set(inputs.map(input => input.ingredientId))];
+    const batchIds = [...new Set(inputs.map(input => input.batchId))];
+    const ingredientRows = await ingredients.find({ _id: { $in: ingredientIds } }).select('_id name unitOfMeasure').session(session).lean().exec() as IngredientRow[];
+    const batchRows = await batches.find({ _id: { $in: batchIds } }).select('_id ingredientId batchID quantity unit').session(session).lean().exec() as BatchRow[];
+    const ingredientsById = new Map(ingredientRows.map(row => [row._id.toString(), row]));
+    const batchesById = new Map(batchRows.map(row => [row._id.toString(), row]));
+    const deductions = new Map<string, number>();
+    const firstRowByBatch = new Map<string, number>();
+    inputs.forEach((input, index) => {
+      const ingredient = ingredientsById.get(input.ingredientId);
+      const batch = batchesById.get(input.batchId);
+      if (!ingredient) throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found', [{ field: `items.${index}.ingredientId`, message: 'Ingredient not found' }]);
+      if (!batch) throw new AdministrationError(404, 'NOT_FOUND', 'Inventory batch not found', [{ field: `items.${index}.batchId`, message: 'Inventory batch not found' }]);
+      if (batch.ingredientId.toString() !== ingredient._id.toString()) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: `items.${index}.batchId`, message: 'Selected batch does not belong to the ingredient' }]);
+      if (!firstRowByBatch.has(input.batchId)) firstRowByBatch.set(input.batchId, index);
+      deductions.set(input.batchId, (deductions.get(input.batchId) ?? 0) + input.quantityUsed);
+    });
+    for (const [batchId, quantity] of deductions) {
+      const deducted = await batches.findOneAndUpdate({ _id: batchId, quantity: { $gte: quantity } }, { $inc: { quantity: -quantity } }, { new: true, session }).lean().exec() as BatchRow | null;
+      if (!deducted) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: `items.${firstRowByBatch.get(batchId) ?? 0}.quantityUsed`, message: 'Combined usage exceeds the available quantity for the selected batch' }]);
+    }
+    const ids: string[] = [];
+    for (const input of inputs) {
+      const batch = batchesById.get(input.batchId)!;
+      const created = await records.create([{ batchId: input.batchId, ingredientId: input.ingredientId, quantityUsed: input.quantityUsed, unit: batch.unit, dateUsed: input.dateUsed, staffId: new driver.Types.ObjectId(actor.id) }], { session });
+      const row = created[0] as unknown as UsageRow;
+      ids.push(row._id.toString());
+      await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined, action: 'CREATE', targetType: 'UsageRecord', targetId: row._id.toString(), targetName: batch.batchID, module: 'Usage Recording', status: 'Success', details: 'Inventory usage recorded and batch quantity deducted' }], { session });
+    }
+    return ids;
+  };
+  return {
+    async ready() { await Promise.all([records.collection.createIndex({ dateUsed: -1, _id: -1 }, { name: 'dateUsed_-1__id_-1' }), records.collection.createIndex({ ingredientId: 1, dateUsed: -1 }, { name: 'ingredientId_1_dateUsed_-1' })]); },
+    async list(query) { const items = filtered(await resolve(), query); const start = (query.page - 1) * query.pageSize; return { items: items.slice(start, start + query.pageSize).map(serialize), page: query.page, pageSize: query.pageSize, total: items.length }; },
+    async detail(id) { const item = (await resolve()).find(candidate => candidate.row._id.toString() === id); return item ? serialize(item) : null; },
+    async summary(now) {
+      const items = await resolve(); const today = businessDayBounds(now); const todayItems = items.filter(item => item.row.dateUsed >= today.start && item.row.dateUsed < today.end);
+      const totalsByUnit = new Map<string, number>();
+      for (const item of todayItems) totalsByUnit.set(item.row.unit, (totalsByUnit.get(item.row.unit) ?? 0) + item.row.quantityUsed);
+      const usageTotalsByUnitToday = [...totalsByUnit].map(([unit, quantity]) => ({ quantity, unit }));
+      const totalUsageToday = usageTotalsByUnitToday.length === 1 ? usageTotalsByUnitToday[0]! : null;
+      // The week starts on a Philippine Monday, so derive the weekday from the business calendar
+      // date: the boundary instant itself is the previous day in UTC, which would read one day off.
+      const businessToday = businessCalendarDate(now);
+      const weekStart = new Date(today.start.getTime() - ((new Date(Date.UTC(businessToday.year, businessToday.month - 1, businessToday.day)).getUTCDay() + 6) % 7) * 86_400_000);
+      // A cross-unit "most used" ranking is invalid until the product defines unit normalization.
+      return { totalUsageToday, usageTotalsByUnitToday, usageRecordsToday: todayItems.length, mostUsedIngredient: null, ingredientsUsedThisWeek: new Set(items.filter(item => item.row.dateUsed >= weekStart && item.row.dateUsed < today.end).map(item => item.row.ingredientId.toString())).size } satisfies UsageSummary;
+    },
+    async analytics(query) {
+      const result = await aggregateRecordCounts(pipeline => records.aggregate(pipeline).exec(), query, 'dateUsed');
+      return {
+        metric: 'record count',
+        period: result.period,
+        total: result.total,
+        dailyCounts: result.dailyCounts,
+        unresolvedIngredientRecords: result.unresolvedIngredientRecords,
+      } satisfies UsageAnalytics;
+    },
+    async create(actor, input) {
+      try { return (await this.createMany(actor, [input]))[0]!; }
+      catch (error) {
+        if (error instanceof AdministrationError) throw new AdministrationError(error.status, error.code, error.message, error.details.map(detail => ({ ...detail, field: detail.field.replace(/^items\.0\.?/, '') || 'quantityUsed' })));
+        throw error;
+      }
+    },
+    async createMany(actor, inputs) { const ids = await driver.connection.transaction(session => createManyWithin(session, actor, inputs)); const created = await Promise.all(ids.map(id => this.detail(id))); if (created.some(record => !record)) throw new AdministrationError(500, 'REQUEST_FAILED', 'Usage records could not be loaded'); return created as UsageRecordView[]; },
+  };
+}
