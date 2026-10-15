@@ -10,7 +10,7 @@ import { accountSummary, type DashboardSummary } from '../../services/administra
 import { listIngredientCategories, listIngredients } from '../../services/ingredients';
 import { AuditTable } from '../application/AuditTable';
 import { sessionDisplayName } from '../../services/auth';
-import { getInventoryBatchSummary, listInventoryBatches, type InventoryBatch } from '../../services/inventory-batches';
+import { getInventoryBatchSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchSummary } from '../../services/inventory-batches';
 import { changeRequestStatusLabel, changeRequestTypeLabel, getChangeRequest, listChangeRequests, type ChangeRequest } from '../../services/change-requests';
 import { getUsageSummary, type UsageSummary } from '../../services/usage-records';
 import { formatDate } from '../../utils/date-time';
@@ -52,6 +52,22 @@ function AdminDashboardContent({ userName }: { userName: string }) {
   const [ingredientCategoriesFailed, setIngredientCategoriesFailed] = useState(false);
   const [userSummary, setUserSummary] = useState<DashboardSummary | null>(null);
   const [userSummaryFailed, setUserSummaryFailed] = useState(false);
+  // Inventory KPIs and the status donut come from the same authorized batch summary the
+  // Manager and Inventory Staff dashboards already use. Admin is an authorized reader of
+  // `/inventory-batches/summary`, so these values are real, not placeholders.
+  const [inventorySummary, setInventorySummary] = useState<Pick<InventoryBatchSummary, 'totalBatches' | 'nearExpiry' | 'lowStockItems' | 'statusCounts'> | null>(null);
+  const [inventorySummaryFailed, setInventorySummaryFailed] = useState(false);
+  useEffect(() => {
+    const abort = new AbortController();
+    setInventorySummaryFailed(false);
+    getInventoryBatchSummary(abort.signal)
+      .then(summary => {
+        if (abort.signal.aborted) return;
+        setInventorySummary({ totalBatches: summary.totalBatches, nearExpiry: summary.nearExpiry, lowStockItems: summary.lowStockItems, statusCounts: summary.statusCounts });
+      })
+      .catch(() => { if (!abort.signal.aborted) setInventorySummaryFailed(true); });
+    return () => abort.abort();
+  }, []);
   useEffect(() => {
     const abort = new AbortController();
     setIngredientFailed(false);
@@ -96,14 +112,14 @@ function AdminDashboardContent({ userName }: { userName: string }) {
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Establishment inventory overview">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound aria-hidden="true" /></span><div><span>Total Users</span><strong>{userValue}</strong>{(userSummaryFailed || userSummary === null) && <small>{userSummaryFailed ? 'Account summary unavailable' : 'Loading account records'}</small>}</div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Box aria-hidden="true" /></span><div><span>Total Ingredients</span><strong>{ingredientValue}</strong>{(ingredientFailed || ingredientTotal === null) && <small>{ingredientFailed ? 'Ingredient service unavailable' : 'Loading ingredient records'}</small>}</div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Inventory Batches</span><strong>—</strong><small>Inventory batch service unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TriangleAlert aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>—</strong><small>Expiration service unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Inventory Batches</span><strong>{inventorySummary?.totalBatches ?? '—'}</strong><small>{inventorySummaryFailed ? 'Inventory batch service unavailable' : 'Live inventory batches'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TriangleAlert aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>{inventorySummary?.nearExpiry ?? '—'}</strong><small>{inventorySummaryFailed ? 'Expiration service unavailable' : 'Batches expiring within seven days'}</small></div></article>
       </section>
 
       <section className="sl-admin-reference-analytics" aria-label="Inventory analytics">
         <Card id="admin-ingredient-overview" title={<DashboardCardTitle Icon={Box}>Ingredient Overview</DashboardCardTitle>}><ApplicationDonutChart ariaLabel="Ingredient category overview" centerLabel="Ingredients" items={ingredientCategories ?? []} unavailableMessage={categoryStatus} /></Card>
         <Card id="admin-user-overview" title={<DashboardCardTitle Icon={UsersRound}>User Overview</DashboardCardTitle>}><ApplicationDonutChart ariaLabel="Current Admin, Manager, and Inventory Staff account totals" centerLabel="Users" items={userOverview} unavailableMessage={accountStatus} /></Card>
-        <Card id="admin-inventory-overview" title={<DashboardCardTitle Icon={Boxes}>Inventory Overview</DashboardCardTitle>}><ApplicationPendingState description="Inventory status records will appear when the inventory batch service is connected." /></Card>
+        <Card id="admin-inventory-overview" title={<DashboardCardTitle Icon={Boxes}>Inventory Overview</DashboardCardTitle>}>{inventorySummary ? <ApplicationDonutChart ariaLabel="Current inventory batch status distribution" centerLabel="Batches" centerValue={inventorySummary.totalBatches} items={Object.entries(inventorySummary.statusCounts).map(([label, value]) => ({ label, value }))} /> : inventorySummaryFailed ? <DataState kind="error" title="Data unavailable" description="Inventory status data could not be loaded." /> : <DataState kind="loading" title="Loading inventory status" description="Retrieving current batch status totals." />}</Card>
       </section>
 
       <section className="sl-admin-dashboard-record-grid sl-admin-dashboard-record-grid-single" aria-label="Admin dashboard records">

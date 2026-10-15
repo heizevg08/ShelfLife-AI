@@ -5,12 +5,17 @@ import { createDatabase, type Database } from './config/database';
 import { readConfig, type Config } from './config/env';
 import { Mongoose } from 'mongoose';
 import { readJwtSecret } from './config/auth';
-import { userModel } from './models/user';
+import { normalizeUserRole, userModel } from './models/user';
 import { createAuth, type AuthService } from './services/auth';
 import { persistentSessionModel } from './models/persistent-session';
 import { createPersistentSessions } from './services/persistent-session';
 import { createPasswordRecovery } from './services/password-recovery';
+import { createPasswordChange } from './services/password-change';
+import { createProfileUpdate } from './services/profile-update';
 import { createResetEmail } from './services/reset-email';
+import { createEmailChangeEmail } from './services/email-change-email';
+import { createEmailChange } from './services/email-change';
+import { createEmailChangeStore } from './services/email-change-store';
 import type { AuthExtensions } from './routes/auth.routes';
 import { auditRecordModel } from './models/audit-record';
 import { createAdministration, type AdministrationService } from './services/administration';
@@ -159,7 +164,35 @@ if (require.main === module) {
         return result.modifiedCount === 1;
       },
     }, createResetEmail(process.env));
+    const passwordChange = createPasswordChange({
+      byIdWithHash: (id: string) => users.findById(id).select('+passwordHash').lean().exec(),
+      applyPasswordChange: async (id: string, passwordHash: string) => {
+        // One atomic write: the new hash lands only for an active account, the outstanding
+        // reset request is cleared, and the version bump invalidates every access token and
+        // refresh session already issued to this account.
+        const result = await users.updateOne({ _id: id, isActive: true }, {
+          $set: { passwordHash }, $unset: { resetTokenHash: 1, resetExpiresAt: 1 }, $inc: { authVersion: 1 },
+        }).exec();
+        return result.modifiedCount === 1;
+      },
+    });
     const audits = auditRecordModel(driver);
+    const emailChange = createEmailChange(createEmailChangeStore(driver, users, audits), createEmailChangeEmail(process.env));
+    const profileUpdate = createProfileUpdate({
+      byId: (id: string) => users.findById(id).lean().exec(),
+      // Optimistic write: the name parts only change while they still hold the values the
+      // caller was shown, so two concurrent edits cannot silently overwrite each other.
+      applyName: async (id: string, expected: { firstName: string; lastName: string }, next: { firstName: string; lastName: string; name: string }) => {
+        const result = await users.updateOne({ _id: id, isActive: true, firstName: expected.firstName, lastName: expected.lastName },
+          { $set: { firstName: next.firstName, lastName: next.lastName, name: next.name } }).exec();
+        return result.modifiedCount === 1;
+      },
+    }, async (actor, details) => {
+      // The record names the account and the changed fields only. No credential, token or
+      // internal identifier beyond the account's own id is written.
+      await audits.create({ userId: actor.id, actorName: actor.name, actorRole: normalizeUserRole(actor.role) ?? undefined,
+        action: 'UPDATE', targetType: 'User', targetId: actor.id, targetName: 'Own account', module: 'Account Profile', status: 'Success', details });
+    });
     const administration = createAdministration(createAdministrationStore(driver, users, audits));
     const ingredients = createIngredients(createIngredientStore(driver, ingredientModel(driver), users, audits));
     const inventoryBatches = createInventoryBatches(createInventoryBatchStore(driver, inventoryBatchModel(driver), inventoryBatchCounterModel(driver), ingredientModel(driver), users, audits));
@@ -172,7 +205,7 @@ if (require.main === module) {
       await database.connect(uri);
       await provisionSecurityIndexes(loginAttempts);
     } };
-    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports);
+    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

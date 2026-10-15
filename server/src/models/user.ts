@@ -37,6 +37,11 @@ const schema = new Schema({
   authVersion: { type: Number, default: 0 },
   resetTokenHash: { type: String, select: false },
   resetExpiresAt: { type: Date, select: false },
+  pendingEmail: { type: String, select: false, set: (value: string) => value.trim().toLowerCase(), validate: (value: string) => normalizeEmail(value) === value },
+  emailChangeCodeHash: { type: String, select: false },
+  emailChangeExpiresAt: { type: Date, select: false },
+  emailChangeSentAt: { type: Date, select: false },
+  emailChangeAttempts: { type: Number, select: false, min: 0, max: 5 },
 }, { timestamps: true, versionKey: false, collection: 'users', strict: 'throw' });
 
 export type UserRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
@@ -62,7 +67,12 @@ export function safeUser(user: UserRecord) {
   if (role === 'Super Admin' && displayName === 'Admin') displayName = 'Super Admin';
   const createdAt = isoTimestamp(user.createdAt);
   const updatedAt = isoTimestamp(user.updatedAt);
-  return { id: user._id.toString(), name: displayName, email: user.email,
+  // First and last name are exposed as their own authoritative fields so a profile can
+  // present them separately instead of splitting the combined display name.
+  return { id: user._id.toString(), name: displayName,
+    firstName: typeof user.firstName === 'string' ? user.firstName.trim() : '',
+    lastName: typeof user.lastName === 'string' ? user.lastName.trim() : '',
+    email: user.email,
     role, isActive: user.isActive, ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}),
     ...(createdAt ? { createdAt } : {}), ...(updatedAt ? { updatedAt } : {}) };
 }

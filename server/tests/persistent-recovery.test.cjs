@@ -76,12 +76,12 @@ test('recovery is generic, hashed, expiring, single-use and invalidates prior ac
   assert.deepEqual(await failed.request({email:f.row.email}),known);assert.equal(saved,undefined);
 });
 
-test('Resend boundary is disabled without configuration and requires provider acceptance',async()=>{
+test('password recovery mail is disabled without configuration and uses the captured transport',async()=>{
   assert.equal(createResetEmail({}),undefined);
-  assert.equal(createResetEmail({RESEND_API_KEY:'test',RESEND_FROM:'test@example.com',PASSWORD_RESET_URL:'http://untrusted.example',NODE_ENV:'production'}),undefined);
-  const env={RESEND_API_KEY:'isolated-key',RESEND_FROM:'test@example.com',PASSWORD_RESET_URL:'https://example.com/ShelfLifeAILogin'};
+  assert.equal(createResetEmail({PASSWORD_RESET_URL:'http://untrusted.example',NODE_ENV:'production'},{send:async()=>{}}),undefined);
+  const env={PASSWORD_RESET_URL:'https://example.com/ShelfLifeAILogin'};
   let sent;
-  await createResetEmail(env,async(url,options)=>{sent=JSON.parse(options.body);return new Response(JSON.stringify({id:'provider-accepted'}),{status:200})}).send('recipient@example.com','a'.repeat(64));
+  await createResetEmail(env,{send:async message=>{sent=message}}).send('recipient@example.com','a'.repeat(64));
   assert(sent.text.includes('#reset='));assert(!sent.text.includes('?reset='));
-  await assert.rejects(createResetEmail(env,async()=>new Response('{}',{status:500})).send('recipient@example.com','a'.repeat(64)));
+  await assert.rejects(createResetEmail(env,{send:async()=>{throw Error('delivery unavailable')}}).send('recipient@example.com','a'.repeat(64)));
 });

@@ -69,7 +69,9 @@ test('HTTP login/me verify tokens and current user state, with safe responses', 
   async function login(body){return fetch(base+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
   const valid=await login({email:' ADMIN@SHELFLIFE.COM ',password:seedInput.password});assert.equal(valid.status,200);
   assert.equal(valid.headers.get('cache-control'),'no-store');
-  const result=await valid.json();assert.equal(result.message,'Login successful');assert.deepEqual(Object.keys(result.user).sort(),['createdAt','email','id','isActive','lastLoginAt','name','role','updatedAt']);
+  const result=await valid.json();assert.equal(result.message,'Login successful');assert.deepEqual(Object.keys(result.user).sort(),['createdAt','email','firstName','id','isActive','lastLoginAt','lastName','name','role','updatedAt']);
+  // The name parts are the authoritative stored fields, not a split of the display name.
+  assert.equal(result.user.firstName,'Test');assert.equal(result.user.lastName,'Admin');assert.equal(result.user.name,'Test Admin');
   assert.equal(Number.isNaN(Date.parse(result.user.lastLoginAt)),false);
   assert.equal(recordedLoginAt.toISOString(),result.user.lastLoginAt);
   assert.equal(JSON.stringify(result).includes('password'),false);assert.equal(JSON.stringify(result).includes(row.passwordHash),false);

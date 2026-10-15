@@ -5,10 +5,12 @@
 // module depends on that component's own point type rather than defining a second one:
 // Forecasting maps its series onto the reference chart's two value slots.
 //
-// This module intentionally contains types and deterministic transformations only. The
-// production Manager /Forecasting page renders truthful unavailable states until an
-// authoritative forecasting service exists. Nothing here is a measurement, model output,
-// prediction, development fixture, or synthetic dataset.
+// WHY THE SAMPLE FIXTURES ARE NOT IN THIS FILE: the production Manager /Forecasting page
+// renders these panels with no data at all, so it imports this module for its helpers. If
+// the invented fixtures lived here, importing a chart would pull every sample number into
+// the production bundle - one `import` away from being rendered on a live decision-support
+// surface. They therefore live in forecast-sample-data.ts, which only the development-only
+// preview imports. Nothing in this file is a measurement, a model output or a prediction.
 import type { DailyPoint } from './ManagerDailyRecordChart';
 import { shiftBusinessDate } from '../../utils/business-day';
 

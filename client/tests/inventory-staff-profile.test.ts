@@ -3,41 +3,67 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const profile = readFileSync(new URL('../src/components/application/ProfilePage.tsx', import.meta.url), 'utf8');
+const accountProfile = readFileSync(new URL('../src/components/application/ManagerProfilePage.tsx', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
 
-test('Inventory Staff receives the real read-only Profile Settings presentation', () => {
-  assert.match(profile, /if \(user\.role === 'Inventory Staff'\) return <InventoryStaffProfileSettings user=\{user\} \/>/);
-  assert.match(profile, /<PageHeader eyebrow="Account" title="Profile Settings" description="View your profile information and account access details\." \/>/);
-  assert.match(profile, /title="Profile Information" description="View your account identity and contact information\."/);
-  assert.match(profile, /<dt>Full Name<\/dt><dd>\{displayName \|\| 'Unavailable'\}<\/dd>/);
-  assert.match(profile, /<dt>Email Address<\/dt><dd>\{user\.email \|\| 'Unavailable'\}<\/dd>/);
-  assert.match(profile, /Account information is managed by an administrator\./);
-  assert.match(profile, /title="Account & Access" description="Review your account status and access information\."/);
-  for (const label of ['Role', 'Account Status', 'Last Login', 'Created', 'Last Updated']) assert.ok(profile.includes(`label: '${label}'`), label);
-  assert.match(profile, /'No recorded login'/);
-  assert.match(profile, /: '—'/);
+test('Inventory Staff resolves to the shared editable Profile presentation', () => {
+  assert.match(profile, /ManagerProfilePage as ProfilePage/);
+  assert.match(accountProfile, /<PageHeader eyebrow="Account" title="My Profile"/);
+  assert.match(accountProfile, /<NameRow field="firstName"/);
+  assert.match(accountProfile, /<NameRow field="lastName"/);
+  assert.match(accountProfile, /<EmailRow/);
+  assert.match(accountProfile, /Change password/);
 });
 
-test('unsupported settings remain absent from the Inventory Staff presentation while other roles keep the shared page', () => {
-  const staffStart = profile.indexOf('function InventoryStaffProfileSettings');
-  const staffEnd = profile.indexOf('export function ProfilePage');
-  const staff = profile.slice(staffStart, staffEnd);
-  assert.doesNotMatch(staff, /input|textarea|ProfileTab|PendingCapability|PendingPanel|Change Password|Notification Preferences|Appearance|Active Sessions|Two-Factor|phone/i);
-  assert.match(profile, /const \[activeTab, setActiveTab\] = useState<ProfileTab>\('profile'\)/);
-  assert.match(profile, /<div className="sl-profile-tabs" role="tablist"/);
-  assert.match(profile, /<PendingCapability icon=\{<KeyRound \/>\} title="Change Password"/);
+test('the approved reference sections are present for the shared four-role profile', () => {
+  // The profile avatar and the profile-photo upload block were both removed from scope; identity
+  // initials are shown once, in the shell's topbar avatar.
+  assert.doesNotMatch(accountProfile, /function IdentityAvatar|function PhotoBlock/);
+  assert.doesNotMatch(accountProfile, /sl-profile-manager-identity|sl-profile-manager-avatar/);
+  assert.doesNotMatch(accountProfile, /Upload photo|Profile photo/);
+  assert.match(accountProfile, /<dt>2-Step Verification<\/dt>/);
+  // The notification-preference block was removed for every role: no model, endpoint or delivery
+  // exists to back a saved preference or an alert.
+  assert.doesNotMatch(accountProfile, /notificationRows|NotificationRow|sl-profile-manager-notification|sl-profile-manager-toggle/);
+  // The Role row stays absent and the bottom Sign out button was removed.
+  assert.doesNotMatch(accountProfile, /<dt>Role<\/dt>/);
+  assert.doesNotMatch(accountProfile, /sl-profile-manager-notice/);
+  assert.doesNotMatch(accountProfile, /Sign out<\/button>|sl-profile-manager-signout/);
 });
 
-test('Inventory Staff profile responsiveness is role-scoped and container-owned', () => {
-  const profileRulesStart = styles.indexOf('/* Inventory Staff profile is read-only');
-  const profileRulesEnd = styles.indexOf('@media (width<=600px)', profileRulesStart);
-  const profileRules = styles.slice(profileRulesStart, profileRulesEnd);
+test('unsupported backend features are shown disabled rather than faked', () => {
+  // Nothing may claim an enforced second factor, and the enrolment action is disabled because no
+  // second factor is enforced by the server.
+  assert.doesNotMatch(accountProfile, /Required by policy|MFA Enforced|MFA Required/);
+  assert.match(accountProfile, /2-Step Verification is not enforced yet/);
+  assert.match(accountProfile, /disabled aria-describedby="sl-profile-manager-twostep-note">Set up<\/button>/);
+  // No switch exists, so no preference can falsely read as stored.
+  assert.doesNotMatch(accountProfile, /role="switch"|aria-checked/);
+});
 
-  assert.ok(profileRulesStart >= 0 && profileRulesEnd > profileRulesStart);
-  assert.match(profileRules, /\.sl-shell\[data-role="Inventory Staff"\] \.sl-inventory-staff-profile-settings \{[\s\S]*?container-name:sl-inventory-staff-profile;[\s\S]*?container-type:inline-size;[\s\S]*?min-width:0;/);
-  assert.match(profileRules, /\.sl-inventory-staff-profile-information-grid \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\); \}/);
-  assert.match(profileRules, /\.sl-inventory-staff-profile-access-grid \{ grid-template-columns:repeat\(3,minmax\(0,1fr\)\); \}/);
-  assert.match(profileRules, /@container sl-inventory-staff-profile \(max-width:52rem\)[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\);/);
-  assert.match(profileRules, /@container sl-inventory-staff-profile \(max-width:36rem\)[\s\S]*?grid-template-columns:minmax\(0,1fr\);/);
-  assert.doesNotMatch(profileRules, /@media[^{}]+(?:125|150|resolution)/);
+test('the Change Password dialog validates each field independently for every role', () => {
+  // The shared component serves all four roles, so a Manager, Super Admin, Admin and Inventory
+  // Staff account all get one error per field, placed beneath the field it describes.
+  assert.match(accountProfile, /const \[currentError, setCurrentError\] = useState\(''\)/);
+  assert.match(accountProfile, /const \[nextError, setNextError\] = useState\(''\)/);
+  assert.match(accountProfile, /const \[confirmError, setConfirmError\] = useState\(''\)/);
+  assert.match(accountProfile, /id="sl-profile-manager-current-password-error"/);
+  assert.match(accountProfile, /id="sl-profile-manager-new-password-error"/);
+  assert.match(accountProfile, /id="sl-profile-manager-confirm-password-error"/);
+  // The policy the client checks is the same policy the server enforces.
+  assert.match(accountProfile, /next\.length < 12/);
+  // The redundant standalone "Set" text is gone; the masked indicator remains.
+  assert.doesNotMatch(accountProfile, /sl-profile-manager-managed">Set</);
+  assert.match(accountProfile, /sl-profile-manager-masked/);
+});
+
+test('shared profile responsiveness is component-scoped rather than role-scoped', () => {
+  const start = styles.indexOf('/* Shared four-role profile:');
+  const rules = styles.slice(start);
+  assert.ok(start >= 0);
+  assert.match(rules, /\.sl-profile-manager \{[\s\S]*?container-name:sl-profile-manager;/);
+  assert.match(rules, /@container sl-profile-manager \(max-width:34rem\)/);
+  assert.doesNotMatch(rules, /\[data-role=/);
+  // The removed avatar, notification and photo blocks leave no dead styles behind.
+  assert.doesNotMatch(rules, /sl-profile-manager-photo|sl-profile-manager-signout|sl-profile-manager-identity|sl-profile-manager-avatar|sl-profile-manager-notification|sl-profile-manager-toggle/);
 });

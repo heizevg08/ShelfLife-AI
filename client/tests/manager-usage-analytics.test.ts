@@ -72,9 +72,9 @@ test('the empty plot carries a rounded panel with its explanation', () => {
   assert.match(dailyChart, /allZero && emptyLabel && <div className="sl-manager-daily-empty" role="status">/);
   assert.match(dailyChart, /sl-manager-daily-empty-title/);
   assert.match(dailyChart, /sl-manager-daily-empty-text/);
-  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-daily-empty \{[^}]*border-radius: var\(--sl-radius-lg\);[^}]*pointer-events: none;/);
+  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-mgr-fc-preview,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-daily-empty \{[^}]*border-radius: var\(--sl-radius-lg\);[^}]*pointer-events: none;/);
   // The panel must stay out of the way of the plot while its buttons stay clickable.
-  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-daily-empty-actions \{[^}]*pointer-events: auto;/);
+  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-mgr-fc-preview,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-daily-empty-actions \{[^}]*pointer-events: auto;/);
 });
 
 test('the charts aggregate on the server instead of summing the fetched table page', () => {
@@ -210,8 +210,8 @@ test('the legend sits in the header and toggles one series at a time', () => {
   assert.match(dailyChart, /const measuredValues = points\.flatMap\(point => seriesKeys\.map\(key => point\[key\]\)\)\.filter/);
   assert.match(dailyChart, /const peak = Math\.max\(0, \.\.\.measuredValues\);/);
   assert.doesNotMatch(dailyChart, /visible\.usage \? point\.usage : 0/);
-  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-analytics-legend \{[^}]*display: inline-flex;/);
-  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-analytics-legend-item\[aria-pressed="false"\] \{ opacity: \.45;/);
+  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-mgr-fc-preview,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-analytics-legend \{[^}]*display: inline-flex;/);
+  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-mgr-fc-preview,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-analytics-legend-item\[aria-pressed="false"\] \{ opacity: \.45;/);
 });
 
 test('each analytics card owns its period while the table range stays independent', () => {

@@ -4901,7 +4901,6 @@ section.sl-card:has(.sl-filter-popover) {
     grid-column: auto!important;
   }
 }
-
 .sl-account-form .sl-role-option input[type=radio] {
   flex: 0 0 16px;
   order: 0;
@@ -31509,6 +31508,13 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   height: auto;
   padding: clamp(.55rem,.48rem + .14vw,.66rem) clamp(.65rem,.55rem + .2vw,.82rem);
 }
+/* The row-number column needs only enough width for its contents. Left at auto, the auto table
+   layout hands it a share of the free space, which pushes USER far from #. Pinning it to the
+   narrowest useful width balances the spacing without touching the global table rules. */
+.sl-admin-dashboard-records :is(.sl-reference-records-table,.sl-data-table) :is(th,td):first-child {
+  width: 3.25rem;
+  padding-inline: clamp(.5rem,.45rem + .14vw,.7rem);
+}
 .sl-admin-dashboard-records :is(.sl-reference-records-table,.sl-data-table) th {
   background: var(--sl-surface-subtle);
   color: var(--sl-text);
@@ -33320,7 +33326,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
    padding on the frame, never a change to the SVG coordinate system: the ResizeObserver
    measures the frame's content box, so the viewBox is still told the exact size it is
    drawn into and one unit stays one pixel. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-chart { box-sizing: border-box; width: 100%; min-width: 0; padding: .75rem 1.25rem 0; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-chart { box-sizing: border-box; width: 100%; min-width: 0; padding: .75rem 1.25rem 0; }
 .sl-manager-usage-live .sl-manager-usage-analytics>.sl-card:first-child .sl-card-header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem 1rem; }
 /* Following the approved reference, the card title and its freshness line sit on the
    left and the legend plus period dropdown on the right, in one header row. The
@@ -33331,20 +33337,20 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
    Each entry is a real button so a series can be switched off by keyboard as well as
    pointer. An unpressed entry dims rather than disappears: its label is what tells the
    Manager that a hidden series still exists. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-analytics-legend i[data-series="waste"] { background: var(--sl-manager-chart-waste); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-analytics-legend i[data-series="waste"] { background: var(--sl-manager-chart-waste); }
 /* Manager Alerts draws its three priority lines through the SAME shared trend chart, so it
    joins this selector list rather than restating the chart rules. The two priority colours
    beyond the reference's own are added as extra token values, never as a second rule set:
    the chart CSS itself is not duplicated. High/Medium/Low reuse the locked waste-reason
    family (coral, amber, gold) so no new colour enters the visual system, and each is
    always shown beside its written label. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-analytics-legend { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .2rem .9rem; color: var(--sl-manager-chart-label); font: var(--sl-font-label); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-analytics-legend-item { display: inline-flex; align-items: center; gap: .4rem; border: 0; background: transparent; padding: .15rem .3rem; color: inherit; cursor: pointer; font: inherit; border-radius: calc(var(--sl-radius) - .125rem); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-analytics-legend-item[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-analytics-legend-item:hover { background: var(--sl-surface-subtle); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-analytics-legend-item:focus-visible { outline: 2px solid var(--sl-brand); outline-offset: 1px; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-analytics-legend i { width: .65rem; height: .65rem; border-radius: 50%; background: var(--sl-manager-chart-usage); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-analytics-legend i[data-series="waste"] { background: var(--sl-manager-chart-waste); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-analytics-legend { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .2rem .9rem; color: var(--sl-manager-chart-label); font: var(--sl-font-label); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-analytics-legend-item { display: inline-flex; align-items: center; gap: .4rem; border: 0; background: transparent; padding: .15rem .3rem; color: inherit; cursor: pointer; font: inherit; border-radius: calc(var(--sl-radius) - .125rem); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-analytics-legend-item[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-analytics-legend-item:hover { background: var(--sl-surface-subtle); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-analytics-legend-item:focus-visible { outline: 2px solid var(--sl-brand); outline-offset: 1px; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-analytics-legend i { width: .65rem; height: .65rem; border-radius: 50%; background: var(--sl-manager-chart-usage); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-analytics-legend i[data-series="waste"] { background: var(--sl-manager-chart-waste); }
 /* The legend and the period dropdown share the chart header's right side. Wrapping
    keeps both reachable at 393px instead of letting one slide under the card edge. */
 .sl-manager-usage-live .sl-manager-analytics-header-tools { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: .4rem 1rem; }
@@ -33384,24 +33390,24 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
    occupies the same vertical band as its bars rather than collapsing to one slim line,
    which is what left the earlier empty card with one blank region under the chips. */
 .sl-manager-usage-live .sl-manager-usage-analytics>.sl-card:nth-child(2)>.sl-card-body>.sl-manager-reason-empty { padding-block: var(--sl-space-5); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-frame { position: relative; width: 100%; min-width: 0; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-frame { position: relative; width: 100%; min-width: 0; }
 /* The approved reference sets the plot on a faint inset panel so the gridlines read as a
    chart surface. It carries no data of its own - every gridline, label and marker is drawn
    above it - so it can never imply a value that was not measured. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-plot { fill: var(--sl-surface-subtle); opacity: .55; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-plot { fill: var(--sl-surface-subtle); opacity: .55; }
 /* The empty panel is the reference's centred rounded card inside the plotting area. It
    overlays the plot rather than replacing it, so the axes and date labels stay readable.
    pointer-events: none keeps the plot behind it reachable. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-empty { position: absolute; left: 50%; top: 46%; transform: translate(-50%,-50%); width: min(26.5rem,88%); box-sizing: border-box; display: grid; justify-items: center; gap: .3rem; margin: 0; border: 1px solid var(--sl-border-subtle); border-radius: var(--sl-radius-lg); background: var(--sl-surface); padding: var(--sl-space-4) var(--sl-space-5); box-shadow: 0 2px 6px rgb(0 0 0 / 5%); text-align: center; pointer-events: none; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-empty-title { margin: 0; color: var(--sl-text); font-size: .95rem; font-weight: 700; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-empty { position: absolute; left: 50%; top: 46%; transform: translate(-50%,-50%); width: min(26.5rem,88%); box-sizing: border-box; display: grid; justify-items: center; gap: .3rem; margin: 0; border: 1px solid var(--sl-border-subtle); border-radius: var(--sl-radius-lg); background: var(--sl-surface); padding: var(--sl-space-4) var(--sl-space-5); box-shadow: 0 2px 6px rgb(0 0 0 / 5%); text-align: center; pointer-events: none; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-empty-title { margin: 0; color: var(--sl-text); font-size: .95rem; font-weight: 700; }
 /* The explanation balances across lines instead of breaking a short sentence into an
    orphaned word that reads as clipped text. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-empty-text { margin: 0; color: var(--sl-muted); font-size: .82rem; line-height: 1.4; text-wrap: balance; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-top: .35rem; pointer-events: auto; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-empty-actions .sl-button { min-height: 34px; gap: .35rem; flex: 0 0 auto; white-space: nowrap; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-empty-text { margin: 0; color: var(--sl-muted); font-size: .82rem; line-height: 1.4; text-wrap: balance; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-top: .35rem; pointer-events: auto; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-empty-actions .sl-button { min-height: 34px; gap: .35rem; flex: 0 0 auto; white-space: nowrap; }
 /* Inside the panel the icon must keep its own size: without this the SVG stretches to
    fill the button and the label is pushed off the edge. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-empty-actions .sl-button svg { width: 16px; height: 16px; flex: 0 0 auto; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-empty-actions .sl-button svg { width: 16px; height: 16px; flex: 0 0 auto; }
 /* The reference's secondary action is an outlined green button beside the solid one, so the
    two logging paths stay distinguishable without introducing a new colour. */
 .sl-manager-usage-live .sl-manager-log-waste { border-color: var(--sl-brand); background: var(--sl-surface); color: var(--sl-brand); }
@@ -33410,35 +33416,35 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
    the approved paired Usage/Waste peak callouts (`.sl-manager-insight-pair` above), so
    these pill rules are retired rather than left as a second, unused presentation of the
    same totals. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-frame svg { display: block; width: 100%; height: 18.5rem; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-grid { stroke: var(--sl-border-subtle); stroke-width: 1; stroke-dasharray: 3 4; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-frame svg { display: block; width: 100%; height: 18.5rem; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-grid { stroke: var(--sl-border-subtle); stroke-width: 1; stroke-dasharray: 3 4; }
 /* The zero baseline is the only solid rule in the ladder and the only one carrying a
    number: it is the axis the whole plot is read against. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-grid[data-zero="true"] { stroke: var(--sl-border); stroke-dasharray: none; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-axis { fill: var(--sl-muted); font: 11px Inter,sans-serif; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-area { fill: #e7f1ec; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-line { fill: none; stroke: var(--sl-manager-chart-usage); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-line[data-series="waste"] { stroke: var(--sl-manager-chart-waste); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-point { fill: transparent; stroke: transparent; stroke-width: 2.5; cursor: pointer; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-grid[data-zero="true"] { stroke: var(--sl-border); stroke-dasharray: none; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-axis { fill: var(--sl-muted); font: 11px Inter,sans-serif; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-area { fill: #e7f1ec; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-line { fill: none; stroke: var(--sl-manager-chart-usage); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-line[data-series="waste"] { stroke: var(--sl-manager-chart-waste); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-point { fill: transparent; stroke: transparent; stroke-width: 2.5; cursor: pointer; }
 /* The dot is the marker the eye reads, and it is paint only: the larger transparent
    hit circle above owns every pointer and keyboard event, so a moving cursor cannot
    hand focus back and forth between two overlapping elements. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-dot { pointer-events: none; fill: var(--sl-surface); stroke: var(--sl-manager-chart-usage); stroke-width: 2.5; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-dot[data-series="waste"] { stroke: var(--sl-manager-chart-waste); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-point:is(:hover,:focus-visible) + .sl-manager-daily-dot { stroke-width: 3.5; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-point:is(:focus-visible) { outline: none; filter: drop-shadow(0 0 3px var(--sl-manager-chart-usage)); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-point[data-series="waste"]:is(:focus-visible) { filter: drop-shadow(0 0 3px var(--sl-manager-chart-waste)); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-tooltip { pointer-events: none; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-tooltip rect { fill: var(--sl-surface); stroke: var(--sl-border); stroke-width: 1; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-tooltip-date { fill: var(--sl-muted); font: 10px Inter,sans-serif; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-tooltip-value { font: 600 11px Inter,sans-serif; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-tooltip-value[data-series="usage"] { fill: var(--sl-manager-chart-usage); }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-tooltip-value[data-series="waste"] { fill: var(--sl-manager-chart-waste); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-dot { pointer-events: none; fill: var(--sl-surface); stroke: var(--sl-manager-chart-usage); stroke-width: 2.5; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-dot[data-series="waste"] { stroke: var(--sl-manager-chart-waste); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-point:is(:hover,:focus-visible) + .sl-manager-daily-dot { stroke-width: 3.5; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-point:is(:focus-visible) { outline: none; filter: drop-shadow(0 0 3px var(--sl-manager-chart-usage)); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-point[data-series="waste"]:is(:focus-visible) { filter: drop-shadow(0 0 3px var(--sl-manager-chart-waste)); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-tooltip { pointer-events: none; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-tooltip rect { fill: var(--sl-surface); stroke: var(--sl-border); stroke-width: 1; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-tooltip-date { fill: var(--sl-muted); font: 10px Inter,sans-serif; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-tooltip-value { font: 600 11px Inter,sans-serif; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-tooltip-value[data-series="usage"] { fill: var(--sl-manager-chart-usage); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-tooltip-value[data-series="waste"] { fill: var(--sl-manager-chart-waste); }
 /* The reference marks the hovered day with a vertical guide and a ring on each
    series at that day, so the reading is anchored to the axis instead of floating. */
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-guide { stroke: var(--sl-manager-chart-label); stroke-width: 1; stroke-dasharray: 3 3; opacity: .55; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-guide-dot { pointer-events: none; fill: var(--sl-surface); stroke: var(--sl-manager-chart-usage); stroke-width: 2.5; }
-:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-daily-guide-dot[data-series="waste"] { stroke: var(--sl-manager-chart-waste); }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-guide { stroke: var(--sl-manager-chart-label); stroke-width: 1; stroke-dasharray: 3 3; opacity: .55; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-guide-dot { pointer-events: none; fill: var(--sl-surface); stroke: var(--sl-manager-chart-usage); stroke-width: 2.5; }
+:is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-daily-guide-dot[data-series="waste"] { stroke: var(--sl-manager-chart-waste); }
 @media (width<=900px) {
   .sl-manager-usage-live .sl-manager-usage-analytics { grid-template-columns: minmax(0,1fr); }
   .sl-manager-usage-live .sl-manager-usage-analytics>.sl-card:nth-child(2) { min-height: 0; }
@@ -33447,7 +33453,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-manager-usage-live .sl-manager-insight-pair { grid-template-columns: minmax(0,1fr); }
   .sl-manager-usage-live .sl-manager-insight { padding: var(--sl-space-3) var(--sl-space-4); }
   .sl-manager-usage-live .sl-manager-usage-analytics>.sl-card:first-child .sl-card-header { gap: .4rem; }
-  :is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-manager-alerts-live) .sl-manager-analytics-legend { gap: .15rem .6rem; font-size: .72rem; }
+  :is(.sl-manager-usage-live, .sl-mgr-forecast-page, .sl-mgr-fc-preview, .sl-manager-alerts-live) .sl-manager-analytics-legend { gap: .15rem .6rem; font-size: .72rem; }
   .sl-manager-usage-live .sl-application-bar-row[data-percentages] { grid-template-columns: minmax(0,5.25rem) minmax(0,1fr) 1.2rem 2.2rem; gap: .35rem; }
 }
 
@@ -33610,7 +33616,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
    and every chart in this app is hand-built CSS/SVG. A second idiom or a new dependency
    would duplicate the visual system instead of extending it, which is why no package was
    added. Forecasting uses the locked trend's green/coral series token values. */
-.sl-mgr-forecast-page {
+.sl-mgr-forecast-page,
+.sl-mgr-fc-preview {
   --sl-manager-chart-usage: #2e7d55;
   --sl-manager-chart-waste: #e2574c;
   --sl-manager-chart-label: #19345f;
@@ -33750,6 +33757,13 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-mgr-fc-insight-placeholder i:first-child { width: 35%; }
 .sl-mgr-fc-insight-placeholder i:last-child { width: 70%; }
 
+/* Development-only preview. The banner leads the page so a screenshot can never be
+   mistaken for a working forecasting feature. */
+.sl-mgr-fc-preview { display: flex; flex-direction: column; gap: clamp(10px,1vw,16px); }
+.sl-mgr-fc-sample-banner { margin: 0; border: 1px dashed var(--sl-attention); border-radius: var(--sl-radius-lg); padding: .7rem .9rem; background: #fff7e8; color: #6b4708; font: var(--sl-font-supporting); }
+.sl-mgr-fc-sample-banner strong { color: #8a5a06; }
+.sl-mgr-fc-preview-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,22rem),1fr)); gap: clamp(10px,1vw,14px); align-items: start; min-width: 0; }
+.sl-mgr-fc-preview-note { margin: 0; color: var(--sl-muted); font: var(--sl-font-supporting); }
 @media (width<=760px) {
   .sl-mgr-fc-demand-row { grid-template-columns: minmax(0,1fr); }
   .sl-mgr-fc-demand-values { flex-direction: row; gap: .6rem; justify-content: flex-start; }
@@ -34606,4 +34620,174 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-pending-requests-table :is(th,td):is(:nth-child(2),:nth-child(3)) {
     white-space:normal;
   }
+}
+/* Shared four-role profile: the self-service endpoint owns name changes. The owner's approved
+   reference layout is reproduced for all four roles: First/Last Name rows, Email, and Sign-in &
+   security (password + 2-Step Verification). The Role row, the profile avatar and the profile-photo
+   upload block stay absent, and the notification-preference block was removed, so this page never
+   implies photo storage, a saved preference, an alert or a second factor that the server does not
+   actually perform. Controls whose backend is not built stay visible but disabled and truthfully
+   labelled. The identity initials live in the shell's topbar avatar rather than being repeated here. */
+.sl-profile-manager {
+  container-name:sl-profile-manager;
+  container-type:inline-size;
+  align-content:start;
+  gap:var(--sl-space-4);
+  width:min(100%,64rem);
+}
+.sl-profile-manager > .sl-profile-card { min-width:0; }
+.sl-profile-manager .sl-profile-card-header {
+  grid-template-columns:minmax(0,1fr);
+  padding:1.15rem 1.35rem;
+  border-bottom:0;
+}
+.sl-profile-manager .sl-profile-card-header h2 { font:var(--sl-font-section-title); }
+.sl-profile-manager-rows {
+  margin:0;
+  display:grid;
+}
+.sl-profile-manager-row {
+  grid-template-columns:minmax(7rem,13rem) minmax(0,1fr) auto;
+  align-items:center;
+  gap:var(--sl-space-4);
+  min-width:0;
+  padding:.95rem 1.35rem;
+  border-top:1px solid var(--sl-border-subtle);
+  display:grid;
+}
+.sl-profile-manager-row dt {
+  color:var(--sl-muted);
+  font:var(--sl-font-label);
+  letter-spacing:.02em;
+}
+.sl-profile-manager-row dd {
+  margin:0;
+  min-width:0;
+  overflow-wrap:anywhere;
+  font:var(--sl-font-body);
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:var(--sl-space-4);
+}
+.sl-profile-manager-value { min-width:0; overflow-wrap:anywhere; }
+.sl-profile-manager-managed {
+  margin-left:auto;
+  color:var(--sl-muted);
+  font:var(--sl-font-supporting);
+  font-weight:400;
+  white-space:nowrap;
+}
+/* Every row-end action in the profile — the name and email Edit controls, Change password and the
+   2-Step action — shares one treatment so they align and read as the same affordance. The underline
+   is dropped in every state, and keyboard feedback comes from the visible focus outline instead. */
+.sl-profile-manager-edit,
+.sl-profile-manager-action {
+  color:var(--sl-brand);
+  background:0 0;
+  border:0;
+  white-space:nowrap;
+  width:auto;
+  min-height:44px;
+  padding:var(--sl-space-2) 0;
+  margin-left:auto;
+  font:var(--sl-font-label);
+  text-decoration:none;
+}
+.sl-profile-manager-edit:hover:not(:disabled),
+.sl-profile-manager-action:hover:not(:disabled) { color:var(--sl-success); }
+.sl-profile-manager-edit:active:not(:disabled),
+.sl-profile-manager-action:active:not(:disabled) { color:var(--sl-brand-hover); }
+/* Removing the underline must not remove keyboard feedback, so the shared focus ring stays. */
+.sl-profile-manager-edit:focus-visible,
+.sl-profile-manager-action:focus-visible { outline:3px solid var(--sl-focus); outline-offset:3px; }
+.sl-profile-manager-form {
+  gap:var(--sl-space-2);
+  display:grid;
+}
+.sl-profile-manager-form input {
+  width:100%;
+  max-width:22rem;
+  min-height:44px;
+  padding-inline:var(--sl-space-3);
+  border:1px solid var(--sl-border);
+  border-radius:var(--sl-radius);
+  background:var(--sl-surface);
+  color:var(--sl-text);
+  font:var(--sl-font-body);
+}
+.sl-profile-manager-form input:focus-visible { outline:2px solid var(--sl-focus); outline-offset:1px; border-color:var(--sl-focus); }
+.sl-profile-manager-form input[aria-invalid="true"] { border-color:var(--sl-critical); }
+.sl-profile-manager-form-actions { gap:var(--sl-space-2); display:flex; }
+.sl-profile-manager-form-actions .sl-button { width:auto; min-height:40px; }
+.sl-profile-manager-row .sl-field-error { margin-top:var(--sl-space-2); font:var(--sl-font-supporting); }
+.sl-profile-manager-rows[data-layout="security"] .sl-profile-manager-row { grid-template-columns:minmax(7rem,13rem) minmax(0,1fr) auto; }
+.sl-profile-manager-row[data-editing] dd { display:block; }
+.sl-profile-manager-password-form {
+  gap:var(--sl-space-4);
+  display:grid;
+}
+/* The dialog's field labels and helper text keep the same hierarchy as the page, and the inline
+   error sits directly beneath its own field rather than at the foot of the form. */
+.sl-profile-manager-password-form .sl-field { gap:var(--sl-space-2); }
+.sl-profile-manager-password-form .sl-field-error { margin:0; }
+.sl-profile-manager-password-done {
+  gap:var(--sl-space-4);
+  display:grid;
+}
+.sl-profile-manager-password-done p { margin:0; }
+.sl-profile-manager-password-done .sl-button { width:auto; justify-self:start; }
+@container sl-profile-manager (max-width:34rem) {
+  .sl-profile-manager-row,
+  .sl-profile-manager-rows[data-layout="security"] .sl-profile-manager-row {
+    grid-template-columns:minmax(0,1fr);
+    gap:.55rem;
+    align-items:start;
+  }
+  .sl-profile-manager-action,
+  .sl-profile-manager-edit { justify-self:start; margin-left:0; }
+  .sl-profile-manager-managed { margin-left:0; white-space:normal; }
+  .sl-profile-manager-row dd { flex-wrap:wrap; }
+}
+/* Masked password presentation. The dots are a convention for "a password is set", never the value. */
+.sl-profile-manager-masked { letter-spacing:.18em; }
+.sl-profile-manager-badge {
+  padding:.22rem .6rem;
+  border:1px solid var(--sl-border-subtle);
+  border-radius:var(--sl-radius-full);
+  background:color-mix(in oklab,var(--sl-muted) 12%,transparent);
+  color:var(--sl-muted);
+  white-space:nowrap;
+  font:var(--sl-font-label);
+  display:inline-flex;
+  align-items:center;
+}
+.sl-profile-manager-help {
+  margin:.9rem 1.35rem 1.15rem;
+  max-width:62ch;
+  display:block;
+}
+/* The two-step explanation belongs to its row and must span the row's columns instead of
+   dropping into the first column as a stray grid item. */
+.sl-profile-manager-row > .sl-profile-manager-help {
+  grid-column:1 / -1;
+  margin:0 0 .2rem;
+}
+/* A disabled control must *look* unavailable. The base primary and text-action styles keep their
+   green fill or link colour even when disabled, which would read as a working control, so the
+   unavailable variants are muted here while staying focusable and labelled. */
+.sl-profile-manager .sl-button:disabled,
+.sl-profile-manager .sl-button-primary:disabled {
+  background:var(--sl-border);
+  border-color:var(--sl-border);
+  color:var(--sl-muted);
+  box-shadow:none;
+  cursor:not-allowed;
+}
+.sl-profile-manager .sl-button.sl-text-action:disabled {
+  background:0 0;
+  border:0;
+  color:var(--sl-muted);
+  text-decoration:none;
+  cursor:not-allowed;
 }

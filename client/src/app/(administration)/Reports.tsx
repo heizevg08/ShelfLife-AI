@@ -5,6 +5,7 @@ import { Card, DataState, ExportControl, PageHeader, Pagination } from '../../co
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 import { workspaceNavigation } from '../../components/application/workspace';
 import { listIngredients } from '../../services/ingredients';
+import { getInventoryBatchSummary } from '../../services/inventory-batches';
 import { DATE_RANGE_OPTIONS, DateRangeFilter, type DateRangeValue } from '../../components/application/DateRangeFilter';
 import { Dialog } from '../../components/application/Dialog';
 import { ConnectedManagerReportsPage } from '../../components/application/ManagerReportsPage';
@@ -30,6 +31,11 @@ function AdminReports() {
   const [reportType, setReportType] = useState('All Reports');
   const [ingredientTotal, setIngredientTotal] = useState<number | null>(null);
   const [ingredientTotalFailed, setIngredientTotalFailed] = useState(false);
+  // Inventory value and batch totals come from the same authorized batch summary the Manager
+  // Reports and Manager/Staff dashboards already read. Admin is an authorized reader of
+  // `/inventory-batches/summary`, so these report figures are authoritative, not placeholders.
+  const [inventorySummary, setInventorySummary] = useState<{ totalBatches: number; inventoryValue: number | null } | null>(null);
+  const [inventorySummaryFailed, setInventorySummaryFailed] = useState(false);
   const [reportPage, setReportPage] = useState(1);
   const [reportPageSize, setReportPageSize] = useState(10);
   const reset = () => { setDateRange('any'); setDateFrom(''); setDateTo(''); setReportType('All Reports'); };
@@ -41,6 +47,17 @@ function AdminReports() {
       .catch(() => { if (!abort.signal.aborted) setIngredientTotalFailed(true); });
     return () => abort.abort();
   }, []);
+  useEffect(() => {
+    const abort = new AbortController();
+    setInventorySummaryFailed(false);
+    getInventoryBatchSummary(abort.signal)
+      .then(summary => { if (!abort.signal.aborted) setInventorySummary({ totalBatches: summary.totalBatches, inventoryValue: summary.inventoryValue }); })
+      .catch(() => { if (!abort.signal.aborted) setInventorySummaryFailed(true); });
+    return () => abort.abort();
+  }, []);
+  const inventoryValueLabel = inventorySummary === null || inventorySummary.inventoryValue === null
+    ? '—'
+    : `₱${inventorySummary.inventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const reports = workspaceNavigation('Admin')
     .filter(item => item.path !== '/Reports')
     .map(item => ({ name: `${item.label} Report`, type: item.label, path: item.path }));
@@ -50,10 +67,10 @@ function AdminReports() {
     <PageHeader eyebrow="Oversight" title="Reports" description="Generate and view reports on inventory, usage, waste, and ingredient data for your establishment." />
     <div className="sl-admin-view sl-admin-reports-v114">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Report summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Package/></span><div><span>Total Inventory Value</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Cost</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Package/></span><div><span>Total Inventory Value</span><strong>{inventorySummaryFailed ? '—' : inventoryValueLabel}</strong><small>{inventorySummaryFailed ? 'Inventory valuation unavailable' : !inventorySummary ? 'Loading inventory valuation' : inventorySummary.inventoryValue === null ? 'Some batches have no authoritative unit cost' : 'Current stock valued at unit cost'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Cost</span><strong>—</strong><small>Waste-cost aggregate requires Manager scope</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Total Ingredients</span><strong>{ingredientTotal?.toLocaleString() ?? '—'}</strong><small>{ingredientTotalFailed ? 'Ingredient service unavailable' : ingredientTotal === null ? 'Loading ingredient records' : 'Ingredient catalogue total'}</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList/></span><div><span>Total Batches</span><strong>—</strong><small>Data unavailable</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList/></span><div><span>Total Batches</span><strong>{inventorySummary?.totalBatches ?? '—'}</strong><small>{inventorySummaryFailed ? 'Inventory batch service unavailable' : !inventorySummary ? 'Loading inventory batches' : 'Live inventory batch records'}</small></div></article>
       </section>
 
       <section className="sl-application-records sl-application-records-overflow sl-admin-report-records" aria-labelledby="sl-admin-available-reports">

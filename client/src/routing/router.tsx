@@ -51,4 +51,26 @@ const aliases: Record<string, string> = {
 };
 const redirects = Object.entries(aliases).map(([path, to]) => createRoute({ getParentRoute: () => root, path, beforeLoad: ({ location }) => { throw redirect({ to, hash: location.hash, replace: true }); } }));
 
-export const router = createRouter({ routeTree: root.addChildren([home, login, workspace.addChildren(protectedRoutes), ...redirects]), defaultPreload: false });
+// The Forecasting panel design preview is DEVELOPMENT ONLY. Reading import.meta.env.DEV
+// here means a production build never registers the path at all, and the page itself
+// renders null outside development as a second guard. It requires a signed-in session but
+// no specific workspace module, because it owns no operational data: every value it draws
+// is an invented fixture for reviewing the panel designs.
+async function devSessionGuard() {
+  try {
+    await currentUser();
+  } catch (error) {
+    if (error instanceof AuthRequestError && error.status === 401) throw redirect({ to: '/ShelfLifeAILogin', replace: true });
+    throw error;
+  }
+}
+const devRoutes = import.meta.env.DEV
+  ? [createRoute({
+      getParentRoute: () => workspace,
+      path: '/ForecastPreview',
+      beforeLoad: () => devSessionGuard(),
+      component: lazyRouteComponent(() => import('../app/(administration)/ForecastPreview')),
+    })]
+  : [];
+
+export const router = createRouter({ routeTree: root.addChildren([home, login, workspace.addChildren([...protectedRoutes, ...devRoutes]), ...redirects]), defaultPreload: false });

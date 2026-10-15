@@ -3,11 +3,11 @@ import type { SessionUser } from '../../services/auth';
 import type { AdministrationAreaId } from './administration';
 import ApplicationShell from './ApplicationShell';
 
-const WorkspaceContext = createContext<{ user: SessionUser; openArea: (id: AdministrationAreaId) => void } | null>(null);
+const WorkspaceContext = createContext<{ user: SessionUser; openArea: (id: AdministrationAreaId) => void; signOut: (trigger?: HTMLButtonElement | null) => void; refreshIdentity: () => void } | null>(null);
 
 export function ApplicationWorkspace({ children }: { children: ReactNode }) {
   // The route layout retains verified identity across navigation, never across a page reload.
-  return <ApplicationShell>{(user, openArea) => <WorkspaceContext.Provider value={{ user, openArea }}>{children}</WorkspaceContext.Provider>}</ApplicationShell>;
+  return <ApplicationShell>{(user, openArea, signOut, refreshIdentity) => <WorkspaceContext.Provider value={{ user, openArea, signOut, refreshIdentity }}>{children}</WorkspaceContext.Provider>}</ApplicationShell>;
 }
 
 export function useApplicationWorkspace() {

@@ -88,7 +88,7 @@ test('an empty period keeps its axes, date labels and a truthful empty message',
   assert.match(source, /allZero && emptyLabel && <div className="sl-manager-daily-empty" role="status">/);
   // The rule is SHARED with Manager Forecasting rather than copied for it, so any page
   // that mounts the reference chart is styled by this one declaration.
-  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-daily-empty \{[^}]*pointer-events: none;/);
+  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-mgr-fc-preview,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-daily-empty \{[^}]*pointer-events: none;/);
   // The reference sets the plot on a faint inset panel, and the empty panel overlays it
   // rather than replacing it: the axes and date labels must survive an empty period.
   assert.match(source, /sl-manager-daily-plot/);

@@ -29,7 +29,7 @@ import { formatTopbarDateTime } from '../../utils/date-time';
 
 import { canOpenWorkspacePath, dashboardPaths, profilePaths, workspaceNavigation } from './workspace';
 
-export default function ApplicationShell({ children }: { children: (user: SessionUser, openArea: (id: AdministrationAreaId) => void) => ReactNode }) {
+export default function ApplicationShell({ children }: { children: (user: SessionUser, openArea: (id: AdministrationAreaId) => void, signOut: (trigger?: HTMLButtonElement | null) => void, refreshIdentity: () => void) => ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<SessionUser | null>(null);
@@ -80,6 +80,9 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
 
   const accountRef = useRef<HTMLDivElement>(null);
   const accountButton = useRef<HTMLButtonElement>(null);
+  // The menu item is removed when its panel closes, so the stable account button owns
+  // focus restoration after the confirmation dialog is dismissed.
+  const logoutReturnFocus = useRef<HTMLButtonElement | null>(null);
   const toastTimer = useRef<number | null>(null);
   const drawer = useRef<HTMLDialogElement>(null);
   const mobileButton = useRef<HTMLButtonElement>(null);
@@ -97,6 +100,11 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
       if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    setActionToast(null);
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+  }, [pathname]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setTopbarClock(new Date()), 30000);
@@ -259,6 +267,17 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
 
   const sidebarHover = useHoverIntent(() => { if (collapsed) setHoverExpanded(true); }, () => setHoverExpanded(false));
   const accountHover = useHoverIntent(() => { if (!confirmLogout) { setAccountOpen(true); setNotificationsOpen(false); } }, () => { if (!confirmLogout) setAccountOpen(false); });
+
+  // One confirmation flow for the account-menu sign-out action.
+  const requestSignOut = useCallback((_trigger?: HTMLButtonElement | null) => {
+    logoutReturnFocus.current = accountButton.current;
+    setConfirmLogout(true);
+  }, []);
+
+  // A self-service name change alters the identity every part of the shell displays, so the
+  // resolved session is re-read through the existing auth boundary instead of being patched
+  // locally. Bumping the attempt counter re-runs the identity effect below.
+  const refreshIdentity = useCallback(() => setAttempt(value => value + 1), []);
 
   function renderNavigation(mobile = false) {
     return (
@@ -448,7 +467,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
         title="Log out of your account?"
         confirmation={{ icon: <LogOut />, description: 'You’ll need to sign in again to continue using ShelfLife AI.' }}
         onDismiss={() => setConfirmLogout(false)}
-        returnFocus={accountButton}
+        returnFocus={logoutReturnFocus}
         actions={<>
           <button className="sl-button sl-logout-stay" disabled={logoutPending} data-initial-focus onClick={() => setConfirmLogout(false)}>Cancel</button>
           <button className="sl-button sl-button-logout" disabled={logoutPending} onClick={logout}>{logoutPending ? 'Logging out...' : 'Log out'}</button>
@@ -565,7 +584,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
                       <UserRound size={15} aria-hidden="true" />
                       My Profile
                     </button>
-                    <button className="sl-button sl-account-logout" onClick={() => { accountHover.cancel(); setAccountOpen(false); setConfirmLogout(true); }}>
+                    <button className="sl-button sl-account-logout" onClick={event => { accountHover.cancel(); setAccountOpen(false); requestSignOut(event.currentTarget); }}>
                       <LogOut size={15} aria-hidden="true" />
                       Log out
                     </button>
@@ -577,7 +596,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
         </header>
 
         <main id="sl-main" tabIndex={-1} className="sl-main">
-          {children(user, openArea)}
+          {children(user, openArea, requestSignOut, refreshIdentity)}
         </main>
 
         {showBackToTop && (

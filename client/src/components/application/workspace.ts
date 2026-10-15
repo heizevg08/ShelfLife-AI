@@ -74,6 +74,13 @@ export function workspaceNavigation(role: WorkspaceRole) {
   }));
 }
 export function canOpenWorkspacePath(role: WorkspaceRole, pathname: string) {
+  // The Forecasting panel design preview is a DEVELOPMENT-ONLY surface that owns no
+  // operational data: every value it draws is an invented fixture for reviewing the panel
+  // designs. It is deliberately kept OUT of the canonical workspace table below, because
+  // that table registers modules a role is granted, and nobody is granted a preview. The
+  // path is therefore gated on the build instead of on the role: a production build never
+  // registers the route at all, and this check answers false there even if one did.
+  if (pathname === '/ForecastPreview') return import.meta.env.DEV;
   // Visibility and page guards share the same map; APIs still authorize every request independently.
   const canonicalRoles = canonicalWorkspaceAccess[pathname as CanonicalWorkspacePath];
   if (canonicalRoles) return (canonicalRoles as readonly WorkspaceRole[]).includes(role);

@@ -88,7 +88,7 @@ test('all Manager insights use the chart inset and the established compact radiu
   assert.doesNotMatch(css, /\.sl-manager-reason-insights \{[^}]*margin-top: auto/);
   assert.match(css, /\.sl-manager-usage-live \.sl-manager-insight \{[^}]*border-radius: var\(--sl-radius-lg\); padding: var\(--sl-space-3\) var\(--sl-space-5\);/);
   assert.match(css, /\.sl-manager-usage-live \.sl-manager-usage-analytics>\.sl-card:nth-child\(2\) \.sl-application-bar-breakdown \{ margin-top: 0; \}/);
-  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-daily-chart \{[^}]*padding: .75rem 1.25rem 0;/);
+  assert.match(css, /:is\(\s?\.sl-manager-usage-live,\s*\.sl-mgr-forecast-page,\s*\.sl-mgr-fc-preview,\s*\.sl-manager-alerts-live\s?\) \.sl-manager-daily-chart \{[^}]*padding: .75rem 1.25rem 0;/);
   assert.match(css, /@media \(width<=420px\) \{\s*\.sl-manager-usage-live \.sl-manager-insight-pair \{ grid-template-columns: minmax\(0,1fr\); \}/);
 });
 

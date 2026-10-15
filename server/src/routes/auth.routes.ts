@@ -6,7 +6,11 @@ import type { PasswordRecovery } from '../services/password-recovery';
 import { HttpError } from '../middleware/error.middleware';
 import { createLoginLimiter, memoryLoginAttemptStore, type LoginLimiter } from '../services/login-limiter';
 
-export interface AuthExtensions { loginLimiter?: LoginLimiter; sessions?: PersistentSessions; recovery?: PasswordRecovery; secureCookies?: boolean }
+import type { PasswordChange } from '../services/password-change';
+import type { ProfileUpdate } from '../services/profile-update';
+import type { EmailChange } from '../services/email-change';
+
+export interface AuthExtensions { loginLimiter?: LoginLimiter; sessions?: PersistentSessions; recovery?: PasswordRecovery; passwordChange?: PasswordChange; profileUpdate?: ProfileUpdate; emailChange?: EmailChange; secureCookies?: boolean }
 
 export function authRoutes(auth: AuthService, origins: readonly string[] = [], extensions: AuthExtensions = {}) {
   const router = Router();
@@ -60,5 +64,35 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
     res.json(await extensions.recovery.complete(req.body));
   });
   router.get('/me', authenticate(auth), (_req, res) => { res.json({ user: res.locals.user }); });
+  router.get('/email/change/availability', authenticate(auth), (_req, res) => { res.json({ available: extensions.emailChange?.available === true }); });
+  router.post('/email/change/request', authenticate(auth), async (req, res, next) => {
+    try {
+      if (!extensions.emailChange) throw new HttpError(503, 'Email changes unavailable');
+      res.json(await extensions.emailChange.request(res.locals.user.id as string, req.body));
+    } catch (error) { next(error); }
+  });
+  router.post('/email/change/complete', authenticate(auth), async (req, res, next) => {
+    try {
+      if (!extensions.emailChange) throw new HttpError(503, 'Email changes unavailable');
+      res.json(await extensions.emailChange.complete(res.locals.user.id as string, req.body));
+    } catch (error) { next(error); }
+  });
+  // Self-service account update, available to every authenticated role. Only the caller's own
+  // name parts are accepted; the sign-in identifier, role, account status and credential
+  // fields are refused rather than silently ignored.
+  router.patch('/profile', authenticate(auth), async (req, res, next) => {
+    try {
+      if (!extensions.profileUpdate) throw new HttpError(503, 'Profile updates unavailable');
+      res.json(await extensions.profileUpdate.update(res.locals.user.id as string, req.body));
+    } catch (error) { next(error); }
+  });
+  // Authenticated self-service change. The account is taken from the verified access token,
+  // so this endpoint can only ever change the caller's own password.
+  router.post('/password/change', authenticate(auth), async (req, res, next) => {
+    try {
+      if (!extensions.passwordChange) throw new HttpError(503, 'Password change unavailable');
+      res.json(await extensions.passwordChange.change(res.locals.user.id as string, req.body));
+    } catch (error) { next(error); }
+  });
   return router;
 }

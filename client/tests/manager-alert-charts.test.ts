@@ -94,13 +94,13 @@ test('the priority colours remain in the trend legend', () => {
 });
 
 test('the Alerts page joins the shared chart scope instead of restating the chart CSS', () => {
-  // One shared selector list covers all three production chart surfaces, so a change to the
+  // One shared selector list now covers all four chart surfaces, so a change to the
   // reference reaches every page that mounts it.
-  assert.match(styles, /:is\(\.sl-manager-usage-live, \.sl-mgr-forecast-page, \.sl-manager-alerts-live\) \.sl-manager-daily-plot/);
-  assert.match(styles, /:is\(\.sl-manager-usage-live, \.sl-mgr-forecast-page, \.sl-manager-alerts-live\) \.sl-manager-daily-empty \{/);
+  assert.match(styles, /:is\(\.sl-manager-usage-live, \.sl-mgr-forecast-page, \.sl-mgr-fc-preview, \.sl-manager-alerts-live\) \.sl-manager-daily-plot/);
+  assert.match(styles, /:is\(\.sl-manager-usage-live, \.sl-mgr-forecast-page, \.sl-mgr-fc-preview, \.sl-manager-alerts-live\) \.sl-manager-daily-empty \{/);
   // The locked pages' own selector form must not survive anywhere: a leftover copy is
   // exactly the drift this reuse exists to prevent.
-  const lockedOnly = styles.match(/:is\(\.sl-manager-usage-live, \.sl-mgr-forecast-page\)/g) || [];
+  const lockedOnly = styles.match(/:is\(\.sl-manager-usage-live, \.sl-mgr-forecast-page, \.sl-mgr-fc-preview\)/g) || [];
   assert.equal(lockedOnly.length, 0, 'no chart rule is scoped to the locked pages only');
 });
 

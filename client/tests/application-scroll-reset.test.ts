@@ -2,9 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-// Source guard for the shell scroll reset. This test protects the shape the
-// behaviour depends on, so an unrelated edit cannot quietly remove the reset or
-// make it fire on something other than navigation.
+// Source guard for the shell scroll reset. The behaviour itself is exercised in a
+// real browser by client/e2e/application-scroll-reset.spec.ts; this test protects
+// the shape the behaviour depends on, so an unrelated edit cannot quietly remove
+// the reset or make it fire on something other than navigation.
 const shell = readFileSync(new URL('../src/components/application/ApplicationShell.tsx', import.meta.url), 'utf8');
 
 test('opening a module resets both scroll containers, on navigation only', () => {
