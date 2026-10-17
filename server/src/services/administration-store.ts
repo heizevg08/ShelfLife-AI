@@ -5,11 +5,12 @@ import type { auditRecordModel } from '../models/audit-record';
 import type { Account, Actor, AdministrationStore } from './administration';
 import type { AccountPageQuery, AuditPageQuery, PageQuery } from '../validators/administration';
 
-const publicFields = '_id firstName lastName email role isActive lastLoginAt createdAt updatedAt';
-type PublicDocument = { _id: { toString(): string }; firstName: string; lastName: string; email: string; role: string; isActive: boolean; lastLoginAt?: Date | null; createdAt: Date; updatedAt: Date };
+const publicFields = '_id firstName lastName email role isActive mustChangePassword lastLoginAt createdAt updatedAt';
+type PublicDocument = { _id: { toString(): string }; firstName: string; lastName: string; email: string; role: string; isActive: boolean; mustChangePassword?: boolean; lastLoginAt?: Date | null; createdAt: Date; updatedAt: Date };
 function account(user: PublicDocument): Account {
   return { id: user._id.toString(), firstName: user.firstName, lastName: user.lastName,
     name: `${user.firstName} ${user.lastName}`, email: user.email, role: normalizeUserRole(user.role) ?? user.role, isActive: user.isActive,
+    ...(user.mustChangePassword ? { mustChangePassword: true } : {}),
     ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}), createdAt: user.createdAt.toISOString(), updatedAt: user.updatedAt.toISOString() };
 }
 const sorting = (query: PageQuery): Record<string, 1 | -1> => ({ [query.sortBy]: query.sortOrder === 'asc' ? 1 : -1, _id: query.sortOrder === 'asc' ? 1 : -1 });

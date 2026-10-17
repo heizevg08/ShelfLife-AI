@@ -33,6 +33,8 @@ const schema = new Schema({
   passwordHash: { type: String, required: true, select: false, match: /^scrypt\$131072\$8\$1\$[a-f0-9]{32}\$[a-f0-9]{128}$/ },
   role: { type: String, required: true, enum: ROLES },
   isActive: { type: Boolean, required: true, default: true },
+  // Newly provisioned accounts can authenticate only to complete first-login setup.
+  mustChangePassword: { type: Boolean, required: true, default: false },
   lastLoginAt: { type: Date },
   authVersion: { type: Number, default: 0 },
   resetTokenHash: { type: String, select: false },
@@ -73,6 +75,7 @@ export function safeUser(user: UserRecord) {
     firstName: typeof user.firstName === 'string' ? user.firstName.trim() : '',
     lastName: typeof user.lastName === 'string' ? user.lastName.trim() : '',
     email: user.email,
-    role, isActive: user.isActive, ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}),
+    role, isActive: user.isActive, mustChangePassword: user.mustChangePassword === true,
+    ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}),
     ...(createdAt ? { createdAt } : {}), ...(updatedAt ? { updatedAt } : {}) };
 }

@@ -47,6 +47,7 @@ export function ApplicationModalForm({
   onSubmit,
   children,
   message,
+  messageRole = 'status',
   secondaryLabel,
   onSecondary,
   primaryLabel,
@@ -59,6 +60,7 @@ export function ApplicationModalForm({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
   message?: string;
+  messageRole?: 'status' | 'alert';
   secondaryLabel: 'Clear' | 'Cancel';
   onSecondary: () => void;
   primaryLabel: string;
@@ -68,7 +70,7 @@ export function ApplicationModalForm({
 }) {
   return <form id={formId} ref={formRef} className={`sl-application-modal-form${className ? ` ${className}` : ''}`} noValidate onSubmit={onSubmit}>
     {children}
-    {message && <p className="sl-inline-notice sl-application-modal-message" role="status">{message}</p>}
+    {message && <p className={`sl-inline-notice sl-application-modal-message${messageRole === 'alert' ? ' sl-inline-notice-error' : ''}`} role={messageRole}>{message}</p>}
     <div className="sl-application-modal-actions">
       <button type="button" className="sl-button" disabled={busy} onClick={onSecondary}>{secondaryLabel}</button>
       <button type="submit" className="sl-button sl-button-primary" disabled={busy}>{PrimaryIcon && <PrimaryIcon size={16} aria-hidden="true" />}{primaryLabel}</button>

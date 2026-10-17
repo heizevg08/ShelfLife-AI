@@ -7,6 +7,7 @@ import { FilterSelect, type FilterSelectOption } from './FilterSelect';
 import { businessDayRange, businessWeekRange } from '../../utils/business-day';
 import { downloadCombinedReport, downloadReportXlsx, getMyRecentExports, type OperationalReportId, type RecentExport } from '../../services/report-exports';
 import { formatDate, formatDateTime, isValidDateOnlyInput } from '../../utils/date-time';
+import { formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
 
 const periods = ['This Week', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom'] as const;
 type ReportSelection = OperationalReportId | 'all';
@@ -79,13 +80,14 @@ export function ConnectedManagerReportsPage() {
   }, []);
   // A missing authoritative unit cost makes the whole valuation unavailable rather than
   // silently reporting a partial total that a Manager could mistake for the real figure.
-  const inventoryValue = inventory?.inventoryValue === null || inventory?.inventoryValue === undefined ? '—' : `₱${inventory.inventoryValue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const inventoryAmount = inventory?.inventoryValue;
+  const wasteAmount = waste?.totalWasteCostToday;
   return <><PageHeader eyebrow="Intelligence" title="Reports & Analytics" />
     <div className="sl-admin-view sl-manager-reports-v139 sl-manager-reports-live">
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Cross-domain analytics summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso/></span><div><span>Inventory Value</span><strong>{inventoryError?'—':inventoryValue}</strong><small>{inventoryError?'Inventory valuation unavailable':!inventory?'Loading inventory valuation':inventory.inventoryValue===null?'Some batches lack authoritative unit cost':'Current authoritative inventory value'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso/></span><div><span>Inventory Value</span><strong title={inventoryAmount !== null && inventoryAmount !== undefined && Number.isFinite(inventoryAmount) ? formatExactPeso(inventoryAmount) : undefined}>{inventoryError || inventoryAmount === null || inventoryAmount === undefined || !Number.isFinite(inventoryAmount) ? '—' : formatCompactPeso(inventoryAmount)}</strong><small>{inventoryError?'Inventory valuation unavailable':!inventory?'Loading inventory valuation':inventory.inventoryValue===null?'Some batches lack authoritative unit cost':'Current authoritative inventory value'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle/></span><div><span>Near-Expiry Batches</span><strong>{inventoryError?'—':inventory?.nearExpiry??'—'}</strong><small>{inventoryError?'Expiration summary unavailable':inventory?'Batches within the canonical near-expiry window':'Loading expiration summary'}</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Estimated Waste Cost</span><strong>{wasteError?'—':waste?`₱${waste.totalWasteCostToday.toFixed(2)}`:'—'}</strong><small>{wasteError?'Waste-cost summary unavailable':waste?'Authoritative waste cost recorded today':'Loading waste-cost summary'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Estimated Waste Cost</span><strong title={wasteAmount !== undefined && Number.isFinite(wasteAmount) ? formatExactPeso(wasteAmount) : undefined}>{wasteError || wasteAmount === undefined || !Number.isFinite(wasteAmount) ? '—' : formatCompactPeso(wasteAmount)}</strong><small>{wasteError?'Waste-cost summary unavailable':waste?'Authoritative waste cost recorded today':'Loading waste-cost summary'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp/></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
       </section>
       <section className="sl-manager-operational-reports sl-manager-download-center" aria-labelledby="operational-reports-title">

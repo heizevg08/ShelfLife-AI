@@ -4,12 +4,16 @@ import { bulkItems } from './bulk';
 
 export type UsageCreateInput = { ingredientId: string; batchId: string; dateUsed: Date; quantityUsed: number };
 export type UsagePageQuery = { page: number; pageSize: number; search?: string; ingredientId?: string; from?: Date; to?: Date };
+const MAX_USAGE_QUANTITY = 1_000_000;
 
 export function usageInput(body: unknown): UsageCreateInput {
   if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
   const input = body as Record<string, unknown>;
   for (const key of Object.keys(input)) if (!['ingredientId', 'batchId', 'dateUsed', 'quantityUsed'].includes(key)) invalid(key, 'Field is not permitted');
-  if (typeof input.quantityUsed !== 'number' || !Number.isFinite(input.quantityUsed) || input.quantityUsed <= 0) invalid('quantityUsed', 'Enter a quantity greater than 0');
+  if (typeof input.quantityUsed !== 'number' || !Number.isFinite(input.quantityUsed)) invalid('quantityUsed', 'Enter a numeric quantity.');
+  if (input.quantityUsed <= 0) invalid('quantityUsed', 'Enter a quantity greater than 0.');
+  if (input.quantityUsed > MAX_USAGE_QUANTITY) invalid('quantityUsed', 'Quantity used cannot exceed 1,000,000.');
+  if (Number(input.quantityUsed.toFixed(3)) !== input.quantityUsed) invalid('quantityUsed', 'Use no more than 3 decimal places.');
   return { ingredientId: objectId(input.ingredientId), batchId: objectId(input.batchId), dateUsed: calendarDate('dateUsed', input.dateUsed), quantityUsed: input.quantityUsed };
 }
 

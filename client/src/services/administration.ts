@@ -17,7 +17,7 @@ export const listAccounts = (page = 1, sortBy = 'createdAt', sortOrder = 'desc',
   return apiClient<Page<Account>>(`/users?${query}`, { signal });
 };
 export const getAccount = (id: string) => apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}`);
-export const createAccount = (fields: AccountFields & { password: string }) => apiClient<{ user: Account }>('/users', { method: 'POST', body: JSON.stringify(fields) });
+export const createAccount = (fields: AccountFields) => apiClient<{ user: Account }>('/users', { method: 'POST', body: JSON.stringify(fields) });
 export const updateAccount = (id: string, fields: AccountFields) => apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(fields) });
 export const setAccountActive = (id: string, active: boolean) => apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}/${active ? 'reactivate' : 'deactivate'}`, { method: 'POST' });
 export const accountSummary = (signal?: AbortSignal) => apiClient<DashboardSummary>('/users/summary', { signal });

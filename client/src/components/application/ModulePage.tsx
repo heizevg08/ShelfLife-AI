@@ -23,10 +23,12 @@ import { getWasteSummary, listWasteRecords, type WasteReason, type WasteRecord, 
 import { formatDate, formatDateTime } from '../../utils/date-time';
 import { businessDateInputValue, businessDayRange, businessMonthRange, businessWeekRange } from '../../utils/business-day';
 import { formatHumanReadableText } from '../../utils/display-text';
+import { formatCompactNumber, formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
 import { inventoryBatchRecorderLabel } from '../../utils/inventory-batch-recorder';
 import { ConnectedManagerInventoryPage } from './ManagerInventoryPage';
 import { ConnectedManagerUsageWastePage } from './ManagerUsageWastePage';
 import { ConnectedManagerChangeRequestsPage } from './ManagerChangeRequestsPage';
+import { ConnectedManagerAlertsPage } from './ManagerAlertsPage';
 import { InventoryBatchDetailsDialog } from './InventoryBatchDetailsDialog';
 import { FilterSelect } from './FilterSelect';
 import { customRangeFieldInvalid, customRangeState } from './manager-record-date-range';
@@ -38,6 +40,7 @@ const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', '
 const INGREDIENT_UNITS = ['kg', 'g', 'L', 'mL', 'pcs', 'pack', 'box', 'bottle', 'can', 'tray'] as const;
 const STOCK_IN_DATE_RANGES = ['All dates', 'Today', 'Last 7 Days', 'Last 30 Days', 'Custom range'] as const;
 const INVENTORY_STAFF_WASTE_REASONS = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'] as const;
+const compactNumber = (value: number) => Number.isFinite(value) ? formatCompactNumber(value) : 'Unavailable';
 type IngredientDraft = { name: string; brand: string; category: string; unit: string; minStock: string; unitCost: string; shelfLife: string; description: string };
 const emptyIngredient: IngredientDraft = { name:'', brand:'', category:'', unit:'', minStock:'', unitCost:'', shelfLife:'', description:'' };
 type IngredientField = keyof IngredientDraft;
@@ -134,10 +137,10 @@ function InventoryStaffWastePage() {
     <div className="sl-admin-view sl-staff-waste-v159">
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-waste-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Waste summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Today</span><strong>{metric(summary?.totalWasteToday ? `${summary.totalWasteToday.quantity} ${summary.totalWasteToday.unit}` : undefined)}</strong><small>Waste quantity recorded today</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Today</span><strong title={summary?.totalWasteToday ? `${summary.totalWasteToday.quantity.toLocaleString()} ${summary.totalWasteToday.unit}` : undefined}>{metric(summary?.totalWasteToday ? `${compactNumber(summary.totalWasteToday.quantity)} ${summary.totalWasteToday.unit}` : undefined)}</strong><small>Waste quantity recorded today</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Most Wasted Ingredient</span><strong>{metric(summary?.mostWastedIngredient ?? undefined)}</strong><small>Based on today&apos;s waste records</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3/></span><div><span>Common Waste Reason</span><strong>{metric(summary?.commonWasteReason ?? undefined)}</strong><small>Most frequent reason today</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown/></span><div><span>Total Waste Cost</span><strong>{metric(summary ? `₱${summary.totalWasteCostToday.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : undefined)}</strong><small>Waste cost recorded today</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown/></span><div><span>Total Waste Cost</span><strong title={summary && Number.isFinite(summary.totalWasteCostToday) ? formatExactPeso(summary.totalWasteCostToday) : undefined}>{metric(summary && Number.isFinite(summary.totalWasteCostToday) ? formatCompactPeso(summary.totalWasteCostToday) : undefined)}</strong><small>Waste cost recorded today</small></div></article>
       </section>
       </div>
       <section className="sl-application-records sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-waste-card sl-staff-waste-records"><header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><Clock3/></span><h2>Recent Waste Records</h2></header>
@@ -1796,6 +1799,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'Waste' && user.role === 'Super Admin') return <SuperAdminWastePage />;
   if (moduleId === 'Waste' && user.role === 'Inventory Staff') return <InventoryStaffWastePage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Manager') return <ConnectedManagerChangeRequestsPage />;
+  if (moduleId === 'Alerts' && (user.role === 'Manager' || user.role === 'Admin')) return <ConnectedManagerAlertsPage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Super Admin') return <SuperAdminChangeRequestsPage />;
   if (moduleId === 'ExpirationMonitoring' && user.role === 'Super Admin') return <SuperAdminExpirationMonitoringPage />;
   if (moduleId === 'Forecasting' && user.role === 'Manager') return <ManagerForecastingPage />;
@@ -1832,7 +1836,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
             {adminInventoryLoading && !adminInventoryData ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="loading" title="Loading inventory batches" description="Retrieving current inventory records." /></td></tr>
               : adminInventoryError ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="error" title="Inventory batches unavailable" description="The inventory batch service could not be reached. Try again later." /></td></tr>
               : !adminInventoryData?.items.length ? <tr><td colSpan={9} className="sl-empty-cell"><DataState kind="empty" title={adminInventorySummary?.totalIngredients ? 'No matching records' : 'No live records yet'} description={adminInventorySummary?.totalIngredients ? 'No inventory batches match the current filters.' : 'Inventory batches will appear here once stock is received.'} /></td></tr>
-              : adminInventoryData.items.map((batch, index) => <tr key={batch.id}><td>{(adminInventoryPage - 1) * adminInventoryRows + index + 1}</td><td className="sl-emphasized-value">{formatHumanReadableText(batch.ingredient.name)}</td><td>{batch.batchID}</td><td>{formatHumanReadableText(batch.ingredient.category)}</td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td><time dateTime={batch.expirationDate}>{date(batch.expirationDate)}</time></td><td><Status tone={statusTone(batch.displayStatus)}>{batch.displayStatus}</Status></td><td><button type="button" className="sl-account-action sl-account-action-view" aria-label={`View batch ${batch.batchID}`} title="View Batch" onClick={() => void openBatch(batch.id)}><Eye size={16} aria-hidden="true" /></button></td></tr>)}
+              : adminInventoryData.items.map((batch, index) => <tr key={batch.id}><td>{(adminInventoryPage - 1) * adminInventoryRows + index + 1}</td><td className="sl-emphasized-value">{formatHumanReadableText(batch.ingredient.name)}</td><td>{batch.batchID}</td><td>{formatHumanReadableText(batch.ingredient.category)}</td><td>{batch.quantity.toLocaleString()}</td><td>{batch.unit}</td><td><time dateTime={batch.expirationDate}>{date(batch.expirationDate)}</time></td><td><Status tone={statusTone(batch.displayStatus)}>{batch.displayStatus}</Status></td><td><button type="button" className="sl-icon-button sl-account-action sl-account-action-view" aria-label={`View batch ${batch.batchID}`} title="View Batch" onClick={() => void openBatch(batch.id)}><Eye size={16} aria-hidden="true" /></button></td></tr>)}
           </tbody></table>
         </div>
         <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={adminInventoryRows} onChange={event => { setAdminInventoryRows(Number(event.target.value)); setAdminInventoryPage(1); }}>{APPLICATION_RECORD_PAGE_SIZES.map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={adminInventoryPage} pageSize={adminInventoryRows} total={adminInventoryData?.total ?? 0} itemLabel="inventory records" onPageChange={setAdminInventoryPage} /></footer>
@@ -1844,7 +1848,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
         <div><dt>Ingredient</dt><dd>{formatHumanReadableText(adminInventoryDetail.ingredient.name)}</dd></div><div><dt>Batch ID</dt><dd>{adminInventoryDetail.batchID}</dd></div>
         <div><dt>Category</dt><dd>{formatHumanReadableText(adminInventoryDetail.ingredient.category)}</dd></div><div><dt>Current Stock</dt><dd>{adminInventoryDetail.quantity.toLocaleString()} {adminInventoryDetail.unit}</dd></div>
         <div><dt>Date Received</dt><dd>{date(adminInventoryDetail.dateReceived)}</dd></div><div><dt>Expiration Date</dt><dd>{date(adminInventoryDetail.expirationDate)}</dd></div>
-        <div><dt>Status</dt><dd><Status tone={statusTone(adminInventoryDetail.displayStatus)}>{adminInventoryDetail.displayStatus}</Status></dd></div><div><dt>Unit Cost</dt><dd>{adminInventoryDetail.unitCost === undefined ? '—' : `₱${adminInventoryDetail.unitCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</dd></div>
+        <div><dt>Status</dt><dd><Status tone={statusTone(adminInventoryDetail.displayStatus)}>{adminInventoryDetail.displayStatus}</Status></dd></div><div><dt>Unit Cost</dt><dd title={adminInventoryDetail.unitCost !== undefined && Number.isFinite(adminInventoryDetail.unitCost) ? formatExactPeso(adminInventoryDetail.unitCost) : undefined}>{adminInventoryDetail.unitCost === undefined || !Number.isFinite(adminInventoryDetail.unitCost) ? '—' : formatCompactPeso(adminInventoryDetail.unitCost)}</dd></div>
       </dl>}
     </Dialog>
   </>;

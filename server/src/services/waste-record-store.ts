@@ -12,12 +12,12 @@ import type { AnalyticsQuery } from '../validators/analytics';
 import type { WasteAnalytics } from './waste-records';
 import { aggregateRecordCounts } from './analytics';
 import type { WasteReasonBreakdown, WasteRecordStore, WasteRecordView, WasteSummary } from './waste-records';
-import { businessDayBounds, recentBusinessCalendarBounds } from '../utils/business-day';
+import { businessDayBounds, dateOnlyCalendarString, recentBusinessCalendarBounds } from '../utils/business-day';
 
 type Id = { toString(): string };
 type WasteRow = { _id: Id; batchId: Id; ingredientId: Id; quantityWasted: number; unit: string; reason: WasteReason; wasteCost: number; dateWasted: Date; recordedBy: Id; createdAt: Date };
 type IngredientRow = { _id: Id; name: string; standardUnitCost?: number };
-type BatchRow = { _id: Id; ingredientId: Id; batchID: string; quantity: number; unit: string; unitCost?: number };
+type BatchRow = { _id: Id; ingredientId: Id; batchID: string; quantity: number; unit: string; unitCost?: number; dateReceived?: Date };
 type UserRow = { _id: Id; name?: string; firstName: string; lastName: string };
 type Resolved = { row: WasteRow; ingredient: IngredientRow; batch: BatchRow; staff: UserRow };
 const reasons = ['Expired', 'Spoiled', 'Damaged', 'Over-prepared', 'Other'] as const satisfies readonly WasteReason[];
@@ -68,7 +68,7 @@ export function createWasteRecordStore(driver: Mongoose, records: ReturnType<typ
     const ingredientIds = [...new Set(inputs.map(input => input.ingredientId))];
     const batchIds = [...new Set(inputs.map(input => input.batchId))];
     const ingredientRows = await ingredients.find({ _id: { $in: ingredientIds } }).select('_id name standardUnitCost').session(session).lean().exec() as IngredientRow[];
-    const batchRows = await batches.find({ _id: { $in: batchIds } }).select('_id ingredientId batchID quantity unit unitCost').session(session).lean().exec() as BatchRow[];
+    const batchRows = await batches.find({ _id: { $in: batchIds } }).select('_id ingredientId batchID quantity unit unitCost dateReceived').session(session).lean().exec() as BatchRow[];
     const ingredientsById = new Map(ingredientRows.map(row => [row._id.toString(), row]));
     const batchesById = new Map(batchRows.map(row => [row._id.toString(), row]));
     const deductions = new Map<string, number>();
@@ -79,6 +79,7 @@ export function createWasteRecordStore(driver: Mongoose, records: ReturnType<typ
       if (!ingredient) throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found', [{ field: `items.${index}.ingredientId`, message: 'Ingredient not found' }]);
       if (!batch) throw new AdministrationError(404, 'NOT_FOUND', 'Inventory batch not found', [{ field: `items.${index}.batchId`, message: 'Inventory batch not found' }]);
       if (batch.ingredientId.toString() !== ingredient._id.toString()) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: `items.${index}.batchId`, message: 'Selected batch does not belong to the ingredient' }]);
+      if (batch.dateReceived && dateOnlyCalendarString(input.dateWasted) < dateOnlyCalendarString(batch.dateReceived)) throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field: `items.${index}.dateWasted`, message: 'Date wasted cannot be before the batch was received.' }]);
       if (!firstRowByBatch.has(input.batchId)) firstRowByBatch.set(input.batchId, index);
       deductions.set(input.batchId, (deductions.get(input.batchId) ?? 0) + input.quantityWasted);
       return resolveCost(batch, ingredient);

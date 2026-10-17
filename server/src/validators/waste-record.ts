@@ -4,6 +4,7 @@ import { calendarDate } from './date';
 import { bulkItems } from './bulk';
 
 export type WasteReason = typeof WASTE_REASONS[number];
+export const MAX_WASTE_QUANTITY = 1_000_000;
 export type WasteCreateInput = { ingredientId: string; batchId: string; quantityWasted: number; reason: WasteReason; dateWasted: Date };
 export type WastePageQuery = { page: number; pageSize: number; search?: string; reason?: WasteReason; ingredientId?: string; from?: Date; to?: Date };
 
@@ -11,7 +12,10 @@ export function wasteInput(body: unknown): WasteCreateInput {
   if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
   const input = body as Record<string, unknown>;
   for (const key of Object.keys(input)) if (!['ingredientId', 'batchId', 'quantityWasted', 'reason', 'dateWasted'].includes(key)) invalid(key, 'Field is not permitted');
-  if (typeof input.quantityWasted !== 'number' || !Number.isFinite(input.quantityWasted) || input.quantityWasted <= 0) invalid('quantityWasted', 'Enter a quantity greater than 0');
+  if (typeof input.quantityWasted !== 'number' || !Number.isFinite(input.quantityWasted)) invalid('quantityWasted', 'Enter a numeric quantity.');
+  if (input.quantityWasted <= 0) invalid('quantityWasted', 'Enter a quantity greater than 0.');
+  if (input.quantityWasted > MAX_WASTE_QUANTITY) invalid('quantityWasted', 'Quantity wasted cannot exceed 1,000,000.');
+  if (Number(input.quantityWasted.toFixed(3)) !== input.quantityWasted) invalid('quantityWasted', 'Use no more than 3 decimal places.');
   if (typeof input.reason !== 'string' || !WASTE_REASONS.includes(input.reason as WasteReason)) invalid('reason', 'Select a valid waste reason');
   return { ingredientId: objectId(input.ingredientId), batchId: objectId(input.batchId), quantityWasted: input.quantityWasted, reason: input.reason as WasteReason, dateWasted: calendarDate('dateWasted', input.dateWasted) };
 }

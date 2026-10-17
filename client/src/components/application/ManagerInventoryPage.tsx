@@ -5,6 +5,7 @@ import { getInventoryBatchSummary, listInventoryBatches, type InventoryBatch, ty
 import { formatDate } from '../../utils/date-time';
 import { fefoUrgency } from '../../utils/fefo-urgency';
 import { formatHumanReadableText } from '../../utils/display-text';
+import { formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
 import { ApplicationDonutChart } from './ApplicationPatterns';
 import { FilterSelect } from './FilterSelect';
 import { InventoryBatchDetailsDialog } from './InventoryBatchDetailsDialog';
@@ -62,7 +63,7 @@ export function ConnectedManagerInventoryPage() {
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Inventory Batches</span><strong>{summary?.totalBatches ?? '—'}</strong><small>{failed ? 'Inventory summary unavailable' : summary ? 'Current inventory batches' : 'Loading inventory summary'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Near Expiry ≤ 7 Days</span><strong>{summary?.nearExpiry ?? '—'}</strong><small>{failed ? 'Expiration summary unavailable' : summary ? 'Batches requiring attention' : 'Loading expiration summary'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><PackageX /></span><div><span>Low Stock Items</span><strong>{summary?.lowStockItems ?? '—'}</strong><small>{failed ? 'Stock summary unavailable' : summary ? 'Items at or below minimum stock' : 'Loading stock summary'}</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Inventory Value</span><strong>{summary?.inventoryValue === null || summary?.inventoryValue === undefined ? '—' : `₱${summary.inventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</strong><small>{failed ? 'Inventory valuation unavailable' : !summary ? 'Loading inventory valuation' : summary.inventoryValue === null ? 'Some batches have no authoritative unit cost' : 'Current stock valued at unit cost'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Inventory Value</span><strong title={summary?.inventoryValue !== null && summary?.inventoryValue !== undefined && Number.isFinite(summary.inventoryValue) ? formatExactPeso(summary.inventoryValue) : undefined}>{failed || summary?.inventoryValue === null || summary?.inventoryValue === undefined || !Number.isFinite(summary.inventoryValue) ? '—' : formatCompactPeso(summary.inventoryValue)}</strong><small>{failed ? 'Inventory valuation unavailable' : !summary ? 'Loading inventory valuation' : summary.inventoryValue === null ? 'Some batches have no authoritative unit cost' : 'Current stock valued at unit cost'}</small></div></article>
       </section>
       <section className="sl-manager-inventory-directory sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records" aria-label="Inventory records">
         <header className="sl-application-records-header sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileText /></span><h2>Inventory Records</h2></header>

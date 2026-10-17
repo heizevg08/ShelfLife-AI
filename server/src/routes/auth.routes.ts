@@ -28,11 +28,11 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
   router.post('/login', async (req, res) => {
     const result = await limiter.run(req.body?.email, req.ip ?? req.socket.remoteAddress ?? 'unknown', () => auth.login(req.body), seconds => res.setHeader('Retry-After', String(seconds)));
     const previous = cookie(req.headers.cookie);
-    if (req.body?.rememberMe === true || previous) {
+    if ((req.body?.rememberMe === true && !result.user.mustChangePassword) || previous) {
       verifyOrigin(req.headers.origin);
       if (!extensions.sessions) throw new HttpError(503, 'Persistent sessions unavailable');
       await extensions.sessions.revoke(previous);
-      if (req.body?.rememberMe === true) {
+      if (req.body?.rememberMe === true && !result.user.mustChangePassword) {
         const session = await extensions.sessions.create(result.user.id);
         res.cookie(cookieName, session.token, { ...cookieOptions, expires: session.expiresAt });
       } else res.clearCookie(cookieName, cookieOptions);

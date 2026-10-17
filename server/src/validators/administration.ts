@@ -1,6 +1,6 @@
 import { AdministrationError } from '../middleware/administration.middleware';
 import { ROLES } from '../models/user';
-import { normalizeEmail, validPassword } from './auth';
+import { normalizeEmail } from './auth';
 
 export function invalid(field: string, message = 'Invalid value'): never {
   throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field, message }]);
@@ -81,11 +81,11 @@ export function auditPagination(query: Record<string, unknown>): AuditPageQuery 
   if (result.from && result.to && result.from > result.to) invalid('to', 'End date must be on or after start date');
   return result;
 }
-export type AccountInput = { firstName?: string; lastName?: string; email?: string; role?: typeof ROLES[number]; password?: string };
+export type AccountInput = { firstName?: string; lastName?: string; email?: string; role?: typeof ROLES[number] };
 export function accountInput(body: unknown, create: boolean): AccountInput {
   if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
   const input = body as Record<string, unknown>, result: AccountInput = {};
-  const fields = ['firstName', 'lastName', 'email', 'role', ...(create ? ['password'] : [])];
+  const fields = ['firstName', 'lastName', 'email', 'role'];
   for (const key of Object.keys(input)) if (!fields.includes(key)) invalid(key, 'Field is not permitted');
   if (!Object.keys(input).length) invalid('body', 'Provide at least one permitted field');
   for (const field of ['firstName', 'lastName'] as const) {
@@ -102,10 +102,6 @@ export function accountInput(body: unknown, create: boolean): AccountInput {
   if (create || input.role !== undefined) {
     if (typeof input.role !== 'string' || !ROLES.includes(input.role as typeof ROLES[number])) invalid('role');
     result.role = input.role as typeof ROLES[number];
-  }
-  if (create) {
-    if (!validPassword(input.password) || input.password.length < 12) invalid('password', 'Use at least 12 characters');
-    result.password = input.password;
   }
   return result;
 }
