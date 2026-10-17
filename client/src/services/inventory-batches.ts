@@ -1,5 +1,6 @@
 import { apiClient } from './apiClient';
 import { publishActionFeedback } from './actionFeedback';
+import { downloadFile, type ReportRange } from './report-exports';
 
 export type InventoryBatchDisplayStatus = 'In Stock' | 'Low Stock' | 'Near Expiry' | 'Expired';
 export interface InventoryBatch {
@@ -37,6 +38,11 @@ export function listInventoryBatches(query: { page: number; pageSize: number; se
 export function getInventoryBatchSummary(signal?: AbortSignal) { return apiClient<InventoryBatchSummary>('/inventory-batches/summary', { signal }); }
 export function getInventoryBatch(id: string, signal?: AbortSignal) { return apiClient<{ batch: InventoryBatch }>(`/inventory-batches/${encodeURIComponent(id)}`, { signal }).then(result => result.batch); }
 export function getStockInSummary(signal?: AbortSignal) { return apiClient<StockInSummary>('/inventory-batches/stock-in-summary', { signal }); }
+export function downloadInventoryPeriodXlsx(range: ReportRange) {
+  const params = range ? `?${new URLSearchParams(range)}` : '';
+  const suffix = range ? `${range.from}-${range.to}` : 'all-dates-all-dates';
+  return downloadFile(`/inventory-batches/export.xlsx${params}`, `inventory-period-report-${suffix}.xlsx`, /filename="([a-z0-9-]+\.xlsx)"/i);
+}
 export async function createStockIn(input: StockInInput) {
   const result = await apiClient<{ batch: InventoryBatch }>('/inventory-batches', { method: 'POST', body: JSON.stringify(input), successMessage: false });
   publishActionFeedback({ kind: 'success', message: `Stock-In saved successfully. Batch ID: ${result.batch.batchID}` });

@@ -18,6 +18,7 @@ import { createEmailChange } from './services/email-change';
 import { createEmailChangeStore } from './services/email-change-store';
 import type { AuthExtensions } from './routes/auth.routes';
 import { auditRecordModel } from './models/audit-record';
+import { withAuditRecordedNotifications } from './services/audit-events';
 import { createAdministration, type AdministrationService } from './services/administration';
 import { createAdministrationStore } from './services/administration-store';
 import { ingredientModel } from './models/ingredient';
@@ -176,7 +177,14 @@ if (require.main === module) {
         return result.modifiedCount === 1;
       },
     });
-    const audits = auditRecordModel(driver);
+    const audits = withAuditRecordedNotifications(auditRecordModel(driver));
+    // Authentication events share the wrapped audit model, so their persistence and
+    // the SSE wake-up notification cannot drift apart. Only identity crosses this
+    // boundary; credentials, tokens and session material never reach the audit trail.
+    const auditAuthenticationEvent = async (action: 'LOGIN' | 'LOGOUT', actor: { id: string; name: string; role: string }) => {
+      await audits.create({ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined,
+        action, targetType: 'User', targetId: actor.id, targetName: 'Own account', module: 'Authentication', status: 'Success' });
+    };
     const emailChange = createEmailChange(createEmailChangeStore(driver, users, audits), createEmailChangeEmail(process.env));
     const profileUpdate = createProfileUpdate({
       byId: (id: string) => users.findById(id).lean().exec(),
@@ -205,7 +213,7 @@ if (require.main === module) {
       await database.connect(uri);
       await provisionSecurityIndexes(loginAttempts);
     } };
-    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports);
+    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange, secureCookies: config.nodeEnv === 'production', auditAuthenticationEvent }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

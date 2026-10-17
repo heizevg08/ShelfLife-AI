@@ -10,7 +10,20 @@ import type { PasswordChange } from '../services/password-change';
 import type { ProfileUpdate } from '../services/profile-update';
 import type { EmailChange } from '../services/email-change';
 
-export interface AuthExtensions { loginLimiter?: LoginLimiter; sessions?: PersistentSessions; recovery?: PasswordRecovery; passwordChange?: PasswordChange; profileUpdate?: ProfileUpdate; emailChange?: EmailChange; secureCookies?: boolean }
+export interface AuthExtensions {
+  loginLimiter?: LoginLimiter;
+  sessions?: PersistentSessions;
+  recovery?: PasswordRecovery;
+  passwordChange?: PasswordChange;
+  profileUpdate?: ProfileUpdate;
+  emailChange?: EmailChange;
+  secureCookies?: boolean;
+  // Persists a LOGIN/LOGOUT audit record through the composition root's wrapped
+  // audit model, so the write also feeds the in-process notification bus behind
+  // the Audit Logs SSE stream. Receives identity only — never credentials,
+  // tokens or session material.
+  auditAuthenticationEvent?: (action: 'LOGIN' | 'LOGOUT', actor: { id: string; name: string; role: string }) => Promise<void>;
+}
 
 export function authRoutes(auth: AuthService, origins: readonly string[] = [], extensions: AuthExtensions = {}) {
   const router = Router();
@@ -37,6 +50,11 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
         res.cookie(cookieName, session.token, { ...cookieOptions, expires: session.expiresAt });
       } else res.clearCookie(cookieName, cookieOptions);
     }
+    // A successful sign-in is itself an audited event. The write is awaited before
+    // the response so a persisted trail always precedes an issued token; it sits
+    // after the remember-me handling so no LOGIN record exists for a request that
+    // ultimately fails before delivering a session.
+    await extensions.auditAuthenticationEvent?.('LOGIN', result.user);
     res.json(result);
   });
   router.post('/refresh', async (req, res) => {
@@ -50,8 +68,15 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
   });
   router.post('/logout', async (req, res) => {
     verifyOrigin(req.headers.origin);
+    // Sign-out must always succeed, even with an expired access token, so actor
+    // attribution is best-effort: a still-valid bearer identifies who signed out;
+    // an expired or absent one produces an unattributed revocation, never a failed
+    // logout. The client always sends the bearer header on this request.
+    let actor: { id: string; name: string; role: string } | undefined;
+    try { actor = await auth.authenticate(req.headers.authorization); } catch { /* unattributed logout */ }
     await extensions.sessions?.revoke(cookie(req.headers.cookie));
     res.clearCookie(cookieName, cookieOptions);
+    try { if (actor) await extensions.auditAuthenticationEvent?.('LOGOUT', actor); } catch { /* the session is already revoked; never fail the sign-out itself */ }
     res.status(204).end();
   });
   router.get('/password-reset/availability', (_req, res) => { res.json({ available: extensions.recovery?.available === true }); });

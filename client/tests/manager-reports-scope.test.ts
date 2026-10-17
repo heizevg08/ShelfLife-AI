@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const page = readFileSync(new URL('../src/components/application/ManagerReportsPage.tsx', import.meta.url), 'utf8');
 const service = readFileSync(new URL('../src/services/report-exports.ts', import.meta.url), 'utf8');
+const primitives = readFileSync(new URL('../src/components/application/primitives.tsx', import.meta.url), 'utf8');
 
 test('Manager retains the four authorized KPI sources and pending forecast', () => {
   const labels = ['Inventory Value', 'Near-Expiry Batches', 'Estimated Waste Cost', 'Forecast Accuracy'];
@@ -14,10 +15,11 @@ test('Manager retains the four authorized KPI sources and pending forecast', () 
   assert.match(page, /<span>Forecast Accuracy<\/span><strong>—<\/strong><small>Forecast data pending<\/small>/);
 });
 
-test('Download Center offers one XLSX action and preserves CSV service without exposing it here', () => {
+test('Download Center offers one shared XLSX action and no CSV service', () => {
   assert.match(page, /Management Report Download Center/);
   assert.match(page, /Date Range/);
-  assert.match(page, /Download \(XLSX\)/);
+  assert.match(page, /<ExportControl available disabled=\{!range\} loading=\{exporting\} onExport=\{exportSelected\} \/>/);
+  assert.match(primitives, /Download \(XLSX\)/);
   assert.match(page, /All reports/);
   assert.match(page, /Choose report/);
   assert.match(page, /Reset/);
@@ -28,7 +30,8 @@ test('Download Center offers one XLSX action and preserves CSV service without e
   assert.match(service, /downloadCombinedReport/);
   assert.match(service, /downloadReportXlsx/);
   assert.match(page, /await refreshRecentExports\(\)/);
-  assert.match(service, /downloadReport/);
+  assert.doesNotMatch(service, /downloadReport\(/);
+  assert.doesNotMatch(service, /export\.csv|\.csv/);
 });
 
 test('Report filter exposes approved future reports only as disabled options', () => {

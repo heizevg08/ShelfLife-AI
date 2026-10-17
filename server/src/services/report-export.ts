@@ -12,6 +12,7 @@ type Ingredient = { _id: Id; name: string; category: string; standardUnitCost?: 
 type Waste = { batchId: Id; ingredientId: Id; unit: string; quantityWasted: number; wasteCost: number; dateWasted: Date };
 type Usage = { ingredientId: Id; unit: string; quantityUsed: number; dateUsed: Date };
 type Cell = string | number | null;
+type ReportActorRole = 'Manager' | 'Admin';
 export type ReportTable = { columns: string[]; rows: Cell[][]; dataRows: number; empty: boolean };
 
 const headers: Record<ReportId, string[]> = {
@@ -105,16 +106,16 @@ export function createReportExports(models: {
     const rows = await models.ingredients.find({ _id: { $in: uniqueIds } }).select('_id ingredientCode').lean().exec() as Array<{ _id: Id; ingredientCode?: string }>;
     return new Map(rows.flatMap(row => typeof row.ingredientCode === 'string' ? [[id(row._id), row.ingredientCode] as const] : []));
   }
-  async function audit(actor: { id: string; name?: string; role: 'Manager' }, query: ReportQuery, dataRows: number, status: 'Success' | 'Failed') {
+  async function audit(actor: { id: string; name?: string; role: ReportActorRole }, query: ReportQuery, dataRows: number, status: 'Success' | 'Failed') {
     await models.audits.create({ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: actor.role, action: 'EXPORT', targetType: 'Report', targetName: query.reportId, exportFormat: 'csv', module: 'Reports & Analytics', status, details: `${query.from ?? 'snapshot'}..${query.to ?? 'snapshot'}; ${dataRows} data rows` });
   }
-  async function auditWorkbook(actor: { id: string; name?: string; role: 'Manager' }, query: ReportQuery, reports: Array<{ reportId: ReportId; dataRows: number }>, status: 'Success' | 'Failed') {
+  async function auditWorkbook(actor: { id: string; name?: string; role: ReportActorRole }, query: ReportQuery, reports: Array<{ reportId: ReportId; dataRows: number }>, status: 'Success' | 'Failed') {
     const combined = reports.length > 1;
     const details = reports.map(report => `${report.reportId} ${report.dataRows} data rows`).join(', ');
     await models.audits.create({ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: actor.role, action: 'EXPORT', targetType: 'Report', targetName: combined ? 'management-workbook' : reports[0]?.reportId ?? 'management-workbook', exportFormat: 'xlsx', module: 'Reports & Analytics', status, details: `${query.from ?? 'snapshot'}..${query.to ?? 'snapshot'}; ${details}` });
   }
   async function recentExports(actorId: string) {
-    const records = await models.audits.find({ userId: actorId, actorRole: 'Manager', action: 'EXPORT', targetType: 'Report', module: 'Reports & Analytics', status: 'Success', targetName: { $in: [...Object.keys(headers), 'management-workbook'] }, exportFormat: 'xlsx', timestamp: { $type: 'date' } })
+    const records = await models.audits.find({ userId: actorId, actorRole: { $in: ['Manager', 'Admin'] }, action: 'EXPORT', targetType: 'Report', module: 'Reports & Analytics', status: 'Success', targetName: { $in: [...Object.keys(headers), 'management-workbook'] }, exportFormat: 'xlsx', timestamp: { $type: 'date' } })
       .select('targetName exportFormat timestamp details -_id').sort({ timestamp: -1, _id: -1 }).limit(5).lean().exec();
     return records.flatMap(row => {
       const timestamp = new Date(row.timestamp);

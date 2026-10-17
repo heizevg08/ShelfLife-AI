@@ -3,11 +3,11 @@ import { apiBaseUrl } from './config';
 import type { SessionUser } from './auth';
 
 export interface Account extends SessionUser { firstName: string; lastName: string; lastLoginAt?: string; createdAt: string; updatedAt: string }
-export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: string; targetType: string; targetId?: string; targetName?: string; module?: string; status?: string; details?: string; timestamp: string }
-export interface AuditFilters { actorRole?: SessionUser['role']; action?: 'CREATE' | 'UPDATE' | 'DEACTIVATE' | 'REACTIVATE' | 'EXPORT'; module?: string; status?: 'Success' | 'Failed' | 'Warning'; search?: string; from?: string; to?: string }
+export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: string; targetType: string; targetId?: string; targetName?: string; module?: string; status?: string; details?: string; detailsDisplay?: string; timestamp: string }
+export interface AuditFilters { actorRole?: SessionUser['role']; action?: 'CREATE' | 'UPDATE' | 'DEACTIVATE' | 'REACTIVATE' | 'EXPORT' | 'LOGIN' | 'LOGOUT'; module?: string; status?: 'Success' | 'Failed' | 'Warning'; search?: string; from?: string; to?: string }
 export interface AccountFilters { search?: string; role?: SessionUser['role']; status?: 'Active' | 'Deactivated' }
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
-export interface DashboardSummary { totalUsers: number; activeUsers: number; inactiveUsers: number; roleCounts?: Partial<Record<SessionUser['role'], number>> }
+export interface DashboardSummary { totalUsers: number; activeUsers: number; inactiveUsers: number; roleCounts: Partial<Record<SessionUser['role'], number>> }
 export type AccountFields = Pick<Account, 'firstName' | 'lastName' | 'email' | 'role'>;
 export const listAccounts = (page = 1, sortBy = 'createdAt', sortOrder = 'desc', signal?: AbortSignal, pageSize = 10, filters: AccountFilters = {}) => {
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize), sortBy, sortOrder });
@@ -34,7 +34,36 @@ export const listAuditRecords = (page = 1, pageSize = 25, sortOrder = 'desc', fi
   return apiClient<Page<AuditRecord>>(`/audit-records?${query}`, { signal });
 };
 
-export async function downloadAuditCsv(filters: AuditFilters, signal?: AbortSignal): Promise<void> {
+// Consumes the audit wake-up feed (GET /audit-records/stream) with fetch
+// streaming, because EventSource cannot send the Authorization header this API
+// requires. The server only signals that the trail changed — the caller is
+// expected to re-query through listAuditRecords with its current page/filters.
+// Comment frames (heartbeats) are skipped; only data frames reach onRecorded.
+export async function streamAuditRecorded(onRecorded: () => void, signal: AbortSignal, onOpen?: () => void): Promise<void> {
+  const { currentUser } = await import('./auth');
+  const { getAccessToken } = await import('./session');
+  await currentUser();
+  const response = await fetch(`${apiBaseUrl}/api/audit-records/stream`, { credentials: 'include', cache: 'no-store', signal, headers: { Authorization: `Bearer ${getAccessToken()}` } });
+  if (!response.ok || !response.body) throw new Error('The audit feed could not be opened.');
+  onOpen?.();
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    buffer += decoder.decode(value, { stream: true });
+    let newline = buffer.indexOf('\n');
+    while (newline !== -1) {
+      const line = buffer.slice(0, newline).replace(/\r$/, '');
+      buffer = buffer.slice(newline + 1);
+      if (line.startsWith('data:')) onRecorded();
+      newline = buffer.indexOf('\n');
+    }
+  }
+}
+
+export async function downloadAuditXlsx(filters: AuditFilters, signal?: AbortSignal): Promise<void> {
   const { currentUser } = await import('./auth');
   const { getAccessToken } = await import('./session');
   await currentUser();
@@ -44,13 +73,16 @@ export async function downloadAuditCsv(filters: AuditFilters, signal?: AbortSign
     if (value) query.set(key, value);
   }
   const base = apiBaseUrl;
-  const response = await fetch(`${base}/api/audit-records/export.csv?${query}`, { credentials: 'include', cache: 'no-store', signal, headers: { Authorization: `Bearer ${getAccessToken()}` } });
+  const response = await fetch(`${base}/api/audit-records/export.xlsx?${query}`, { credentials: 'include', cache: 'no-store', signal, headers: { Authorization: `Bearer ${getAccessToken()}` } });
   if (!response.ok) throw new Error('The audit export could not be prepared.');
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'shelflife-audit-records.csv';
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  link.download = /filename="([a-z0-9-]+\.xlsx)"/i.exec(disposition)?.[1] ?? 'shelflife-audit-records.xlsx';
+  document.body.append(link);
   link.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  link.remove();
+  URL.revokeObjectURL(url);
 }

@@ -1,8 +1,9 @@
 import type { RequestHandler } from 'express';
 import type { AdministrationService } from '../services/administration';
+import { onAuditRecorded } from '../services/audit-events';
 import { accountInput, accountPagination, auditPagination, objectId, invalid } from '../validators/administration';
 
-export function administrationControllers(service: AdministrationService): Record<'list' | 'get' | 'create' | 'update' | 'deactivate' | 'reactivate' | 'summary' | 'audit' | 'exportAudit', RequestHandler> {
+export function administrationControllers(service: AdministrationService): Record<'list' | 'get' | 'create' | 'update' | 'deactivate' | 'reactivate' | 'summary' | 'audit' | 'exportAudit' | 'stream', RequestHandler> {
   const lifecycle = (active: boolean): RequestHandler => async (req, res) => {
     if (req.body && Object.keys(req.body).length) invalid('body', 'No fields are accepted');
     res.json({ user: await service.setActive(res.locals.user, objectId(req.params.id), active) });
@@ -16,11 +17,30 @@ export function administrationControllers(service: AdministrationService): Recor
     summary: async (_req, res) => { res.json(await service.summary(res.locals.user)); },
     audit: async (req, res) => { res.json(await service.audits(res.locals.user, auditPagination(req.query))); },
     exportAudit: async (req, res) => {
-      const csv = await service.exportAudits(res.locals.user, auditPagination(req.query));
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', 'attachment; filename="shelflife-audit-records.csv"');
+      const workbook = await service.exportAudits(res.locals.user, auditPagination(req.query));
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="shelflife-audit-records.xlsx"');
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
       res.setHeader('Cache-Control', 'no-store');
-      res.send(csv);
+      res.send(Buffer.from(workbook));
+    },
+    // Server-Sent Events wake-up feed: an empty data frame per audit write, so
+    // connected Admin/Super Admin tables re-query immediately. Comment frames
+    // double as heartbeats and never reach the client's change handler.
+    stream: (req, res) => {
+      res.status(200).set({
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      });
+      res.flushHeaders();
+      res.write('retry: 5000\n: connected\n\n');
+      const heartbeat = setInterval(() => { res.write(': ping\n\n'); }, 25000);
+      const unsubscribe = onAuditRecorded(() => { res.write('data: {}\n\n'); });
+      const close = () => { clearInterval(heartbeat); unsubscribe(); };
+      req.on('close', close);
+      res.on('close', close);
+      res.on('error', close);
     },
   };
 }

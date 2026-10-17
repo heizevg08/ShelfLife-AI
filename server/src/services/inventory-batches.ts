@@ -25,6 +25,7 @@ export interface InventoryBatchStore {
   detail(id: string, now: Date): Promise<InventoryBatch | null>;
   summary(now: Date): Promise<InventoryBatchSummary>;
   stockInSummary(now: Date): Promise<StockInSummary>;
+  auditExport(actor: Actor, from: string | null, to: string | null, dataRows: number): Promise<void>;
   create(actor: Actor, input: StockInInput): Promise<InventoryBatch | null>;
   createMany(actor: Actor, inputs: StockInInput[]): Promise<InventoryBatch[]>;
 }
@@ -34,6 +35,7 @@ export function createInventoryBatches(store: InventoryBatchStore, now: () => Da
     detail: (id: string) => store.detail(id, now()),
     summary: () => store.summary(now()),
     stockInSummary: () => store.stockInSummary(now()),
+    auditExport: (actor: Actor, from: string | null, to: string | null, dataRows: number) => store.auditExport(actor, from, to, dataRows),
     create: (actor: Actor, input: StockInInput) => store.create(actor, input),
     createMany: (actor: Actor, inputs: StockInInput[]) => store.createMany(actor, inputs),
     ready: () => store.ready(),

@@ -1,15 +1,15 @@
-import { AlertTriangle, CalendarDays, ClipboardList, Download, FileBarChart2, Leaf, Package, RotateCcw, Trash2, TrendingUp } from 'lucide-react';
+import { AlertTriangle, CalendarDays, ClipboardList, Leaf, Package, PhilippinePeso, Trash2, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ApplicationDonutChart, ApplicationLineChart } from '../../components/application/ApplicationPatterns';
-import { Card, DataState, ExportControl, PageHeader, Pagination } from '../../components/application/primitives';
+import { Card, DataState, ExportControl, PageHeader } from '../../components/application/primitives';
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
-import { workspaceNavigation } from '../../components/application/workspace';
 import { listIngredients } from '../../services/ingredients';
 import { getInventoryBatchSummary } from '../../services/inventory-batches';
-import { DATE_RANGE_OPTIONS, DateRangeFilter, type DateRangeValue } from '../../components/application/DateRangeFilter';
+import { DATE_RANGE_OPTIONS, type DateRangeValue } from '../../components/application/DateRangeFilter';
 import { Dialog } from '../../components/application/Dialog';
-import { ConnectedManagerReportsPage } from '../../components/application/ManagerReportsPage';
+import { ConnectedManagerReportsPage, ManagementReportDownloadCenter, ManagementReportRecentDownloads, adminReportOptions, useRecentReportDownloads } from '../../components/application/ManagerReportsPage';
 import { FilterSelect } from '../../components/application/FilterSelect';
+import { getWasteSummary, type WasteSummary } from '../../services/waste-records';
 
 function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
   return (
@@ -25,10 +25,6 @@ function PendingPanel({ label, compact = false }: { label: string; compact?: boo
 }
 
 function AdminReports() {
-  const [dateRange, setDateRange] = useState<DateRangeValue>('any');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [reportType, setReportType] = useState('All Reports');
   const [ingredientTotal, setIngredientTotal] = useState<number | null>(null);
   const [ingredientTotalFailed, setIngredientTotalFailed] = useState(false);
   // Inventory value and batch totals come from the same authorized batch summary the Manager
@@ -36,9 +32,10 @@ function AdminReports() {
   // `/inventory-batches/summary`, so these report figures are authoritative, not placeholders.
   const [inventorySummary, setInventorySummary] = useState<{ totalBatches: number; inventoryValue: number | null } | null>(null);
   const [inventorySummaryFailed, setInventorySummaryFailed] = useState(false);
-  const [reportPage, setReportPage] = useState(1);
-  const [reportPageSize, setReportPageSize] = useState(10);
-  const reset = () => { setDateRange('any'); setDateFrom(''); setDateTo(''); setReportType('All Reports'); };
+  const [wasteSummary, setWasteSummary] = useState<WasteSummary | null>(null);
+  const [wasteSummaryFailed, setWasteSummaryFailed] = useState(false);
+  const { recentExports, recentExportsError, refreshRecentExports } = useRecentReportDownloads();
+  async function handleExported() { await refreshRecentExports(); }
   useEffect(() => {
     const abort = new AbortController();
     setIngredientTotalFailed(false);
@@ -55,39 +52,36 @@ function AdminReports() {
       .catch(() => { if (!abort.signal.aborted) setInventorySummaryFailed(true); });
     return () => abort.abort();
   }, []);
+  useEffect(() => {
+    const abort = new AbortController();
+    setWasteSummaryFailed(false);
+    getWasteSummary(abort.signal)
+      .then(summary => { if (!abort.signal.aborted) setWasteSummary(summary); })
+      .catch(() => { if (!abort.signal.aborted) setWasteSummaryFailed(true); });
+    return () => abort.abort();
+  }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    void refreshRecentExports(controller.signal);
+    return () => controller.abort();
+  }, []);
   const inventoryValueLabel = inventorySummary === null || inventorySummary.inventoryValue === null
     ? '—'
     : `₱${inventorySummary.inventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const reports = workspaceNavigation('Admin')
-    .filter(item => item.path !== '/Reports')
-    .map(item => ({ name: `${item.label} Report`, type: item.label, path: item.path }));
-  const reportTypes = [...new Set(reports.map(report => report.type))];
-  const visibleReports = reports.filter(report => reportType === 'All Reports' || report.type === reportType);
   return <div className="sl-admin-reports-page">
     <PageHeader eyebrow="Oversight" title="Reports" description="Generate and view reports on inventory, usage, waste, and ingredient data for your establishment." />
     <div className="sl-admin-view sl-admin-reports-v114">
-      <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Report summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Package/></span><div><span>Total Inventory Value</span><strong>{inventorySummaryFailed ? '—' : inventoryValueLabel}</strong><small>{inventorySummaryFailed ? 'Inventory valuation unavailable' : !inventorySummary ? 'Loading inventory valuation' : inventorySummary.inventoryValue === null ? 'Some batches have no authoritative unit cost' : 'Current stock valued at unit cost'}</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Cost</span><strong>—</strong><small>Waste-cost aggregate requires Manager scope</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Total Ingredients</span><strong>{ingredientTotal?.toLocaleString() ?? '—'}</strong><small>{ingredientTotalFailed ? 'Ingredient service unavailable' : ingredientTotal === null ? 'Loading ingredient records' : 'Ingredient catalogue total'}</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList/></span><div><span>Total Batches</span><strong>{inventorySummary?.totalBatches ?? '—'}</strong><small>{inventorySummaryFailed ? 'Inventory batch service unavailable' : !inventorySummary ? 'Loading inventory batches' : 'Live inventory batch records'}</small></div></article>
+      <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Cross-domain report summary">
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso aria-hidden="true" /></span><div><span>Inventory Value</span><strong>{inventorySummaryFailed ? '—' : inventoryValueLabel}</strong><small>{inventorySummaryFailed ? 'Inventory valuation unavailable' : !inventorySummary ? 'Loading inventory valuation' : inventorySummary.inventoryValue === null ? 'Some batches lack authoritative unit cost' : 'Current authoritative inventory value'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2 aria-hidden="true" /></span><div><span>Estimated Waste Cost</span><strong>{wasteSummaryFailed ? '—' : wasteSummary ? `₱${wasteSummary.totalWasteCostToday.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}</strong><small>{wasteSummaryFailed ? 'Waste-cost summary unavailable' : wasteSummary ? 'Authoritative waste cost recorded today' : 'Loading waste-cost summary'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span><div><span>Total Ingredients</span><strong>{ingredientTotalFailed ? '—' : ingredientTotal?.toLocaleString() ?? '—'}</strong><small>{ingredientTotalFailed ? 'Ingredient service unavailable' : ingredientTotal === null ? 'Loading ingredient records' : 'Ingredient catalogue total'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList aria-hidden="true" /></span><div><span>Total Batches</span><strong>{inventorySummaryFailed ? '—' : inventorySummary?.totalBatches.toLocaleString() ?? '—'}</strong><small>{inventorySummaryFailed ? 'Inventory batch service unavailable' : !inventorySummary ? 'Loading inventory batches' : 'Live inventory batch records'}</small></div></article>
       </section>
 
-      <section className="sl-application-records sl-application-records-overflow sl-admin-report-records" aria-labelledby="sl-admin-available-reports">
-        <header className="sl-application-records-header"><span className="sl-application-records-icon"><FileBarChart2 aria-hidden="true" /></span><h2 id="sl-admin-available-reports">Available Reports</h2></header>
-        <div className="sl-application-records-filters"><div className="sl-application-records-toolbar sl-admin-reports-filters" data-layout="reports" aria-label="Report filters">
-          <DateRangeFilter value={dateRange} from={dateFrom} to={dateTo} onChange={value => { setDateRange(value); setReportPage(1); }} onFromChange={setDateFrom} onToChange={setDateTo} />
-          <label><span>Report Type</span><FilterSelect ariaLabel="Filter reports by type" value={reportType} options={[{value:'All Reports',label:'All Reports'},...reportTypes.map(value => ({value, label: value}))]} onChange={value => { setReportType(value); setReportPage(1); }}/></label>
-          <div className="sl-application-records-filter-actions"><button className="sl-button sl-admin-reports-reset" type="button" onClick={() => { reset(); setReportPage(1); }}><RotateCcw size={14}/> Reset</button><ExportControl label="Export" menuId="sl-admin-reports-export-menu" /></div>
-        </div></div>
-        <div className="sl-application-records-table-shell">
-          <table className="sl-application-records-table" data-layout="reports" aria-label="Available reports">
-            <thead><tr><th scope="col">#</th><th scope="col">Report</th><th scope="col">Type</th><th scope="col">Last Generated</th></tr></thead>
-            <tbody>{visibleReports.map((report, index) => <tr key={report.path}><td>{index + 1}</td><td><span className="sl-emphasized-value sl-admin-report-name">{report.name}</span></td><td><span className="sl-emphasized-value" data-category={report.type}>{report.type}</span></td><td>—</td></tr>)}</tbody>
-          </table>
-        </div>
-        <footer className="sl-application-records-footer"><label><span>Rows per page</span><select value={reportPageSize} onChange={event => { setReportPageSize(Number(event.target.value)); setReportPage(1); }}><option>10</option><option>25</option><option>50</option></select></label><Pagination compact page={reportPage} pageSize={reportPageSize} total={visibleReports.length} itemLabel="reports" onPageChange={setReportPage} /></footer>
-      </section>
+      <div className="sl-manager-reports-live">
+        <ManagementReportDownloadCenter options={adminReportOptions} onExported={handleExported} />
+        <ManagementReportRecentDownloads recentExports={recentExports} recentExportsError={recentExportsError} />
+      </div>
     </div>
   </div>;
 }
@@ -149,6 +143,5 @@ export default function Reports(){
   const { user } = useApplicationWorkspace();
   if (user.role === 'Admin') return <AdminReports />;
   if (user.role === 'Manager') return <ConnectedManagerReportsPage />;
-  if (user.role === 'Super Admin') return <SuperAdminReports />;
-  return <LegacyReports />;
+  return <div className="sl-app sl-session-state"><h1 className="sl-page-title">Access Denied</h1><p className="sl-description">You do not have permission to access the reports workspace.</p></div>;
 }

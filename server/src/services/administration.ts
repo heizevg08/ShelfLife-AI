@@ -1,5 +1,6 @@
 import { AdministrationError, forbidden } from '../middleware/administration.middleware';
 import type { AccountInput, AccountPageQuery, AuditPageQuery } from '../validators/administration';
+import { presentAuditDetails } from './audit-presentation';
 import { hashPassword } from './password';
 
 export interface Account {
@@ -7,8 +8,8 @@ export interface Account {
   role: string; isActive: boolean; lastLoginAt?: string; createdAt: string; updatedAt: string;
 }
 export interface Actor { id: string; name?: string; role: string }
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'DEACTIVATE' | 'REACTIVATE' | 'EXPORT';
-export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: AuditAction; targetType: 'User' | 'Ingredient' | 'Audit Records' | 'Report' | 'InventoryBatch' | 'UsageRecord' | 'WasteRecord' | 'ChangeRequest'; targetId?: string; targetName?: string; module?: string; status?: 'Success' | 'Failed' | 'Warning'; details?: string; timestamp: string }
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'DEACTIVATE' | 'REACTIVATE' | 'EXPORT' | 'LOGIN' | 'LOGOUT';
+export interface AuditRecord { id: string; userId: string; actor: { id: string; name: string; role: string }; action: AuditAction; targetType: 'User' | 'Ingredient' | 'Audit Records' | 'Report' | 'InventoryBatch' | 'UsageRecord' | 'WasteRecord' | 'ChangeRequest'; targetId?: string; targetName?: string; module?: string; status?: 'Success' | 'Failed' | 'Warning'; details?: string; detailsDisplay?: string; timestamp: string }
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface AccountTransaction {
   get(id: string): Promise<Account | null>;
@@ -45,9 +46,13 @@ export function createAdministration(store: AdministrationStore) {
       return user;
     },
     summary: (actor?: Actor) => store.summary(actor?.role === 'Admin' ? managedRoles(actor.role) : null, actor?.role === 'Admin', actor?.role === 'Admin' ? actor.id : undefined),
-    audits: (actor: Actor, query: AuditPageQuery) => {
+    async audits(actor: Actor, query: AuditPageQuery) {
       if (actor.role === 'Admin' && query.actorRole === 'Super Admin') throw forbidden();
-      return store.audits(query, actor.role === 'Admin' ? ['Admin', 'Manager', 'Inventory Staff'] : null);
+      const page = await store.audits(query, actor.role === 'Admin' ? ['Admin', 'Manager', 'Inventory Staff'] : null);
+      // The Details sentence is presentation, not data: it is composed for the
+      // reader from the same formatter the XLSX export uses, while the stored
+      // record keeps its raw details for search and traceability (SoT §22).
+      return { ...page, items: page.items.map(item => ({ ...item, detailsDisplay: presentAuditDetails(item) })) };
     },
     async exportAudits(actor: Actor, query: AuditPageQuery) {
       if (actor.role === 'Admin' && query.actorRole === 'Super Admin') throw forbidden();
@@ -63,15 +68,13 @@ export function createAdministration(store: AdministrationStore) {
           page += 1;
         } while (records.length < Math.min(total, 5000));
         if (total > 5000) throw new AdministrationError(413, 'EXPORT_TOO_LARGE', 'Narrow the filters to export at most 5,000 audit records');
-        const safe = (value: string) => /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-        const quote = (value: unknown) => `"${safe(String(value ?? '')).replace(/"/g, '""')}"`;
-        const lines = [['Date & Time', 'User', 'Role', 'Action', 'Module', 'Target', 'Status', 'Details'], ...records.map(record => [record.timestamp, record.actor.name, record.actor.role, record.action, record.module ?? '', record.targetName ?? record.targetType, record.status ?? 'Success', record.details ?? ''])];
-        const csv = `\uFEFF${lines.map(row => row.map(quote).join(',')).join('\r\n')}`;
-        await store.recordAudit(actor, { action: 'EXPORT', targetType: 'Audit Records', targetName: 'Audit records CSV', module: 'Security & Activity', status: 'Success', details: `CSV export; ${records.length} records` });
-        return csv;
+        const { auditWorkbook } = await import('./audit-workbook.js');
+        const workbook = await auditWorkbook(records);
+        await store.recordAudit(actor, { action: 'EXPORT', targetType: 'Audit Records', targetName: 'Audit records XLSX', module: 'Security & Activity', status: 'Success', details: `XLSX export; ${records.length} records` });
+        return workbook;
       } catch (error) {
         try {
-          await store.recordAudit(actor, { action: 'EXPORT', targetType: 'Audit Records', targetName: 'Audit records CSV', module: 'Security & Activity', status: 'Failed', details: 'CSV export failed before a file was prepared' });
+          await store.recordAudit(actor, { action: 'EXPORT', targetType: 'Audit Records', targetName: 'Audit records XLSX', module: 'Security & Activity', status: 'Failed', details: 'XLSX export failed before a file was prepared' });
         } catch {
           // Preserve the original export failure if its audit write also cannot be stored.
         }

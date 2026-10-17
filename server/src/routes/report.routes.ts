@@ -5,14 +5,14 @@ import { AdministrationError, authorizeAdministration } from '../middleware/admi
 import { HttpError } from '../middleware/error.middleware';
 import { mongoInputGuard } from '../middleware/request-security.middleware';
 import { reportQuery, type ReportId } from '../validators/report';
-import { reportCsv, type ReportExportService } from '../services/report-export';
+import type { ReportExportService } from '../services/report-export';
 import { reportWorkbook } from '../services/report-workbook';
 
 export function reportRoutes(auth: AuthService, service: ReportExportService) {
   const router = Router();
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
-  router.use(authorizeAdministration(['Manager']));
+  router.use(authorizeAdministration(['Manager', 'Admin']));
   // Reject MongoDB operators and dotted keys in query input before any handler reads it.
   router.use(mongoInputGuard);
   router.get('/my-exports', async (req, res, next) => {
@@ -32,7 +32,7 @@ export function reportRoutes(auth: AuthService, service: ReportExportService) {
     let query;
     try { query = reportQuery(selectedReport ?? 'usage-consumption', req.query); }
     catch (error) { next(error); return; }
-    const actor = { id: res.locals.user.id as string, name: `${res.locals.user.firstName ?? ''} ${res.locals.user.lastName ?? ''}`.trim(), role: 'Manager' as const };
+    const actor = { id: res.locals.user.id as string, name: `${res.locals.user.firstName ?? ''} ${res.locals.user.lastName ?? ''}`.trim(), role: (res.locals.user.role === 'Admin' ? 'Admin' : 'Manager') as 'Admin' | 'Manager' };
     const requestedReports = selectedReport
       ? [{ reportId: query.reportId, dataRows: 0 }]
       : ['inventory-summary', 'usage-consumption', 'expiration-waste'].map(reportId => ({ reportId: reportId as ReportId, dataRows: 0 }));
@@ -53,24 +53,6 @@ export function reportRoutes(auth: AuthService, service: ReportExportService) {
   };
   router.get('/operational/export.xlsx', (req, res, next) => exportWorkbook(req, res, next));
   router.get('/operational/:reportId/export.xlsx', (req, res, next) => exportWorkbook(req, res, next, req.params.reportId));
-  router.get('/operational/:reportId/export.csv', async (req, res, next) => {
-    let query;
-    try { query = reportQuery(req.params.reportId!, req.query); }
-    catch (error) { next(error); return; }
-    const actor = { id: res.locals.user.id as string, name: `${res.locals.user.firstName ?? ''} ${res.locals.user.lastName ?? ''}`.trim(), role: 'Manager' as const };
-    try {
-      const table = await service.table(query);
-      const csv = reportCsv(table);
-      await service.audit(actor, query, table.dataRows, 'Success');
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="${query.reportId}${query.from ? `-${query.from}-${query.to}` : ''}.csv"`);
-      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-      res.send(csv);
-    } catch (error) {
-      try { await service.audit(actor, query, 0, 'Failed'); } catch { /* Preserve the original failure. */ }
-      next(error);
-    }
-  });
   // Answer an unknown report sub-path with a coded 404, and translate handler errors
   // into the same error envelope every other administration router returns. Without
   // this the request falls through to the app-level not-found handler, which answers a

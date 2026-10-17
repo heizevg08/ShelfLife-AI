@@ -6,6 +6,7 @@ const { randomBytes } = require('node:crypto');
 const { createApp } = require('../dist/app');
 const { createAuth } = require('../dist/services/auth');
 const { createAdministration } = require('../dist/services/administration');
+const { createAdministrationStore } = require('../dist/services/administration-store');
 const { verifyPassword } = require('../dist/services/password');
 const { normalizeUserRole, storedUserRoles } = require('../dist/models/user');
 const { pagination, auditPagination, accountInput } = require('../dist/validators/administration');
@@ -151,6 +152,23 @@ test('real HTTP administration checks authentication before authorization and va
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });
 
+test('Super Admin combined account filters are applied before pagination and return accurate empty totals', async () => {
+  const f = fixture(), http = createServer(createApp([], () => true, f.auth, undefined, f.service));
+  http.listen(0, '127.0.0.1'); await once(http, 'listening');
+  const actor = f.rows()[0], token = f.auth.issue({ ...actor, _id: actor.id }).accessToken;
+  const request = path => fetch(`http://127.0.0.1:${http.address().port}/api${path}`, { headers: { Authorization: `Bearer ${token}` } });
+  try {
+    const query = 'search=test&role=Super%20Admin&status=Active&pageSize=1';
+    const first = await (await request(`/users?${query}&page=1`)).json();
+    const second = await (await request(`/users?${query}&page=2`)).json();
+    assert.equal(first.total, 2); assert.equal(first.page, 1); assert.equal(first.items.length, 1);
+    assert.equal(second.total, 2); assert.equal(second.page, 2); assert.equal(second.items.length, 1);
+    assert.notEqual(first.items[0].id, second.items[0].id);
+    const empty = await (await request('/users?search=no-such-account&role=Super%20Admin&status=Deactivated&page=1')).json();
+    assert.equal(empty.total, 0); assert.equal(empty.items.length, 0);
+  } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
+});
+
 test('HTTP lifecycle records the authenticated actor and rejects mass assignment', async () => {
   const f = fixture(), http = createServer(createApp([], () => true, f.auth, undefined, f.service));
   http.listen(0, '127.0.0.1'); await once(http, 'listening');
@@ -196,16 +214,110 @@ test('Admin active summary excludes deactivated accounts while keeping them insp
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });
 
-test('Admin audit filters are server-side and CSV exports record the authenticated actor', async () => {
+test('Super Admin summary reconciles lifecycle totals and counts deactivated Super Admins', async () => {
+  const f = fixture();
+  f.rows()[2].isActive = false;
+  f.rows()[4].isActive = false;
+  const http = createServer(createApp([], () => true, f.auth, undefined, f.service));
+  http.listen(0, '127.0.0.1'); await once(http, 'listening');
+  const actor = f.rows()[0], token = f.auth.issue({ ...actor, _id: actor.id }).accessToken;
+  try {
+    const response = await fetch(`http://127.0.0.1:${http.address().port}/api/dashboard/summary`, { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(response.status, 200);
+    const summary = await response.json();
+    assert.equal(summary.totalUsers, 6);
+    assert.equal(summary.activeUsers, 4);
+    assert.equal(summary.inactiveUsers, 2);
+    assert.equal(summary.activeUsers + summary.inactiveUsers, summary.totalUsers);
+    assert.equal(summary.roleCounts['Super Admin'], 2);
+  } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
+});
+
+test('account summary returns zero totals and empty role counts for an empty account collection', async () => {
+  const users = { aggregate: () => ({ exec: async () => [] }) };
+  const store = createAdministrationStore({}, users, {});
+  assert.deepEqual(await store.summary(), { totalUsers: 0, activeUsers: 0, inactiveUsers: 0, roleCounts: {} });
+});
+
+test('audit status filtering agrees with the model default the Status column presents', async () => {
+  // The status model is Success | Failed | Warning with default 'Success'
+  // (models/audit-record.ts), and every presentation surface reads a missing
+  // stored status as Success. The query filter has to agree with them, or a
+  // Status=Success request silently drops rows the same table labels Success.
+  const seen = [];
+  const auditQuery = (rows) => ({
+    sort() { return this; },
+    skip() { return this; },
+    limit() { return this; },
+    lean() { return this; },
+    exec: async () => rows,
+  });
+  const audits = {
+    find(filter) { seen.push(['find', filter.status]); return auditQuery([]); },
+    countDocuments(filter) { seen.push(['count', filter.status]); return { exec: async () => 0 }; },
+  };
+  const users = { find() { return { select() { return this; }, lean() { return this; }, exec: async () => [] }; } };
+  const store = createAdministrationStore({}, users, audits);
+  const base = { page: 1, pageSize: 25, sortBy: 'timestamp', sortOrder: 'desc' };
+  // Success matches stored Success plus an absent field (the model default).
+  await store.audits({ ...base, status: 'Success' }, null);
+  assert.deepEqual(seen, [['find', { $in: ['Success', null] }], ['count', { $in: ['Success', null] }]]);
+  // Failed and Warning stay exact: a missing status can never be one of those.
+  for (const status of ['Failed', 'Warning']) {
+    seen.length = 0;
+    await store.audits({ ...base, status }, null);
+    assert.deepEqual(seen, [['find', status], ['count', status]]);
+  }
+  // With no status filter the collection-wide total is untouched.
+  seen.length = 0;
+  await store.audits(base, null);
+  assert.deepEqual(seen, [['find', undefined], ['count', undefined]]);
+});
+
+test('account listing sorts login recency with creation and id tie-breakers before pagination', async () => {
+  const calls = [];
+  const query = {
+    select() { return this; },
+    sort(value) { calls.push(['sort', value]); return this; },
+    skip(value) { calls.push(['skip', value]); return this; },
+    limit(value) { calls.push(['limit', value]); return this; },
+    lean() { return this; },
+    exec: async () => [],
+  };
+  const users = {
+    find: () => query,
+    countDocuments: () => ({ exec: async () => 0 }),
+  };
+  const store = createAdministrationStore({}, users, {});
+  await store.list(null, { page: 2, pageSize: 10, sortBy: 'lastLoginAt', sortOrder: 'desc' });
+  assert.deepEqual(calls, [
+    ['sort', { lastLoginAt: -1, createdAt: -1, _id: -1 }],
+    ['skip', 10],
+    ['limit', 10],
+  ]);
+});
+
+test('Admin audit filters are server-side and XLSX exports record the authenticated actor', async () => {
   const f = fixture(), actor = f.rows()[1];
   f.rows()[2].name = 'Manager Actor';
-  await f.service.exportAudits(actor, { page: 1, pageSize: 25, sortBy: 'timestamp', sortOrder: 'desc' });
+  const workbook = await f.service.exportAudits(actor, { page: 1, pageSize: 25, sortBy: 'timestamp', sortOrder: 'desc' });
+  assert.ok(workbook.byteLength > 0);
+  const { Workbook } = (await import('@excel.js/exceljs')).default;
+  const opened = new Workbook();
+  await opened.xlsx.load(workbook);
+  const sheet = opened.getWorksheet('Audit Records');
+  assert.deepEqual(sheet.getRow(4).values.slice(1), ['Date & Time', 'User', 'Action', 'Module', 'Details', 'Status']);
+  assert.equal(sheet.getRow(4).fill.fgColor.argb, 'FF11613C');
+  assert.equal(sheet.views[0].state, 'frozen');
+  assert.equal(sheet.views[0].ySplit, 4);
   assert.equal(f.records().length, 1);
   assert.equal(f.records()[0].userId, actor.id);
   assert.equal(f.records()[0].actor.role, 'Admin');
   assert.equal(f.records()[0].status, 'Success');
   assert.equal(f.records()[0].action, 'EXPORT');
+  assert.equal(f.records()[0].targetName, 'Audit records XLSX');
   const result = await f.service.audits(actor, { page: 1, pageSize: 25, sortBy: 'timestamp', sortOrder: 'desc' });
   assert.equal(result.total, 1);
   assert.equal(result.items[0].actor.role, 'Admin');
+  assert.equal(result.items[0].detailsDisplay, 'Exported audit records to XLSX (0 records).');
 });

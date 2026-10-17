@@ -57,6 +57,10 @@ test('Waste API permits authorized Manager and Inventory Staff operations and pr
     assert.equal((await request()).status, 401);
     assert.equal((await request(admin, '', 'POST', { ingredientId: record.ingredient.id, batchId: record.batch.id, dateWasted: '2030-01-10', quantityWasted: 2, reason: 'Spoiled' })).status, 403);
     assert.equal((await request(manager)).status, 200);
+    assert.equal((await request(admin, '/summary')).status, 200);
+    assert.equal((await request(admin)).status, 403);
+    assert.equal((await request(admin, '/' + record.id)).status, 403);
+    assert.equal((await request(admin, '/reason-breakdown')).status, 403);
     assert.equal((await request(staff, '/analytics')).status, 403);
     assert.equal((await request(admin, '/analytics')).status, 403);
     assert.equal((await request(manager, '/analytics?from=2030-01-10&to=2030-01-10&category=Dairy')).status, 200);

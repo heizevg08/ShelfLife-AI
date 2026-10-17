@@ -40,6 +40,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const [topbarClock, setTopbarClock] = useState(() => new Date());
   const appRef = useRef<HTMLDivElement>(null);
   const managerDashboardUsesDocumentScroll = user?.role === 'Manager' && pathname === '/ManagerDashboard';
+  const backToTopAlwaysAvailable = user?.role === 'Admin' && ['/UserManagement', '/Ingredients', '/InventoryBatches', '/AdministrativeAudit'].includes(pathname);
   const dashboardPath = dashboardPaths[user?.role ?? 'Super Admin'];
   const destinations = [{ label: 'Dashboard', Icon: LayoutDashboard, path: dashboardPath }, ...(user?.role === 'Super Admin' ? administrationAreas.filter(area => !('hidden' in area && area.hidden)) : user ? workspaceNavigation(user.role) : [])];
   const superAdminSearchEntries = user?.role === 'Super Admin' ? [
@@ -599,12 +600,16 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
           {children(user, openArea, requestSignOut, refreshIdentity)}
         </main>
 
-        {showBackToTop && (
+        {(showBackToTop || backToTopAlwaysAvailable) && (
           <button
             className="sl-back-to-top"
             type="button"
             aria-label="Back to top"
-            onClick={() => managerDashboardUsesDocumentScroll ? window.scrollTo({ top: 0, behavior: 'smooth' }) : appRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => {
+              appRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              document.getElementById('sl-main')?.focus({ preventScroll: true });
+            }}
           >
             <ArrowUp size={19} aria-hidden="true" />
           </button>

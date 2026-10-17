@@ -303,12 +303,15 @@ export function ManagerProfilePage() {
   }, [user, saved]);
   // Only the roles the backend authorizes may start a self-service email change.
   const canEditEmail = current.role === 'Super Admin' || current.role === 'Admin';
+  // Super Admin renders the shared presentation inside its own surface; every other role keeps
+  // the approved profile exactly as it is.
+  const surface = current.role === 'Super Admin' ? ' sl-superadmin-surface sl-superadmin-profile' : '';
   const name = (value?: string) => value && value.trim() ? value : 'Unavailable';
   const onSaved = (next: SessionUser, message: string) => { setSaved(next); publishActionFeedback({ kind: 'success', message }); refreshIdentity(); };
 
   return <>
     <PageHeader eyebrow="Account" title="My Profile" description="Keep your details and sign-in settings up to date." />
-    <div className="sl-admin-view sl-profile-page sl-profile-manager">
+    <div className={`sl-admin-view sl-profile-page sl-profile-manager${surface}`}>
       <section className="sl-profile-card" aria-labelledby="sl-profile-manager-details">
         <header className="sl-profile-card-header"><h2 id="sl-profile-manager-details">Your details</h2></header>
         <dl className="sl-profile-manager-rows">

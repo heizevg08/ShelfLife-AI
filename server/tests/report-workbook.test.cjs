@@ -74,19 +74,20 @@ test('individual workbooks reopen with exactly the selected report and its mappe
   }
 });
 
-test('Manager workbook route denies other roles, audits before delivery and refuses audit failure', async t => {
+test('workbook route denies non-report roles, audits before delivery and refuses audit failure', async t => {
   let status = 'Success';
+  let lastActor;
   const auditCalls = [];
   const auth = { authenticate: async header => { if (!header) throw new HttpError(401, 'Authentication required'); return { id: 'a'.repeat(24), role: header.slice(7) === 'manager' ? 'Manager' : header.slice(7) }; } };
-  const service = { ...reports, auditWorkbook: async (_actor, _query, exportedReports, result) => { auditCalls.push({ reports: exportedReports, result }); if (status === 'Failed' && result === 'Success') throw new Error('audit unavailable'); } };
+  const service = { ...reports, auditWorkbook: async (actor, _query, exportedReports, result) => { lastActor = actor; auditCalls.push({ reports: exportedReports, result }); if (status === 'Failed' && result === 'Success') throw new Error('audit unavailable'); } };
   const server = createApp([], () => true, auth, undefined, undefined, undefined, undefined, undefined, undefined, undefined, service).listen(0);
   t.after(() => new Promise(resolve => server.close(resolve)));
   const url = `http://127.0.0.1:${server.address().port}/api/reports/operational/export.xlsx?from=2026-10-14&to=2026-10-14`;
   const individualUrl = url.replace('/export.xlsx?', '/expiration-waste/export.xlsx?');
   assert.equal((await fetch(url)).status, 401);
   assert.equal((await fetch(individualUrl)).status, 401);
-  for (const role of ['Admin', 'Inventory Staff', 'Super Admin']) assert.equal((await fetch(url, { headers: { Authorization: `Bearer ${role}` } })).status, 403);
-  for (const role of ['Admin', 'Inventory Staff', 'Super Admin']) assert.equal((await fetch(individualUrl, { headers: { Authorization: `Bearer ${role}` } })).status, 403);
+  for (const role of ['Inventory Staff', 'Super Admin']) assert.equal((await fetch(url, { headers: { Authorization: `Bearer ${role}` } })).status, 403);
+  for (const role of ['Inventory Staff', 'Super Admin']) assert.equal((await fetch(individualUrl, { headers: { Authorization: `Bearer ${role}` } })).status, 403);
   const response = await fetch(url, { headers: { Authorization: 'Bearer manager' } });
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type'), /spreadsheetml/);
@@ -111,6 +112,14 @@ test('Manager workbook route denies other roles, audits before delivery and refu
   assert.equal(failedIndividual.status, 500);
   assert.equal(auditCalls.at(-1).result, 'Failed');
   assert.deepEqual(auditCalls.at(-1).reports, [{ reportId: 'expiration-waste', dataRows: 0 }]);
+  status = 'Success';
+  const adminWorkbook = await fetch(url, { headers: { Authorization: 'Bearer Admin' } });
+  assert.equal(adminWorkbook.status, 200);
+  assert.match(adminWorkbook.headers.get('content-disposition'), /management-report-2026-10-14-2026-10-14.xlsx/);
+  assert.equal(lastActor.role, 'Admin');
+  const adminIndividual = await fetch(individualUrl, { headers: { Authorization: 'Bearer Admin' } });
+  assert.equal(adminIndividual.status, 200);
+  assert.equal(lastActor.role, 'Admin');
 });
 
 test('individual XLSX route audits its own report and rejects an invalid report/date query', async t => {
