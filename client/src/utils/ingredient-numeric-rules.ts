@@ -11,7 +11,7 @@ export const INGREDIENT_UNIT_COST_MAX = 1_000_000_000;
 export const INGREDIENT_DEFAULT_SHELF_LIFE_MAX = 3_650;
 
 // The server's own wording, reused verbatim so the browser and the API agree.
-export const INGREDIENT_MINIMUM_STOCK_MESSAGE = 'Minimum stock must be between 0 and 1,000,000,000.';
+export const INGREDIENT_MINIMUM_STOCK_MESSAGE = 'Minimum stock must be between 1 and 1,000,000,000.';
 export const INGREDIENT_UNIT_COST_MESSAGE = 'Enter a valid unit cost.';
 export const INGREDIENT_SHELF_LIFE_MESSAGE = 'Shelf life must be a whole number from 1 to 3,650 days.';
 
@@ -35,12 +35,12 @@ const finiteNumber = (value: number | string | undefined) => {
   return Number.isFinite(numericValue) ? numericValue : undefined;
 };
 
-// Minimum stock: 0 to 1,000,000,000, whole or fractional, matching the API range.
+// Minimum stock: 1 to 1,000,000,000, whole or fractional, matching the API range.
 export function ingredientMinimumStockError(value: string): string | undefined {
   if (value === '') return undefined;
   if (!decimal(value)) return INGREDIENT_MINIMUM_STOCK_MESSAGE;
   const numericValue = Number(value);
-  if (!Number.isFinite(numericValue) || numericValue > INGREDIENT_MINIMUM_STOCK_MAX) return INGREDIENT_MINIMUM_STOCK_MESSAGE;
+  if (!Number.isFinite(numericValue) || numericValue < 1 || numericValue > INGREDIENT_MINIMUM_STOCK_MAX) return INGREDIENT_MINIMUM_STOCK_MESSAGE;
   return undefined;
 }
 

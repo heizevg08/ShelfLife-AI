@@ -48,7 +48,7 @@ export function accountPagination(query: Record<string, unknown>): AccountPageQu
   }
   return result;
 }
-const auditActions = ['CREATE', 'UPDATE', 'DEACTIVATE', 'REACTIVATE', 'EXPORT'] as const;
+const auditActions = ['CREATE', 'UPDATE', 'DEACTIVATE', 'REACTIVATE', 'EXPORT', 'LOGIN', 'LOGOUT'] as const;
 export type AuditActionFilter = typeof auditActions[number];
 export type AuditPageQuery = PageQuery & { actorRole?: typeof ROLES[number]; action?: AuditActionFilter; module?: string; status?: 'Success' | 'Failed' | 'Warning'; search?: string; from?: Date; to?: Date };
 export function auditPagination(query: Record<string, unknown>): AuditPageQuery {

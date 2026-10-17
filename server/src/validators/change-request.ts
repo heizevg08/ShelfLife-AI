@@ -14,7 +14,7 @@ const cleanText = (field: string, value: unknown, minimum: number, maximum: numb
 function normalizeRequestedValue(type: ChangeRequestType, value: unknown): string {
   if (type === 'MINIMUM_STOCK_CHANGE' || type === 'STANDARD_UNIT_COST_CHANGE') { if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1_000_000_000) invalid('requestedValue', 'Enter a valid non-negative value'); return String(value); }
   if (type === 'DEFAULT_SHELF_LIFE_CHANGE') { if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0 || value > 3650) invalid('requestedValue', 'Enter a valid shelf life in days'); return String(value); }
-  const clean = cleanText('requestedValue', value, type === 'BRAND_CHANGE' || type === 'DESCRIPTION_CHANGE' ? 0 : 1, type === 'DESCRIPTION_CHANGE' ? 1000 : 120);
+  const clean = cleanText('requestedValue', value, type === 'DESCRIPTION_CHANGE' ? 1 : 0, type === 'DESCRIPTION_CHANGE' ? 1000 : 120);
   if (type === 'CATEGORY_CHANGE' && !INGREDIENT_CATEGORIES.includes(clean as typeof INGREDIENT_CATEGORIES[number])) invalid('requestedValue', 'Select a valid category');
   if (type === 'UNIT_OF_MEASURE_CHANGE' && !CHANGE_REQUEST_UNITS.includes(clean as typeof CHANGE_REQUEST_UNITS[number])) invalid('requestedValue', 'Select a valid unit');
   return clean;

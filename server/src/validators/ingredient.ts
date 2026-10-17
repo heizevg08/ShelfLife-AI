@@ -43,7 +43,7 @@ export function ingredientInput(body: unknown): IngredientInput {
     category: input.category as typeof INGREDIENT_CATEGORIES[number],
     unitOfMeasure: cleanText('unitOfMeasure', input.unitOfMeasure, true, 50),
   };
-  if (input.minimumStock !== undefined && input.minimumStock !== '') result.minimumStock = number('minimumStock', input.minimumStock, 0, INGREDIENT_LIMITS.minimumStock);
+  if (input.minimumStock !== undefined && input.minimumStock !== '') result.minimumStock = number('minimumStock', input.minimumStock, 1, INGREDIENT_LIMITS.minimumStock);
   if (input.standardUnitCost !== undefined && input.standardUnitCost !== '') {
     const cost = number('standardUnitCost', input.standardUnitCost, 0, INGREDIENT_LIMITS.standardUnitCost);
     if (Math.round(cost * 100) !== cost * 100) invalid('standardUnitCost', 'Use no more than 2 decimal places');

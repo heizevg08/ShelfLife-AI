@@ -20,19 +20,19 @@ test('frontend numeric rules match the server ingredient ranges', () => {
   assert.match(server, /minimumStock: 1_000_000_000,/);
   assert.match(server, /standardUnitCost: 1_000_000_000,/);
   assert.match(server, /defaultShelfLifeDays: 3_650,/);
-  assert.match(server, /number\('minimumStock', input\.minimumStock, 0, INGREDIENT_LIMITS\.minimumStock\)/);
+  assert.match(server, /number\('minimumStock', input\.minimumStock, 1, INGREDIENT_LIMITS\.minimumStock\)/);
   assert.match(server, /number\('standardUnitCost', input\.standardUnitCost, 0, INGREDIENT_LIMITS\.standardUnitCost\)/);
   assert.match(server, /number\('defaultShelfLifeDays', input\.defaultShelfLifeDays, 1, INGREDIENT_LIMITS\.defaultShelfLifeDays\)/);
   assert.match(server, /Use no more than 2 decimal places/);
   assert.match(server, /Enter a whole number of at least 1/);
 });
 
-test('minimum stock accepts 0 to 1,000,000,000 and refuses everything else', () => {
-  for (const value of ['0', '1', '5.5', '57', '999999999', '1000000000']) {
+test('minimum stock accepts 1 to 1,000,000,000 and refuses everything else', () => {
+  for (const value of ['1', '5.5', '57', '999999999', '1000000000']) {
     assert.equal(ingredientMinimumStockError(value), undefined, value);
   }
-  for (const value of ['-1', '1000000001', '1000000001.5', '1e21', '1e+21', 'Infinity', '-Infinity', 'NaN', 'abc', '12abc', '0x10', '  5  ']) {
-    assert.equal(ingredientMinimumStockError(value), 'Minimum stock must be between 0 and 1,000,000,000.', value);
+  for (const value of ['0', '-1', '1000000001', '1000000001.5', '1e21', '1e+21', 'Infinity', '-Infinity', 'NaN', 'abc', '12abc', '0x10', '  5  ']) {
+    assert.equal(ingredientMinimumStockError(value), 'Minimum stock must be between 1 and 1,000,000,000.', value);
   }
 });
 

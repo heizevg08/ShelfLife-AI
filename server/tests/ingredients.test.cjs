@@ -13,12 +13,13 @@ const manager = { id: '2'.repeat(24), _id: '2'.repeat(24), name: 'Manager User',
 const staff = { id: '3'.repeat(24), _id: '3'.repeat(24), name: 'Inventory Staff User', email: 'staff@shelflife.com', role: 'Inventory Staff', isActive: true, authVersion: 0 };
 
 test('ingredient validation preserves the ingredient/batch boundary and numeric rules', () => {
-  const valid = ingredientInput({ name: '  Whole   Milk ', brand: '', description: '', category: 'Dairy', unitOfMeasure: ' liter ', minimumStock: 0, standardUnitCost: 0, defaultShelfLifeDays: 7 });
+  const valid = ingredientInput({ name: '  Whole   Milk ', brand: '', description: '', category: 'Dairy', unitOfMeasure: ' liter ', minimumStock: 1, standardUnitCost: 0, defaultShelfLifeDays: 7 });
   assert.equal(valid.name, 'Whole Milk');
   assert.equal(valid.unitOfMeasure, 'liter');
   for (const body of [
     { ...valid, expirationDate: '2030-01-01' },
     { ...valid, name: '' },
+    { ...valid, minimumStock: 0 },
     { ...valid, minimumStock: -1 },
     { ...valid, minimumStock: 1_000_000_001 },
     { ...valid, standardUnitCost: Number.POSITIVE_INFINITY },
@@ -32,7 +33,7 @@ test('ingredient validation preserves the ingredient/batch boundary and numeric 
 });
 
 test('ingredient names normalize to 1–50 characters without truncation', () => {
-  const base = { name: 'A', brand: '', description: '', category: 'Dairy', unitOfMeasure: 'liter' };
+  const base = { name: 'A', brand: '', description: '', category: 'Dairy', unitOfMeasure: 'liter', minimumStock: 1 };
   assert.equal(ingredientInput(base).name, 'A');
   assert.equal(ingredientInput({ ...base, name: '  Whole   Milk  ' }).name, 'Whole Milk');
   assert.equal(ingredientInput({ ...base, name: 'x'.repeat(50) }).name.length, 50);
