@@ -1,3 +1,4 @@
+/* CDN cache-bust: trivial whitespace change to force refresh */
 @font-face {
   font-family:Inter;
   src:url("/fonts/InterVariable.woff2")format("woff2");
