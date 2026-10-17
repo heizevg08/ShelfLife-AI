@@ -10,6 +10,7 @@ import { DATE_RANGE_OPTIONS, DateRangeFilter, type DateRangeValue } from '../../
 import { Dialog } from '../../components/application/Dialog';
 import { ConnectedManagerReportsPage } from '../../components/application/ManagerReportsPage';
 import { FilterSelect } from '../../components/application/FilterSelect';
+import { formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
 
 function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
   return (
@@ -55,9 +56,9 @@ function AdminReports() {
       .catch(() => { if (!abort.signal.aborted) setInventorySummaryFailed(true); });
     return () => abort.abort();
   }, []);
-  const inventoryValueLabel = inventorySummary === null || inventorySummary.inventoryValue === null
+  const inventoryValueLabel = inventorySummary === null || inventorySummary.inventoryValue === null || !Number.isFinite(inventorySummary.inventoryValue)
     ? '—'
-    : `₱${inventorySummary.inventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    : formatCompactPeso(inventorySummary.inventoryValue);
   const reports = workspaceNavigation('Admin')
     .filter(item => item.path !== '/Reports')
     .map(item => ({ name: `${item.label} Report`, type: item.label, path: item.path }));
@@ -67,7 +68,7 @@ function AdminReports() {
     <PageHeader eyebrow="Oversight" title="Reports" description="Generate and view reports on inventory, usage, waste, and ingredient data for your establishment." />
     <div className="sl-admin-view sl-admin-reports-v114">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Report summary">
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Package/></span><div><span>Total Inventory Value</span><strong>{inventorySummaryFailed ? '—' : inventoryValueLabel}</strong><small>{inventorySummaryFailed ? 'Inventory valuation unavailable' : !inventorySummary ? 'Loading inventory valuation' : inventorySummary.inventoryValue === null ? 'Some batches have no authoritative unit cost' : 'Current stock valued at unit cost'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Package/></span><div><span>Total Inventory Value</span><strong title={inventorySummary?.inventoryValue !== null && inventorySummary?.inventoryValue !== undefined && Number.isFinite(inventorySummary.inventoryValue) ? formatExactPeso(inventorySummary.inventoryValue) : undefined}>{inventorySummaryFailed ? '—' : inventoryValueLabel}</strong><small>{inventorySummaryFailed ? 'Inventory valuation unavailable' : !inventorySummary ? 'Loading inventory valuation' : inventorySummary.inventoryValue === null ? 'Some batches have no authoritative unit cost' : 'Current stock valued at unit cost'}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Cost</span><strong>—</strong><small>Waste-cost aggregate requires Manager scope</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Total Ingredients</span><strong>{ingredientTotal?.toLocaleString() ?? '—'}</strong><small>{ingredientTotalFailed ? 'Ingredient service unavailable' : ingredientTotal === null ? 'Loading ingredient records' : 'Ingredient catalogue total'}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList/></span><div><span>Total Batches</span><strong>{inventorySummary?.totalBatches ?? '—'}</strong><small>{inventorySummaryFailed ? 'Inventory batch service unavailable' : !inventorySummary ? 'Loading inventory batches' : 'Live inventory batch records'}</small></div></article>

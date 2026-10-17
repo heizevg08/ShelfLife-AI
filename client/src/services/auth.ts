@@ -18,6 +18,7 @@ export interface SessionUser {
   email: string;
   role: 'Super Admin' | 'Admin' | 'Manager' | 'Inventory Staff';
   isActive: boolean;
+  mustChangePassword?: boolean;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;

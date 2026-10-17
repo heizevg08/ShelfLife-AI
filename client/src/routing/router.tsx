@@ -16,6 +16,7 @@ const workspace = createRoute({ getParentRoute: () => root, id: '_workspace', co
 async function guard(path: string) {
   try {
     const user = await currentUser();
+    if (user.mustChangePassword) throw redirect({ to: '/ShelfLifeAILogin', replace: true });
     if (!canOpenWorkspacePath(user.role, path)) throw redirect({ to: dashboardPaths[user.role], replace: true });
   } catch (error) {
     if (error instanceof AuthRequestError && error.status === 401) throw redirect({ to: '/ShelfLifeAILogin', replace: true });
@@ -58,7 +59,8 @@ const redirects = Object.entries(aliases).map(([path, to]) => createRoute({ getP
 // is an invented fixture for reviewing the panel designs.
 async function devSessionGuard() {
   try {
-    await currentUser();
+    const user = await currentUser();
+    if (user.mustChangePassword) throw redirect({ to: '/ShelfLifeAILogin', replace: true });
   } catch (error) {
     if (error instanceof AuthRequestError && error.status === 401) throw redirect({ to: '/ShelfLifeAILogin', replace: true });
     throw error;

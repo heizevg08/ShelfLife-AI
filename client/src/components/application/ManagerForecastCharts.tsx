@@ -1,5 +1,6 @@
 import { ApplicationBarBreakdown, ApplicationPendingState } from './ApplicationPatterns';
 import { ManagerDailyRecordChart, ManagerDailyRecordLegend, type DailyPoint, type DailySeries } from './ManagerDailyRecordChart';
+import { formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
 import {
   formatQuantity,
   rankInsights,
@@ -252,7 +253,7 @@ export function ForecastInsightCards({ ariaLabel, insights }: { ariaLabel: strin
         <p className="sl-mgr-fc-insight-reason">{insight.reason}</p>
         <p className="sl-mgr-fc-insight-evidence">{insight.evidence}</p>
         {(insight.potentialWasteQuantity !== undefined && insight.potentialWasteCost !== undefined) && <p className="sl-mgr-fc-insight-waste">
-          Potential waste {formatQuantity(insight.potentialWasteQuantity)} {insight.unit} · est. ₱{insight.potentialWasteCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          Potential waste {formatQuantity(insight.potentialWasteQuantity)} {insight.unit} · est. <span title={Number.isFinite(insight.potentialWasteCost) ? formatExactPeso(insight.potentialWasteCost) : undefined}>{Number.isFinite(insight.potentialWasteCost) ? formatCompactPeso(insight.potentialWasteCost) : '—'}</span>
           {insight.expiresOn && <span> · expires {dateLabel(insight.expiresOn)}</span>}
         </p>}
         <p className="sl-mgr-fc-insight-action"><strong>Suggested next step:</strong> {insight.action}</p>

@@ -10,11 +10,28 @@ export const CHANGE_REQUEST_TARGET_BY_TYPE: Record<ChangeRequestType, ChangeRequ
   MINIMUM_STOCK_CHANGE: 'minimumStock', STANDARD_UNIT_COST_CHANGE: 'standardUnitCost', CATEGORY_CHANGE: 'category', BRAND_CHANGE: 'brand', DESCRIPTION_CHANGE: 'description', UNIT_OF_MEASURE_CHANGE: 'unitOfMeasure', DEFAULT_SHELF_LIFE_CHANGE: 'defaultShelfLifeDays',
 };
 export type ChangeRequestInput = { requestType: ChangeRequestType; ingredientId: string; targetField: ChangeRequestTargetField; requestedValue: string; reason: string };
-const cleanText = (field: string, value: unknown, minimum: number, maximum: number) => { if (typeof value !== 'string') invalid(field); const clean = value.trim().replace(/\s+/g, ' '); if (clean.length < minimum || clean.length > maximum) invalid(field); return clean; };
+const MAX_REQUESTED_MINIMUM_STOCK = 1_000_000;
+const cleanText = (field: string, value: unknown, minimum: number, maximum: number) => {
+  if (typeof value !== 'string') invalid(field, field === 'requestedValue' ? 'Enter a text value.' : 'Enter a valid value.');
+  const clean = value.trim().replace(/\s+/g, ' ');
+  if (clean.length < minimum) invalid(field, field === 'requestedValue' ? 'Enter a requested value.' : 'This field is required.');
+  if (clean.length > maximum) invalid(field, field === 'requestedValue' ? `Requested value must be ${maximum} characters or fewer.` : `Reason must be ${maximum} characters or fewer.`);
+  return clean;
+};
 function normalizeRequestedValue(type: ChangeRequestType, value: unknown): string {
-  if (type === 'MINIMUM_STOCK_CHANGE' || type === 'STANDARD_UNIT_COST_CHANGE') { if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1_000_000_000) invalid('requestedValue', 'Enter a valid non-negative value'); return String(value); }
+  if (type === 'MINIMUM_STOCK_CHANGE') {
+    if (typeof value !== 'number' || !Number.isFinite(value)) invalid('requestedValue', 'Minimum stock must be numeric.');
+    if (value < 0 || value > MAX_REQUESTED_MINIMUM_STOCK) invalid('requestedValue', 'Minimum stock must be from 0 to 1,000,000.');
+    return String(value);
+  }
+  if (type === 'STANDARD_UNIT_COST_CHANGE') {
+    if (typeof value !== 'number' || !Number.isFinite(value)) invalid('requestedValue', 'Unit cost must be numeric.');
+    if (value < 0 || value > 1_000_000_000) invalid('requestedValue', 'Enter a unit cost from 0 to 1,000,000,000.');
+    if (Number(value.toFixed(2)) !== value) invalid('requestedValue', 'Use no more than 2 decimal places.');
+    return String(value);
+  }
   if (type === 'DEFAULT_SHELF_LIFE_CHANGE') { if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0 || value > 3650) invalid('requestedValue', 'Enter a valid shelf life in days'); return String(value); }
-  const clean = cleanText('requestedValue', value, type === 'BRAND_CHANGE' || type === 'DESCRIPTION_CHANGE' ? 0 : 1, type === 'DESCRIPTION_CHANGE' ? 1000 : 120);
+  const clean = cleanText('requestedValue', value, type === 'DESCRIPTION_CHANGE' ? 0 : 1, type === 'DESCRIPTION_CHANGE' ? 1000 : 120);
   if (type === 'CATEGORY_CHANGE' && !INGREDIENT_CATEGORIES.includes(clean as typeof INGREDIENT_CATEGORIES[number])) invalid('requestedValue', 'Select a valid category');
   if (type === 'UNIT_OF_MEASURE_CHANGE' && !CHANGE_REQUEST_UNITS.includes(clean as typeof CHANGE_REQUEST_UNITS[number])) invalid('requestedValue', 'Select a valid unit');
   return clean;

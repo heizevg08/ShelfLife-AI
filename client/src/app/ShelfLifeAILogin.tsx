@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Brand } from '../components/application/Brand';
 import { Dialog } from '../components/application/Dialog';
 import { PasswordRecovery } from '../components/application/PasswordRecovery';
-import { AuthRequestError, login } from '../services/auth';
+import { AuthRequestError, changePassword, login } from '../services/auth';
 import { clearSession } from '../services/session';
 import '../styles/application.css';
 
@@ -25,6 +25,11 @@ export default function ShelfLifeLogin() {
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const recoveryButton = useRef<HTMLButtonElement>(null);
   const [resetToken, setResetToken] = useState<string>();
+  const [temporaryPassword, setTemporaryPassword] = useState('');
+  const [firstLogin, setFirstLogin] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordChanged, setPasswordChanged] = useState(false);
   const errorSummary = useRef<HTMLDivElement>(null);
   useEffect(() => { if (errors.auth) errorSummary.current?.focus(); }, [errors.auth]);
   useEffect(() => {
@@ -61,6 +66,13 @@ export default function ShelfLifeLogin() {
     setErrors({});
     try {
       const user = await login(email.trim().toLowerCase(), password, rememberMe);
+      if (user.mustChangePassword) {
+        setTemporaryPassword(password);
+        setFirstLogin(true);
+        setRememberMe(false);
+        setPassword('');
+        return;
+      }
       switch (user.role) {
         case 'Super Admin': router.replace('/SuperAdminDashboard'); break;
         case 'Admin': router.replace('/AdminDashboard'); break;
@@ -82,6 +94,26 @@ export default function ShelfLifeLogin() {
     }
   };
 
+  const handleFirstPasswordChange = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting.current) return;
+    if (newPassword.length < 12) { setErrors({ auth: 'Use at least 12 characters for your new password.' }); return; }
+    if (newPassword !== confirmPassword) { setErrors({ auth: 'The new passwords do not match.' }); return; }
+    submitting.current = true;
+    setIsLoading(true);
+    setErrors({});
+    try {
+      await changePassword(temporaryPassword, newPassword);
+      clearSession();
+      setTemporaryPassword(''); setNewPassword(''); setConfirmPassword(''); setFirstLogin(false); setPasswordChanged(true);
+    } catch (error) {
+      setErrors({ auth: error instanceof AuthRequestError ? error.message : 'Unable to update your password. Please try again.' });
+    } finally {
+      submitting.current = false;
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="sl-app sl-login">
       <main className="sl-login-layout">
@@ -96,10 +128,16 @@ export default function ShelfLifeLogin() {
         </section>
         <section className="sl-login-form-panel" aria-labelledby="sl-login-title">
           <div className="sl-login-form-heading">
-            <h1 id="sl-login-title" className="sl-page-title">Welcome Back!</h1>
-            <p className="sl-description">Please enter your login details below.</p>
+            <h1 id="sl-login-title" className="sl-page-title">{firstLogin ? 'Set your new password' : 'Welcome Back!'}</h1>
+            <p className="sl-description">{firstLogin ? 'Choose a personal password to activate your account and continue.' : passwordChanged ? 'Your password has been changed. Sign in using your new password.' : 'Please enter your login details below.'}</p>
           </div>
-          <form noValidate onSubmit={handleSubmit} aria-labelledby="sl-login-title" aria-describedby={errors.auth ? 'sl-auth-error' : undefined} aria-busy={isLoading}>
+          {firstLogin ? <form noValidate onSubmit={handleFirstPasswordChange} aria-labelledby="sl-login-title" aria-busy={isLoading}>
+            {errors.auth && <div tabIndex={-1} className="sl-form-error" role="alert"><TriangleAlert size={18} aria-hidden="true" /><p>{errors.auth}</p></div>}
+            <div className="sl-field"><label htmlFor="sl-new-password">New password</label><input id="sl-new-password" type="password" autoComplete="new-password" value={newPassword} disabled={isLoading} onChange={event => { setNewPassword(event.target.value); setErrors({}); }} /></div>
+            <div className="sl-field"><label htmlFor="sl-confirm-password">Confirm new password</label><input id="sl-confirm-password" type="password" autoComplete="new-password" value={confirmPassword} disabled={isLoading} onChange={event => { setConfirmPassword(event.target.value); setErrors({}); }} /></div>
+            <p className="sl-password-feedback sl-field-attention">Use at least 12 characters. You must change this password before you can access ShelfLife AI.</p>
+            <button className="sl-button sl-button-primary sl-login-submit" type="submit" disabled={isLoading}><span>{isLoading ? 'Updating...' : 'Set new password'}</span></button>
+          </form> : <form noValidate onSubmit={handleSubmit} aria-labelledby="sl-login-title" aria-describedby={errors.auth ? 'sl-auth-error' : undefined} aria-busy={isLoading}>
             {errors.auth && <div ref={errorSummary} tabIndex={-1} id="sl-auth-error" className="sl-form-error" role="alert"><TriangleAlert size={18} aria-hidden="true" /><p>{errors.auth}</p></div>}
             <div className="sl-field">
               <label htmlFor="sl-email">Email</label>
@@ -137,6 +175,7 @@ export default function ShelfLifeLogin() {
               <span>{isLoading ? 'Logging in...' : 'Log in'}</span>
             </button>
           </form>
+          }
         </section>
       </main>
       <Dialog open={recoveryOpen} title="Password recovery" onDismiss={() => { setRecoveryOpen(false); setResetToken(undefined); }} returnFocus={recoveryButton}>

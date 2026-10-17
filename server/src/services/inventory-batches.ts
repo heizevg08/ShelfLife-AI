@@ -1,5 +1,7 @@
 import type { InventoryBatchDisplayStatus, InventoryBatchPageQuery, StockInInput } from '../validators/inventory-batch';
 import type { Actor } from './administration';
+import { AdministrationError } from '../middleware/administration.middleware';
+import { businessDateString, dateOnlyCalendarString } from '../utils/business-day';
 
 export interface InventoryBatch {
   id: string;
@@ -29,13 +31,22 @@ export interface InventoryBatchStore {
   createMany(actor: Actor, inputs: StockInInput[]): Promise<InventoryBatch[]>;
 }
 export function createInventoryBatches(store: InventoryBatchStore, now: () => Date = () => new Date()) {
+  const checkReceivedDates = (inputs: StockInInput[]) => {
+    const today = businessDateString(now());
+    inputs.forEach((input, index) => {
+      if (dateOnlyCalendarString(input.dateReceived) > today) {
+        const field = inputs.length === 1 ? 'dateReceived' : `items.${index}.dateReceived`;
+        throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field, message: 'Date received cannot be in the future.' }]);
+      }
+    });
+  };
   return {
     list: (query: InventoryBatchPageQuery) => store.list(query, now()),
     detail: (id: string) => store.detail(id, now()),
     summary: () => store.summary(now()),
     stockInSummary: () => store.stockInSummary(now()),
-    create: (actor: Actor, input: StockInInput) => store.create(actor, input),
-    createMany: (actor: Actor, inputs: StockInInput[]) => store.createMany(actor, inputs),
+    create: (actor: Actor, input: StockInInput) => { checkReceivedDates([input]); return store.create(actor, input); },
+    createMany: (actor: Actor, inputs: StockInInput[]) => { checkReceivedDates(inputs); return store.createMany(actor, inputs); },
     ready: () => store.ready(),
   };
 }

@@ -23,6 +23,16 @@ export function changeRequestRoutes(auth: any, service: any) {
     if (res.headersSent) { next(value); return; }
     if (value instanceof AdministrationError) { res.status(value.status).json({ error: { code: value.code, message: value.message, details: value.details } }); return; }
     if (value instanceof HttpError) { res.status(value.status).json({ error: { code: value.status === 401 ? 'UNAUTHENTICATED' : 'REQUEST_FAILED', message: value.message, details: [] } }); return; }
+    if (value && typeof value === 'object' && value.name === 'ValidationError' && 'errors' in value) {
+      const fields = Object.values(value.errors as Record<string, { path?: unknown; message?: unknown }>).map(detail => ({
+        field: typeof detail.path === 'string' ? detail.path : 'requestedValue',
+        message: typeof detail.message === 'string' ? detail.message : 'Enter a valid value.',
+      }));
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Check the supplied fields', details: fields } }); return;
+    }
+    if (value && typeof value === 'object' && 'code' in value && value.code === 11000) {
+      res.status(409).json({ error: { code: 'CONFLICT', message: 'This request could not be saved because its identifier is already in use. Please try again.', details: [] } }); return;
+    }
     next(value);
   };
   router.use(error);
