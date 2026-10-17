@@ -33,11 +33,14 @@ async function serve(t, app) {
 test('environment defaults, overrides, validation, and value redaction', () => {
   const defaults = readConfig({ MONGO_URI: config.mongoUri });
   assert.equal(defaults.host, '127.0.0.1'); assert.equal(defaults.port, 5000);
-  const overridden = readConfig({ MONGO_URI: config.mongoUri, NODE_ENV: 'production', HOST: '0.0.0.0', PORT: '8123', CORS_ORIGINS: 'https://example.test' });
+  assert.equal(defaults.trustProxy, false); assert.equal(defaults.cookieSameSite, 'lax');
+  const overridden = readConfig({ MONGO_URI: config.mongoUri, NODE_ENV: 'production', HOST: '0.0.0.0', PORT: '8123', CORS_ORIGINS: 'https://example.test', TRUST_PROXY: 'true', COOKIE_SAME_SITE: 'none' });
   assert.equal(overridden.port, 8123); assert.equal(overridden.host, '0.0.0.0');
-  for (const key of ['MONGO_URI', 'NODE_ENV', 'HOST', 'PORT', 'CORS_ORIGINS']) {
+  assert.equal(overridden.trustProxy, true); assert.equal(overridden.cookieSameSite, 'none');
+  for (const key of ['MONGO_URI', 'NODE_ENV', 'HOST', 'PORT', 'CORS_ORIGINS', 'TRUST_PROXY', 'COOKIE_SAME_SITE']) {
     assert.throws(() => readConfig({ MONGO_URI: config.mongoUri, [key]: 'private invalid value' }), e => e.message.includes(key) && !e.message.includes('private invalid value'));
   }
+  assert.throws(() => readConfig({ MONGO_URI: config.mongoUri, COOKIE_SAME_SITE: 'none' }), /COOKIE_SAME_SITE/);
   assert.throws(() => readConfig({}), /MONGO_URI/);
   for (const port of ['', '0', '65536', '2.5', '5e3']) assert.throws(() => readConfig({ MONGO_URI: config.mongoUri, PORT: port }), /PORT/);
 });

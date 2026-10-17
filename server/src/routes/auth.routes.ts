@@ -10,13 +10,13 @@ import type { PasswordChange } from '../services/password-change';
 import type { ProfileUpdate } from '../services/profile-update';
 import type { EmailChange } from '../services/email-change';
 
-export interface AuthExtensions { loginLimiter?: LoginLimiter; sessions?: PersistentSessions; recovery?: PasswordRecovery; passwordChange?: PasswordChange; profileUpdate?: ProfileUpdate; emailChange?: EmailChange; secureCookies?: boolean }
+export interface AuthExtensions { loginLimiter?: LoginLimiter; sessions?: PersistentSessions; recovery?: PasswordRecovery; passwordChange?: PasswordChange; profileUpdate?: ProfileUpdate; emailChange?: EmailChange; secureCookies?: boolean; cookieSameSite?: 'lax' | 'none' }
 
 export function authRoutes(auth: AuthService, origins: readonly string[] = [], extensions: AuthExtensions = {}) {
   const router = Router();
   const limiter = extensions.loginLimiter ?? createLoginLimiter(memoryLoginAttemptStore());
   const cookieName = extensions.secureCookies ? '__Secure-shelflife.refresh' : 'shelflife.refresh';
-  const cookieOptions = { httpOnly: true, secure: !!extensions.secureCookies, sameSite: 'lax' as const, path: '/api/auth' };
+  const cookieOptions = { httpOnly: true, secure: !!extensions.secureCookies, sameSite: extensions.cookieSameSite ?? 'lax', path: '/api/auth' };
   const cookie = (header?: string) => {
     const values = (header || '').split(';').map(value => value.trim()).filter(value => value.startsWith(cookieName + '='));
     return values.length === 1 ? values[0].slice(cookieName.length + 1) : undefined;

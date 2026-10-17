@@ -58,6 +58,12 @@ test('real HTTP cookie contract is HttpOnly, CSRF guarded, rotating and revocabl
   assert.equal((await post('/refresh',{},first)).status,401);
   assert.equal((await post('/logout',{},cookie)).status,204);
   assert.equal((await post('/refresh',{},cookie)).status,401);
+
+  const crossSite=createServer(createApp(['https://app.example'],()=>true,f.auth,{sessions:f.sessions,secureCookies:true,cookieSameSite:'none'}));
+  crossSite.listen(0,'127.0.0.1');await once(crossSite,'listening');t.after(()=>{crossSite.close();crossSite.closeAllConnections()});
+  const crossBase=`http://127.0.0.1:${crossSite.address().port}/api/auth`;
+  r=await fetch(crossBase+'/login',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://app.example'},body:JSON.stringify({...body,rememberMe:true})});
+  assert.equal(r.status,200);assert.match(r.headers.get('set-cookie'),/SameSite=None/);
 });
 
 test('recovery is generic, hashed, expiring, single-use and invalidates prior access tokens',async()=>{

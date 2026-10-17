@@ -52,7 +52,7 @@ export function startupDiagnostic(stage: StartupStage, error: unknown) {
   const code = typeof value?.code === 'string' && safeCodes.has(value.code) ? value.code
     : value?.code === 18 ? 'AUTHENTICATION_FAILED' : undefined;
   const message = stage === 'configuration' && value &&
-    /^Invalid configuration: (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET)(?:, (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET))*$/.test(value.message)
+    /^Invalid configuration: (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE)(?:, (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE))*$/.test(value.message)
     ? value.message : undefined;
   return { stage, name, ...(code ? { code } : {}), ...(message ? { message } : {}) };
 }
@@ -78,7 +78,7 @@ export async function startServer(config: Config, database: Database, shutdownTi
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, config.trustProxy));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -205,7 +205,10 @@ if (require.main === module) {
       await database.connect(uri);
       await provisionSecurityIndexes(loginAttempts);
     } };
-    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange, secureCookies: config.nodeEnv === 'production' }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports);
+    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, {
+      loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange,
+      secureCookies: config.nodeEnv === 'production', cookieSameSite: config.cookieSameSite,
+    }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

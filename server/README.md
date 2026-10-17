@@ -5,7 +5,7 @@ Use Node 24 LTS. The canonical server compiles to CommonJS and always selects th
 legacy `test` database. No seed runs during server startup.
 
 Keep configuration in ignored `server/.env`, using `server/.env.example` as the
-field reference. Never put server secrets in Expo public variables.
+field reference. Never put server secrets in Vite public variables.
 
 - `JWT_SECRET`: independently generated secret of at least 32 random bytes,
   represented as hex or Base64. The server checks a minimum of 32 UTF-8 bytes;
@@ -16,6 +16,10 @@ field reference. Never put server secrets in Expo public variables.
   1,024 UTF-8 bytes. Passwords are never trimmed or lowercased.
 - `CORS_ORIGINS`: exact browser origins, for example `http://localhost:8081`.
   An empty value permits no cross-origin browser access.
+- `TRUST_PROXY`: set to `true` for Render so Express uses the original client address through
+  its one trusted proxy hop; keep `false` locally.
+- `COOKIE_SAME_SITE`: `lax` locally; set `none` for the HTTPS Vercel-to-Render deployment so
+  the HttpOnly refresh cookie is sent cross-site.
 
 From the repository root, explicitly create the initial development account:
 
@@ -29,9 +33,9 @@ including its password, role, timestamps, and inactive state. Re-running it is
 safe. Remove the `DEV_ADMIN_*` values after seeding if no longer needed. A seed
 configuration change is not an account update or password reset.
 
-Start the backend with `npm --prefix server run dev` and Expo with `npm run client`.
+Start the backend with `npm --prefix server run dev` and the Vite client with `npm run client`.
 Use an origin allowed by CORS. The client defaults to the local backend on port
-5000; `EXPO_PUBLIC_API_URL` may specify a different API origin (never a secret).
+5000; `VITE_API_URL` may specify a different API origin (never a secret).
 
 `POST /api/auth/login` accepts `{ email, password }` and returns
 `{ message: "Login successful", accessToken, user }`. Safe user fields are

@@ -22,9 +22,11 @@ import { changeRequestRoutes } from './routes/change-request.routes';
 import { reportRoutes } from './routes/report.routes';
 import type { ReportExportService } from './services/report-export';
 
-export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService) {
+export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, trustProxy = false) {
   const app = express();
   app.disable('x-powered-by');
+  // Render terminates TLS before forwarding one request hop to this process.
+  app.set('trust proxy', trustProxy ? 1 : false);
   app.use(requestDiagnostics);
   app.use(helmet({
     strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true },

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: shelflife-ai-api
+    runtime: node
+    buildCommand: npm ci --include=dev && npm run build --workspace server
+    startCommand: npm run start --workspace server
+    healthCheckPath: /api/health/live
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: TRUST_PROXY
+        value: "true"
+      - key: COOKIE_SAME_SITE
+        value: none
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false

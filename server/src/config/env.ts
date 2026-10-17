@@ -6,6 +6,8 @@ export interface Config {
   port: number;
   mongoUri: string;
   corsOrigins: string[];
+  trustProxy: boolean;
+  cookieSameSite: 'lax' | 'none';
 }
 
 // Validation errors contain field names only, never supplied values.
@@ -28,6 +30,15 @@ export function readConfig(env: NodeJS.ProcessEnv): Config {
       corsOrigins.push(origin);
     } catch { invalid.add('CORS_ORIGINS'); }
   }
+  const rawTrustProxy = env.TRUST_PROXY ?? 'false';
+  if (!['true', 'false'].includes(rawTrustProxy)) invalid.add('TRUST_PROXY');
+  const rawCookieSameSite = env.COOKIE_SAME_SITE ?? 'lax';
+  if (!['lax', 'none'].includes(rawCookieSameSite)) invalid.add('COOKIE_SAME_SITE');
+  if (nodeEnv !== 'production' && rawCookieSameSite === 'none') invalid.add('COOKIE_SAME_SITE');
   if (invalid.size) throw new Error(`Invalid configuration: ${[...invalid].join(', ')}`);
-  return { nodeEnv: nodeEnv as Config['nodeEnv'], host, port, mongoUri, corsOrigins: [...new Set(corsOrigins)] };
+  return {
+    nodeEnv: nodeEnv as Config['nodeEnv'], host, port, mongoUri,
+    corsOrigins: [...new Set(corsOrigins)], trustProxy: rawTrustProxy === 'true',
+    cookieSameSite: rawCookieSameSite as Config['cookieSameSite'],
+  };
 }
