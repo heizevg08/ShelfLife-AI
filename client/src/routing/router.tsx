@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, Outlet, redirect, Link } from '@tanstack/react-router';
 import Login from '../app/ShelfLifeAILogin';
+import Terms from '../app/Terms';
 import { ApplicationWorkspace } from '../components/application/ApplicationWorkspace';
 import { AuthRequestError, currentUser } from '../services/auth';
 import { canOpenWorkspacePath, dashboardPaths } from '../components/application/workspace';
@@ -10,6 +11,7 @@ const root = createRootRoute({
   errorComponent: ({ reset }) => <main className="sl-app sl-session-state"><h1>Unable to open this page</h1><p>Check your connection and try again.</p><button onClick={reset}>Retry</button><Link to="/">Return to login</Link></main>,
 });
 const login = createRoute({ getParentRoute: () => root, path: '/ShelfLifeAILogin', component: Login });
+const terms = createRoute({ getParentRoute: () => root, path: '/terms', component: Terms });
 const home = createRoute({ getParentRoute: () => root, path: '/', beforeLoad: ({ location }) => { throw redirect({ to: '/ShelfLifeAILogin', hash: location.hash, replace: true }); } });
 const workspace = createRoute({ getParentRoute: () => root, id: '_workspace', component: () => <ApplicationWorkspace><Outlet /></ApplicationWorkspace> });
 
@@ -75,4 +77,4 @@ const devRoutes = import.meta.env.DEV
     })]
   : [];
 
-export const router = createRouter({ routeTree: root.addChildren([home, login, workspace.addChildren([...protectedRoutes, ...devRoutes]), ...redirects]), defaultPreload: false });
+export const router = createRouter({ routeTree: root.addChildren([home, login, terms, workspace.addChildren([...protectedRoutes, ...devRoutes]), ...redirects]), defaultPreload: false });

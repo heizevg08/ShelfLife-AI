@@ -16,8 +16,14 @@ export function createAccountWelcomeEmail(env: NodeJS.ProcessEnv, transport: Mai
     if (url.username || url.password || url.hash || url.search ||
       !(url.protocol === 'https:' || (env.NODE_ENV !== 'production' && url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)))) return;
   } catch { return; }
+  let termsUrl: URL;
+  try {
+    termsUrl = new URL(env.ACCOUNT_TERMS_URL?.trim() || '/terms', url.origin);
+    if (termsUrl.username || termsUrl.password || termsUrl.hash || termsUrl.search ||
+      !(termsUrl.protocol === 'https:' || (env.NODE_ENV !== 'production' && termsUrl.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(termsUrl.hostname)))) return;
+  } catch { return; }
   return { available: true, async send(email, name, temporaryPassword, accountEmail = email) {
-    await transport.send({ to: email, subject: 'Your ShelfLife AI account is ready',
-      text: `Hello ${name},\n\nYour ShelfLife AI account has been created. Sign in at:\n${url.href}\n\nAccount email: ${accountEmail}\nTemporary password: ${temporaryPassword}\n\nYou must choose a new password immediately after signing in. The temporary password will stop working once it is changed. If you did not expect this account, contact your administrator.` });
+    await transport.send({ to: email, subject: 'Welcome to ShelfLife AI – Your Account Details',
+      text: `Hello ${name},\n\nYour ShelfLife AI account has been successfully created.\n\nSign-In URL: ${url.href}\nAccount Email: ${accountEmail}\nTemporary Password: [ ${temporaryPassword} ]\n\n⚠️ Security Notice: You will be required to choose a new password immediately upon your first sign-in. This temporary password will expire after first use.\n\nIf you did not request this account, please contact your system administrator.\n\n---\nBy signing in, you agree to the ShelfLife AI Terms of Service and Privacy Policy.\n${termsUrl.href}` });
   } };
 }

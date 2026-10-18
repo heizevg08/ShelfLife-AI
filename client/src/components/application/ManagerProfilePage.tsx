@@ -78,24 +78,6 @@ function NameRow({ field, value, disabled, onSaved }: {
   </div>;
 }
 
-function TwoStepRow({ returnFocus }: { returnFocus: RefObject<HTMLButtonElement | null> }) {
-  // No second factor is enforced by this server. The row matches the reference but must not claim
-  // "required by policy" or "enabled", so both badges and the action state the honest position.
-  return <div className="sl-profile-manager-row">
-    <dt>2-Step Verification</dt>
-    <dd>
-      <span className="sl-profile-manager-badge">Not available</span>
-      <span className="sl-profile-manager-badge">Not set up</span>
-    </dd>
-    <button ref={returnFocus} type="button" className="sl-button sl-text-action sl-profile-manager-action"
-      disabled aria-describedby="sl-profile-manager-twostep-note">Set up</button>
-    <p id="sl-profile-manager-twostep-note" className="sl-supporting sl-profile-manager-help">
-      2-Step Verification is not enforced yet. Sign-in is protected by your password, a login attempt
-      limit and session revocation on password change.
-    </p>
-  </div>;
-}
-
 type PasswordChangeProps = { open: boolean; onDismiss: () => void; returnFocus: RefObject<HTMLButtonElement | null> };
 
 function ManagerPasswordChange({ open, onDismiss, returnFocus }: PasswordChangeProps) {
@@ -291,7 +273,6 @@ export function ManagerProfilePage() {
   const { user, refreshIdentity } = useApplicationWorkspace();
   const [passwordOpen, setPasswordOpen] = useState(false);
   const passwordTrigger = useRef<HTMLButtonElement>(null);
-  const twoStepTrigger = useRef<HTMLButtonElement>(null);
   // A saved name is shown immediately while the shell re-resolves the identity, so the page, the
   // avatar initials and the account menu never disagree during the round trip.
   const [saved, setSaved] = useState<SessionUser | null>(null);
@@ -309,7 +290,7 @@ export function ManagerProfilePage() {
       <nav className="sl-profile-reference-breadcrumb" aria-label="Breadcrumb"><span>My Account</span><ChevronRight size={15} aria-hidden="true"/><span aria-current="page"><UserRound size={15} aria-hidden="true"/> Profile</span></nav>
       <section className="sl-profile-reference-identity" aria-label="Profile identity">
         <div className="sl-profile-reference-avatar" aria-hidden="true">{sessionInitials(current)}</div>
-        <div><h1>{sessionDisplayName(current)}</h1><p>{current.email}</p><span className="sl-profile-reference-role">{current.role}</span></div>
+        <div><h1>{sessionDisplayName(current)}</h1><p>{current.email}</p></div>
       </section>
       <section className="sl-profile-card" aria-labelledby="sl-profile-manager-details">
         <header className="sl-profile-card-header"><h2 id="sl-profile-manager-details">Personal details</h2></header>
@@ -317,7 +298,6 @@ export function ManagerProfilePage() {
           <NameRow field="firstName" value={name(current.firstName)} onSaved={onSaved} disabled={false} />
           <NameRow field="lastName" value={name(current.lastName)} onSaved={onSaved} disabled={false} />
           <EmailRow value={name(current.email)} canEdit={canEditEmail} />
-          <SecurityRow label="Role"><span className="sl-profile-manager-value">{current.role}</span></SecurityRow>
           <SecurityRow label="Account created"><span className="sl-profile-manager-value">{formatDateTime(current.createdAt)}</span></SecurityRow>
           <SecurityRow label="Last sign-in"><span className="sl-profile-manager-value">{current.lastLoginAt ? formatDateTime(current.lastLoginAt) : 'Not available'}</span></SecurityRow>
         </dl>
@@ -332,7 +312,6 @@ export function ManagerProfilePage() {
             </button>}>
             <span className="sl-profile-manager-value sl-profile-manager-masked" aria-label="Password is set">••••••••••</span>
           </SecurityRow>
-          <TwoStepRow returnFocus={twoStepTrigger} />
         </dl>
       </section>
     </div>

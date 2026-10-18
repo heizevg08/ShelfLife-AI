@@ -4,11 +4,41 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Brand } from '../components/application/Brand';
 import { Dialog } from '../components/application/Dialog';
 import { PasswordRecovery } from '../components/application/PasswordRecovery';
+import { TermsPolicyContent } from './Terms';
 import { AuthRequestError, changePassword, login } from '../services/auth';
 import { clearSession } from '../services/session';
 import '../styles/application.css';
 
 interface ValidationErrors { email?: string; password?: string; auth?: string }
+
+function FirstLoginTermsPage({
+  reachedBottom, accepted, onReachBottom, onAcceptedChange, onBack, onContinue,
+}: {
+  reachedBottom: boolean; accepted: boolean; onReachBottom: () => void; onAcceptedChange: (value: boolean) => void;
+  onBack: () => void; onContinue: () => void;
+}) {
+  return <div className="sl-app sl-first-login-terms-page">
+    <header className="sl-first-login-terms-header"><Brand login /><button type="button" onClick={onBack}>Back to password setup</button></header>
+    <main className="sl-first-login-terms-main">
+      <div className="sl-terms-eyebrow">ACCOUNT SETUP · STEP 1 OF 2</div>
+      <h1>Terms and Privacy Policy</h1>
+      <p className="sl-first-login-terms-intro">Read the full policy below. You can accept it after you reach the end, then return to set your new password.</p>
+      <div className="sl-first-login-policy-scroll sl-first-login-policy-full" role="region" aria-label="Terms of Service and Privacy Policy. Scroll to the bottom to enable acceptance." tabIndex={0}
+        onScroll={event => { const panel = event.currentTarget; if (panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 4) onReachBottom(); }}>
+        <TermsPolicyContent />
+      </div>
+      <label className={`sl-first-login-policy-accept${reachedBottom ? ' is-enabled' : ''}`}>
+        <input type="checkbox" checked={accepted} disabled={!reachedBottom} onChange={event => onAcceptedChange(event.target.checked)} />
+        <span>I have read and agree to the Terms of Service and Privacy Policy.</span>
+      </label>
+      {!reachedBottom && <p className="sl-first-login-policy-hint">Scroll to the bottom of the policy to enable the agreement.</p>}
+      <div className="sl-first-login-terms-actions">
+        <button type="button" className="sl-first-login-terms-secondary" onClick={onBack}>Back</button>
+        <button type="button" className="sl-button sl-button-primary" disabled={!accepted} onClick={onContinue}>Agree and return to password setup</button>
+      </div>
+    </main>
+  </div>;
+}
 
 export default function ShelfLifeLogin() {
   const router = useRouter();
@@ -30,6 +60,9 @@ export default function ShelfLifeLogin() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordChanged, setPasswordChanged] = useState(false);
+  const [termsReached, setTermsReached] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showFirstLoginTerms, setShowFirstLoginTerms] = useState(false);
   const errorSummary = useRef<HTMLDivElement>(null);
   useEffect(() => { if (errors.auth) errorSummary.current?.focus(); }, [errors.auth]);
   useEffect(() => {
@@ -97,6 +130,7 @@ export default function ShelfLifeLogin() {
   const handleFirstPasswordChange = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting.current) return;
+    if (!termsAccepted) { setErrors({ auth: 'Accept the Terms and Privacy Policy to activate your account.' }); return; }
     if (newPassword.length < 12) { setErrors({ auth: 'Use at least 12 characters for your new password.' }); return; }
     if (newPassword !== confirmPassword) { setErrors({ auth: 'The new passwords do not match.' }); return; }
     submitting.current = true;
@@ -105,7 +139,7 @@ export default function ShelfLifeLogin() {
     try {
       await changePassword(temporaryPassword, newPassword);
       clearSession();
-      setTemporaryPassword(''); setNewPassword(''); setConfirmPassword(''); setFirstLogin(false); setPasswordChanged(true);
+      setTemporaryPassword(''); setNewPassword(''); setConfirmPassword(''); setFirstLogin(false); setTermsReached(false); setTermsAccepted(false); setPasswordChanged(true);
     } catch (error) {
       setErrors({ auth: error instanceof AuthRequestError ? error.message : 'Unable to update your password. Please try again.' });
     } finally {
@@ -113,6 +147,15 @@ export default function ShelfLifeLogin() {
       setIsLoading(false);
     }
   };
+
+  if (firstLogin && showFirstLoginTerms) return <FirstLoginTermsPage
+    reachedBottom={termsReached}
+    accepted={termsAccepted}
+    onReachBottom={() => setTermsReached(true)}
+    onAcceptedChange={setTermsAccepted}
+    onBack={() => setShowFirstLoginTerms(false)}
+    onContinue={() => { setTermsAccepted(true); setShowFirstLoginTerms(false); setErrors({}); }}
+  />;
 
   return (
     <div className="sl-app sl-login">
@@ -136,7 +179,11 @@ export default function ShelfLifeLogin() {
             <div className="sl-field"><label htmlFor="sl-new-password">New password</label><input id="sl-new-password" type="password" autoComplete="new-password" value={newPassword} disabled={isLoading} onChange={event => { setNewPassword(event.target.value); setErrors({}); }} /></div>
             <div className="sl-field"><label htmlFor="sl-confirm-password">Confirm new password</label><input id="sl-confirm-password" type="password" autoComplete="new-password" value={confirmPassword} disabled={isLoading} onChange={event => { setConfirmPassword(event.target.value); setErrors({}); }} /></div>
             <p className="sl-password-feedback sl-field-attention">Use at least 12 characters. You must change this password before you can access ShelfLife AI.</p>
-            <button className="sl-button sl-button-primary sl-login-submit" type="submit" disabled={isLoading}><span>{isLoading ? 'Updating...' : 'Set new password'}</span></button>
+            <section className="sl-first-login-policy-link" aria-labelledby="sl-first-login-policy-title">
+              <div><h2 id="sl-first-login-policy-title">Terms and Privacy Policy</h2><p>{termsAccepted ? 'You accepted the policy. You can return to review it.' : 'Review and accept the policy before setting your password.'}</p></div>
+              <button type="button" onClick={() => setShowFirstLoginTerms(true)} disabled={isLoading}>{termsAccepted ? 'Review policy' : 'Read and accept'}</button>
+            </section>
+            <button className="sl-button sl-button-primary sl-login-submit" type="submit" disabled={isLoading || !termsAccepted}><span>{isLoading ? 'Updating...' : 'Set new password'}</span></button>
           </form> : <form noValidate onSubmit={handleSubmit} aria-labelledby="sl-login-title" aria-describedby={errors.auth ? 'sl-auth-error' : undefined} aria-busy={isLoading}>
             {errors.auth && <div ref={errorSummary} tabIndex={-1} id="sl-auth-error" className="sl-form-error" role="alert"><TriangleAlert size={18} aria-hidden="true" /><p>{errors.auth}</p></div>}
             <div className="sl-field">
