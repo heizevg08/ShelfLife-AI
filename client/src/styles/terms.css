@@ -1,0 +1,123 @@
+.sl-terms-page {
+  min-height: 100vh;
+  color: #183328;
+  background: #f5f7f3;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.sl-terms-topbar {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: 0 clamp(20px, 5vw, 72px);
+  border-bottom: 1px solid #e2e8e0;
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(12px);
+}
+.sl-terms-back { color: #155c38; font-size: 14px; font-weight: 700; text-decoration: none; }
+.sl-terms-back span { margin: 0 8px; color: #9aa79d; font-weight: 400; }
+.sl-terms-topbar-label { color: #718076; font-size: 10px; font-weight: 750; letter-spacing: .14em; }
+.sl-terms-layout { display: grid; grid-template-columns: 255px minmax(0, 790px); gap: clamp(30px, 6vw, 90px); justify-content: center; padding: 52px 32px 96px; }
+.sl-terms-sidebar { position: sticky; top: 92px; align-self: start; max-height: calc(100vh - 116px); overflow: auto; padding: 4px 16px 18px 0; scrollbar-width: thin; }
+.sl-terms-sidebar-title { display: flex; align-items: center; gap: 9px; margin: 0 0 20px; color: #183328; font-size: 13px; font-weight: 750; }
+.sl-terms-sidebar-title svg { color: #247346; }
+.sl-terms-nav-group { margin: 0 0 18px; }
+.sl-terms-nav-heading { margin: 0 0 7px; color: #66776c; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.sl-terms-nav-group a { display: block; padding: 5px 8px; border-radius: 6px; color: #526259; font-size: 11px; line-height: 1.4; text-decoration: none; }
+.sl-terms-nav-group a:hover { color: #155c38; background: #e8f1e9; }
+.sl-terms-content { min-width: 0; }
+.sl-terms-eyebrow { display: flex; align-items: center; gap: 8px; color: #287347; font-size: 10px; font-weight: 800; letter-spacing: .15em; }
+.sl-terms-content > h1 { margin: 18px 0 14px; color: #132d22; font-size: clamp(38px, 5vw, 58px); font-weight: 760; letter-spacing: -.055em; line-height: 1.05; }
+.sl-terms-content > h1 span { color: #63a37a; }
+.sl-terms-lead { max-width: 610px; margin: 0; color: #64756a; font-size: 16px; line-height: 1.7; }
+.sl-terms-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 18px; }
+.sl-terms-meta span { padding: 7px 10px; border: 1px solid #e0e7df; border-radius: 999px; color: #536459; background: #fff; font-size: 11px; font-weight: 650; }
+.sl-terms-draft { display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; border: 1px solid #f0d49b; border-radius: 10px; color: #795522; background: #fff9e9; font-size: 12px; line-height: 1.5; }
+.sl-terms-draft strong { flex: 0 0 auto; }
+.sl-terms-document-note { margin: 17px 0 42px; padding: 0 0 14px; border-bottom: 1px solid #e1e7df; color: #68776d; font-size: 12px; line-height: 1.65; }
+.sl-terms-document-note summary { color: #496153; cursor: pointer; font-weight: 700; }
+.sl-terms-document-note p { margin: 10px 0 0; }
+.sl-terms-part-heading { scroll-margin-top: 84px; margin: 48px 0 14px; padding-bottom: 16px; border-bottom: 1px solid #dfe7df; }
+.sl-terms-part-heading > span { color: #388057; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.sl-terms-part-heading h2 { margin: 7px 0 4px; color: #163628; font-size: 27px; letter-spacing: -.035em; }
+.sl-terms-part-heading p { margin: 0; color: #758279; font-size: 13px; }
+.sl-terms-sections { display: grid; gap: 10px; }
+.sl-terms-section { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 13px; scroll-margin-top: 82px; padding: 18px 20px 18px 16px; border: 1px solid #e6ebe5; border-radius: 11px; background: #fff; box-shadow: 0 2px 7px rgb(23 52 37 / 3%); }
+.sl-terms-section-number { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 8px; color: #277146; background: #eaf4ec; font-size: 10px; font-weight: 800; }
+.sl-terms-section h3 { margin: 3px 0 9px; color: #1c3729; font-size: 15px; font-weight: 750; letter-spacing: -.01em; }
+.sl-terms-section p, .sl-terms-acceptance p { margin: 0; color: #536259; font-size: 13px; line-height: 1.75; overflow-wrap: anywhere; }
+.sl-terms-list { display: grid; gap: 8px; margin: 10px 0 0; padding-left: 20px; color: #536259; font-size: 13px; line-height: 1.7; }
+.sl-terms-list li { padding-left: 3px; }
+.sl-terms-acceptance { scroll-margin-top: 82px; margin-top: 34px; padding: 24px; border: 1px solid #d8e7dc; border-radius: 12px; background: #edf6ef; }
+.sl-terms-acceptance h2 { margin: 8px 0; color: #173b28; font-size: 21px; }
+.sl-terms-footer { display: flex; justify-content: space-between; gap: 20px; margin-top: 24px; padding-top: 18px; border-top: 1px solid #dfe7df; color: #78867c; font-size: 11px; }
+.sl-terms-footer a { display: inline-flex; align-items: center; gap: 5px; color: #267046; font-weight: 700; text-decoration: none; }
+@media (max-width: 800px) {
+  .sl-terms-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 32px 20px 64px; }
+  .sl-terms-sidebar { position: static; max-height: none; padding: 16px; border: 1px solid #e2e8e0; border-radius: 11px; background: #fff; }
+  .sl-terms-nav-group { display: none; }
+  .sl-terms-sidebar-title { margin: 0; }
+  .sl-terms-content > h1 { font-size: 42px; }
+}
+@media (max-width: 480px) {
+  .sl-terms-topbar { min-height: 54px; padding: 0 16px; }
+  .sl-terms-topbar-label { max-width: 112px; text-align: right; font-size: 8px; }
+  .sl-terms-layout { padding-inline: 14px; }
+  .sl-terms-section { grid-template-columns: 29px minmax(0, 1fr); gap: 9px; padding: 15px 12px; }
+  .sl-terms-section-number { width: 27px; height: 27px; }
+  .sl-terms-footer { flex-direction: column; }
+}
+
+.sl-first-login-policy { margin: 20px 0 16px; }
+.sl-first-login-policy-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+.sl-first-login-policy-heading h2 { margin: 0; color: #183328; font-size: 14px; font-weight: 750; }
+.sl-first-login-policy-heading > span { color: #748078; font-size: 10px; font-weight: 700; }
+.sl-first-login-policy-scroll { height: 250px; overflow: auto; overscroll-behavior: contain; padding: 12px; border: 1px solid #dce4dc; border-radius: 9px; background: #fafbf8; scrollbar-width: thin; }
+.sl-first-login-policy-scroll:focus-visible { outline: 2px solid #287c42; outline-offset: 2px; }
+.sl-first-login-policy-scroll .sl-terms-part-heading { margin: 5px 0 10px; padding-bottom: 9px; }
+.sl-first-login-policy-scroll .sl-terms-part-heading h2 { font-size: 16px; }
+.sl-first-login-policy-scroll .sl-terms-part-heading p { font-size: 11px; }
+.sl-first-login-policy-scroll .sl-terms-sections { gap: 6px; }
+.sl-first-login-policy-scroll .sl-terms-section { grid-template-columns: 24px minmax(0, 1fr); gap: 8px; scroll-margin-top: 8px; padding: 9px; border-radius: 7px; box-shadow: none; }
+.sl-first-login-policy-scroll .sl-terms-section-number { width: 23px; height: 23px; border-radius: 6px; font-size: 8px; }
+.sl-first-login-policy-scroll .sl-terms-section h3 { margin: 2px 0 5px; font-size: 11px; }
+.sl-first-login-policy-scroll .sl-terms-section p, .sl-first-login-policy-scroll .sl-terms-list { font-size: 10px; line-height: 1.55; }
+.sl-first-login-policy-scroll .sl-terms-list { gap: 4px; margin-top: 5px; padding-left: 16px; }
+.sl-first-login-policy-scroll .sl-terms-acceptance { margin-top: 10px; padding: 12px; }
+.sl-first-login-policy-scroll .sl-terms-acceptance h2 { font-size: 14px; }
+.sl-first-login-policy-scroll .sl-terms-acceptance p { font-size: 10px; line-height: 1.55; }
+.sl-first-login-policy-accept { display: flex; align-items: flex-start; gap: 9px; margin-top: 12px; color: #8a948c; font-size: 12px; line-height: 1.5; }
+.sl-first-login-policy-accept.is-enabled { color: #263b2e; }
+.sl-first-login-policy-accept input { flex: 0 0 auto; width: 16px; height: 16px; margin: 1px 0 0; accent-color: #176238; }
+.sl-first-login-policy-hint { margin: 6px 0 0 25px; color: #6e7c72; font-size: 10px; }
+.sl-first-login-policy-link { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 21px 0 16px; padding: 14px; border: 1px solid #dce6dc; border-radius: 10px; background: #f8faf6; }
+.sl-first-login-policy-link h2 { margin: 0 0 4px; color: #1d3527; font-size: 13px; }
+.sl-first-login-policy-link p { margin: 0; color: #647168; font-size: 11px; line-height: 1.45; }
+.sl-first-login-policy-link button, .sl-first-login-terms-header button, .sl-first-login-terms-secondary { min-height: 38px; padding: 0 12px; border: 1px solid #cbd8cd; border-radius: 7px; color: #175a35; background: #fff; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.sl-first-login-policy-link button:hover, .sl-first-login-terms-header button:hover, .sl-first-login-terms-secondary:hover { background: #edf5ee; }
+.sl-first-login-policy-link button:disabled { opacity: .55; cursor: not-allowed; }
+.sl-first-login-terms-page { padding: 0 clamp(18px, 5vw, 72px) 48px; background: #f5f7f3; }
+.sl-first-login-terms-header { display: flex; align-items: center; justify-content: space-between; max-width: 1100px; min-height: 76px; margin: 0 auto; border-bottom: 1px solid #e1e8e0; }
+.sl-first-login-terms-header > div { max-width: 190px; }
+.sl-first-login-terms-main { max-width: 920px; margin: 36px auto 0; }
+.sl-first-login-terms-main > h1 { margin: 12px 0 7px; color: #173526; font-size: clamp(27px, 4vw, 38px); letter-spacing: -.04em; }
+.sl-first-login-terms-intro { margin: 0 0 19px; color: #627168; font-size: 13px; line-height: 1.6; }
+.sl-first-login-policy-full { height: min(55vh, 540px); min-height: 250px; padding: 16px; background: #fff; }
+.sl-first-login-terms-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.sl-first-login-terms-actions .sl-button { min-height: 42px; padding: 0 18px; }
+.sl-first-login-terms-actions .sl-button:disabled { opacity: .5; cursor: not-allowed; }
+@media (max-width: 560px) {
+  .sl-first-login-terms-page { padding: 0 14px 32px; }
+  .sl-first-login-terms-header { min-height: 64px; }
+  .sl-first-login-terms-main { margin-top: 24px; }
+  .sl-first-login-policy-link { align-items: flex-start; flex-direction: column; }
+  .sl-first-login-policy-full { height: 50vh; min-height: 220px; }
+  .sl-first-login-terms-actions { flex-direction: column-reverse; }
+  .sl-first-login-terms-actions > * { width: 100%; }
+}
+@media (max-height: 820px) {
+  .sl-first-login-policy-scroll { height: 190px; }
+}
