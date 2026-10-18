@@ -15,6 +15,7 @@ const AUTO_REFRESH_MS = 15000;
 const auditActionByLabel: Record<string, AuditFilters['action']> = {
   'Account created': 'CREATE',
   'Account updated': 'UPDATE',
+  'Account deleted': 'DELETE',
   'Account deactivated': 'DEACTIVATE',
   'Account reactivated': 'REACTIVATE',
   'Data exported': 'EXPORT',
@@ -65,7 +66,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
   }, []);
 
   const actorOptions = adminOverview ? ['All users', 'Admin', 'Manager', 'Inventory Staff'] : [...administrationFilterCatalog.audit.actor];
-  const actionOptions = adminOverview ? ['All actions', 'Account created', 'Account updated', 'Account deactivated', 'Account reactivated', 'Data exported'] : [...administrationFilterCatalog.audit.action];
+  const actionOptions = adminOverview ? ['All actions', 'Account created', 'Account updated', 'Account deleted', 'Account deactivated', 'Account reactivated', 'Data exported'] : [...administrationFilterCatalog.audit.action];
   const rows = data?.items ?? [];
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const rowStatus = (row: AuditRecord) => row.status ?? 'Success';
@@ -123,7 +124,7 @@ export function AuditTable({ recent = false, adminOverview = false, adminDashboa
     return counts;
   }, {});
   const commonAction = Object.entries(actionCounts).sort((a, b) => b[1] - a[1])[0];
-  const actionLabel = (action: string) => ({ CREATE: 'Created', UPDATE: 'Updated', DEACTIVATE: 'Deactivated', REACTIVATE: 'Reactivated' }[action] ?? action);
+  const actionLabel = (action: string) => ({ CREATE: 'Created', UPDATE: 'Updated', DELETE: 'Deleted', DEACTIVATE: 'Deactivated', REACTIVATE: 'Reactivated' }[action] ?? action);
   const actorName = (row: AuditRecord) => {
     return row.actor.name.trim() || 'Unknown account';
   };

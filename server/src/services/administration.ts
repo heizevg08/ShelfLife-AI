@@ -17,6 +17,7 @@ export interface AccountTransaction {
   get(id: string): Promise<Account | null>;
   create(input: AccountInput & { passwordHash: string; mustChangePassword: true }): Promise<Account>;
   update(id: string, input: Omit<AccountInput, 'password'> & { isActive?: boolean }): Promise<Account>;
+  delete(id: string): Promise<void>;
   audit(actor: Actor, action: AuditAction, targetId: string): Promise<void>;
 }
 export interface AdministrationStore {
@@ -89,8 +90,13 @@ export function createAdministration(store: AdministrationStore, welcomeEmail?: 
       return store.transaction(async tx => {
         const user = await tx.create({ ...input, passwordHash, mustChangePassword: true });
         await tx.audit(actor, 'CREATE', user.id);
-        try { await welcomeEmail.send(user.email, user.name, temporaryPassword); }
-        catch { throw new HttpError(502, 'The account was not created because the welcome email could not be delivered. Check the mail settings and try again.'); }
+        try { await welcomeEmail.send(input.personalEmail!, user.name, temporaryPassword, user.email); }
+        catch (error) {
+          const authenticationRejected = Boolean(error && typeof error === 'object' && 'code' in error && error.code === 'EAUTH');
+          throw new HttpError(502, authenticationRejected
+            ? 'The mail provider rejected the configured SMTP credentials. Update SMTP_USER and SMTP_PASS, then restart the server.'
+            : 'The account was not created because the welcome email could not be delivered. Check the mail settings and try again.');
+        }
         return user;
       });
     },
@@ -118,6 +124,15 @@ export function createAdministration(store: AdministrationStore, welcomeEmail?: 
         const result = await tx.update(id, { isActive: active });
         await tx.audit(actor, active ? 'REACTIVATE' : 'DEACTIVATE', id);
         return result;
+      });
+    },
+    async delete(actor: Actor, id: string) {
+      return store.transaction(async tx => {
+        const user = await tx.get(id);
+        if (!user) throw missing();
+        assertWrite(actor, user);
+        await tx.delete(id);
+        await tx.audit(actor, 'DELETE', id);
       });
     },
   };

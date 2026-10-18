@@ -1,6 +1,6 @@
 import { AdministrationError } from '../middleware/administration.middleware';
 import { ROLES } from '../models/user';
-import { normalizeEmail } from './auth';
+import { normalizeEmail, normalizePersonalEmail } from './auth';
 
 export function invalid(field: string, message = 'Invalid value'): never {
   throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [{ field, message }]);
@@ -48,7 +48,7 @@ export function accountPagination(query: Record<string, unknown>): AccountPageQu
   }
   return result;
 }
-const auditActions = ['CREATE', 'UPDATE', 'DEACTIVATE', 'REACTIVATE', 'EXPORT'] as const;
+const auditActions = ['CREATE', 'UPDATE', 'DELETE', 'DEACTIVATE', 'REACTIVATE', 'EXPORT'] as const;
 export type AuditActionFilter = typeof auditActions[number];
 export type AuditPageQuery = PageQuery & { actorRole?: typeof ROLES[number]; action?: AuditActionFilter; module?: string; status?: 'Success' | 'Failed' | 'Warning'; search?: string; from?: Date; to?: Date };
 export function auditPagination(query: Record<string, unknown>): AuditPageQuery {
@@ -81,11 +81,11 @@ export function auditPagination(query: Record<string, unknown>): AuditPageQuery 
   if (result.from && result.to && result.from > result.to) invalid('to', 'End date must be on or after start date');
   return result;
 }
-export type AccountInput = { firstName?: string; lastName?: string; email?: string; role?: typeof ROLES[number] };
+export type AccountInput = { firstName?: string; lastName?: string; email?: string; personalEmail?: string; role?: typeof ROLES[number] };
 export function accountInput(body: unknown, create: boolean): AccountInput {
   if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
   const input = body as Record<string, unknown>, result: AccountInput = {};
-  const fields = ['firstName', 'lastName', 'email', 'role'];
+  const fields = create ? ['firstName', 'lastName', 'email', 'personalEmail', 'role'] : ['firstName', 'lastName', 'email', 'role'];
   for (const key of Object.keys(input)) if (!fields.includes(key)) invalid(key, 'Field is not permitted');
   if (!Object.keys(input).length) invalid('body', 'Provide at least one permitted field');
   for (const field of ['firstName', 'lastName'] as const) {
@@ -98,6 +98,11 @@ export function accountInput(body: unknown, create: boolean): AccountInput {
     const email = normalizeEmail(input.email);
     if (!email) invalid('email', 'Enter a valid shelflife.com email');
     result.email = email;
+  }
+  if (create || input.personalEmail !== undefined) {
+    const personalEmail = normalizePersonalEmail(input.personalEmail);
+    if (!personalEmail) invalid('personalEmail', 'Enter a valid personal email address');
+    result.personalEmail = personalEmail;
   }
   if (create || input.role !== undefined) {
     if (typeof input.role !== 'string' || !ROLES.includes(input.role as typeof ROLES[number])) invalid('role');

@@ -50,6 +50,7 @@ function fixture() {
         get: store.get,
         create: async input => { hash = input.passwordHash; const { passwordHash, ...fields } = input; const row = { ...rows[1], ...fields, id: 'f'.repeat(24) }; rows.push(row); return row; },
         update: async (id, input) => { lastUpdate = input; const row = rows.find(x => x.id === id); Object.assign(row, input); return row; },
+        delete: async id => { rows = rows.filter(row => row.id !== id); },
         audit: async (actor, action, targetId) => {
           if (failAudit) throw new Error('Audit unavailable');
           records.push({ id: (records.length + 1).toString(16).padStart(24, 'a'), userId: actor.id, actor: { id: actor.id, name: actor.name, role: actor.role }, action, targetId, targetType: 'User', module: 'User Management', status: 'Success', timestamp: new Date().toISOString() });
@@ -65,7 +66,7 @@ test('administration validation rejects injection, unknown fields, role strings 
   assert.deepEqual(pagination({}, ['createdAt'], 'createdAt'), { page: 1, pageSize: 25, sortBy: 'createdAt', sortOrder: 'desc' });
   for (const query of [{ page: '0' }, { pageSize: '101' }, { sortBy: '$where' }, { sortOrder: 'other' }, { page: {} }, { role: 'Admin' }]) assert.throws(() => pagination(query, ['createdAt'], 'createdAt'));
   assert.deepEqual(auditPagination({ actorRole: 'Admin', action: 'UPDATE' }), { page: 1, pageSize: 25, sortBy: 'timestamp', sortOrder: 'desc', actorRole: 'Admin', action: 'UPDATE' });
-  for (const query of [{ actorRole: 'Staff' }, { action: 'DELETE' }, { from: 'yesterday' }, { targetId: 'x' }]) assert.throws(() => auditPagination(query));
+  for (const query of [{ actorRole: 'Staff' }, { action: 'BOGUS' }, { from: 'yesterday' }, { targetId: 'x' }]) assert.throws(() => auditPagination(query));
   for (const body of [{ isActive: false }, { password: 'new-password' }, { authVersion: 0 }, { role: 'Staff' }, { email: { $ne: null } }, { firstName: '' }]) assert.throws(() => accountInput(body, false));
   assert.equal(accountInput({ email: ' VALID@SHELFLIFE.COM ' }, false).email, 'valid@shelflife.com');
 });
@@ -135,9 +136,9 @@ test('real HTTP administration checks authentication before authorization and va
     assert.equal((await call('/api/users?role=Super%20Admin', f.rows()[1])).status, 403);
     assert.equal((await call('/api/users/' + f.rows()[1].id, f.rows()[1])).status, 200);
     assert.equal((await call('/api/users/' + f.rows()[5].id, f.rows()[1])).status, 404);
-    assert.equal((await call('/api/users/' + f.rows()[1].id, f.rows()[0], { method: 'DELETE' })).status, 404);
+    assert.equal((await call('/api/users/' + f.rows()[0].id, f.rows()[0], { method: 'DELETE' })).status, 403);
     assert.equal((await call('/api/audit-records', f.rows()[1])).status, 200);
-    assert.equal((await call('/api/audit-records?action=DELETE', f.rows()[0])).status, 400);
+    assert.equal((await call('/api/audit-records?action=DELETE', f.rows()[0])).status, 200);
     assert.equal((await call('/api/audit-records', f.rows()[0], { method: 'POST', body: '{}' })).status, 404);
     assert.deepEqual(await (await call('/api/dashboard/summary', f.rows()[0])).json(), { totalUsers: 6, activeUsers: 6, inactiveUsers: 0, roleCounts: { 'Super Admin': 2, Admin: 2, Manager: 1, 'Inventory Staff': 1 } });
     assert.deepEqual(await (await call('/api/users/summary', f.rows()[1])).json(), { totalUsers: 3, activeUsers: 3, inactiveUsers: 0, roleCounts: { Admin: 1, Manager: 1, 'Inventory Staff': 1 } });
@@ -177,6 +178,10 @@ test('HTTP lifecycle records the authenticated actor and rejects mass assignment
     assert.equal(filtered.total, 1); assert.equal(filtered.items.length, 1);
     assert.deepEqual(filtered.items[0].actor, { id: f.rows()[0].id, name: f.rows()[0].name, role: 'Super Admin' });
     assert.equal(filtered.items[0].action, 'REACTIVATE');
+    const deletedId = user.id;
+    const deleted = await request(`/users/${deletedId}`, 'DELETE'); assert.equal(deleted.status, 204);
+    assert.equal(await f.store.get(deletedId), null);
+    assert.equal(f.records().at(-1).action, 'DELETE');
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });
 

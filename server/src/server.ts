@@ -204,7 +204,7 @@ if (require.main === module) {
     const database = createDatabase(driver);
     const indexedDatabase = { ...database, connect: async (uri: string) => {
       await database.connect(uri);
-      await provisionSecurityIndexes(loginAttempts);
+      await provisionSecurityIndexes(loginAttempts, users);
     } };
     const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, {
       loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange,

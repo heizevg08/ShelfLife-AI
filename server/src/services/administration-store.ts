@@ -121,6 +121,13 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
           if (!row) throw new Error('Account changed during transaction');
           return account(row);
         },
+        async delete(id) {
+          const userId = new driver.Types.ObjectId(id);
+          // Remove refresh credentials in the same transaction as the account deletion.
+          await driver.connection.collection('authSessions').deleteMany({ userId }, { session });
+          const result = await users.deleteOne({ _id: userId }, { session }).exec();
+          if (result.deletedCount !== 1) throw new Error('Account changed during transaction');
+        },
         async audit(actor, action, targetId) {
           await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined, action, targetType: 'User', targetId, targetName: 'User account', module: 'User Management', status: 'Success' }], { session });
         },

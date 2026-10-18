@@ -1,5 +1,5 @@
 import { Schema, type Mongoose, type InferSchemaType } from 'mongoose';
-import { normalizeEmail } from '../validators/auth';
+import { normalizeEmail, normalizePersonalEmail } from '../validators/auth';
 
 export const ROLES = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
 export type UserRole = typeof ROLES[number];
@@ -25,6 +25,7 @@ export function storedUserRoles(roles: readonly string[]): string[] {
 }
 const schema = new Schema({
   email: { type: String, required: true, unique: true, set: (value: string) => value.trim().toLowerCase(), validate: (value: string) => normalizeEmail(value) === value },
+  personalEmail: { type: String, trim: true, lowercase: true, maxlength: 254, validate: (value: string) => normalizePersonalEmail(value) === value },
   // Legacy/current database records may carry the canonical display name in `name`.
   // Keep it readable so authenticated UI identity reflects the database value instead of stale first/last-name fields.
   name: { type: String, trim: true, maxlength: 200 },
@@ -45,6 +46,10 @@ const schema = new Schema({
   emailChangeSentAt: { type: Date, select: false },
   emailChangeAttempts: { type: Number, select: false, min: 0, max: 5 },
 }, { timestamps: true, versionKey: false, collection: 'users', strict: 'throw' });
+
+// Setup addresses are optional on legacy accounts, so the sparse unique index applies
+// uniqueness only when an account actually has a personal email address.
+schema.index({ personalEmail: 1 }, { unique: true, sparse: true, name: 'personalEmail_1' });
 
 export type UserRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
 export function userModel(driver: Mongoose) {
