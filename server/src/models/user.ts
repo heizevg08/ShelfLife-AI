@@ -1,5 +1,5 @@
 import { Schema, type Mongoose, type InferSchemaType } from 'mongoose';
-import { normalizeEmail } from '../validators/auth';
+import { normalizeEmail, normalizePersonalEmail } from '../validators/auth';
 
 export const ROLES = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
 export type UserRole = typeof ROLES[number];
@@ -25,6 +25,7 @@ export function storedUserRoles(roles: readonly string[]): string[] {
 }
 const schema = new Schema({
   email: { type: String, required: true, unique: true, set: (value: string) => value.trim().toLowerCase(), validate: (value: string) => normalizeEmail(value) === value },
+  personalEmail: { type: String, trim: true, lowercase: true, maxlength: 254, validate: (value: string) => normalizePersonalEmail(value) === value },
   // Legacy/current database records may carry the canonical display name in `name`.
   // Keep it readable so authenticated UI identity reflects the database value instead of stale first/last-name fields.
   name: { type: String, trim: true, maxlength: 200 },
@@ -33,6 +34,8 @@ const schema = new Schema({
   passwordHash: { type: String, required: true, select: false, match: /^scrypt\$131072\$8\$1\$[a-f0-9]{32}\$[a-f0-9]{128}$/ },
   role: { type: String, required: true, enum: ROLES },
   isActive: { type: Boolean, required: true, default: true },
+  // Newly provisioned accounts can authenticate only to complete first-login setup.
+  mustChangePassword: { type: Boolean, required: true, default: false },
   lastLoginAt: { type: Date },
   authVersion: { type: Number, default: 0 },
   resetTokenHash: { type: String, select: false },
@@ -43,6 +46,10 @@ const schema = new Schema({
   emailChangeSentAt: { type: Date, select: false },
   emailChangeAttempts: { type: Number, select: false, min: 0, max: 5 },
 }, { timestamps: true, versionKey: false, collection: 'users', strict: 'throw' });
+
+// Setup addresses are optional on legacy accounts, so the sparse unique index applies
+// uniqueness only when an account actually has a personal email address.
+schema.index({ personalEmail: 1 }, { unique: true, sparse: true, name: 'personalEmail_1' });
 
 export type UserRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
 export function userModel(driver: Mongoose) {
@@ -73,6 +80,7 @@ export function safeUser(user: UserRecord) {
     firstName: typeof user.firstName === 'string' ? user.firstName.trim() : '',
     lastName: typeof user.lastName === 'string' ? user.lastName.trim() : '',
     email: user.email,
-    role, isActive: user.isActive, ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}),
+    role, isActive: user.isActive, mustChangePassword: user.mustChangePassword === true,
+    ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}),
     ...(createdAt ? { createdAt } : {}), ...(updatedAt ? { updatedAt } : {}) };
 }

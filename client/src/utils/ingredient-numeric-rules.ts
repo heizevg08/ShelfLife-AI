@@ -9,6 +9,7 @@
 export const INGREDIENT_MINIMUM_STOCK_MAX = 1_000_000_000;
 export const INGREDIENT_UNIT_COST_MAX = 1_000_000_000;
 export const INGREDIENT_DEFAULT_SHELF_LIFE_MAX = 3_650;
+export const CHANGE_REQUEST_MINIMUM_STOCK_MAX = 1_000_000;
 
 // The server's own wording, reused verbatim so the browser and the API agree.
 export const INGREDIENT_MINIMUM_STOCK_MESSAGE = 'Minimum stock must be between 0 and 1,000,000,000.';
@@ -38,9 +39,17 @@ const finiteNumber = (value: number | string | undefined) => {
 // Minimum stock: 0 to 1,000,000,000, whole or fractional, matching the API range.
 export function ingredientMinimumStockError(value: string): string | undefined {
   if (value === '') return undefined;
-  if (!decimal(value)) return INGREDIENT_MINIMUM_STOCK_MESSAGE;
+  if (!/^-?\d+(?:\.\d+)?$/.test(value)) return 'Minimum stock must contain numbers only.';
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue) || numericValue > INGREDIENT_MINIMUM_STOCK_MAX) return INGREDIENT_MINIMUM_STOCK_MESSAGE;
+  return undefined;
+}
+
+export function changeRequestMinimumStockError(value: string): string | undefined {
+  if (value === '') return undefined;
+  if (!/^-?\d+(?:\.\d+)?$/.test(value)) return 'Minimum stock must contain numbers only.';
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue > CHANGE_REQUEST_MINIMUM_STOCK_MAX) return 'Minimum stock must be from 0 to 1,000,000.';
   return undefined;
 }
 

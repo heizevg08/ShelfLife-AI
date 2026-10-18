@@ -5,11 +5,12 @@ import type { auditRecordModel } from '../models/audit-record';
 import type { Account, Actor, AdministrationStore } from './administration';
 import type { AccountPageQuery, AuditPageQuery, PageQuery } from '../validators/administration';
 
-const publicFields = '_id firstName lastName email role isActive lastLoginAt createdAt updatedAt';
-type PublicDocument = { _id: { toString(): string }; firstName: string; lastName: string; email: string; role: string; isActive: boolean; lastLoginAt?: Date | null; createdAt: Date; updatedAt: Date };
+const publicFields = '_id firstName lastName email role isActive mustChangePassword lastLoginAt createdAt updatedAt';
+type PublicDocument = { _id: { toString(): string }; firstName: string; lastName: string; email: string; role: string; isActive: boolean; mustChangePassword?: boolean; lastLoginAt?: Date | null; createdAt: Date; updatedAt: Date };
 function account(user: PublicDocument): Account {
   return { id: user._id.toString(), firstName: user.firstName, lastName: user.lastName,
     name: `${user.firstName} ${user.lastName}`, email: user.email, role: normalizeUserRole(user.role) ?? user.role, isActive: user.isActive,
+    ...(user.mustChangePassword ? { mustChangePassword: true } : {}),
     ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}), createdAt: user.createdAt.toISOString(), updatedAt: user.updatedAt.toISOString() };
 }
 const sorting = (query: PageQuery): Record<string, 1 | -1> => ({ [query.sortBy]: query.sortOrder === 'asc' ? 1 : -1, _id: query.sortOrder === 'asc' ? 1 : -1 });
@@ -119,6 +120,13 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
           }, { session, new: true, runValidators: true }).select(publicFields).lean().exec();
           if (!row) throw new Error('Account changed during transaction');
           return account(row);
+        },
+        async delete(id) {
+          const userId = new driver.Types.ObjectId(id);
+          // Remove refresh credentials in the same transaction as the account deletion.
+          await driver.connection.collection('authSessions').deleteMany({ userId }, { session });
+          const result = await users.deleteOne({ _id: userId }, { session }).exec();
+          if (result.deletedCount !== 1) throw new Error('Account changed during transaction');
         },
         async audit(actor, action, targetId) {
           await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined, action, targetType: 'User', targetId, targetName: 'User account', module: 'User Management', status: 'Success' }], { session });

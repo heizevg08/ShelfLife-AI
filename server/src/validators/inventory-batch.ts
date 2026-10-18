@@ -3,6 +3,8 @@ import { calendarDate } from './date';
 import { bulkItems } from './bulk';
 
 export const INVENTORY_BATCH_DISPLAY_STATUSES = ['In Stock', 'Low Stock', 'Near Expiry', 'Expired'] as const;
+export const MAX_STOCK_IN_QUANTITY = 1_000_000;
+export const MAX_STOCK_IN_UNIT_COST = 1_000_000_000;
 export type InventoryBatchDisplayStatus = typeof INVENTORY_BATCH_DISPLAY_STATUSES[number];
 export type InventoryBatchSort = 'fefo' | 'latest' | 'ingredient';
 export type InventoryBatchPageQuery = { page: number; pageSize: number; search?: string; category?: string; status?: InventoryBatchDisplayStatus; ingredientId?: string; from?: Date; to?: Date; sort?: InventoryBatchSort; eligibleFefo?: true };
@@ -55,7 +57,12 @@ export function stockInInput(body: unknown): StockInInput {
   const number = (key: 'quantity' | 'unitCost', required: boolean) => {
     const value = input[key];
     if (value === undefined && !required) return undefined;
-    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || (key === 'quantity' && value <= 0)) invalid(key);
+    if (typeof value !== 'number' || !Number.isFinite(value)) invalid(key, `${key === 'quantity' ? 'Quantity received' : 'Unit cost'} must be numeric.`);
+    if (value < 0 || (key === 'quantity' && value <= 0)) invalid(key, key === 'quantity' ? 'Enter a quantity greater than 0.' : 'Enter a unit cost of 0 or more.');
+    if (key === 'quantity' && value > MAX_STOCK_IN_QUANTITY) invalid(key, 'Quantity received cannot exceed 1,000,000.');
+    if (key === 'quantity' && Number(value.toFixed(3)) !== value) invalid(key, 'Use no more than 3 decimal places.');
+    if (key === 'unitCost' && value > MAX_STOCK_IN_UNIT_COST) invalid(key, 'Unit cost cannot exceed 1,000,000,000.');
+    if (key === 'unitCost' && Number(value.toFixed(2)) !== value) invalid(key, 'Use no more than 2 decimal places.');
     return value;
   };
   const result: StockInInput = { ingredientId: objectId(input.ingredientId), dateReceived: date('dateReceived'), quantity: number('quantity', true)!, expirationDate: date('expirationDate') };

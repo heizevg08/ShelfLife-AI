@@ -21,6 +21,7 @@ export function administrationRoutes(auth: AuthService, service: AdministrationS
   router.patch('/users/:id', actions.update);
   router.post('/users/:id/deactivate', actions.deactivate);
   router.post('/users/:id/reactivate', actions.reactivate);
+  router.delete('/users/:id', actions.delete);
   router.get('/dashboard/summary', authorizeAdministration(['Super Admin']), actions.summary);
   router.get('/audit-records/export.csv', authorizeAdministration(['Super Admin', 'Admin']), actions.exportAudit);
   router.get('/audit-records', authorizeAdministration(['Super Admin', 'Admin']), actions.audit);
@@ -30,7 +31,12 @@ export function administrationRoutes(auth: AuthService, service: AdministrationS
     if (res.headersSent) { next(value); return; }
     if (value instanceof AdministrationError) { res.status(value.status).json({ error: { code: value.code, message: value.message, details: value.details } }); return; }
     if (value instanceof HttpError) { res.status(value.status).json({ error: { code: value.status === 401 ? 'UNAUTHENTICATED' : 'REQUEST_FAILED', message: value.message, details: [] } }); return; }
-    if (value?.code === 11000) { res.status(409).json({ error: { code: 'CONFLICT', message: 'An account with that email already exists', details: [] } }); return; }
+    if (value?.code === 11000) {
+      const personalEmailConflict = value.keyPattern && typeof value.keyPattern === 'object' && 'personalEmail' in value.keyPattern;
+      res.status(409).json({ error: { code: 'CONFLICT',
+        message: personalEmailConflict ? 'That personal email is already assigned to another account' : 'An account with that email already exists',
+        details: personalEmailConflict ? [{ field: 'personalEmail', message: 'Use a personal email that is not linked to another account' }] : [{ field: 'email', message: 'Use a unique account email' }] } }); return;
+    }
     if (value?.type === 'entity.parse.failed' || value?.type === 'entity.too.large') { res.status(value.type === 'entity.too.large' ? 413 : 400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: [] } }); return; }
     res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Unable to complete the request', details: [] } });
   };

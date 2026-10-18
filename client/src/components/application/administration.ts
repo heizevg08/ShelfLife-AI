@@ -26,7 +26,7 @@ export const administrationFilterCatalog = {
   },
   audit: {
     actor: ['All users', 'Super Admin', 'Admin', 'Manager', 'Inventory Staff'],
-    action: ['All actions', 'Account created', 'Account updated', 'Account deactivated', 'Account reactivated'],
+    action: ['All actions', 'Account created', 'Account updated', 'Account deleted', 'Account deactivated', 'Account reactivated'],
     period: ['Any date', 'Last week', 'Last month', 'Last year', 'Custom'],
     status: ['All statuses', 'Success', 'Failed', 'Warning'],
   },

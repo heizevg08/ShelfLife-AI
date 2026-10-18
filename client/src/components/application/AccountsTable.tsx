@@ -1,6 +1,6 @@
-import { Ban, Clock3, Eye, EyeOff, FileText, Pencil, Search, Trash2, User, UserCheck, UserPlus, Users, UserX } from 'lucide-react';
+import { Ban, Clock3, Eye, FileText, Pencil, Search, Trash2, User, UserCheck, UserPlus, Users, UserX } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { accountSummary, dashboardSummary, createAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type DashboardSummary, type Page } from '../../services/administration';
+import { accountSummary, dashboardSummary, createAccount, deleteAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
@@ -10,11 +10,11 @@ import { FilterSelect } from './FilterSelect';
 import { sessionInitials } from '../../services/auth';
 import { formatDate, formatDateTime } from '../../utils/date-time';
 
-const blank = { firstName: '', lastName: '', email: '', password: '' };
+const blank = { firstName: '', lastName: '', email: '', personalEmail: '' };
 type ManagedRole = 'Admin' | 'Manager' | 'Inventory Staff';
 const NAME_LIMIT = 25;
 const EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/;
-const PASSWORD_MAX_UTF8_BYTES = 1024;
+const PERSONAL_EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const SUMMARY_AUTO_REFRESH_MS = 15000;
 const REQUIRED_ERROR = 'This field is required.';
 
@@ -23,8 +23,11 @@ function validShelfLifeEmail(value: string) {
   return email.length <= 254 && EMAIL_PATTERN.test(email) && !email.startsWith('.') && !email.includes('..') && !email.includes('.@');
 }
 
-function utf8Length(value: string) {
-  return new TextEncoder().encode(value).length;
+function validPersonalEmail(value: string) {
+  const email = value.trim().toLowerCase();
+  const local = email.slice(0, email.lastIndexOf('@'));
+  return email.length <= 254 && PERSONAL_EMAIL_PATTERN.test(email)
+    && !local.startsWith('.') && !local.endsWith('.') && !local.includes('..');
 }
 
 export function AccountsTable() {
@@ -38,10 +41,9 @@ export function AccountsTable() {
   const [statusFilter, setStatusFilter] = useState(superAdmin ? 'Active' : 'All Statuses');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [data, setData] = useState<Page<Account> | null>(null), [loadError, setLoadError] = useState(false);
-  const [mode, setMode] = useState<'create' | 'view' | 'edit' | 'lifecycle' | null>(null), [selected, setSelected] = useState<Account | null>(null);
+  const [mode, setMode] = useState<'create' | 'view' | 'edit' | 'lifecycle' | 'delete' | null>(null), [selected, setSelected] = useState<Account | null>(null);
   const [fields, setFields] = useState(blank), [errors, setErrors] = useState<Record<string, string>>({}), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -93,13 +95,13 @@ export function AccountsTable() {
     });
   }, [data, directorySearch, roleFilter, statusFilter, sort, superAdmin]);
 
-  async function open(account: Account, next: 'view' | 'edit' | 'lifecycle') {
+  async function open(account: Account, next: 'view' | 'edit' | 'lifecycle' | 'delete') {
     setBusy(true); setMessage(''); setErrors({});
     try {
       const result = await getAccount(account.id);
       setSelected(result.user);
       setAssignedRole(result.user.role as ManagedRole);
-      setFields({ firstName: result.user.firstName, lastName: result.user.lastName, email: result.user.email, password: '' });
+      setFields({ firstName: result.user.firstName, lastName: result.user.lastName, email: result.user.email, personalEmail: '' });
       setTouched({});
       setMode(next);
     } catch {
@@ -110,7 +112,7 @@ export function AccountsTable() {
   }
 
 
-  function validateField(key: 'firstName' | 'lastName' | 'email' | 'password', value: string) {
+  function validateField(key: 'firstName' | 'lastName' | 'email' | 'personalEmail', value: string) {
     if (key === 'firstName' || key === 'lastName') {
       const trimmed = value.trim();
       if (!trimmed) return REQUIRED_ERROR;
@@ -118,8 +120,8 @@ export function AccountsTable() {
     }
     if (!value.trim()) return REQUIRED_ERROR;
     if (key === 'email') return !validShelfLifeEmail(value) ? 'Enter a valid shelflife.com email.' : '';
-    if (value.length < 12) return 'Use at least 12 characters.';
-    return utf8Length(value) > PASSWORD_MAX_UTF8_BYTES ? 'Use a shorter password (at most 1,024 UTF-8 bytes).' : '';
+    if (key === 'personalEmail') return !validPersonalEmail(value) ? 'Enter a valid email address, such as name@example.com.' : '';
+    return '';
   }
 
   function close() {
@@ -129,7 +131,6 @@ export function AccountsTable() {
       setFields(blank);
       setErrors({});
       setTouched({});
-      setShowPassword(false);
     }
   }
 
@@ -137,7 +138,7 @@ export function AccountsTable() {
     event.preventDefault();
     if (busy) return;
     const next: Record<string, string> = {};
-    const requiredFields = ['firstName', 'lastName', 'email', ...(mode === 'create' ? ['password'] as const : [])] as const;
+    const requiredFields = mode === 'create' ? ['firstName', 'lastName', 'email', 'personalEmail'] as const : ['firstName', 'lastName', 'email'] as const;
     for (const key of requiredFields) {
       const error = validateField(key, fields[key]);
       if (error) next[key] = error;
@@ -154,16 +155,23 @@ export function AccountsTable() {
 
     setBusy(true);
     try {
-      const input = { firstName: fields.firstName.trim(), lastName: fields.lastName.trim(), email: fields.email.trim().toLowerCase(), role: assignedRole };
-      if (mode === 'create') await createAccount({ ...input, password: fields.password });
+      const input = { firstName: fields.firstName.trim(), lastName: fields.lastName.trim(), email: fields.email.trim().toLowerCase(), ...(mode === 'create' ? { personalEmail: fields.personalEmail.trim().toLowerCase() } : {}), role: assignedRole };
+      if (mode === 'create') await createAccount(input);
       else await updateAccount(selected!.id, input);
-      setMessage(mode === 'create' ? 'Account created.' : 'Account updated.');
-      setMode(null); setFields(blank); setSelected(null); setShowPassword(false); setRefresh(value => value + 1);
+      setMessage(mode === 'create' ? 'Account created. A temporary password and sign-in link were emailed to the user.' : 'Account updated.');
+      setMode(null); setFields(blank); setSelected(null); setRefresh(value => value + 1);
     } catch (error) {
       const details = error instanceof ApiError
-        ? Object.fromEntries(error.details.map(item => [item.field, item.field === 'password' ? (item.message || 'Use at least 12 characters.') : item.message]))
+        ? Object.fromEntries(error.details.map(item => [item.field, item.message]))
         : {};
-      setErrors({ ...details, form: error instanceof ApiError ? error.message : 'The result could not be confirmed. The directory will refresh automatically.' });
+      const inlineConflict = mode === 'create' && error instanceof ApiError && error.status === 409;
+      if (inlineConflict) {
+        const personalEmailConflict = error.details.some(item => item.field === 'personalEmail') || /personal email/i.test(error.message);
+        const field = personalEmailConflict ? 'personalEmail' : 'email';
+        details[field] ??= field === 'personalEmail' ? 'This personal email is already assigned to another account.' : 'This account email is already in use.';
+        setTouched(previous => ({ ...previous, [field]: true }));
+      }
+      setErrors({ ...details, form: inlineConflict ? '' : error instanceof ApiError ? error.message : 'The result could not be confirmed. The directory will refresh automatically.' });
     } finally {
       setBusy(false);
     }
@@ -178,6 +186,20 @@ export function AccountsTable() {
       setMode(null); setSelected(null); setRefresh(value => value + 1);
     } catch {
       setErrors({ form: 'The account change could not be confirmed. The directory will refresh automatically.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeAccount() {
+    if (!selected || busy) return;
+    setBusy(true); setErrors({});
+    try {
+      await deleteAccount(selected.id);
+      setMessage(`Deleted ${selected.name}'s account.`);
+      setMode(null); setSelected(null); setRefresh(value => value + 1);
+    } catch (error) {
+      setErrors({ form: error instanceof ApiError ? error.message : 'The account could not be deleted. Try again.' });
     } finally {
       setBusy(false);
     }
@@ -224,14 +246,14 @@ export function AccountsTable() {
               setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('Active'); setPage(1);
             }}>Reset</button>
             <button className="sl-button sl-button-primary" disabled={busy} onClick={() => {
-              setMode('create'); setAssignedRole('Admin'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage('');
+              setMode('create'); setAssignedRole('Admin'); setFields(blank); setErrors({}); setTouched({}); setMessage('');
             }}><UserPlus size={16} aria-hidden="true" /> Add User</button>
           </div> : <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions">
             <button className="sl-button" onClick={() => {
               setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
             }}>Reset</button>
             <button className="sl-button sl-button-primary" disabled={busy} onClick={() => {
-              setMode('create'); setAssignedRole('Manager'); setFields(blank); setErrors({}); setTouched({}); setShowPassword(false); setMessage('');
+              setMode('create'); setAssignedRole('Manager'); setFields(blank); setErrors({}); setTouched({}); setMessage('');
             }}><UserPlus size={16} aria-hidden="true" /> Add User</button>
           </div>}
         </div>
@@ -257,17 +279,19 @@ export function AccountsTable() {
                 <td className={superAdmin ? 'sl-v56-name' : 'sl-v56-name sl-application-record-name'}>{superAdmin ? account.name : <span className="sl-emphasized-value">{account.name}</span>}</td>
                 <td>{account.email}</td>
                 <td><span className={superAdmin ? 'sl-v56-role-pill' : 'sl-application-role-pill'} data-role={account.role}>{account.role}</span></td>
-                <td>{superAdmin ? <Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status> : <span className="sl-status sl-application-status" data-tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Deactivated'}</span>}</td>
+                <td>{account.mustChangePassword ? <Status tone="attention">Setup required</Status> : superAdmin ? <Status tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Inactive'}</Status> : <span className="sl-status sl-application-status" data-tone={account.isActive ? 'success' : 'critical'}>{account.isActive ? 'Active' : 'Deactivated'}</span>}</td>
                 <td>{account.lastLoginAt ? <time dateTime={account.lastLoginAt}>{formatDateTime(account.lastLoginAt)}</time> : <span className={superAdmin ? 'sl-v56-unavailable' : 'sl-application-unavailable'} title="No recorded login">—</span>}</td>
                 {superAdmin && <td>{formatDate(account.createdAt)}</td>}
                 <td><div className="sl-staff-waste-row-actions">
                   {superAdmin ? <>
                     <button type="button" className="sl-icon-button" disabled={busy} aria-label={`View ${account.name}`} title="View" onClick={() => open(account, 'view')}><Eye size={16} aria-hidden="true" /></button>
                     <button type="button" className="sl-icon-button" disabled={busy} aria-label={`Edit ${account.name}`} title="Edit" onClick={() => open(account, 'edit')}><Pencil size={16} aria-hidden="true" /></button>
-                    <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled={busy} aria-label={`${account.isActive ? 'Deactivate' : 'Reactivate'} ${account.name}`} title={account.isActive ? 'Deactivate' : 'Reactivate'} onClick={() => open(account, 'lifecycle')}><Trash2 size={16} aria-hidden="true" /></button>
+                    <button type="button" className="sl-icon-button" disabled={busy} aria-label={`Deactivate or reactivate ${account.name}`} title={account.isActive ? 'Deactivate' : 'Reactivate'} onClick={() => open(account, 'lifecycle')}>{account.isActive ? <UserX size={16} aria-hidden="true" /> : <UserCheck size={16} aria-hidden="true" />}</button>
+                    <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled={busy} aria-label={`Delete ${account.name}`} title="Delete account" onClick={() => open(account, 'delete')}><Trash2 size={16} aria-hidden="true" /></button>
                   </> : <>
                     <button type="button" className="sl-icon-button sl-account-action-view" disabled={busy} aria-label={`View ${account.name}`} title="View" onClick={() => open(account, 'view')}><Eye size={16} aria-hidden="true" /></button>
                     <button type="button" className={`sl-icon-button ${account.isActive ? 'sl-account-action-deactivate' : 'sl-account-action-reactivate'}`} disabled={busy || !mayManage(account)} aria-label={`${account.isActive ? 'Deactivate' : 'Reactivate'} ${account.name}`} title={account.isActive ? 'Deactivate' : 'Reactivate'} onClick={() => open(account, 'lifecycle')}>{account.isActive ? <UserX size={16} aria-hidden="true" /> : <UserCheck size={16} aria-hidden="true" />}</button>
+                    <button type="button" className="sl-icon-button sl-staff-waste-delete sl-staff-usage-delete-action" disabled={busy || !mayManage(account)} aria-label={`Delete ${account.name}`} title="Delete account" onClick={() => open(account, 'delete')}><Trash2 size={16} aria-hidden="true" /></button>
                   </>}
                 </div></td>
               </tr>)}
@@ -293,27 +317,14 @@ export function AccountsTable() {
     >
       <form className="sl-admin-form sl-account-form" onSubmit={save} noValidate>
         <div className="sl-form-grid">
-          {(['firstName', 'lastName', 'email', ...(mode === 'create' ? ['password'] as const : [])] as const).map(key => <div key={key} className={`sl-account-field${key === 'email' || key === 'password' ? ' sl-form-span-2' : ''}`}>
-            <label htmlFor={`admin-${key}`}>{({ firstName: 'First name', lastName: 'Last name', email: 'Email', password: 'Temporary Password' })[key]}</label>
-            <div className={key === 'password' ? 'sl-password-field' : undefined}>
-              <input
-                className="sl-admin-input"
-                id={`admin-${key}`}
-                type={key === 'password' ? (showPassword ? 'text' : 'password') : key === 'email' ? 'email' : 'text'}
-                autoComplete={key === 'password' ? 'new-password' : 'off'}
-                disabled={busy}
-                value={fields[key]}
-                maxLength={key === 'firstName' || key === 'lastName' ? NAME_LIMIT : undefined}
-                aria-invalid={touched[key] && !!errors[key] ? true : undefined}
-                aria-describedby={[touched[key] && errors[key] ? `admin-${key}-error` : '', key === 'password' ? 'admin-password-help' : ''].filter(Boolean).join(' ') || undefined}
-                                onBlur={() => { setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, fields[key]) })); }}
-                onChange={event => { const value = event.target.value; setFields({ ...fields, [key]: value }); setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, value), form: '' })); }}
-              />
-              {key === 'password' && <button className="sl-password-toggle" type="button" disabled={busy} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-controls="admin-password" onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}</button>}
-            </div>
+          {([...(['firstName', 'lastName', 'email'] as const), ...(mode === 'create' ? ['personalEmail' as const] : [])]).map(key => <div key={key} className={`sl-account-field${key === 'email' || key === 'personalEmail' ? ' sl-form-span-2' : ''}`}>
+            <label htmlFor={`admin-${key}`}>{({ firstName: 'First name', lastName: 'Last name', email: mode === 'create' ? 'Account email' : 'Email', personalEmail: 'Personal email (for setup email)' })[key]}</label>
+            <input className="sl-admin-input" id={`admin-${key}`} type={key === 'email' || key === 'personalEmail' ? 'email' : 'text'} autoComplete="off" disabled={busy} value={fields[key]} maxLength={key === 'firstName' || key === 'lastName' ? NAME_LIMIT : key === 'personalEmail' ? 254 : undefined} aria-invalid={touched[key] && !!errors[key] ? true : undefined} aria-describedby={touched[key] && errors[key] ? `admin-${key}-error` : undefined}
+              onBlur={() => { setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, fields[key]) })); }}
+              onChange={event => { const value = event.target.value; setFields({ ...fields, [key]: value }); setTouched(previous => ({ ...previous, [key]: true })); setErrors(previous => ({ ...previous, [key]: validateField(key, value), form: '' })); }} />
             {touched[key] && errors[key] && <p id={`admin-${key}-error`} className="sl-admin-error">{errors[key]}</p>}
-            {key === 'password' && <p id="admin-password-help" className="sl-password-help">Share this with the user — they can change it after signing in.</p>}
           </div>)}
+          {mode === 'create' && <p className="sl-password-help sl-form-span-2">A secure temporary password and sign-in link will be sent to the personal email. The user signs in with their account email and must set a new password before accessing the account.</p>}
           <fieldset className="sl-form-span-2 sl-role-picker" aria-invalid={touched.role && !!errors.role ? true : undefined} aria-describedby={touched.role && errors.role ? 'admin-role-error' : undefined}><legend>Role</legend>{assignableRoles.map(role => <label key={role} className="sl-role-option" data-selected={assignedRole === role}>
             <input type="radio" name="admin-role" value={role} checked={assignedRole === role} disabled={busy} onChange={() => { setAssignedRole(role); setTouched(previous => ({ ...previous, role: true })); setErrors(previous => ({ ...previous, role: '', form: '' })); }} />
             <span>{role}</span>
@@ -329,6 +340,9 @@ export function AccountsTable() {
     </Dialog>
     <Dialog open={mode === 'lifecycle'} showClose={false} className={`sl-logout-dialog sl-account-lifecycle-dialog${selected?.isActive ? ' is-destructive' : ' is-positive'}`} title={<><span className="sl-logout-icon" aria-hidden="true">{selected?.isActive ? <UserX size={20} /> : <UserCheck size={20} />}</span><span>{selected?.isActive ? 'Deactivate account?' : 'Reactivate account?'}</span></>} onDismiss={close} busy={busy} actions={<><button className="sl-button sl-logout-stay" data-initial-focus disabled={busy} onClick={close}>Cancel</button><button className={`sl-button ${selected?.isActive ? 'sl-button-logout' : 'sl-button-primary'}`} disabled={busy} onClick={lifecycle}>{busy ? 'Saving…' : selected?.isActive ? 'Deactivate account' : 'Reactivate account'}</button></>}>
       <p className="sl-description">{selected?.isActive ? 'This account will lose access to ShelfLife AI. Historical records will be preserved.' : 'This account will be able to sign in to ShelfLife AI again.'}</p><p className="sl-supporting">{selected?.email}</p>{errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
+    </Dialog>
+    <Dialog open={mode === 'delete'} showClose={false} className="sl-logout-dialog sl-account-lifecycle-dialog is-destructive" title={<><span className="sl-logout-icon" aria-hidden="true"><Trash2 size={20} /></span><span>Delete account permanently?</span></>} onDismiss={close} busy={busy} actions={<><button className="sl-button sl-logout-stay" data-initial-focus disabled={busy} onClick={close}>Cancel</button><button className="sl-button sl-button-logout" disabled={busy} onClick={removeAccount}>{busy ? 'Deleting…' : 'Delete account'}</button></>}>
+      <p className="sl-description">This permanently removes {selected?.name}'s account and ends their saved sessions. Historical inventory and audit records remain. This action cannot be undone.</p><p className="sl-supporting">{selected?.email}</p>{errors.form && <p role="alert" className="sl-admin-error">{errors.form}</p>}
     </Dialog>
   </>;
 }

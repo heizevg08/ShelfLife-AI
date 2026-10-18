@@ -26,19 +26,27 @@ const labels = {
   waste: { title: 'Record Waste', subtitle: 'Record one or more discarded ingredients.', quantity: 'Quantity Wasted', date: 'Date Wasted', primary: 'Save Waste Records', Icon: Trash2 },
 } as const;
 
-function validate(mode: Mode, row: Draft, today: string): RowErrors {
+const MAX_RECORD_QUANTITY = 1_000_000;
+const MAX_UNIT_COST = 1_000_000_000;
+function validate(mode: Mode, row: Draft, today: string, batch?: InventoryBatch): RowErrors {
   const errors: RowErrors = {};
   if (!row.ingredientId) errors.ingredientId = 'Select an ingredient.';
   if (mode !== 'stock' && !row.batchId) errors.batchId = 'Select a batch ID.';
-  const quantity = Number(row.quantity);
+  const quantityText = row.quantity.trim(), quantity = Number(quantityText);
   if (!row.quantity.trim()) errors.quantity = `Enter the ${labels[mode].quantity.toLowerCase()}.`;
-  else if (!Number.isFinite(quantity) || quantity <= 0) errors.quantity = 'Enter a quantity greater than 0.';
+  else if (!/^-?\d+(?:\.\d{1,3})?$/.test(quantityText)) errors.quantity = 'Use numbers only, with up to 3 decimal places.';
+  else if (!Number.isFinite(quantity) || quantity > MAX_RECORD_QUANTITY) errors.quantity = 'Quantity cannot exceed 1,000,000.';
+  else if (quantity <= 0) errors.quantity = 'Enter a quantity greater than 0.';
   if (!row.date) errors.date = `Select the ${labels[mode].date.toLowerCase()}.`;
   else if (!isValidDateOnlyInput(row.date)) errors.date = 'Enter a valid date.';
-  else if (mode !== 'stock' && row.date > today) errors.date = `${labels[mode].date} cannot be in the future.`;
+  else if (row.date > today) errors.date = `${labels[mode].date} cannot be in the future.`;
+  else if (mode === 'waste' && batch?.dateReceived && row.date < batch.dateReceived.slice(0, 10)) errors.date = 'Date wasted cannot be before the batch was received.';
   if (mode === 'stock' && !row.expirationDate) errors.expirationDate = 'Select the expiration date.';
+  else if (mode === 'stock' && row.expirationDate && !isValidDateOnlyInput(row.expirationDate)) errors.expirationDate = 'Enter a valid expiration date.';
   else if (mode === 'stock' && row.date && row.expirationDate <= row.date) errors.expirationDate = 'Expiration date must be after the date received.';
-  if (mode === 'stock' && row.unitCost && (!Number.isFinite(Number(row.unitCost)) || Number(row.unitCost) < 0)) errors.unitCost = 'Enter a unit cost of 0 or more.';
+  if (mode === 'stock' && row.unitCost && !/^-?\d+(?:\.\d{1,2})?$/.test(row.unitCost.trim())) errors.unitCost = 'Use numbers only, with up to 2 decimal places.';
+  else if (mode === 'stock' && row.unitCost && (!Number.isFinite(Number(row.unitCost)) || Number(row.unitCost) > MAX_UNIT_COST)) errors.unitCost = 'Unit cost cannot exceed 1,000,000,000.';
+  else if (mode === 'stock' && row.unitCost && Number(row.unitCost) < 0) errors.unitCost = 'Enter a unit cost of 0 or more.';
   if (mode === 'waste' && !row.reason) errors.reason = 'Select a waste reason.';
   return errors;
 }
@@ -79,12 +87,13 @@ export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, i
   const blur = (row: Draft, field: Field) => {
     if (!interacted.current[row.key]?.[field]) return;
     setTouched(current => ({ ...current, [row.key]: { ...current[row.key], [field]: true } }));
-    setErrors(current => ({ ...current, [row.key]: { ...current[row.key], [field]: validate(mode, row, today)[field] } }));
+    const batch = batches[row.ingredientId]?.find(item => item.id === row.batchId);
+    setErrors(current => ({ ...current, [row.key]: { ...current[row.key], [field]: validate(mode, row, today, batch)[field] } }));
   };
   const interaction = (row: Draft, field: Field) => ({ onPointerDown: () => { interacted.current[row.key] = { ...interacted.current[row.key], [field]: true }; }, onKeyDown: () => { interacted.current[row.key] = { ...interacted.current[row.key], [field]: true }; } });
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    const next = Object.fromEntries(rows.map(row => [row.key, validate(mode, row, today)]));
+    const next = Object.fromEntries(rows.map(row => [row.key, validate(mode, row, today, batches[row.ingredientId]?.find(item => item.id === row.batchId))]));
     if (Object.values(next).some(row => Object.keys(row).length)) {
       setErrors(next); setTouched(Object.fromEntries(rows.map(row => [row.key, Object.fromEntries(Object.keys(next[row.key] ?? {}).map(field => [field, true]))])));
       requestAnimationFrame(() => form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()); return;
@@ -105,7 +114,9 @@ export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, i
           const apiField = match[2] === 'quantityUsed' || match[2] === 'quantityWasted' ? 'quantity' : match[2] === 'dateUsed' || match[2] === 'dateWasted' || match[2] === 'dateReceived' ? 'date' : match[2];
           serverErrors[row.key] = { ...serverErrors[row.key], [apiField as Field]: detail.message };
         }
-        setErrors(serverErrors); setMessage(Object.keys(serverErrors).length ? '' : error.message);
+        setErrors(serverErrors);
+        setTouched(current => ({ ...current, ...Object.fromEntries(Object.entries(serverErrors).map(([key, fields]) => [key, Object.fromEntries(Object.keys(fields).map(field => [field, true]))])) }));
+        setMessage(Object.keys(serverErrors).length ? '' : error.message);
       } else setMessage(`Unable to save ${config.title.toLowerCase()}. Try again.`);
     } finally { setBusy(false); }
   };
@@ -127,13 +138,14 @@ export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, i
         const selectedUnit = mode === 'stock' ? ingredient?.unitOfMeasure : batch?.unit;
         const unitSource = mode === 'stock' ? 'ingredient' : 'selected batch';
         const quantityField = field('quantity', config.quantity, <span className="sl-bulk-quantity-input"><input inputMode="decimal" value={row.quantity} onChange={event => update(row.key, 'quantity', event.target.value)} onBlur={() => blur(row, 'quantity')} {...interaction(row, 'quantity')} placeholder="Enter quantity" {...validation(row, 'quantity')}/><output className="sl-staff-derived-unit" aria-label={selectedUnit ? `Unit ${selectedUnit}, auto-filled from ${unitSource}` : `Unit auto-filled from the ${unitSource}`}>{selectedUnit ?? '—'}</output></span>, 'sl-bulk-quantity-control');
-        const dateField = field('date', config.date, <input type="date" max={mode === 'stock' ? undefined : today} value={row.date} onChange={event => update(row.key, 'date', event.target.value)} onBlur={() => blur(row, 'date')} {...interaction(row, 'date')} {...validation(row, 'date')}/>);
+        const dateMin = mode === 'waste' ? batch?.dateReceived.slice(0, 10) : undefined;
+        const dateField = field('date', config.date, <input type="date" min={dateMin} max={today} value={row.date} onChange={event => update(row.key, 'date', event.target.value)} onBlur={() => blur(row, 'date')} {...interaction(row, 'date')} {...validation(row, 'date')}/>);
         return <fieldset key={row.key} aria-labelledby={`${row.key}-title`} className={`sl-bulk-recording-row sl-bulk-recording-row--${mode}`}><div className="sl-bulk-recording-header"><h3 id={`${row.key}-title`}>Item {index + 1}</h3>{index > 0 && <button type="button" className="sl-bulk-recording-remove" aria-label={`Remove item ${index + 1}`} onClick={() => removeRow(row.key)}><X size={16} aria-hidden="true"/> Remove</button>}</div>
           {mode === 'stock' ? <div className="sl-creation-form-grid"><div className="sl-creation-form-row sl-bulk-recording-row--full">{ingredientField}</div><div className="sl-creation-form-row">{quantityField}{dateField}</div><div className="sl-creation-form-row">{field('expirationDate', 'Expiration Date', <input type="date" min={row.date || undefined} value={row.expirationDate} onChange={event => update(row.key, 'expirationDate', event.target.value)} onBlur={() => blur(row, 'expirationDate')} {...interaction(row, 'expirationDate')} {...validation(row, 'expirationDate')}/>)}{field('unitCost', 'Unit Cost (Optional)', <span className="sl-currency-input sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" value={row.unitCost} onChange={event => update(row.key, 'unitCost', event.target.value)} onBlur={() => blur(row, 'unitCost')} {...interaction(row, 'unitCost')} placeholder="0.00" {...validation(row, 'unitCost')}/></span>)}</div></div> : mode === 'usage' ? <div className="sl-creation-form-grid"><div className="sl-creation-form-row">{ingredientField}{batchField}</div><div className="sl-creation-form-row">{quantityField}{dateField}</div></div> : <div className="sl-creation-form-grid"><div className="sl-creation-form-row">{ingredientField}{batchField}</div><div className="sl-creation-form-row">{quantityField}{dateField}</div><div className="sl-creation-form-row sl-bulk-recording-row--full">{field('reason', 'Reason', <select value={row.reason} onChange={event => update(row.key, 'reason', event.target.value)} onBlur={() => blur(row, 'reason')} {...interaction(row, 'reason')} {...validation(row, 'reason')}><option value="">Select reason...</option>{reasons.map(reason => <option key={reason}>{reason}</option>)}</select>)}</div></div>}
         </fieldset>;
       })}</div>;
   const addButton = <button type="button" className="sl-button sl-bulk-recording-add" disabled={rows.length >= MAX_ITEMS} onClick={() => setRows(current => [...current, blank()])}><Plus size={16} aria-hidden="true"/>Add another item</button>;
-  if (mode === 'waste') return <InventoryStaffModal open={open} busy={busy || outerBusy} showClose={false} className="sl-staff-waste-dialog sl-inventory-staff-bulk-dialog" title={config.title} subtitle="Record one or more discarded ingredients." Icon={Icon} onDismiss={close} returnFocus={returnFocus}><InventoryStaffModalForm formRef={form} onSubmit={submit} message={message} secondaryLabel="Cancel" onSecondary={close} primaryLabel="Save Waste Records" busy={busy || outerBusy} className="sl-inventory-staff-bulk-form">{items}{addButton}</InventoryStaffModalForm></InventoryStaffModal>;
+  if (mode === 'waste') return <InventoryStaffModal open={open} busy={busy || outerBusy} showClose={false} className="sl-staff-waste-dialog sl-inventory-staff-bulk-dialog" title={config.title} subtitle="Record one or more discarded ingredients." Icon={Icon} onDismiss={close} returnFocus={returnFocus}><InventoryStaffModalForm formRef={form} onSubmit={submit} message={message} messageRole="alert" secondaryLabel="Cancel" onSecondary={close} primaryLabel="Save Waste Records" busy={busy || outerBusy} className="sl-inventory-staff-bulk-form">{items}{addButton}</InventoryStaffModalForm></InventoryStaffModal>;
   const entryClass = mode === 'stock' ? 'sl-stockin-entry' : 'sl-usage-entry';
   return <Dialog open={open} busy={busy || outerBusy} showClose={false} className={`sl-add-user-dialog sl-account-reference-dialog ${entryClass}-modal sl-inventory-staff-bulk-dialog`} title={<span className="sl-account-dialog-heading"><span className="sl-account-dialog-icon"><Icon size={18} aria-hidden="true" /></span><span><span className="sl-account-dialog-title">{config.title}</span><small>{config.subtitle}</small></span></span>} onDismiss={close} returnFocus={returnFocus} actions={<span className="sl-creation-form-actions"><button type="button" className="sl-button" disabled={busy || outerBusy} onClick={close}>Cancel</button><button type="submit" form={`${entryClass}-bulk-form`} className="sl-button sl-button-primary" disabled={busy || outerBusy}>{config.primary}</button></span>}><form id={`${entryClass}-bulk-form`} ref={form} className={`${entryClass}-form sl-creation-form sl-inventory-staff-bulk-form`} noValidate onSubmit={submit}>{items}{addButton}{message && <p className="sl-inline-notice" role="status">{message}</p>}</form></Dialog>;
 }

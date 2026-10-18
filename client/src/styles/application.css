@@ -4779,6 +4779,38 @@ section.sl-card:has(.sl-filter-popover) {
   font-size: .84rem;
   line-height: 1.45;
 }
+.sl-notification-panel { width: min(320px,100vw - 1.5rem); max-height:min(470px,100dvh - 90px); display:flex; flex-direction:column; overflow:hidden; }
+.sl-notification-header { align-items: center; flex:none; padding:.8rem .9rem .55rem; border-bottom:0; }
+.sl-notification-header > div { flex: 1; }
+.sl-notification-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:center; gap:.15rem; margin:.1rem .7rem .5rem; padding:.18rem; border-radius:9px; background:var(--sl-surface-subtle); flex:none; }
+.sl-notification-tabs button { display:flex; justify-content:center; align-items:center; gap:.35rem; min-height:29px; padding:.3rem .45rem; border:0; border-radius:7px; color:var(--sl-muted); background:transparent; font:inherit; font-size:.74rem; cursor:pointer; }
+.sl-notification-tabs button.is-active { color:var(--sl-text); background:var(--sl-surface); box-shadow:0 1px 3px rgb(0 0 0 / 10%); font-weight:600; }
+.sl-notification-section-heading { display:flex; align-items:center; justify-content:space-between; padding:.45rem .9rem .2rem; color:var(--sl-muted); font-size:.72rem; font-weight:600; }
+.sl-notification-section-heading button { border:0; padding:.25rem; color:var(--sl-brand); background:transparent; font:inherit; font-size:.72rem; cursor:pointer; }
+.sl-notification-tabs small { color:var(--sl-muted); font-size:.7rem; }
+.sl-notification-list { overflow:auto; min-height:0; }
+.sl-notification-item { position:relative; padding:.48rem .6rem; border-bottom:0; background:var(--sl-surface); }
+.sl-notification-item[data-read=false] { background:#edf3ff; }
+.sl-notification-open { display:flex; width:100%; min-height:42px; align-items:center; gap:.45rem; border:0; padding:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+.sl-notification-open > svg { flex:none; margin-left:auto; color:var(--sl-muted); opacity:0; }
+.sl-notification-item:hover .sl-notification-open > svg { opacity:1; }
+.sl-notification-avatar { width:28px; height:28px; flex:none; display:grid; place-items:center; border-radius:50%; color:#087d60; background:#dcf4ea; }
+.sl-notification-dot { position:absolute; top:.65rem; right:.55rem; width:6px; height:6px; border-radius:50%; background:#6500ee; opacity:0; }
+.sl-notification-item[data-read=false] .sl-notification-dot { opacity:1; }
+.sl-notification-copy { flex:1; min-width:0; display:grid; gap:.1rem; padding-right:.35rem; }
+.sl-notification-copy strong { overflow:hidden; font-size:.72rem; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.sl-notification-copy > span { overflow:hidden; color:var(--sl-muted); font-size:.67rem; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+.sl-notification-copy time { margin-top:.02rem; color:var(--sl-muted); font-size:.62rem; }
+.sl-notification-review { display:flex; flex-wrap:wrap; align-items:center; gap:.45rem; margin:.65rem 0 0 1rem; }
+.sl-notification-review label { display:grid; flex:1 0 100%; gap:.25rem; color:var(--sl-muted); font-size:.75rem; }
+.sl-notification-review textarea { width:100%; resize:vertical; border:1px solid var(--sl-border); border-radius:8px; padding:.5rem; color:var(--sl-text); background:var(--sl-surface); font:inherit; }
+.sl-notification-review .sl-button { flex:1 1 0; justify-content:center; min-width:0; min-height:32px; gap:.3rem; }
+.sl-notification-review .sl-notification-review-choice { flex:0 0 5.25rem; min-height:30px; padding:.35rem .4rem; font-size:.76rem; }
+.sl-notification-error { margin:.25rem .9rem .6rem; color:var(--sl-critical); font-size:.8rem; }
+.sl-notification-footer { display:flex; gap:.5rem; flex:none; padding:.6rem .65rem; border-top:1px solid var(--sl-border-subtle); background:var(--sl-surface); }
+.sl-notification-footer .sl-button { min-height:33px; gap:.3rem; justify-content:center; padding:.4rem .5rem; font-size:.68rem; white-space:nowrap; }
+.sl-notification-mark-read { flex:1; }
+.sl-notification-footer .sl-button:disabled { opacity:.55; }
 .sl-account-form-intro {
   grid-row: 1;
   font-size: .86rem;
@@ -22918,6 +22950,8 @@ section.sl-card:has(.sl-filter-popover) {
   min-height: clamp(6.6rem,6rem + 2vw,8rem);
   padding: clamp(.8rem,.7rem + .35vw,1.15rem);
 }
+.sl-staff-waste-v159 .sl-staff-waste-kpis .sl-inventory-staff-kpi > div { min-width:0; }
+.sl-staff-waste-v159 .sl-staff-waste-kpis .sl-inventory-staff-kpi strong { display:block; min-width:0; max-width:100%; overflow-wrap:anywhere; font-size:clamp(1rem,1.1vw + .55rem,1.45rem); line-height:1.15; }
 .sl-staff-waste-v159 .sl-staff-waste-kpis .sl-inventory-staff-kpi[data-tone=info] {
   border-top-color: #0c5797;
 }
@@ -30968,8 +31002,10 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-dashboard-source-kpis > .sl-sa-kpi > div > strong {
   color: var(--sl-text);
-  font-size: clamp(1.75rem,1.55rem + .55vw,2.15rem);
+  font-size: clamp(1.45rem,1.3rem + .4vw,1.8rem);
   line-height: 1.05;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .sl-dashboard-source-kpis > .sl-sa-kpi > div > small {
   color: var(--sl-muted);
@@ -34621,13 +34657,9 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
     white-space:normal;
   }
 }
-/* Shared four-role profile: the self-service endpoint owns name changes. The owner's approved
-   reference layout is reproduced for all four roles: First/Last Name rows, Email, and Sign-in &
-   security (password + 2-Step Verification). The Role row, the profile avatar and the profile-photo
-   upload block stay absent, and the notification-preference block was removed, so this page never
-   implies photo storage, a saved preference, an alert or a second factor that the server does not
-   actually perform. Controls whose backend is not built stay visible but disabled and truthfully
-   labelled. The identity initials live in the shell's topbar avatar rather than being repeated here. */
+/* Shared four-role profile. Identity, available account details and security controls remain tied
+   to the authenticated account; initials stand in for a profile photo because uploads are not
+   supported. */
 .sl-profile-manager {
   container-name:sl-profile-manager;
   container-type:inline-size;
@@ -34635,6 +34667,14 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   gap:var(--sl-space-4);
   width:min(100%,64rem);
 }
+.sl-profile-reference-breadcrumb { display:flex; align-items:center; gap:.35rem; min-height:40px; padding:0 .75rem; border-bottom:1px solid var(--sl-border-subtle); color:var(--sl-muted); font-size:.84rem; }
+.sl-profile-reference-breadcrumb > [aria-current="page"] { display:inline-flex; align-items:center; gap:.3rem; color:var(--sl-text); font-weight:600; }
+.sl-profile-reference-identity { position:relative; display:flex; align-items:center; gap:1rem; min-height:165px; padding:1.2rem 1.5rem; overflow:hidden; background-color:var(--sl-surface); background-image:linear-gradient(90deg,transparent 49.7%,rgb(120 130 140 / 3%) 50%),linear-gradient(transparent 49.7%,rgb(120 130 140 / 3%) 50%); background-size:96px 96px; }
+.sl-profile-reference-avatar { display:grid; place-items:center; width:82px; height:82px; flex:none; border:3px solid var(--sl-surface); border-radius:50%; color:#fff; background:var(--sl-brand); box-shadow:0 0 0 1px var(--sl-border); font-size:1.45rem; font-weight:700; }
+.sl-profile-reference-identity h1 { margin:0; color:var(--sl-text); font-size:1.55rem; line-height:1.2; }
+.sl-profile-reference-identity p { margin:.3rem 0 0; color:var(--sl-muted); font-size:.9rem; }
+.sl-profile-reference-role { display:inline-flex; margin-top:.45rem; padding:.15rem .45rem; border-radius:999px; color:var(--sl-brand); background:var(--sl-brand-subtle); font-size:.7rem; font-weight:600; }
+.sl-profile-manager-rows .sl-profile-manager-row:last-child { border-bottom:0; }
 .sl-profile-manager > .sl-profile-card { min-width:0; }
 .sl-profile-manager .sl-profile-card-header {
   grid-template-columns:minmax(0,1fr);
@@ -34738,6 +34778,9 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-profile-manager-password-done p { margin:0; }
 .sl-profile-manager-password-done .sl-button { width:auto; justify-self:start; }
 @container sl-profile-manager (max-width:34rem) {
+  .sl-profile-reference-identity { min-height:140px; gap:.8rem; padding:1rem; }
+  .sl-profile-reference-avatar { width:64px; height:64px; }
+  .sl-profile-reference-identity h1 { font-size:1.3rem; }
   .sl-profile-manager-row,
   .sl-profile-manager-rows[data-layout="security"] .sl-profile-manager-row {
     grid-template-columns:minmax(0,1fr);
@@ -34790,4 +34833,36 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   color:var(--sl-muted);
   text-decoration:none;
   cursor:not-allowed;
+}
+.sl-manager-alerts-page { display:grid; gap:1rem; }
+.sl-manager-alerts-card { min-width:0; overflow:hidden; border:1px solid var(--sl-border); border-radius:var(--sl-radius-lg); background:var(--sl-surface); box-shadow:var(--sl-shadow-sm); }
+.sl-manager-alerts-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 1.15rem; border-bottom:1px solid var(--sl-border-subtle); }
+.sl-manager-alerts-header h2 { margin:0; font:var(--sl-font-section-title); }
+.sl-manager-alerts-header p { margin:.2rem 0 0; color:var(--sl-muted); font-size:.85rem; }
+.sl-manager-alerts-actions,.sl-manager-alert-row-actions { display:flex; flex-wrap:wrap; align-items:center; gap:.45rem; }
+.sl-manager-alerts-tabs { display:flex; gap:.35rem; margin:.75rem 1rem; padding:.2rem; border-radius:9px; background:var(--sl-surface-subtle); }
+.sl-manager-alerts-tabs button { display:flex; align-items:center; gap:.4rem; min-height:34px; padding:.35rem .8rem; border:0; border-radius:7px; color:var(--sl-muted); background:transparent; font:inherit; cursor:pointer; }
+.sl-manager-alerts-tabs button.is-active { color:var(--sl-text); background:var(--sl-surface); box-shadow:0 1px 3px rgb(0 0 0 / 12%); }
+.sl-manager-alerts-tabs button span { color:var(--sl-muted); font-size:.75rem; }
+.sl-manager-alerts-list { max-height: min(62vh, 42rem); overflow:auto; padding:0 1rem 1rem; }
+.sl-manager-alert-row { position:relative; display:grid; grid-template-columns:2.4rem minmax(0,1fr) auto; align-items:center; gap:.8rem; padding:1rem .35rem; border-top:1px solid var(--sl-border-subtle); }
+.sl-manager-alert-row[data-read="false"] { background:linear-gradient(90deg,#f2f8ff,transparent 60%); }
+.sl-manager-alert-row[data-severity="critical"] .sl-manager-alert-icon { color:var(--sl-critical); background:#fff0f1; }
+.sl-manager-alert-row[data-severity="attention"] .sl-manager-alert-icon { color:var(--sl-attention); background:#fff6df; }
+.sl-manager-alert-icon { display:grid; place-items:center; width:2.35rem; height:2.35rem; border-radius:50%; background:var(--sl-surface-subtle); }
+.sl-manager-alert-copy { display:grid; gap:.2rem; min-width:0; }
+.sl-manager-alert-copy strong { color:var(--sl-text); font-size:.9rem; }
+.sl-manager-alert-copy span,.sl-manager-alert-copy small { overflow-wrap:anywhere; color:var(--sl-muted); font-size:.8rem; }
+.sl-manager-alert-row time { grid-column:2 / -1; color:var(--sl-muted); font-size:.72rem; }
+.sl-manager-alert-severity { padding:.2rem .55rem; border-radius:99px; color:var(--sl-text); background:var(--sl-surface-subtle); font-size:.72rem; white-space:nowrap; }
+.sl-manager-alert-row[data-severity="critical"] .sl-manager-alert-severity { color:var(--sl-critical); background:#fff0f1; }
+.sl-manager-alert-row .sl-button { min-height:34px; padding:.4rem .65rem; font-size:.75rem; white-space:nowrap; }
+.sl-admin-inventory-page .sl-application-records-table .sl-account-action-view { display:grid; place-items:center; width:36px; min-width:36px; height:36px; min-height:36px; padding:0; border:1px solid transparent; border-radius:8px; color:var(--sl-text); background:transparent; }
+.sl-admin-inventory-page .sl-application-records-table .sl-account-action-view:hover { border-color:var(--sl-border); background:var(--sl-surface-subtle); }
+.sl-admin-inventory-page .sl-application-records-table .sl-account-action-view:focus-visible { outline:2px solid var(--sl-focus); outline-offset:2px; }
+@media (max-width:700px) {
+  .sl-manager-alerts-header { align-items:flex-start; flex-direction:column; }
+  .sl-manager-alert-row { grid-template-columns:2.2rem minmax(0,1fr); align-items:start; }
+  .sl-manager-alert-row-actions { grid-column:2; }
+  .sl-manager-alert-row time { grid-column:2; }
 }

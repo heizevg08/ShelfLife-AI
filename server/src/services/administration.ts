@@ -1,10 +1,13 @@
 import { AdministrationError, forbidden } from '../middleware/administration.middleware';
 import type { AccountInput, AccountPageQuery, AuditPageQuery } from '../validators/administration';
 import { hashPassword } from './password';
+import { randomBytes } from 'node:crypto';
+import { HttpError } from '../middleware/error.middleware';
+import type { AccountWelcomeEmail } from './account-welcome-email';
 
 export interface Account {
   id: string; firstName: string; lastName: string; name: string; email: string;
-  role: string; isActive: boolean; lastLoginAt?: string; createdAt: string; updatedAt: string;
+  role: string; isActive: boolean; mustChangePassword?: boolean; lastLoginAt?: string; createdAt: string; updatedAt: string;
 }
 export interface Actor { id: string; name?: string; role: string }
 export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'DEACTIVATE' | 'REACTIVATE' | 'EXPORT';
@@ -12,8 +15,9 @@ export interface AuditRecord { id: string; userId: string; actor: { id: string; 
 export interface Page<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface AccountTransaction {
   get(id: string): Promise<Account | null>;
-  create(input: Omit<AccountInput, 'password'> & { passwordHash: string }): Promise<Account>;
+  create(input: AccountInput & { passwordHash: string; mustChangePassword: true }): Promise<Account>;
   update(id: string, input: Omit<AccountInput, 'password'> & { isActive?: boolean }): Promise<Account>;
+  delete(id: string): Promise<void>;
   audit(actor: Actor, action: AuditAction, targetId: string): Promise<void>;
 }
 export interface AdministrationStore {
@@ -30,7 +34,7 @@ function assertWrite(actor: Actor, user: Account) {
   if (actor.id === user.id || !managedRoles(actor.role).includes(user.role)) throw forbidden();
 }
 const missing = () => new AdministrationError(404, 'NOT_FOUND', 'Account not found');
-export function createAdministration(store: AdministrationStore) {
+export function createAdministration(store: AdministrationStore, welcomeEmail?: AccountWelcomeEmail) {
   return {
     async list(actor: Actor, query: AccountPageQuery) {
       if (actor.role === 'Admin' && query.role === 'Super Admin') throw forbidden();
@@ -80,11 +84,19 @@ export function createAdministration(store: AdministrationStore) {
     },
     async create(actor: Actor, input: AccountInput) {
       if (!managedRoles(actor.role).includes(input.role!)) throw forbidden();
-      const { password, ...fields } = input;
-      const passwordHash = await hashPassword(password!);
+      if (!welcomeEmail) throw new HttpError(503, 'Account email delivery is not configured. Set SMTP and ACCOUNT_LOGIN_URL before creating accounts.');
+      const temporaryPassword = randomBytes(24).toString('base64url');
+      const passwordHash = await hashPassword(temporaryPassword);
       return store.transaction(async tx => {
-        const user = await tx.create({ ...fields, passwordHash });
+        const user = await tx.create({ ...input, passwordHash, mustChangePassword: true });
         await tx.audit(actor, 'CREATE', user.id);
+        try { await welcomeEmail.send(input.personalEmail!, user.name, temporaryPassword, user.email); }
+        catch (error) {
+          const authenticationRejected = Boolean(error && typeof error === 'object' && 'code' in error && error.code === 'EAUTH');
+          throw new HttpError(502, authenticationRejected
+            ? 'The mail provider rejected the configured SMTP credentials. Update SMTP_USER and SMTP_PASS, then restart the server.'
+            : 'The account was not created because the welcome email could not be delivered. Check the mail settings and try again.');
+        }
         return user;
       });
     },
@@ -112,6 +124,15 @@ export function createAdministration(store: AdministrationStore) {
         const result = await tx.update(id, { isActive: active });
         await tx.audit(actor, active ? 'REACTIVATE' : 'DEACTIVATE', id);
         return result;
+      });
+    },
+    async delete(actor: Actor, id: string) {
+      return store.transaction(async tx => {
+        const user = await tx.get(id);
+        if (!user) throw missing();
+        assertWrite(actor, user);
+        await tx.delete(id);
+        await tx.audit(actor, 'DELETE', id);
       });
     },
   };

@@ -66,6 +66,7 @@ export function InventoryStaffModalForm({
   onSubmit,
   children,
   message,
+  messageRole,
   secondaryLabel,
   onSecondary,
   primaryLabel,
@@ -78,6 +79,7 @@ export function InventoryStaffModalForm({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
   message?: string;
+  messageRole?: 'status' | 'alert';
   secondaryLabel: 'Clear' | 'Cancel';
   onSecondary: () => void;
   primaryLabel: string;
@@ -90,6 +92,7 @@ export function InventoryStaffModalForm({
     formRef={formRef}
     onSubmit={onSubmit}
     message={message}
+    messageRole={messageRole}
     secondaryLabel={secondaryLabel}
     onSecondary={onSecondary}
     primaryLabel={primaryLabel}

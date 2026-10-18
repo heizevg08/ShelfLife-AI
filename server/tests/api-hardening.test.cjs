@@ -92,10 +92,11 @@ test('authenticated protected routes reject Mongo-shaped query keys before servi
 });
 
 test('security index provisioning is additive and verifies the exact TTL index', async () => {
-  let creates = 0;
+  let creates = 0, userCreates = 0;
   const valid = { createIndexes: async () => { creates += 1; }, collection: { listIndexes: () => ({ toArray: async () => [{ name: '_id_', key: { _id: 1 } }, { name: 'login_attempt_expiry', key: { expiresAt: 1 }, expireAfterSeconds: 0 }] }) } };
-  assert.deepEqual(await provisionSecurityIndexes(valid), { loginAttemptExpiryIndex: 'login_attempt_expiry', expireAfterSeconds: 0 });
+  assert.deepEqual(await provisionSecurityIndexes(valid, { createIndexes: async () => { userCreates += 1; } }), { loginAttemptExpiryIndex: 'login_attempt_expiry', expireAfterSeconds: 0 });
   assert.equal(creates, 1);
+  assert.equal(userCreates, 1);
   const invalid = { ...valid, collection: { listIndexes: () => ({ toArray: async () => [{ name: 'login_attempt_expiry', key: { expiresAt: 1 }, expireAfterSeconds: 60 }] }) } };
   await assert.rejects(provisionSecurityIndexes(invalid), /missing or incompatible/);
 });

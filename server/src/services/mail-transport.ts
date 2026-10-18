@@ -11,7 +11,10 @@ function safeHeader(value: string | undefined): string | undefined {
 export function createSmtpMailTransport(env: NodeJS.ProcessEnv, createTransport: typeof nodemailer.createTransport = nodemailer.createTransport): MailTransport | undefined {
   const host = safeHeader(env.SMTP_HOST);
   const user = safeHeader(env.SMTP_USER);
-  const pass = env.SMTP_PASS;
+  const configuredPass = env.SMTP_PASS;
+  // Google displays app passwords in four groups separated by spaces. Those spaces
+  // are for readability and must not be included in SMTP authentication.
+  const pass = host?.toLowerCase() === 'smtp.gmail.com' ? configuredPass?.replace(/\s+/g, '') : configuredPass;
   const fromAddress = safeHeader(env.MAIL_FROM) ?? user;
   const fromName = safeHeader(env.SMTP_FROM_NAME) ?? 'ShelfLife AI';
   const port = Number(env.SMTP_PORT);

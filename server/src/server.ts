@@ -20,6 +20,7 @@ import type { AuthExtensions } from './routes/auth.routes';
 import { auditRecordModel } from './models/audit-record';
 import { createAdministration, type AdministrationService } from './services/administration';
 import { createAdministrationStore } from './services/administration-store';
+import { createAccountWelcomeEmail } from './services/account-welcome-email';
 import { ingredientModel } from './models/ingredient';
 import { createIngredients, type IngredientService } from './services/ingredients';
 import { createIngredientStore } from './services/ingredient-store';
@@ -159,7 +160,7 @@ if (require.main === module) {
       consumeReset: async (hash, now, passwordHash) => {
         // One atomic update consumes the token and revokes existing access/refresh credentials by version.
         const result = await users.updateOne({ resetTokenHash: hash, resetExpiresAt: { $gt: now }, isActive: true }, {
-          $set: { passwordHash }, $unset: { resetTokenHash: 1, resetExpiresAt: 1 }, $inc: { authVersion: 1 },
+          $set: { passwordHash, mustChangePassword: false }, $unset: { resetTokenHash: 1, resetExpiresAt: 1 }, $inc: { authVersion: 1 },
         }).exec();
         return result.modifiedCount === 1;
       },
@@ -171,7 +172,7 @@ if (require.main === module) {
         // reset request is cleared, and the version bump invalidates every access token and
         // refresh session already issued to this account.
         const result = await users.updateOne({ _id: id, isActive: true }, {
-          $set: { passwordHash }, $unset: { resetTokenHash: 1, resetExpiresAt: 1 }, $inc: { authVersion: 1 },
+          $set: { passwordHash, mustChangePassword: false }, $unset: { resetTokenHash: 1, resetExpiresAt: 1 }, $inc: { authVersion: 1 },
         }).exec();
         return result.modifiedCount === 1;
       },
@@ -193,7 +194,7 @@ if (require.main === module) {
       await audits.create({ userId: actor.id, actorName: actor.name, actorRole: normalizeUserRole(actor.role) ?? undefined,
         action: 'UPDATE', targetType: 'User', targetId: actor.id, targetName: 'Own account', module: 'Account Profile', status: 'Success', details });
     });
-    const administration = createAdministration(createAdministrationStore(driver, users, audits));
+    const administration = createAdministration(createAdministrationStore(driver, users, audits), createAccountWelcomeEmail(process.env));
     const ingredients = createIngredients(createIngredientStore(driver, ingredientModel(driver), users, audits));
     const inventoryBatches = createInventoryBatches(createInventoryBatchStore(driver, inventoryBatchModel(driver), inventoryBatchCounterModel(driver), ingredientModel(driver), users, audits));
     const usageRecords = createUsageRecords(createUsageRecordStore(driver, usageRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
@@ -203,7 +204,7 @@ if (require.main === module) {
     const database = createDatabase(driver);
     const indexedDatabase = { ...database, connect: async (uri: string) => {
       await database.connect(uri);
-      await provisionSecurityIndexes(loginAttempts);
+      await provisionSecurityIndexes(loginAttempts, users);
     } };
     const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, {
       loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange,
