@@ -88,7 +88,7 @@ function ManagerAlerts() {
         date: b.expirationDate,
         ingredient: b.ingredient.name,
         category: 'Expiring Soon',
-        details: `Batch ${b.batchID} expired on ${formatDate(b.expirationDate)} (${b.quantity} ${b.unit} remaining). Immediate action required.`,
+        details: `Batch ${b.batchID} · Expired ${formatDate(b.expirationDate)} · ${b.quantity} ${b.unit} remaining`,
         priority: 'High',
         status: 'Active',
       });
@@ -101,7 +101,7 @@ function ManagerAlerts() {
         date: b.expirationDate,
         ingredient: b.ingredient.name,
         category: 'Expiring Soon',
-        details: `Batch ${b.batchID} expires in ${b.daysLeft} day(s) (${formatDate(b.expirationDate)}). Prioritize in FEFO dispatch.`,
+        details: `Batch ${b.batchID} · ${b.daysLeft}d remaining (${formatDate(b.expirationDate)}) · ${b.quantity} ${b.unit}`,
         priority: b.daysLeft <= 3 ? 'High' : 'Medium',
         status: 'Active',
       });
@@ -114,7 +114,7 @@ function ManagerAlerts() {
         date: b.updatedAt || b.createdAt,
         ingredient: b.ingredient.name,
         category: 'Low Stock',
-        details: `Current stock of ${b.quantity} ${b.unit} is at or below the minimum threshold of ${b.ingredient.minimumStock ?? 0} ${b.unit}. Reorder recommended.`,
+        details: `Stock: ${b.quantity} ${b.unit} · Minimum threshold: ${b.ingredient.minimumStock ?? 0} ${b.unit}`,
         priority: 'Medium',
         status: 'Active',
       });
@@ -125,7 +125,7 @@ function ManagerAlerts() {
       date: new Date('2026-10-19T09:15:00.000Z').toISOString(),
       ingredient: 'Jasmine Rice (Sinandomeng)',
       category: 'Forecast Risk',
-      details: 'Consumption velocity (+18%) is outpacing normal 30-day projection model.',
+      details: 'Consumption +18% above 30-day baseline',
       priority: 'Low',
       status: 'Active',
     });
@@ -136,7 +136,7 @@ function ManagerAlerts() {
         date: new Date('2026-10-15T14:30:00.000Z').toISOString(),
         ingredient: 'Pork Belly (Liempo)',
         category: 'Low Stock',
-        details: 'Stock replenished with 30 kg batch SL-20260916-002.',
+        details: 'Replenished: 30 kg · Batch SL-20260916-002',
         priority: 'Medium',
         status: 'Resolved',
       },
@@ -145,7 +145,7 @@ function ManagerAlerts() {
         date: new Date('2026-10-12T10:45:00.000Z').toISOString(),
         ingredient: 'Fresh Eggs',
         category: 'Expiring Soon',
-        details: 'Batch consumed within 48-hour culinary window before expiration.',
+        details: 'Fully consumed in production prior to expiration',
         priority: 'High',
         status: 'Resolved',
       },
