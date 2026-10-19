@@ -603,116 +603,27 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
 }
 
 
-function SuperAdminIngredientPending({ label, compact = false }: { label: string; compact?: boolean }) {
-  return <div className={`sl-sa-ingredients-pending${compact ? ' compact' : ''}`}>
-    <DataState
-      kind="empty"
-      title={`${label} unavailable`}
-      description="The supporting ingredient service is not connected yet."
-    />
-  </div>;
-}
-
 function SuperAdminIngredientsPage() {
-  const [category, setCategory] = useState('All');
-  const [supplierFilter, setSupplierFilter] = useState('All Suppliers');
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
-  const [searchDraft, setSearchDraft] = useState('');
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [refresh, setRefresh] = useState(0);
-  const [data, setData] = useState<{ items: Ingredient[]; page: number; pageSize: number; total: number } | null>(null);
+  const [summary, setSummary] = useState<{ total: number; categories: string[]; units: string[]; mostCommonIngredient: string | null } | null>(null);
   const [loadError, setLoadError] = useState(false);
-  const [viewIngredient, setViewIngredient] = useState<Ingredient | null>(null);
-  const [editIngredient, setEditIngredient] = useState<Ingredient | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Ingredient | null>(null);
-  const [form, setForm] = useState<IngredientDraft>(emptyIngredient);
-  const [errors, setErrors] = useState<Partial<Record<IngredientField, string>>>({});
-  const [formError, setFormError] = useState('');
-  const [actionBusy, setActionBusy] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-  const [previewAction, setPreviewAction] = useState<'view' | 'edit' | 'delete' | null>(null);
 
   useEffect(() => {
     const abort = new AbortController();
     setLoadError(false);
 
-    listIngredients(page, pageSize, search.trim(), category === 'All' ? '' : category, abort.signal)
+    getIngredientSummary(abort.signal)
       .then(value => {
-        if (!abort.signal.aborted) setData(value);
+        if (!abort.signal.aborted) setSummary(value);
       })
       .catch(() => {
         if (!abort.signal.aborted) {
           setLoadError(true);
-          setData(null);
+          setSummary(null);
         }
       });
 
     return () => abort.abort();
-  }, [page, pageSize, search, category, refresh]);
-
-  const applyFilters = () => {
-    setPage(1);
-    setSearch(searchDraft.trim());
-  };
-
-  const resetFilters = () => {
-    setSearchDraft('');
-    setSearch('');
-    setCategory('All');
-    setSupplierFilter('All Suppliers');
-    setStatusFilter('All Statuses');
-    setPage(1);
-  };
-
-
-  const setField = (key: IngredientField, value: string) => {
-    setForm(current => ({ ...current, [key]: value }));
-    setErrors(current => ({ ...current, [key]: undefined }));
-    setFormError('');
-  };
-  const setFieldError = (key: IngredientField, value?: string) => setErrors(current => ({ ...current, [key]: value }));
-  const openEdit = (item: Ingredient) => {
-    setEditIngredient(item);
-    setForm({ name:item.name, brand:item.brand || '', category:item.category, unit:item.unitOfMeasure, minStock:item.minimumStock === undefined ? '' : String(item.minimumStock), unitCost:item.standardUnitCost === undefined ? '' : String(item.standardUnitCost), shelfLife:item.defaultShelfLifeDays === undefined ? '' : String(item.defaultShelfLifeDays), description:item.description || '' });
-    setErrors({}); setFormError('');
-  };
-  const saveEdit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!editIngredient || actionBusy) return;
-    const next: Partial<Record<IngredientField, string>> = {};
-    const clean = { ...form, name: form.name.trim().replace(/\s+/g, ' '), brand: form.brand.trim().replace(/\s+/g, ' '), unit: form.unit.trim().replace(/\s+/g, ' '), description: form.description.trim().replace(/\s+/g, ' ') };
-    if (!clean.name || clean.name.length > 50) next.name = 'Enter 1–50 characters.';
-    if (!clean.category) next.category = 'Select a category.';
-    if (!clean.unit) next.unit = 'Enter a unit of measure.';
-    // Editing an existing ingredient obeys the same ranges as creating one, so a
-    // value the form accepts can never be refused by the server afterwards.
-    const minimumStockValidationError = ingredientMinimumStockError(clean.minStock);
-    if (minimumStockValidationError) next.minStock = minimumStockValidationError;
-    const unitCostValidationError = ingredientUnitCostError(clean.unitCost);
-    if (unitCostValidationError) next.unitCost = unitCostValidationError;
-    const shelfLifeValidationError = ingredientShelfLifeError(clean.shelfLife);
-    if (shelfLifeValidationError) next.shelfLife = shelfLifeValidationError;
-    if (Object.keys(next).length) { setErrors(next); return; }
-    const input: IngredientInput = { name: clean.name, brand: clean.brand, description: clean.description, category: clean.category, unitOfMeasure: clean.unit, ...(clean.minStock === '' ? {} : { minimumStock: Number(clean.minStock) }), ...(clean.unitCost === '' ? {} : { standardUnitCost: Number(clean.unitCost) }), ...(clean.shelfLife === '' ? {} : { defaultShelfLifeDays: Number(clean.shelfLife) }) };
-    setActionBusy(true); setFormError('');
-    try { await updateIngredient(editIngredient.id, input); setEditIngredient(null); setRefresh(value => value + 1); }
-    catch (error) { setFormError(error instanceof ApiError ? error.message : 'The ingredient could not be updated. Check your connection and try again.'); }
-    finally { setActionBusy(false); }
-  };
-  const removeIngredient = async () => {
-    if (!deleteTarget || actionBusy) return;
-    setActionBusy(true); setDeleteError('');
-    try { await deleteIngredient(deleteTarget.id); setDeleteTarget(null); setRefresh(value => value + 1); }
-    catch (error) { setDeleteError(error instanceof ApiError ? error.message : 'The ingredient could not be removed. Check your connection and try again.'); }
-    finally { setActionBusy(false); }
-  };
-
-  const formatUpdated = (value: string) => Number.isNaN(new Date(value).getTime()) ? 'Unavailable' : formatDateTime(value);
-
-  const visibleStart = data && data.total > 0 ? ((data.page - 1) * data.pageSize) + 1 : 0;
-  const visibleEnd = data && data.total > 0 ? Math.min(data.page * data.pageSize, data.total) : 0;
+  }, []);
 
   return <>
     <div className="sl-sa-ingredients-heading">
@@ -729,8 +640,8 @@ function SuperAdminIngredientsPage() {
           <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
           <div>
             <span>Total Ingredients</span>
-            <strong>{data ? data.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong>
-            <small>{data ? 'Live ingredient catalogue total' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</small>
+            <strong>{summary ? summary.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong>
+            <small>{summary ? 'Live ingredient catalogue' : loadError ? 'Ingredient API unavailable' : 'Loading live total'}</small>
           </div>
         </article>
 
@@ -738,70 +649,30 @@ function SuperAdminIngredientsPage() {
           <span className="sl-sa-kpi-icon"><Grid2X2 aria-hidden="true" /></span>
           <div>
             <span>Categories</span>
-            <strong>—</strong>
-            <small>Awaiting category summary API</small>
+            <strong>{summary?.categories.length ?? '—'}</strong>
+            <small>{summary ? 'Distinct catalogue categories' : 'Live data pending'}</small>
           </div>
         </article>
 
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><Tag aria-hidden="true" /></span>
           <div>
-            <span>Suppliers</span>
-            <strong>—</strong>
-            <small>Awaiting supplier summary API</small>
+            <span>Most Common Ingredient</span>
+            <strong>{summary?.mostCommonIngredient ?? '—'}</strong>
+            <small>{summary?.mostCommonIngredient ? 'Based on recorded usage' : 'No usage records yet'}</small>
           </div>
         </article>
 
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
-          <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
+          <span className="sl-sa-kpi-icon"><Ruler aria-hidden="true" /></span>
           <div>
-            <span>Low-Stock Ingredients</span>
-            <strong>—</strong>
-            <small>Awaiting stock summary API</small>
+            <span>Distinct Units</span>
+            <strong>{summary?.units.length ?? '—'}</strong>
+            <small>{summary ? 'Units used in the catalogue' : 'Live data pending'}</small>
           </div>
         </article>
       </section>
     </div>
-
-    <Dialog
-      open={!!viewIngredient}
-      title={<span className="sl-ingredient-reference-title">Ingredient Details</span>}
-      onDismiss={() => setViewIngredient(null)}
-      className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-view-dialog"
-    >
-      {viewIngredient && <div className="sl-ingredient-detail-reference">
-        <div className="sl-ingredient-detail-hero sl-ingredient-detail-no-photo">
-          <span className="sl-ingredient-detail-copy">
-            <span className="sl-ingredient-name-row"><strong>{formatHumanReadableText(viewIngredient.name)}</strong></span>
-            <small>{formatHumanReadableText(viewIngredient.category)} · {viewIngredient.brand ? formatHumanReadableText(viewIngredient.brand) : 'No brand specified'}</small>
-            {viewIngredient.description && <small>{viewIngredient.description}</small>}
-          </span>
-        </div>
-
-        <div className="sl-detail-grid">
-          <span><small>Unit of Measure</small><strong>{viewIngredient.unitOfMeasure}</strong></span>
-          <span><small>Minimum Stock Level</small><strong>{viewIngredient.minimumStock ?? '—'} {viewIngredient.unitOfMeasure}</strong></span>
-          <span><small>Standard Unit Cost</small><strong>{viewIngredient.standardUnitCost === undefined ? '—' : `${formatIngredientCurrency(viewIngredient.standardUnitCost)} / ${viewIngredient.unitOfMeasure}`}</strong></span>
-          <span><small>Default Shelf Life</small><strong>{viewIngredient.defaultShelfLifeDays ? `${viewIngredient.defaultShelfLifeDays} days` : '—'}</strong></span>
-        </div>
-
-        <SuperAdminIngredientPending label="Ingredient inventory statistics" />
-      </div>}
-    </Dialog>
-
-    <Dialog open={previewAction!==null} title={previewAction==='delete'?'Confirm Delete':previewAction==='edit'?'Edit Ingredient':'Ingredient Details'} onDismiss={() => setPreviewAction(null)} className="sl-staff-waste-action-dialog">
-      <div className="sl-staff-waste-action-pending"><DataState kind="empty" title="No live records yet" description={previewAction==='delete'?'A live ingredient record is required before deletion can be confirmed.':previewAction==='edit'?'A live ingredient record is required before editing.':'Ingredient details will appear here when live records are available.'} action={<Status>Preview · data pending</Status>} /></div>
-      {previewAction==='delete' && <div className="sl-dialog-actions"><button type="button" className="sl-button" onClick={() => setPreviewAction(null)}>Cancel</button><button type="button" className="sl-button sl-button-danger" title="Deletion requires a live ingredient record">Confirm Delete</button></div>}
-    </Dialog>
-
-    <Dialog open={!!editIngredient} title="Edit Ingredient" onDismiss={() => { if (!actionBusy) setEditIngredient(null); }} busy={actionBusy} className="sl-add-user-dialog sl-account-reference-dialog">
-      {editIngredient && <IngredientForm form={form} errors={errors} busy={actionBusy} formError={formError} set={setField} setError={setFieldError} onSubmit={saveEdit} />}
-      <div className="sl-dialog-inline-actions"><button type="button" className="sl-button" disabled={actionBusy} onClick={() => setEditIngredient(null)}>Cancel</button><button type="submit" form="sl-ingredient-form" className="sl-button sl-button-primary" disabled={actionBusy}>{actionBusy ? 'Saving…' : 'Save Changes'}</button></div>
-    </Dialog>
-
-    <Dialog open={!!deleteTarget} title="Delete Ingredient" onDismiss={() => { if (!actionBusy) setDeleteTarget(null); }} busy={actionBusy} className="sl-add-user-dialog sl-account-reference-dialog sl-ingredient-delete-dialog" actions={<><button className="sl-button" type="button" disabled={actionBusy} onClick={() => setDeleteTarget(null)}>Cancel</button><button className="sl-button sl-button-danger" type="button" disabled={actionBusy} onClick={removeIngredient}><Trash2 size={15} aria-hidden="true" />{actionBusy ? 'Deleting…' : 'Delete'}</button></>}>
-      {deleteTarget && <div className="sl-delete-reference-body">{deleteError && <p className="sl-inline-notice sl-inline-notice-error" role="alert">{deleteError}</p>}<p>Delete <strong>{deleteTarget.name}</strong>? This action uses the live ingredient service and cannot be undone.</p></div>}
-    </Dialog>
   </>;
 }
 

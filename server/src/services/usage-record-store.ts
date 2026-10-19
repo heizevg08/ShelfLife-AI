@@ -29,8 +29,8 @@ const serialize = ({ row, ingredient, batch, staff }: Resolved): UsageRecordView
 });
 
 export function createUsageRecordStore(driver: Mongoose, records: ReturnType<typeof usageRecordModel>, batches: ReturnType<typeof inventoryBatchModel>, ingredients: ReturnType<typeof ingredientModel>, users: ReturnType<typeof userModel>, audits: ReturnType<typeof auditRecordModel>): UsageRecordStore {
-  const resolve = async (): Promise<Resolved[]> => {
-    const rows = await records.find({}).sort({ dateUsed: -1, _id: -1 }).lean().exec() as UsageRow[];
+  const resolve = async (filter: Record<string, unknown> = {}): Promise<Resolved[]> => {
+    const rows = await records.find(filter).sort({ dateUsed: -1, _id: -1 }).lean().exec() as UsageRow[];
     const ingredientIds = [...new Set(rows.map(row => row.ingredientId.toString()))];
     const batchIds = [...new Set(rows.map(row => row.batchId.toString()))];
     const staffIds = [...new Set(rows.map(row => row.staffId.toString()))];
@@ -90,18 +90,27 @@ export function createUsageRecordStore(driver: Mongoose, records: ReturnType<typ
   };
   return {
     async ready() { await Promise.all([records.collection.createIndex({ dateUsed: -1, _id: -1 }, { name: 'dateUsed_-1__id_-1' }), records.collection.createIndex({ ingredientId: 1, dateUsed: -1 }, { name: 'ingredientId_1_dateUsed_-1' })]); },
-    async list(query) { const items = filtered(await resolve(), query); const start = (query.page - 1) * query.pageSize; return { items: items.slice(start, start + query.pageSize).map(serialize), page: query.page, pageSize: query.pageSize, total: items.length }; },
-    async detail(id) { const item = (await resolve()).find(candidate => candidate.row._id.toString() === id); return item ? serialize(item) : null; },
+    async list(query) {
+      const dbFilter: Record<string, unknown> = {};
+      if (query.ingredientId) dbFilter.ingredientId = query.ingredientId;
+      if (query.from || query.to) dbFilter.dateUsed = { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lte: query.to } : {}) };
+      const items = filtered(await resolve(dbFilter), query);
+      const start = (query.page - 1) * query.pageSize;
+      return { items: items.slice(start, start + query.pageSize).map(serialize), page: query.page, pageSize: query.pageSize, total: items.length };
+    },
+    async detail(id) { const item = (await resolve({ _id: id })).find(candidate => candidate.row._id.toString() === id); return item ? serialize(item) : null; },
     async summary(now) {
-      const items = await resolve(); const today = businessDayBounds(now); const todayItems = items.filter(item => item.row.dateUsed >= today.start && item.row.dateUsed < today.end);
-      const totalsByUnit = new Map<string, number>();
-      for (const item of todayItems) totalsByUnit.set(item.row.unit, (totalsByUnit.get(item.row.unit) ?? 0) + item.row.quantityUsed);
-      const usageTotalsByUnitToday = [...totalsByUnit].map(([unit, quantity]) => ({ quantity, unit }));
-      const totalUsageToday = usageTotalsByUnitToday.length === 1 ? usageTotalsByUnitToday[0]! : null;
+      const today = businessDayBounds(now);
       // The week starts on a Philippine Monday, so derive the weekday from the business calendar
       // date: the boundary instant itself is the previous day in UTC, which would read one day off.
       const businessToday = businessCalendarDate(now);
       const weekStart = new Date(today.start.getTime() - ((new Date(Date.UTC(businessToday.year, businessToday.month - 1, businessToday.day)).getUTCDay() + 6) % 7) * 86_400_000);
+      const items = await resolve({ dateUsed: { $gte: weekStart, $lt: today.end } });
+      const todayItems = items.filter(item => item.row.dateUsed >= today.start && item.row.dateUsed < today.end);
+      const totalsByUnit = new Map<string, number>();
+      for (const item of todayItems) totalsByUnit.set(item.row.unit, (totalsByUnit.get(item.row.unit) ?? 0) + item.row.quantityUsed);
+      const usageTotalsByUnitToday = [...totalsByUnit].map(([unit, quantity]) => ({ quantity, unit }));
+      const totalUsageToday = usageTotalsByUnitToday.length === 1 ? usageTotalsByUnitToday[0]! : null;
       // A cross-unit "most used" ranking is invalid until the product defines unit normalization.
       return { totalUsageToday, usageTotalsByUnitToday, usageRecordsToday: todayItems.length, mostUsedIngredient: null, ingredientsUsedThisWeek: new Set(items.filter(item => item.row.dateUsed >= weekStart && item.row.dateUsed < today.end).map(item => item.row.ingredientId.toString())).size } satisfies UsageSummary;
     },

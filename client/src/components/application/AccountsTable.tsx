@@ -1,5 +1,5 @@
 import { Eye, EyeOff, FileText, Pencil, Search, Trash2, User, UserCheck, UserPlus, Users, UserX } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { accountSummary, dashboardSummary, createAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
@@ -44,8 +44,11 @@ export function AccountsTable() {
   const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const requestSeqRef = useRef(0);
+
   useEffect(() => {
     const abort = new AbortController();
+    const seq = ++requestSeqRef.current;
     setLoadError(false);
     const sortBy = superAdmin ? 'lastLoginAt' : sort;
     const sortOrder = superAdmin ? 'desc' : sortBy === 'createdAt' ? 'desc' : 'asc';
@@ -54,8 +57,8 @@ export function AccountsTable() {
       role: roleFilter === 'All Roles' ? undefined : roleFilter as Account['role'],
       status: statusFilter === 'All Statuses' ? undefined : statusFilter as 'Active' | 'Deactivated',
     })
-      .then(value => { if (!abort.signal.aborted) setData(value); })
-      .catch(() => { if (!abort.signal.aborted) setLoadError(true); }), 250);
+      .then(value => { if (!abort.signal.aborted && seq === requestSeqRef.current) setData(value); })
+      .catch(() => { if (!abort.signal.aborted && seq === requestSeqRef.current) setLoadError(true); }), 250);
     return () => { window.clearTimeout(timer); abort.abort(); };
   }, [page, pageSize, sort, refresh, superAdmin, directorySearch, roleFilter, statusFilter]);
 
@@ -68,7 +71,10 @@ export function AccountsTable() {
   // Keep the account summary current while this administrative workspace remains open.
   useEffect(() => {
     if (!superAdmin && user.role !== 'Admin') return;
-    const interval = window.setInterval(() => setRefresh(value => value + 1), SUMMARY_AUTO_REFRESH_MS);
+    const interval = window.setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      setRefresh(value => value + 1);
+    }, SUMMARY_AUTO_REFRESH_MS);
     return () => window.clearInterval(interval);
   }, [superAdmin, user.role]);
 

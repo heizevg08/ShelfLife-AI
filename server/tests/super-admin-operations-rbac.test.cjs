@@ -9,6 +9,7 @@ test('operational route declarations exclude Super Admin except three read-only 
   const readOnlyGrants = new Set([
     "router.get('/categories'",
     "router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Manager'])",
+    "router.get('/summary', authorizeAdministration(['Super Admin', 'Admin', 'Manager'])",
     "router.get('/summary', authorizeAdministration(['Super Admin', 'Admin', 'Manager', 'Inventory Staff'])",
   ]);
   const granted = [];
@@ -21,7 +22,7 @@ test('operational route declarations exclude Super Admin except three read-only 
       granted.push(`${name}:${trimmed.split(',')[0]}`);
     }
   }
-  assert.deepEqual(granted.sort(), ["ingredient:router.get('/'", "ingredient:router.get('/categories'", "inventory-batch:router.get('/summary'"]);
+  assert.deepEqual(granted.sort(), ["ingredient:router.get('/'", "ingredient:router.get('/categories'", "ingredient:router.get('/summary'", "inventory-batch:router.get('/summary'"]);
   const inventory = readFileSync(join(__dirname, '../src/routes/inventory-batch.routes.ts'), 'utf8');
   const usage = readFileSync(join(__dirname, '../src/routes/usage-record.routes.ts'), 'utf8');
   const waste = readFileSync(join(__dirname, '../src/routes/waste-record.routes.ts'), 'utf8');

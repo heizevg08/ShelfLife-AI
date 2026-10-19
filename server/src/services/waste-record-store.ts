@@ -30,8 +30,8 @@ const serialize = ({ row, ingredient, batch, staff }: Resolved): WasteRecordView
 });
 
 export function createWasteRecordStore(driver: Mongoose, records: ReturnType<typeof wasteRecordModel>, batches: ReturnType<typeof inventoryBatchModel>, ingredients: ReturnType<typeof ingredientModel>, users: ReturnType<typeof userModel>, audits: ReturnType<typeof auditRecordModel>): WasteRecordStore {
-  const resolve = async (): Promise<Resolved[]> => {
-    const rows = await records.find({}).sort({ createdAt: -1, _id: -1 }).lean().exec() as WasteRow[];
+  const resolve = async (filter: Record<string, unknown> = {}): Promise<Resolved[]> => {
+    const rows = await records.find(filter).sort({ createdAt: -1, _id: -1 }).lean().exec() as WasteRow[];
     const ingredientIds = [...new Set(rows.map(row => row.ingredientId.toString()))];
     const batchIds = [...new Set(rows.map(row => row.batchId.toString()))];
     const staffIds = [...new Set(rows.map(row => row.recordedBy.toString()))];
@@ -100,10 +100,19 @@ export function createWasteRecordStore(driver: Mongoose, records: ReturnType<typ
   };
   return {
     async ready() { await Promise.all([records.collection.createIndex({ createdAt: -1, _id: -1 }, { name: 'createdAt_-1__id_-1' }), records.collection.createIndex({ ingredientId: 1, dateWasted: -1 }, { name: 'ingredientId_1_dateWasted_-1' }), records.collection.createIndex({ reason: 1, dateWasted: -1 }, { name: 'reason_1_dateWasted_-1' })]); },
-    async list(query) { const items = filtered(await resolve(), query); const start = (query.page - 1) * query.pageSize; return { items: items.slice(start, start + query.pageSize).map(serialize), page: query.page, pageSize: query.pageSize, total: items.length }; },
-    async detail(id) { const item = (await resolve()).find(candidate => candidate.row._id.toString() === id); return item ? serialize(item) : null; },
+    async list(query) {
+      const dbFilter: Record<string, unknown> = {};
+      if (query.reason) dbFilter.reason = query.reason;
+      if (query.ingredientId) dbFilter.ingredientId = query.ingredientId;
+      if (query.from || query.to) dbFilter.dateWasted = { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lte: query.to } : {}) };
+      const items = filtered(await resolve(dbFilter), query);
+      const start = (query.page - 1) * query.pageSize;
+      return { items: items.slice(start, start + query.pageSize).map(serialize), page: query.page, pageSize: query.pageSize, total: items.length };
+    },
+    async detail(id) { const item = (await resolve({ _id: id })).find(candidate => candidate.row._id.toString() === id); return item ? serialize(item) : null; },
     async summary(now) {
-      const items = await resolve(), today = businessDayBounds(now);
+      const today = businessDayBounds(now);
+      const items = await resolve({ dateWasted: { $gte: today.start, $lt: today.end } });
       const todayItems = items.filter(item => item.row.dateWasted >= today.start && item.row.dateWasted < today.end);
       const units = new Set(todayItems.map(item => item.row.unit));
       const totalWasteToday = units.size === 1 ? { quantity: todayItems.reduce((total, item) => total + item.row.quantityWasted, 0), unit: todayItems[0]!.row.unit } : null;
@@ -115,7 +124,7 @@ export function createWasteRecordStore(driver: Mongoose, records: ReturnType<typ
     async reasonBreakdown(now) {
       const start = recentBusinessCalendarBounds(now, 30).start;
       const counts = Object.fromEntries(reasons.map(reason => [reason, 0])) as Record<WasteReason, number>;
-      for (const item of await resolve()) if (item.row.dateWasted >= start) counts[item.row.reason] += 1;
+      for (const item of await resolve({ dateWasted: { $gte: start } })) if (item.row.dateWasted >= start) counts[item.row.reason] += 1;
       return { period: 'Last 30 Days', counts, total: Object.values(counts).reduce((sum, count) => sum + count, 0) } satisfies WasteReasonBreakdown;
     },
     async analytics(query) {

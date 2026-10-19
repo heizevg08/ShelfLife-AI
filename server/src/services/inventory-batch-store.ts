@@ -46,8 +46,8 @@ export async function reserveInventoryBatchID(dateReceived: Date, increment: (ke
 }
 
 export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<typeof inventoryBatchModel>, counters: ReturnType<typeof inventoryBatchCounterModel>, ingredients: ReturnType<typeof ingredientModel>, users: ReturnType<typeof userModel>, audits: ReturnType<typeof auditRecordModel>): InventoryBatchStore {
-  const resolve = async (now: Date): Promise<Resolved[]> => {
-    const rows = await batches.find({}).sort({ createdAt: -1, _id: -1 }).lean().exec() as BatchRow[];
+  const resolve = async (now: Date, filter: Record<string, unknown> = {}): Promise<Resolved[]> => {
+    const rows = await batches.find(filter).sort({ createdAt: -1, _id: -1 }).lean().exec() as BatchRow[];
     const ingredientIds = [...new Set(rows.map(row => row.ingredientId.toString()))], creatorIds = [...new Set(rows.map(row => row.createdBy.toString()))];
     const [ingredientRows, creatorRows] = await Promise.all([
       ingredients.find({ _id: { $in: ingredientIds } }).select('_id name category unitOfMeasure minimumStock standardUnitCost').lean().exec() as Promise<IngredientRow[]>,
@@ -90,16 +90,25 @@ export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<
     return row._id.toString();
   };
   return {
-    async ready() { await batches.collection.createIndex({ batchID: 1 }, { unique: true, name: 'batchID_1', collation: { locale: 'en', strength: 2 } }); },
+    async ready() { await Promise.all([batches.collection.createIndex({ batchID: 1 }, { unique: true, name: 'batchID_1', collation: { locale: 'en', strength: 2 } }), batches.collection.createIndex({ ingredientId: 1, expirationDate: 1 }, { name: 'ingredientId_1_expirationDate_1' }), batches.collection.createIndex({ dateReceived: -1, _id: -1 }, { name: 'dateReceived_-1__id_-1' })]); },
     async list(query, now) {
-      const rows = filtered(await resolve(now), query).filter(item => !query.eligibleFefo || (item.row.quantity > 0 && dateOnlyCalendarString(item.row.expirationDate) >= businessDateString(now)));
+      const dbFilter: Record<string, unknown> = {};
+      if (query.ingredientId) dbFilter.ingredientId = query.ingredientId;
+      if (query.from || query.to) dbFilter.dateReceived = { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lte: query.to } : {}) };
+      const rows = filtered(await resolve(now, dbFilter), query).filter(item => !query.eligibleFefo || (item.row.quantity > 0 && dateOnlyCalendarString(item.row.expirationDate) >= businessDateString(now)));
       if (query.sort === 'fefo') rows.sort((a, b) => a.row.expirationDate.getTime() - b.row.expirationDate.getTime() || b.row.createdAt.getTime() - a.row.createdAt.getTime() || b.row._id.toString().localeCompare(a.row._id.toString()));
       if (query.sort === 'latest') rows.sort((a, b) => b.row.dateReceived.getTime() - a.row.dateReceived.getTime() || b.row._id.toString().localeCompare(a.row._id.toString()));
       if (query.sort === 'ingredient') rows.sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name) || a.row.expirationDate.getTime() - b.row.expirationDate.getTime());
       const start = (query.page - 1) * query.pageSize;
       return { items: rows.slice(start, start + query.pageSize).map(serialize), page: query.page, pageSize: query.pageSize, total: rows.length };
     },
-    async detail(id, now) { const item = (await resolve(now)).find(candidate => candidate.row._id.toString() === id); return item ? serialize(item) : null; },
+    async detail(id, now) {
+      const target = await batches.find({ _id: id }).sort({ createdAt: -1, _id: -1 }).lean().exec() as BatchRow[];
+      const targetIngredientId = target[0]?.ingredientId?.toString();
+      const scope = targetIngredientId ? { ingredientId: targetIngredientId } : { _id: id };
+      const item = (await resolve(now, scope)).find(candidate => candidate.row._id.toString() === id);
+      return item ? serialize(item) : null;
+    },
     async summary(now) {
       const rows = await resolve(now), ingredientRows = new Map(rows.map(item => [item.ingredient._id.toString(), item]));
       const inventoryValue = resolveInventoryValue(rows.map(item => ({ quantity: item.row.quantity, batchUnitCost: item.row.unitCost, standardUnitCost: item.ingredient.standardUnitCost })));
