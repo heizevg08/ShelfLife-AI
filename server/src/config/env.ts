@@ -5,6 +5,7 @@ export interface Config {
   host: string;
   port: number;
   mongoUri: string;
+  mongoDbName: string;
   corsOrigins: string[];
   trustProxy: boolean;
   cookieSameSite: 'lax' | 'none';
@@ -26,6 +27,9 @@ export function readConfig(env: NodeJS.ProcessEnv): Config {
   if (!/^\d+$/.test(rawPort) || !Number.isInteger(port) || port < 1 || port > 65535) invalid.add('PORT');
   const mongoUri = env.MONGO_URI?.trim() ?? '';
   if (!/^mongodb(?:\+srv)?:\/\/[^\s/?#]+(?:[/?][^\s]*)?$/.test(mongoUri)) invalid.add('MONGO_URI');
+  const rawMongoDbName = env.MONGO_DB_NAME?.trim();
+  const mongoDbName = rawMongoDbName || 'shelflifeai';
+  if (rawMongoDbName && !/^[a-zA-Z0-9_-]{1,63}$/.test(rawMongoDbName)) invalid.add('MONGO_DB_NAME');
   const corsOrigins: string[] = [];
   for (const origin of (env.CORS_ORIGINS ?? '').split(',').map(value => value.trim()).filter(Boolean)) {
     try {
@@ -51,7 +55,7 @@ export function readConfig(env: NodeJS.ProcessEnv): Config {
   if (!/^\d+$/.test(rawMlInferenceTimeoutMs) || !Number.isSafeInteger(mlInferenceTimeoutMs) || mlInferenceTimeoutMs < 1) invalid.add('ML_INFERENCE_TIMEOUT_MS');
   if (invalid.size) throw new Error(`Invalid configuration: ${[...invalid].join(', ')}`);
   return {
-    nodeEnv: nodeEnv as Config['nodeEnv'], host, port, mongoUri,
+    nodeEnv: nodeEnv as Config['nodeEnv'], host, port, mongoUri, mongoDbName,
     corsOrigins: [...new Set(corsOrigins)], trustProxy: rawTrustProxy === 'true',
     cookieSameSite: rawCookieSameSite as Config['cookieSameSite'],
     mlPythonExecutable, mlWorkerScript, mlStartupTimeoutMs, mlInferenceTimeoutMs,

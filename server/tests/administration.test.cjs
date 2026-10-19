@@ -180,7 +180,7 @@ test('HTTP lifecycle records the authenticated actor and rejects mass assignment
   const rootToken = f.auth.issue({ ...f.rows()[0], _id: f.rows()[0].id }).accessToken;
   const request = (path, method, body) => fetch(`http://127.0.0.1:${http.address().port}/api${path}`, { method, headers: { Authorization: `Bearer ${rootToken}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
   try {
-    const fields = { firstName: 'New', lastName: 'Admin', email: 'new@shelflife.com', role: 'Admin', password: 'isolated-test-password' };
+    const fields = { firstName: 'New', lastName: 'Admin', email: 'new@shelflife.com', personalEmail: 'new.personal@example.com', role: 'Admin' };
     assert.equal((await request('/users', 'POST', { ...fields, userId: f.rows()[2].id })).status, 400);
     assert.equal((await request('/users', 'POST', { ...fields, role: 'Super Admin' })).status, 403);
     const created = await request('/users', 'POST', fields); assert.equal(created.status, 201);

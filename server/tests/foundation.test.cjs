@@ -33,16 +33,19 @@ async function serve(t, app) {
 test('environment defaults, overrides, validation, and value redaction', () => {
   const defaults = readConfig({ MONGO_URI: config.mongoUri });
   assert.equal(defaults.host, '127.0.0.1'); assert.equal(defaults.port, 5000);
+  assert.equal(defaults.mongoDbName, 'shelflifeai');
   assert.equal(defaults.trustProxy, false); assert.equal(defaults.cookieSameSite, 'lax');
-  const overridden = readConfig({ MONGO_URI: config.mongoUri, NODE_ENV: 'production', HOST: '0.0.0.0', PORT: '8123', CORS_ORIGINS: 'https://example.test', TRUST_PROXY: 'true', COOKIE_SAME_SITE: 'none' });
+  const overridden = readConfig({ MONGO_URI: config.mongoUri, NODE_ENV: 'production', HOST: '0.0.0.0', PORT: '8123', CORS_ORIGINS: 'https://example.test', MONGO_DB_NAME: 'shelflifeai_local_dev', TRUST_PROXY: 'true', COOKIE_SAME_SITE: 'none' });
   assert.equal(overridden.port, 8123); assert.equal(overridden.host, '0.0.0.0');
+  assert.equal(overridden.mongoDbName, 'shelflifeai_local_dev');
   assert.equal(overridden.trustProxy, true); assert.equal(overridden.cookieSameSite, 'none');
-  for (const key of ['MONGO_URI', 'NODE_ENV', 'HOST', 'PORT', 'CORS_ORIGINS', 'TRUST_PROXY', 'COOKIE_SAME_SITE']) {
+  for (const key of ['MONGO_URI', 'MONGO_DB_NAME', 'NODE_ENV', 'HOST', 'PORT', 'CORS_ORIGINS', 'TRUST_PROXY', 'COOKIE_SAME_SITE']) {
     assert.throws(() => readConfig({ MONGO_URI: config.mongoUri, [key]: 'private invalid value' }), e => e.message.includes(key) && !e.message.includes('private invalid value'));
   }
   assert.throws(() => readConfig({ MONGO_URI: config.mongoUri, COOKIE_SAME_SITE: 'none' }), /COOKIE_SAME_SITE/);
   assert.throws(() => readConfig({}), /MONGO_URI/);
   for (const port of ['', '0', '65536', '2.5', '5e3']) assert.throws(() => readConfig({ MONGO_URI: config.mongoUri, PORT: port }), /PORT/);
+  for (const dbName of ['invalid db name', 'db/name', 'db$name', 'a'.repeat(64)]) assert.throws(() => readConfig({ MONGO_URI: config.mongoUri, MONGO_DB_NAME: dbName }), /MONGO_DB_NAME/);
 });
 
 test('missing URI exits safely before any database connection', () => {
@@ -89,8 +92,11 @@ test('database boundary uses bounded options and no models or writes', async () 
   const db = createDatabase(driver);
   await db.connect(config.mongoUri);
   assert.deepEqual(calls[0], [config.mongoUri, { dbName: 'shelflifeai', serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000, autoIndex: false, autoCreate: false }]);
+  const customDb = createDatabase(driver, 'shelflifeai_local_dev');
+  await customDb.connect(config.mongoUri);
+  assert.deepEqual(calls[1], [config.mongoUri, { dbName: 'shelflifeai_local_dev', serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000, autoIndex: false, autoCreate: false }]);
   for (const state of [0, 1, 2, 3]) { driver.connection.readyState = state; assert.equal(db.isConnected(), state === 1); }
-  await db.disconnect(); assert.equal(calls[1], 'disconnect');
+  await db.disconnect(); assert.equal(calls[2], 'disconnect');
 });
 
 test('connection failure is sanitized and disconnects without listening', async () => {
@@ -173,4 +179,28 @@ test('in-flight readiness reports unavailable while HTTP drains before database 
 test('stalled database shutdown is bounded', async () => {
   const runtime = await startServer(config, { connect: async () => {}, disconnect: () => new Promise(() => {}), isConnected: () => true }, 30);
   assert.equal(await runtime.stop(), 1);
+});
+
+test('render.yaml provisions Node 24 and isolated Python 3.14.7 ML worker runtime without secrets', () => {
+  const { readFileSync } = require('node:fs');
+  const renderYaml = readFileSync(path.resolve(__dirname, '../../render.yaml'), 'utf8');
+  assert.match(renderYaml, /runtime:\s*node/);
+  assert.match(renderYaml, /UV_UNMANAGED_INSTALL="\$PWD\/ml\/\.uv"/);
+  assert.match(renderYaml, /UV_PYTHON_INSTALL_DIR="\$PWD\/ml\/\.uv-python"/);
+  assert.match(renderYaml, /venv ml\/\.venv --python 3\.14\.7/);
+  assert.match(renderYaml, /pip install --python ml\/\.venv\/bin\/python -r ml\/requirements-runtime\.txt/);
+  assert.match(renderYaml, /key:\s*NODE_VERSION\s+value:\s*"24"/);
+  assert.match(renderYaml, /key:\s*ML_PYTHON_EXECUTABLE\s+value:\s*ml\/\.venv\/bin\/python/);
+  assert.match(renderYaml, /key:\s*ML_WORKER_SCRIPT\s+value:\s*ml\/src\/10_persistent_inference_worker\.py/);
+  const parsed = readConfig({
+    MONGO_URI: config.mongoUri,
+    NODE_ENV: 'production',
+    HOST: '0.0.0.0',
+    TRUST_PROXY: 'true',
+    COOKIE_SAME_SITE: 'none',
+    ML_PYTHON_EXECUTABLE: 'ml/.venv/bin/python',
+    ML_WORKER_SCRIPT: 'ml/src/10_persistent_inference_worker.py',
+  });
+  assert.equal(parsed.mlPythonExecutable, 'ml/.venv/bin/python');
+  assert.equal(parsed.mlWorkerScript, 'ml/src/10_persistent_inference_worker.py');
 });

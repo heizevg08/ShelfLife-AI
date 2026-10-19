@@ -54,9 +54,13 @@ project_structure.txt
 # Local server files
 /server/.env.test-accounts.local
 
-# Generated server files
+# Generated server and ML runtime files
 /server/dist/
 /server/node_modules/
+/ml/.venv/
+/ml/.uv/
+/ml/.uv-python/
+__pycache__/
 
 # Generated browser-test and QA output
 /.playwright-cli/

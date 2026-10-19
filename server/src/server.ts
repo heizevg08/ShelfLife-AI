@@ -59,7 +59,7 @@ export function startupDiagnostic(stage: StartupStage, error: unknown) {
   const code = typeof value?.code === 'string' && safeCodes.has(value.code) ? value.code
     : value?.code === 18 ? 'AUTHENTICATION_FAILED' : undefined;
   const message = stage === 'configuration' && value &&
-    /^Invalid configuration: (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE|ML_PYTHON_EXECUTABLE|ML_WORKER_SCRIPT|ML_STARTUP_TIMEOUT_MS|ML_INFERENCE_TIMEOUT_MS)(?:, (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE|ML_PYTHON_EXECUTABLE|ML_WORKER_SCRIPT|ML_STARTUP_TIMEOUT_MS|ML_INFERENCE_TIMEOUT_MS))*$/.test(value.message)
+    /^Invalid configuration: (?:NODE_ENV|HOST|PORT|MONGO_URI|MONGO_DB_NAME|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE|ML_PYTHON_EXECUTABLE|ML_WORKER_SCRIPT|ML_STARTUP_TIMEOUT_MS|ML_INFERENCE_TIMEOUT_MS)(?:, (?:NODE_ENV|HOST|PORT|MONGO_URI|MONGO_DB_NAME|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE|ML_PYTHON_EXECUTABLE|ML_WORKER_SCRIPT|ML_STARTUP_TIMEOUT_MS|ML_INFERENCE_TIMEOUT_MS))*$/.test(value.message)
     ? value.message : undefined;
   return { stage, name, ...(code ? { code } : {}), ...(message ? { message } : {}) };
 }
@@ -221,7 +221,7 @@ if (require.main === module) {
       operationalRisk = createOperationalRiskService(operationalForecast, ingredientModel(driver), inventoryBatchModel(driver));
       operationalRecommendations = createOperationalRecommendationService(operationalRisk);
     }
-    const database = createDatabase(driver);
+    const database = createDatabase(driver, config.mongoDbName);
     const indexedDatabase = { ...database, connect: async (uri: string) => {
       await database.connect(uri);
       await provisionSecurityIndexes(loginAttempts, users);

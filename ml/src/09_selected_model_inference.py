@@ -26,9 +26,10 @@ import pandas as pd
 import sklearn
 
 
-MODEL_PATH = Path("models/selected_random_forest.joblib")
-METADATA_PATH = Path(
-    "models/selected_random_forest_metadata.json"
+ML_ROOT = Path(__file__).resolve().parents[1]
+MODEL_PATH = ML_ROOT / "models" / "selected_random_forest.joblib"
+METADATA_PATH = (
+    ML_ROOT / "models" / "selected_random_forest_metadata.json"
 )
 
 EXPECTED_MODEL_NAME = (

@@ -9,10 +9,10 @@ async function main() {
   const config = readConfig(process.env);
   const input = readDevAdmin(process.env);
   const driver = new Mongoose();
-  const database = createDatabase(driver);
+  const database = createDatabase(driver, config.mongoDbName);
   try {
     await database.connect(config.mongoUri);
-    if (driver.connection.name !== 'shelflifeai') throw new Error();
+    if (driver.connection.name !== config.mongoDbName) throw new Error();
     const result = await seedAdmin(userModel(driver), input);
     console.info(result === 'created' ? 'Development administrator created' : 'Existing account unchanged');
   } finally { await database.disconnect(); }

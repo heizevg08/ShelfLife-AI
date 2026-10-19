@@ -1,8 +1,24 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { dirname, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname, isAbsolute, resolve } from 'node:path';
 import { createInterface, type Interface as ReadLineInterface } from 'node:readline';
 import type { Config } from '../config/env';
+
+const REPO_ROOT = resolve(__dirname, '../../..');
+
+function resolveWorkerPath(target: string): string {
+  if (isAbsolute(target)) return target;
+  const fromCwd = resolve(target);
+  if (existsSync(fromCwd)) return fromCwd;
+  const fromRepo = resolve(REPO_ROOT, target);
+  return existsSync(fromRepo) ? fromRepo : fromCwd;
+}
+
+function resolvePythonExecutable(executable: string): string {
+  if (!executable.includes('/') && !executable.includes('\\')) return executable;
+  return resolveWorkerPath(executable);
+}
 
 export interface ForecastHistoryRow {
   dt: string;
@@ -134,7 +150,8 @@ export function createForecastInferenceWorker(
   let serialized: Promise<void> = Promise.resolve();
   let stderr = '';
 
-  const workerScript = resolve(config.mlWorkerScript);
+  const pythonExecutable = resolvePythonExecutable(config.mlPythonExecutable);
+  const workerScript = resolveWorkerPath(config.mlWorkerScript);
   const workerCwd = dirname(dirname(workerScript));
 
   const rememberStderr = (chunk: Buffer | string) => {
@@ -227,7 +244,7 @@ export function createForecastInferenceWorker(
       stderr = '';
       let settled = false;
       const process = spawn(
-        config.mlPythonExecutable,
+        pythonExecutable,
         [workerScript],
         {
           cwd: workerCwd,

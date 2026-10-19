@@ -2,10 +2,12 @@ services:
   - type: web
     name: shelflife-ai-api
     runtime: node
-    buildCommand: npm ci --include=dev && npm run build --workspace server
+    buildCommand: npm ci --include=dev && npm run build --workspace server && curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="$PWD/ml/.uv" sh && UV_PYTHON_INSTALL_DIR="$PWD/ml/.uv-python" "$PWD/ml/.uv/uv" venv ml/.venv --python 3.14.7 && "$PWD/ml/.uv/uv" pip install --python ml/.venv/bin/python -r ml/requirements-runtime.txt
     startCommand: npm run start --workspace server
     healthCheckPath: /api/health/live
     envVars:
+      - key: NODE_VERSION
+        value: "24"
       - key: NODE_ENV
         value: production
       - key: HOST
@@ -14,6 +16,10 @@ services:
         value: "true"
       - key: COOKIE_SAME_SITE
         value: none
+      - key: ML_PYTHON_EXECUTABLE
+        value: ml/.venv/bin/python
+      - key: ML_WORKER_SCRIPT
+        value: ml/src/10_persistent_inference_worker.py
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET

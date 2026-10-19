@@ -7,10 +7,10 @@ export interface Database {
 }
 
 // An isolated Mongoose instance, without models, seeds, or import-time I/O.
-export function createDatabase(driver = new Mongoose()): Database {
+export function createDatabase(driver = new Mongoose(), dbName = 'shelflifeai'): Database {
   return {
     async connect(uri) {
-      await driver.connect(uri, { dbName: 'shelflifeai', serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000, autoIndex: false, autoCreate: false });
+      await driver.connect(uri, { dbName, serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000, autoIndex: false, autoCreate: false });
     },
     async disconnect() { await driver.disconnect(); },
     isConnected() { return driver.connection.readyState === 1; },
