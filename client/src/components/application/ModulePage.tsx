@@ -3,8 +3,7 @@ import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, C
 import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { APPLICATION_RECORD_PAGE_SIZES, ApplicationPendingState } from './ApplicationPatterns';
-import { ForecastInsightsEmpty, ForecastVsActualChart, ForecastVsActualLegend } from './ManagerForecastCharts';
-import { emptyForecastWindow } from './forecast-chart-data';
+import { ForecastVsActualChart } from './ManagerForecastCharts';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
 import { InventoryStaffAddButton } from './InventoryStaffModal';
@@ -22,6 +21,7 @@ import { getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary 
 import { getWasteSummary, listWasteRecords, type WasteReason, type WasteRecord, type WasteSummary } from '../../services/waste-records';
 import { formatDate, formatDateTime } from '../../utils/date-time';
 import { businessDateInputValue, businessDayRange, businessMonthRange, businessWeekRange } from '../../utils/business-day';
+import { shiftBusinessDate } from '../../utils/business-day';
 import { formatHumanReadableText } from '../../utils/display-text';
 import { inventoryBatchRecorderLabel } from '../../utils/inventory-batch-recorder';
 import { ConnectedManagerInventoryPage } from './ManagerInventoryPage';
@@ -30,6 +30,7 @@ import { ConnectedManagerChangeRequestsPage } from './ManagerChangeRequestsPage'
 import { InventoryBatchDetailsDialog } from './InventoryBatchDetailsDialog';
 import { FilterSelect } from './FilterSelect';
 import { customRangeFieldInvalid, customRangeState } from './manager-record-date-range';
+import { forecastIngredient, type IngredientForecastResult } from '../../services/forecasts';
 
 export { InventoryBatchDetailsDialog } from './InventoryBatchDetailsDialog';
 
@@ -1551,25 +1552,15 @@ export function SuperAdminForecastingPage() {
 }
 
 function ManagerForecastingPage() {
-  const [range, setRange] = useState('This Week');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
   const [category, setCategory] = useState('');
   const [ingredient, setIngredient] = useState('');
-  const [trendPeriod, setTrendPeriod] = useState('This Week');
-  const [forecastSeriesVisible, setForecastSeriesVisible] = useState({ forecast: true, actual: true });
   const [search, setSearch] = useState('');
-  const [rows, setRows] = useState(10);
-  const [page, setPage] = useState(1);
-  // Ingredient Category and Ingredient are populated from the Manager's own authorized
-  // ingredient master data, never from forecast rows, so no option can imply a
-  // prediction. The forecast outputs stay pending, and choosing a category or an
-  // ingredient narrows the ledger only. A control with nothing real to offer renders
-  // disabled rather than pretending to filter; loading, failure and a genuinely empty
-  // master list are reported separately.
+  const [horizon, setHorizon] = useState(30);
+  const [refreshToken, setRefreshToken] = useState(0);
   const [categories, setCategories] = useState<string[] | null>(null);
   const [ingredients, setIngredients] = useState<StockInIngredient[] | null>(null);
   const [optionsFailed, setOptionsFailed] = useState(false);
+  const [forecast, setForecast] = useState<{ state: 'idle' | 'loading' | 'ready' | 'unavailable' | 'error'; result?: IngredientForecastResult; message?: string }>({ state: 'idle' });
   useEffect(() => {
     const controller = new AbortController();
     setOptionsFailed(false);
@@ -1585,74 +1576,67 @@ function ManagerForecastingPage() {
     return () => controller.abort();
   }, []);
   const categoryOptions = useMemo(() => [{ value: '', label: 'All Categories' }, ...(categories ?? []).map(value => ({ value, label: formatHumanReadableText(value) }))], [categories]);
-  const ingredientOptions = useMemo(() => [{ value: '', label: 'All Ingredients' }, ...(ingredients ?? []).filter(item => !category || item.category === category).map(item => ({ value: item.id, label: formatHumanReadableText(item.name) }))], [ingredients, category]);
+  const visibleIngredients = useMemo(() => (ingredients ?? []).filter(item =>
+    (!category || item.category === category)
+    && (!search.trim() || item.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))), [ingredients, category, search]);
+  const ingredientOptions = useMemo(() => [{ value: '', label: 'Choose an ingredient' }, ...visibleIngredients.map(item => ({ value: item.id, label: formatHumanReadableText(item.name) }))], [visibleIngredients]);
   const optionsLoading = categories === null || ingredients === null;
   const categoriesUnavailable = optionsFailed || optionsLoading || categoryOptions.length <= 1;
   const ingredientsUnavailable = optionsFailed || optionsLoading || ingredientOptions.length <= 1;
   const categoryHint = optionsFailed ? 'Ingredient categories are unavailable' : optionsLoading ? 'Loading ingredient categories' : 'No ingredient categories recorded yet';
   const ingredientHint = optionsFailed ? 'Ingredients are unavailable' : optionsLoading ? 'Loading ingredients' : category ? 'No ingredients recorded in this category' : 'No ingredients recorded yet';
-  // The same validity rules the records ledgers use: a Custom range is accepted only
-  // when both ends are real calendar dates, not in the future and not reversed. This
-  // page has no record ledger to bound the range, so no earliest-date limit applies.
+  // Forecast dates are Philippine calendar dates and start tomorrow. A single
+  // ingredient is required because quantities with different units cannot be summed.
   const today = businessDateInputValue();
-  // These are reporting dates, not the model's future prediction horizon. No
-  // forecast rows are available yet, but the selected filter still owns an
-  // unambiguous calendar window for the future records request.
-  const tableDateWindow = range === 'This Week' ? businessWeekRange()
-    : range === 'Last 7 Days' ? businessDayRange(7)
-    : range === 'Last 30 Days' ? businessDayRange(30)
-    : range === 'This Month' ? businessMonthRange()
-    : dateFrom && dateTo && customRangeState(dateFrom, dateTo, null, today) === 'valid' ? { from: dateFrom, to: dateTo } : null;
-  const customState = range === 'Custom' ? customRangeState(dateFrom, dateTo, null, today) : 'valid';
-  const rangeIncomplete = customState === 'incomplete';
-  const rangeInvalid = customState !== 'valid' && !rangeIncomplete;
-  const rangeMessageId = 'mgr-forecast-range-message';
-  const rangeMessage = customState === 'invalid-date' ? 'Enter a valid calendar date.'
-    : customState === 'future' ? 'Dates cannot be later than today in the Philippines.'
-    : customState === 'reversed' ? 'From date must be on or before To date.' : '';
-  const forecastPeriodOptions = ['This Week', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days'].map(value => ({ value, label: value }));
-  // The trend panel's window, so the chart draws its date axis and gridlines even while no
-  // forecast exists. The approved reference always receives the selected period's dates -
-  // an empty week still has seven of them - which is why its axes survive an empty period.
-  // Forecasting has no rows at all yet, so an empty list removed the entire axis and left a
-  // frame that could equally mean a failed load. These dates carry NO measurement: every
-  // series stays absent, so nothing here can be read as a forecast value.
-  const trendDays = Number(trendPeriod.match(/\d+/)?.[0] ?? 30);
-  const { from: trendFrom, to: trendTo } = trendPeriod === 'This Week' ? businessWeekRange() : businessDayRange(trendDays);
-  const trendWindow = emptyForecastWindow(trendFrom, trendTo);
+  const forecastDates = useMemo(() => Array.from({ length: horizon }, (_, index) => shiftBusinessDate(today, index + 1)), [horizon, today]);
+  const selectedIngredient = useMemo(() => ingredients?.find(item => item.id === ingredient), [ingredients, ingredient]);
+  useEffect(() => {
+    if (!ingredient) { setForecast({ state: 'idle' }); return; }
+    const controller = new AbortController();
+    setForecast({ state: 'loading' });
+    forecastIngredient(ingredient, forecastDates, controller.signal)
+      .then(result => {
+        if (controller.signal.aborted) return;
+        setForecast(result.status === 'FORECAST' ? { state: 'ready', result } : { state: 'unavailable', result });
+      })
+      .catch(error => {
+        if (controller.signal.aborted || (error as Error).name === 'AbortError') return;
+        setForecast({ state: 'error', message: error instanceof ApiError && error.status === 404 ? 'The forecasting runtime is unavailable on this server.' : 'The forecast could not be loaded. Try again.' });
+      });
+    return () => controller.abort();
+  }, [ingredient, forecastDates, refreshToken]);
+  const predictions = forecast.state === 'ready' && forecast.result?.status === 'FORECAST' ? forecast.result.predictions : [];
+  const forecastTotal = predictions.reduce((total, prediction) => total + prediction.predictedConsumption, 0);
+  const nextWeekTotal = predictions.slice(0, 7).reduce((total, prediction) => total + prediction.predictedConsumption, 0);
+  const chartPoints = predictions.map(prediction => ({ date: prediction.date, forecast: prediction.predictedConsumption, actual: null }));
+  const unavailableReason = forecast.result?.status === 'UNAVAILABLE'
+    ? ({ NO_HISTORY: 'No usage history has been recorded for this ingredient.', INSUFFICIENT_HISTORY: 'At least 14 consecutive daily usage records are required before a forecast can be generated.', INCOMPLETE_DAILY_HISTORY: 'The usage history contains a gap, so a forecast would not be reliable.', INCONSISTENT_UNIT: 'Usage records use a unit that differs from the ingredient unit.', INVALID_DATE: 'A usage record has an invalid date.', INVALID_QUANTITY: 'A usage record has an invalid quantity.', MIXED_INGREDIENTS: 'The history could not be matched to one ingredient.' } as const)[forecast.result.reason]
+    : undefined;
   return <>
     <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
     <div className="sl-admin-view sl-mgr-forecast-page">
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Forecasting summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Forecast data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Demand forecast pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At-Risk Ingredients</span><strong>—</strong><small>Risk forecast pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast status</span><strong>{forecast.state === 'ready' ? 'Ready' : forecast.state === 'loading' ? 'Loading' : forecast.state === 'unavailable' ? 'Unavailable' : '—'}</strong><small>{selectedIngredient ? formatHumanReadableText(selectedIngredient.name) : 'Choose an ingredient'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Forecast horizon</span><strong>{predictions.length || '—'}</strong><small>{predictions.length ? `days in ${forecast.result?.status === 'FORECAST' ? forecast.result.unit : ''}` : 'Future business days'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>Demand (next 7 days)</span><strong>{predictions.length ? nextWeekTotal.toFixed(2) : '—'}</strong><small>{forecast.result?.status === 'FORECAST' ? forecast.result.unit : 'Awaiting model output'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Demand (full horizon)</span><strong>{predictions.length ? forecastTotal.toFixed(2) : '—'}</strong><small>{forecast.result?.status === 'FORECAST' ? forecast.result.unit : 'No projected demand yet'}</small></div></article>
       </section>
 
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
-        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendWindow} meta={{ ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: 30 }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
-        <Card id="mgr-forecast-insights" title="Forecast Insights"><ForecastInsightsEmpty /></Card>
+        <Card id="mgr-forecast-v-actual" title="Projected demand"><ForecastVsActualChart ariaLabel="Forecasted ingredient demand by date" points={chartPoints} meta={{ ingredient: selectedIngredient?.name ?? 'Ingredient', unit: forecast.result?.status === 'FORECAST' ? forecast.result.unit : 'unit', asOf: today, horizonDays: horizon }} visible={{ forecast: true, actual: false }} emptyLabel={forecast.state === 'loading' ? 'Loading forecast' : forecast.state === 'unavailable' ? 'Forecast unavailable' : forecast.state === 'error' ? 'Forecast could not be loaded' : 'Choose an ingredient'} emptyDescription={unavailableReason ?? forecast.message ?? 'Select an ingredient with enough consecutive usage records to generate a forecast.'} /></Card>
+        <Card id="mgr-forecast-insights" title="Forecast information"><div className="sl-mgr-fc-insights sl-mgr-fc-insights-empty" role="status"><p><strong>{forecast.state === 'ready' ? 'Live model output' : 'Forecast requirements'}</strong></p><p>{forecast.state === 'ready' ? 'Predictions use the selected ingredient’s recorded usage history. Values are advisory and do not change inventory automatically.' : unavailableReason ?? forecast.message ?? 'A forecast becomes available after at least 14 consecutive Philippine-calendar days of valid usage records for the selected ingredient.'}</p></div></Card>
       </section>
 
       <section className="sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records sl-mgr-forecast-records" aria-labelledby="mgr-ingredient-forecasts">
         <header className="sl-application-records-header sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2 id="mgr-ingredient-forecasts">Ingredient Forecasts</h2></header>
         <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-application-records-toolbar sl-sa-ingredients-filter-card" data-filter-layout="records-five" aria-label="Forecast filters">
-          <label className="sl-application-records-search sl-sa-ingredients-search"><span>Search ingredients</span><div><Search size={16}/><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search ingredients..." /></div></label>
-          <label data-from={tableDateWindow?.from} data-to={tableDateWindow?.to}><span>Date Range</span><FilterSelect ariaLabel="Filter forecasts by date range" value={range} options={['This Week','Last 7 Days','Last 30 Days','This Month','Custom'].map(value => ({value, label: value}))} onChange={value => { setRange(value); setPage(1); }}/></label>
-          {range === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom forecast date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo && dateTo <= today ? dateTo : today} aria-invalid={customRangeFieldInvalid(customState, 'from', dateFrom, dateTo, today)} aria-describedby={rangeInvalid ? rangeMessageId : undefined} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} max={today} aria-invalid={customRangeFieldInvalid(customState, 'to', dateFrom, dateTo, today)} aria-describedby={rangeInvalid ? rangeMessageId : undefined} onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label>{rangeInvalid && <p id={rangeMessageId} className="sl-mgr-forecast-range-message" role="alert">{rangeMessage}</p>}</div>}
-          <label><span>Ingredient Category</span><FilterSelect ariaLabel="Filter forecasts by ingredient category" value={category} disabled={categoriesUnavailable} title={categoriesUnavailable ? categoryHint : 'Filter by ingredient category'} options={categoryOptions} onChange={value => { setCategory(value); setIngredient(''); setPage(1); }}/></label>
-          <label><span>Ingredient</span><FilterSelect ariaLabel="Filter forecasts by ingredient" value={ingredient} disabled={ingredientsUnavailable} title={ingredientsUnavailable ? ingredientHint : 'Filter by ingredient'} options={ingredientOptions} onChange={value => { setIngredient(value); setPage(1); }}/></label>
-          <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions"><button className="sl-button" type="button" onClick={() => { setRange('This Week'); setDateFrom(''); setDateTo(''); setCategory(''); setIngredient(''); setSearch(''); setPage(1); }}>Reset</button></div>
+          <label className="sl-application-records-search sl-sa-ingredients-search"><span>Search ingredients</span><div><Search size={16}/><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search ingredients..." /></div></label>
+          <label><span>Ingredient Category</span><FilterSelect ariaLabel="Filter forecasts by ingredient category" value={category} disabled={categoriesUnavailable} title={categoriesUnavailable ? categoryHint : 'Filter by ingredient category'} options={categoryOptions} onChange={value => { setCategory(value); setIngredient(''); }}/></label>
+          <label><span>Ingredient</span><FilterSelect ariaLabel="Choose an ingredient to forecast" value={ingredient} disabled={ingredientsUnavailable} title={ingredientHint} options={ingredientOptions} onChange={setIngredient}/></label>
+          <label><span>Forecast horizon</span><FilterSelect ariaLabel="Forecast horizon" value={String(horizon)} options={[7, 14, 30].map(value => ({ value: String(value), label: `Next ${value} days` }))} onChange={value => setHorizon(Number(value))}/></label>
+          <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions"><button className="sl-button" type="button" disabled={!ingredient || forecast.state === 'loading'} onClick={() => setRefreshToken(value => value + 1)}>Refresh forecast</button></div>
         </div></div>
-        {/* Ingredient Forecasts has no live rows yet, so the table carries its seven honest
-            headers and the message sits outside the horizontal scroller. Inside it the 76rem
-            scroll canvas centres the label in the canvas rather than in what the Manager can
-            see, which on a phone puts the explanation entirely off-screen and leaves the body
-            looking blank. */}
-        <div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table"><thead><tr><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th></tr></thead></table></div>
-        <div className="sl-mgr-forecast-table-empty"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available." /></div>
-        <div className="sl-mgr-forecast-footer sl-application-records-footer sl-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="forecasts" onPageChange={setPage} /></div>
+        <div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table"><thead><tr><th>Date</th><th>Ingredient</th><th>Category</th><th>Projected demand</th><th>Unit</th></tr></thead><tbody>{predictions.length ? predictions.map(prediction => <tr key={prediction.date}><td>{formatDate(prediction.date)}</td><td>{selectedIngredient?.name}</td><td>{selectedIngredient?.category}</td><td>{prediction.predictedConsumption.toFixed(3)}</td><td>{forecast.result?.status === 'FORECAST' ? forecast.result.unit : ''}</td></tr>) : <tr><td colSpan={5}><ApplicationPendingState description={forecast.state === 'loading' ? 'Loading the selected ingredient forecast.' : unavailableReason ?? forecast.message ?? 'Choose an ingredient to view its forecast.'} /></td></tr>}</tbody></table></div>
       </section>
     </div>
   </>;

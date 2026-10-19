@@ -1,9 +1,9 @@
 services:
   - type: web
     name: shelflife-ai-api
-    runtime: node
-    buildCommand: npm ci --include=dev && npm run build --workspace server
-    startCommand: npm run start --workspace server
+    # The API and the bundled forecasting worker require both Node and Python.
+    runtime: docker
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health/live
     envVars:
       - key: NODE_ENV
@@ -20,3 +20,9 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         sync: false
+      # The Docker image supplies Python and the worker script. These are public
+      # runtime paths, not credentials, and may be overridden in Render if needed.
+      - key: ML_PYTHON_EXECUTABLE
+        value: python3
+      - key: ML_WORKER_SCRIPT
+        value: ml/src/10_persistent_inference_worker.py

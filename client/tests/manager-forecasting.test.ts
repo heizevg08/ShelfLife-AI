@@ -4,10 +4,8 @@ import { test } from 'node:test';
 
 // Manager Forecasting UI correction pass (2026-10-13).
 //
-// This page is a truthful pending surface: it has no forecasting API, no model and no
-// stored forecast records, so every figure stays a dash and every panel says data is
-// pending. These tests pin the corrections without claiming any forecasting capability
-// exists - they guard structure, accessibility and the absence of fabricated values.
+// The page renders model output only when the ingredient-scoped API returns it. The
+// unavailable state stays explicit so missing history cannot look like zero demand.
 
 const PAGE = readFileSync(new URL('../src/components/application/ModulePage.tsx', import.meta.url), 'utf8');
 const STYLES = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
@@ -56,21 +54,22 @@ test('the analytics cards no longer stack two minimum heights', () => {
   assert.doesNotMatch(forecasting(), /compact = false|compact \? ' compact'/);
 });
 
-test('the category and ingredient filters draw on real master data, never forecasts', () => {
+test('the category and ingredient filters draw on real master data before requesting one forecast', () => {
   const page = forecasting();
   // Both controls are populated from the Manager's authorized ingredient master data
   // (/ingredients/categories and /ingredients/stock-in-options), the same services the
-  // approved Manager /Inventory and /UsageWaste pages already use. No forecast dataset
-  // is consulted, so an option can never imply a prediction.
+  // approved Manager /Inventory and /UsageWaste pages already use. A selected ingredient
+  // then drives one forecast request; the UI never bulk-requests every ingredient.
   assert.match(page, /Promise\.all\(\[listIngredientCategories\(controller\.signal\), listStockInIngredients\(controller\.signal\)\]\)/);
   assert.match(page, /const categoryOptions = useMemo\(\(\) => \[\{ value: '', label: 'All Categories' \}, \.\.\.\(categories \?\? \[\]\)\.map/);
-  assert.match(page, /const ingredientOptions = useMemo\(\(\) => \[\{ value: '', label: 'All Ingredients' \}, \.\.\.\(ingredients \?\? \[\]\)\.filter\(item => !category \|\| item\.category === category\)/);
+  assert.match(page, /const visibleIngredients = useMemo\(\(\) => \(ingredients \?\? \[\]\)\.filter/);
+  assert.match(page, /label: 'Choose an ingredient'/);
   // The Ingredient control follows the chosen category and clears a now-stale choice.
-  assert.match(page, /onChange=\{value => \{ setCategory\(value\); setIngredient\(''\); setPage\(1\); \}\}/);
+  assert.match(page, /onChange=\{value => \{ setCategory\(value\); setIngredient\(''\); \}\}/);
   // A control with nothing real to offer still renders disabled rather than pretending
   // to filter, and each unavailable reason is reported on its own title.
   assert.match(page, /disabled=\{categoriesUnavailable\} title=\{categoriesUnavailable \? categoryHint : 'Filter by ingredient category'\}/);
-  assert.match(page, /disabled=\{ingredientsUnavailable\} title=\{ingredientsUnavailable \? ingredientHint : 'Filter by ingredient'\}/);
+  assert.match(page, /disabled=\{ingredientsUnavailable\} title=\{ingredientHint\}/);
   assert.match(page, /const categoriesUnavailable = optionsFailed \|\| optionsLoading \|\| categoryOptions\.length <= 1;/);
   // Loading, failure and a genuinely empty master list are distinct states.
   assert.match(page, /const optionsLoading = categories === null \|\| ingredients === null;/);
@@ -86,100 +85,45 @@ test('the category and ingredient filters draw on real master data, never foreca
   assert.match(STYLES, /\.sl-filter-select-trigger:disabled \{/);
 });
 
-test('the forecast Custom range validates, persists and resets like the records ledgers', () => {
+test('the forecast horizon uses future Philippine calendar dates and a bounded live request', () => {
   const page = forecasting();
-  // The same shared validity helper the Usage & Waste ledgers use, so the rules cannot
-  // drift apart. No earliest-activity bound applies here: this page has no record ledger.
-  // The import sits above the component, so it is read from the whole module.
-  assert.match(PAGE, /import \{ customRangeFieldInvalid, customRangeState \} from '\.\/manager-record-date-range';/);
-  assert.match(page, /const customState = range === 'Custom' \? customRangeState\(dateFrom, dateTo, null, today\) : 'valid';/);
-  // Reversed, malformed and future ranges are reported instead of silently accepted.
-  assert.match(page, /customState === 'reversed' \? 'From date must be on or before To date\.'/);
-  assert.match(page, /aria-invalid=\{customRangeFieldInvalid\(customState, 'from', dateFrom, dateTo, today\)\}/);
-  assert.match(page, /aria-invalid=\{customRangeFieldInvalid\(customState, 'to', dateFrom, dateTo, today\)\}/);
-  assert.match(page, /\{rangeInvalid && <p id=\{rangeMessageId\} className="sl-mgr-forecast-range-message" role="alert">/);
-  // Both ends can never exceed the Philippine business date, so no future date is offered.
   assert.match(page, /const today = businessDateInputValue\(\);/);
-  assert.match(page, /const \[range, setRange\] = useState\('This Week'\);/);
-  assert.match(page, /const \[trendPeriod, setTrendPeriod\] = useState\('This Week'\);/);
-  assert.match(page, /range === 'This Week' \? businessWeekRange\(\)/);
-  assert.match(page, /range === 'Last 7 Days' \? businessDayRange\(7\)/);
-  assert.match(page, /range === 'Last 30 Days' \? businessDayRange\(30\)/);
-  assert.equal((page.match(/max=\{today\}/g) || []).length, 1, 'the To field caps at today');
-  // The selected range survives closing and reopening the control, because it is page
-  // state and never reset on the range selector's own change handler.
-  assert.match(page, /const \[dateFrom, setDateFrom\] = useState\(''\);/);
-  assert.match(page, /value=\{range\} options=\{\['This Week','Last 7 Days','Last 30 Days','This Month','Custom'\]\.map\(value => \(\{value, label: value\}\)\)\} onChange=\{value => \{ setRange\(value\); setPage\(1\); \}\}/);
-  // Reset restores the default period and clears both dates and both filters.
-  assert.match(page, /setRange\('This Week'\); setDateFrom\(''\); setDateTo\(''\); setCategory\(''\); setIngredient\(''\); setSearch\(''\); setPage\(1\);/);
-  assert.doesNotMatch(page, new RegExp("setRange\\('This Week'\\); setDateFrom\\(''\\); setDateTo\\(''\\); setCategory\\('All"));
-  // The two-field block is laid out in a track wide enough for both dates, and the
-  // page-scoped tracks follow this page's real control order rather than Change Requests.
-  assert.match(STYLES, /\.sl-mgr-forecast-page \.sl-application-records-toolbar\[data-filter-layout="records-five"\]:has\(\.sl-v219-custom-date-range\) \{\s*grid-template-columns: minmax\(13rem,1\.45fr\)/);
-  assert.match(STYLES, /\.sl-mgr-forecast-page \.sl-v219-custom-date-range input\[aria-invalid="true"\] \{ border-color: var\(--sl-critical\); \}/);
-  assert.match(STYLES, /@media \(width<=1320px\) \{\s*\.sl-mgr-forecast-page \.sl-application-records-toolbar\[data-filter-layout="records-five"\]:has\(\.sl-v219-custom-date-range\) \{\s*grid-template-columns: repeat\(2,minmax\(0,1fr\)\);/);
+  assert.match(page, /shiftBusinessDate\(today, index \+ 1\)/);
+  assert.match(page, /\[7, 14, 30\]\.map\(value => \(\{ value: String\(value\), label: `Next \$\{value\} days` \}\)\)/);
+  assert.match(page, /forecastIngredient\(ingredient, forecastDates, controller\.signal\)/);
+  assert.match(page, /setRefreshToken\(value => value \+ 1\)/);
 });
 
-test('the trend period control is the shared FilterSelect, not a native select', () => {
+test('the forecast horizon control is the shared FilterSelect, not a native select', () => {
   const page = forecasting();
-  assert.match(page, /const forecastPeriodOptions = \['This Week', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days'\]\.map\(value => \(\{ value, label: value \}\)\);/);
-  assert.match(page, /<Card id="mgr-forecast-v-actual" title="Forecast vs\. Actual" action=\{<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend/);
-  assert.match(page, /<FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value=\{trendPeriod\} options=\{forecastPeriodOptions\} onChange=\{setTrendPeriod\} \/>/);
-  // The only surviving native select in the card is the rows-per-page control in the footer.
+  assert.match(page, /ariaLabel="Forecast horizon" value=\{String\(horizon\)\}/);
+  assert.match(page, /title="Projected demand"/);
   const selects = page.match(/<select/g) || [];
-  assert.equal(selects.length, 1, 'only the rows-per-page select stays native');
-  // Its scoped rule survives late in the cascade; the removed native-select styling does not linger.
-  assert.match(STYLES, /\.sl-mgr-forecast-page \.sl-dashboard-filter \.sl-filter-select-trigger \{ min-height: 32px;/);
-  assert.doesNotMatch(STYLES, /\.sl-mgr-forecast-page \.sl-dashboard-filter select \{/);
+  assert.equal(selects.length, 0, 'the forecast page delegates selection controls to FilterSelect');
 });
 
-test('the corrections fabricate no forecasting value', () => {
+test('the page renders only forecast values returned by the live API and names unavailable history', () => {
   const page = forecasting();
-  // Every KPI stays a dash and every panel keeps its truthful pending copy.
-  assert.match(page, /<span>Forecast Accuracy<\/span><strong>—<\/strong><small>Forecast data pending<\/small>/);
-  assert.match(page, /<span>Total Ingredients Forecasted<\/span><strong>—<\/strong>/);
-  assert.match(page, /<span>High Demand \(Next 7 Days\)<\/span><strong>—<\/strong>/);
-  assert.match(page, /<span>At-Risk Ingredients<\/span><strong>—<\/strong>/);
-  assert.match(page, /<ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available\." \/>/);
-  // The three panels now render the approved framework empty: the chart keeps its frame
-  // and the other two keep the system pending state. Neither claims a computed value.
-  assert.match(page, /<ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points=\{trendWindow\}/);
-  // The chart receives the period's dates rather than an empty list, so the reference's
-  // axis and gridlines survive an empty period. Each point carries null for both series:
-  // no forecast was produced and nothing was recorded, which is not a measured zero.
-  assert.match(page, /const trendWindow = emptyForecastWindow\(trendFrom, trendTo\);/);
-  assert.match(page, /emptyForecastWindow/);
-  // The empty chart names itself through the reference panel's own title slot, and still
-  // claims no value. The label is set by the component, not passed in by the page.
-  assert.match(page, /emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available\."/);
-  assert.doesNotMatch(page, /<CategoryDemandEmpty/);
-  assert.match(page, /<ForecastInsightsEmpty \/>/);
-  // No cell, badge or status claims a computed forecast.
-  assert.doesNotMatch(page, /Forecast Accuracy<\/span><strong>\d/);
-  assert.doesNotMatch(page, /(predictedDemand|forecastValue|accuracyScore|riskScore)\s*[:=]/);
+  assert.match(page, /const predictions = forecast\.state === 'ready'/);
+  assert.match(page, /prediction\.predictedConsumption/);
+  assert.match(page, /At least 14 consecutive daily usage records are required/);
+  assert.match(page, /The forecasting runtime is unavailable on this server\./);
+  assert.doesNotMatch(page, /forecast-sample-data|FORECAST_SAMPLE/);
 });
 
-test('the seven forecast columns and their local overflow are preserved', () => {
+test('the live forecast table keeps local overflow and shows returned prediction rows', () => {
   const page = forecasting();
-  assert.match(page, /<th>Ingredient<\/th><th>Category<\/th><th>Current Stock<\/th><th>Avg\. Daily Usage<\/th><th>Forecasted Demand \(Next 30 Days\)<\/th><th>Recommended Action<\/th><th>Risk Level<\/th>/);
+  assert.match(page, /<th>Date<\/th><th>Ingredient<\/th><th>Category<\/th><th>Projected demand<\/th><th>Unit<\/th>/);
   assert.match(page, /<div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table">/);
-  // The message is a sibling of the scroller, so it centres in the visible width rather
-  // than in the 76rem canvas. Inside the scroller a phone would show a blank body, because
-  // the canvas centre sits past the right edge of the ~369px scroll port.
-  assert.match(page, /<div className="sl-mgr-forecast-table-empty"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available\." \/><\/div>/);
-  assert.doesNotMatch(page, /<td colSpan=\{7\}/);
-  assert.match(STYLES, /\.sl-mgr-forecast-page \.sl-mgr-forecast-table-empty \{\s*display: grid;\s*place-items: center;/);
-  // The container localizes overflow; the table keeps its real minimum width.
+  assert.match(page, /<td colSpan=\{5\}><ApplicationPendingState/);
+  assert.match(page, /prediction\.predictedConsumption\.toFixed\(3\)/);
   assert.match(STYLES, /\.sl-mgr-forecast-tablewrap \{\s*min-width: 0;\s*overflow: auto;/);
-  assert.match(STYLES, /\.sl-mgr-forecast-page \.sl-mgr-forecast-tablewrap \.sl-application-records-table \{ min-width: 76rem; \}/);
 });
 
-test('search, Reset and pagination still work on the forecast table', () => {
+test('search, category, selected ingredient, horizon, and refresh drive the live forecast', () => {
   const page = forecasting();
-  assert.match(page, /<input value=\{search\} onChange=\{event => \{ setSearch\(event\.target\.value\); setPage\(1\); \}\} placeholder="Search ingredients\.\.\." \/>/);
-  assert.match(page, /setRange\('This Week'\); setDateFrom\(''\); setDateTo\(''\); setCategory\(''\); setIngredient\(''\); setSearch\(''\); setPage\(1\);/);
-  assert.match(page, /<Pagination compact page=\{page\} pageSize=\{rows\} total=\{0\} itemLabel="forecasts" onPageChange=\{setPage\} \/>/);
-  // Date Range stays an independent, working local filter with its Custom branch.
-  assert.match(page, /<span>Date Range<\/span><FilterSelect ariaLabel="Filter forecasts by date range" value=\{range\}/);
-  assert.match(page, /range === 'Custom' && <div className="sl-v219-custom-date-range"/);
+  assert.match(page, /<input value=\{search\} onChange=\{event => setSearch\(event\.target\.value\)\} placeholder="Search ingredients\.\.\." \/>/);
+  assert.match(page, /ariaLabel="Choose an ingredient to forecast"/);
+  assert.match(page, /ariaLabel="Forecast horizon"/);
+  assert.match(page, /Refresh forecast/);
 });

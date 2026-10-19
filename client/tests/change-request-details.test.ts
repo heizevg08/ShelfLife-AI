@@ -519,44 +519,21 @@ test('Manager summary table is seven columns and keeps every decision path', () 
   assert.match(styles, /:is\(\.sl-application-records,\.sl-sa-account-pattern-records\) :is\(\.sl-application-records-table-shell,\.sl-sa-ingredients-table-scroll\.sl-staff-usage-table-shell\) \{[\s\S]*?overflow: auto;/);
 });
 
-test('Manager Forecasting table keeps a real min-width and wins the CSS precedence it lost', () => {
+test('Manager Forecasting keeps prediction rows in its local table without fabricated data', () => {
   const page = readFileSync(new URL('../src/components/application/ModulePage.tsx', import.meta.url), 'utf8');
   const styles = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
 
-  // The table is the shared records table inside the forecast scroll container.
+  // The ingredient-scoped live forecast remains inside its own local scroll shell.
   assert.match(page, /<div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table">/);
-  // Seven forecast columns, with the longest header owning its own weighting.
-  assert.match(page, /<th>Ingredient<\/th><th>Category<\/th><th>Current Stock<\/th><th>Avg\. Daily Usage<\/th><th>Forecasted Demand \(Next 30 Days\)<\/th><th>Recommended Action<\/th><th>Risk Level<\/th>/);
+  assert.match(page, /<th>Date<\/th><th>Ingredient<\/th><th>Category<\/th><th>Projected demand<\/th><th>Unit<\/th>/);
+  assert.match(page, /predictions\.map\(prediction => <tr key=\{prediction\.date\}>/);
+  assert.match(page, /<ApplicationPendingState description=\{forecast\.state === 'loading'/);
+  assert.doesNotMatch(page, /Forecasted Demand \(Next 30 Days\)/);
 
   // The container localizes overflow instead of widening the page.
   assert.match(styles, /\.sl-mgr-forecast-tablewrap \{\s*min-width: 0;\s*overflow: auto;/);
-  // Forecasting-scoped override carries the needed specificity, matching the Change Requests pattern.
-  assert.match(styles, /\.sl-mgr-forecast-page \.sl-mgr-forecast-tablewrap \.sl-application-records-table \{ min-width: 76rem; \}/);
-  // The widths are derived from measured header text, so they are pinned as one complete set:
-  // each header's one-line natural width plus an even share of the leftover 76rem space.
-  // Ingredient owns the smallest share (an 85px word) and Forecasted Demand the largest (273px).
-  const forecastWidths = [10, 9, 13, 14, 27, 18, 9];
-  forecastWidths.forEach((width, index) => {
-    assert.match(
-      styles,
-      new RegExp(`\\.sl-mgr-forecast-page \\.sl-mgr-forecast-tablewrap \\.sl-application-records-table :is\\(th,td\\):nth-child\\(${index + 1}\\) \\{ width: ${width}%; \\}`),
-      `forecast column ${index + 1} must keep its measured width`
-    );
-  });
-  // The seven shares total exactly 100% of the 76rem minimum, so no column is left short.
-  assert.strictEqual(forecastWidths.reduce((sum, width) => sum + width, 0), 100);
-  // The override must come after the shared :is(...) rule that sets min-width:0,
-  // otherwise the cascade silently resets the table to zero again.
-  assert.ok(
-    styles.indexOf('.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table { min-width: 76rem; }') >
-      styles.indexOf(':is(.sl-application-records,.sl-sa-account-pattern-records) :is(.sl-application-records-table,.sl-sa-ingredients-table) {\n  table-layout: fixed;'),
-    'forecast min-width override must appear after the shared records-table rule'
-  );
-  // The old losing rule stays scoped and untouched; the shared rule is not edited.
   assert.match(styles, /\.sl-mgr-forecast-tablewrap table \{\s*border-collapse: collapse;\s*width: 100%;\s*min-width: 900px;/);
-  // Truthful unavailable state is preserved: no fabricated accuracy or demand figures.
-  assert.match(page, /<ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available\." \/>/);
-  assert.match(page, /<span>Forecast Accuracy<\/span><strong>—<\/strong><small>Forecast data pending<\/small>/);
+  assert.match(page, /At least 14 consecutive daily usage records are required/);
 });
 
 test('Manager Inventory Overview ledger keeps a real min-width and wins the CSS precedence it lost', () => {

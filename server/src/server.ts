@@ -42,13 +42,13 @@ import { loginAttemptModel } from './models/login-attempt';
 import { createLoginLimiter, mongoLoginAttemptStore } from './services/login-limiter';
 import { provisionSecurityIndexes } from './services/security-indexes';
 import { createReportExports, type ReportExportService } from './services/report-export';
-import { createForecastInferenceWorker } from './services/forecast-inference-worker';
+import { createForecastInferenceWorker, type ForecastInferenceWorker } from './services/forecast-inference-worker';
 import { createForecastingHistoryStore } from './services/forecasting-history-store';
 import { createOperationalForecastService, type OperationalForecastService } from './services/operational-forecast';
 import { createOperationalRiskService, type OperationalRiskService } from './services/operational-risk';
 import { createOperationalRecommendationService, type OperationalRecommendationService } from './services/operational-recommendations';
 
-type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
+type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'ml-runtime' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
 const safeCodes = new Set(['ECONNREFUSED', 'ENOTFOUND', 'ETIMEOUT', 'ETIMEDOUT', 'ESERVFAIL', 'ENODATA', 'ECONNRESET', 'EAI_AGAIN', 'EADDRINUSE', 'EADDRNOTAVAIL', 'EACCES', 'ERR_INVALID_ARG_TYPE', 'ERR_INVALID_ARG_VALUE']);
 
@@ -81,7 +81,7 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService, forecastWorker?: ForecastInferenceWorker) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
@@ -98,6 +98,8 @@ export async function startServer(config: Config, database: Database, shutdownTi
           http.close(error => error ? reject(error) : resolve());
         }), shutdownTimeout);
       } catch { exitCode = 1; http.closeAllConnections(); }
+      try { await bounded(forecastWorker?.stop() ?? Promise.resolve(), shutdownTimeout); }
+      catch { exitCode = 1; }
       try { await bounded(database.disconnect(), shutdownTimeout); }
       catch { exitCode = 1; }
       return exitCode;
@@ -110,6 +112,10 @@ export async function startServer(config: Config, database: Database, shutdownTi
     await inventoryBatches?.ready();
     await usageRecords?.ready();
     await wasteRecords?.ready();
+    if (forecastWorker) {
+      stage = 'ml-runtime'; onStage(stage);
+      await forecastWorker.start();
+    }
     stage = 'http-listen'; onStage(stage);
     await new Promise<void>((resolve, reject) => {
       http.once('error', reject);
@@ -214,8 +220,9 @@ if (require.main === module) {
     let operationalForecast: OperationalForecastService | undefined;
     let operationalRisk: OperationalRiskService | undefined;
     let operationalRecommendations: OperationalRecommendationService | undefined;
+    let forecastWorker: ForecastInferenceWorker | undefined;
     if (config.mlPythonExecutable && config.mlWorkerScript) {
-      const forecastWorker = createForecastInferenceWorker(config);
+      forecastWorker = createForecastInferenceWorker(config);
       const forecastHistoryStore = createForecastingHistoryStore(usageRecordModel(driver), ingredientModel(driver));
       operationalForecast = createOperationalForecastService(forecastHistoryStore, forecastWorker);
       operationalRisk = createOperationalRiskService(operationalForecast, ingredientModel(driver), inventoryBatchModel(driver));
@@ -229,7 +236,7 @@ if (require.main === module) {
     const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, {
       loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange,
       secureCookies: config.nodeEnv === 'production', cookieSameSite: config.cookieSameSite, auditAuthenticationEvent,
-    }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations);
+    }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations, forecastWorker);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

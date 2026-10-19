@@ -119,6 +119,24 @@ test('listen failure disconnects the database and exposes no raw socket error', 
   assert.equal(disconnected, 1);
 });
 
+test('configured forecast worker is ready before listening and is stopped before database disconnect', async () => {
+  const calls = []; let connected = false;
+  const stages = [];
+  const worker = {
+    start: async () => { calls.push('worker-start'); },
+    infer: async () => [],
+    stop: async () => { calls.push('worker-stop'); },
+  };
+  const runtime = await startServer(config, {
+    connect: async () => { connected = true; calls.push('connect'); },
+    disconnect: async () => { calls.push('disconnect'); },
+    isConnected: () => connected,
+  }, 5000, undefined, stage => stages.push(stage), undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, worker);
+  await runtime.stop();
+  assert.deepEqual(stages, ['application-composition', 'database-connection', 'ml-runtime', 'http-listen']);
+  assert.deepEqual(calls, ['connect', 'worker-start', 'worker-stop', 'disconnect']);
+});
+
 test('development TypeScript loader validates configuration without legacy imports', () => {
   const result = spawnSync(process.execPath, ['--env-file-if-exists=.env', '--import', 'tsx', 'src/server.ts'], {
     cwd: path.resolve(__dirname, '..'), env: { NODE_ENV: 'test', MONGO_URI: '' }, encoding: 'utf8', timeout: 15000,

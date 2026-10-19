@@ -87,7 +87,7 @@ The Express API invokes the ML runtime through a small TypeScript integration la
 4. The worker runs `ml/src/09_selected_model_inference.py` to validate the six-feature contract and generate recursive consumption forecasts.
 5. `OperationalRiskService` and `OperationalRecommendationService` apply deterministic business logic to the forecast plus actual batch/expiry data — the model never mutates inventory.
 
-ML is opt-in: set `ML_PYTHON_EXECUTABLE` and `ML_WORKER_SCRIPT` in `server/.env`. Without them, the backend starts normally and ML endpoints remain unavailable.
+ML is opt-in locally: set `ML_PYTHON_EXECUTABLE` and `ML_WORKER_SCRIPT` in `server/.env`. Without them, the backend starts normally and ML endpoints remain unavailable. The Render Docker deployment sets both paths and starts the worker during backend startup, so a bad Python/runtime installation fails deployment rather than leaving a live API with a dead forecast endpoint.
 
 ## Local development
 
@@ -108,13 +108,18 @@ For the ML inference path, run `python -m unittest` from `ml/tests/` (or the equ
 The repository includes [`vercel.json`](vercel.json) for the React/Vite client and
 [`render.yaml`](render.yaml) for the Express API. Deploy both from the repository root.
 
-1. Create the Render web service from this repository. Its health check is `/api/health/live`.
+1. Create the Render web service from this repository using the Docker runtime in
+   [`render.yaml`](render.yaml). The image installs Node, Python, and the pinned ML runtime;
+   its health check is `/api/health/live`.
    Set `MONGO_URI` and `CORS_ORIGINS` in Render; `CORS_ORIGINS` must contain the exact Vercel
    production origin, with no trailing slash. Render supplies `PORT`; the blueprint sets the
    production host, one trusted proxy hop, and secure cross-site refresh cookies.
 2. Deploy the Vercel project with `VITE_API_URL=https://<your-render-service>.onrender.com` as a
    production environment variable. It is a public browser URL, never a secret.
-3. If password recovery or email changes are required, configure the optional SMTP and
+3. Record at least 14 consecutive calendar days of usage for a single ingredient before its
+   forecast becomes available. The Forecasting screen requests the live ingredient-specific
+   endpoint and shows the API's unavailable reason instead of inventing a prediction.
+4. If password recovery or email changes are required, configure the optional SMTP and
    `PASSWORD_RESET_URL` variables in Render. Use the Vercel HTTPS login URL for the reset URL.
 
 Do not upload either `.env` file. Copy the public templates first: `client/.env.example` and

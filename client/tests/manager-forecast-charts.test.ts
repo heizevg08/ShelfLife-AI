@@ -181,14 +181,14 @@ test('the chart names its two series through the reference chart and never borro
   // Ingredient and unit are stated, so a bare number can never be misread.
   assert.match(CHARTS, /<strong>\{meta\.ingredient\}<\/strong>/);
   assert.match(CHARTS, /\{meta\.unit\}/);
-  assert.match(CHARTS, /forecast made \{dateLabel\(meta\.asOf\)\}\n\s*<span aria-hidden="true"> · <\/span>\{meta\.horizonDays\}-day horizon/);
+  assert.match(CHARTS, /forecast made \{dateLabel\(meta\.asOf\)\}\r?\n\s*<span aria-hidden="true"> · <\/span>\{meta\.horizonDays\}-day horizon/);
   // The subject line states a forecast date and horizon, so it is drawn only when a
   // forecast is actually plotted - never alongside an empty chart.
   assert.match(CHARTS, /\{drawable && <p className="sl-mgr-fc-subject">/);
   // The chart is NOT the Usage vs Waste trend: none of its series wording may appear.
   assert.doesNotMatch(CHARTS, /Usage series|Waste series|usage and waste record counts/i);
-  // Production still pending: the pipeline is not connected.
-  assert.match(CHARTS, /never fetch, never\s*\/\/\s*compute a prediction and never invent a value/);
+  // The presentation component cannot compute or invent predictions itself.
+  assert.match(CHARTS, /never fetch, never\s*\/\/\s*compute a prediction and never invent a value; the production page supplies only/);
 });
 
 test('the chart reuses the established axis grammar and keeps fractional quantities readable', () => {
@@ -233,7 +233,7 @@ test('the preview is development-only, unreachable in production and not linked 
   assert.match(PREVIEW, /role="note"/);
 });
 
-test('no sample value can leak into the production Manager Forecasting page', () => {
+test('only API-returned values, never sample fixtures, can reach the production Manager Forecasting page', () => {
   // The production page must not import the fixtures at all, in either direction.
   const start = PAGE.indexOf('function ManagerForecastingPage()');
   const end = PAGE.indexOf('function ManagerChangeRequestsPage()', start);
@@ -241,19 +241,13 @@ test('no sample value can leak into the production Manager Forecasting page', ()
   assert.ok(start > -1 && managerForecast.length > 500, 'the Manager Forecasting page is found');
   assert.doesNotMatch(managerForecast, /forecast-sample-data|FORECAST_SAMPLE|CategoryDemandBreakdown|ForecastInsightCards/);
   assert.doesNotMatch(PAGE, /FORECAST_SAMPLE/);
-  // It keeps every truthful pending state and every dash.
-  assert.match(managerForecast, /<Card id="mgr-forecast-v-actual" title="Forecast vs\. Actual"/);
+  assert.match(managerForecast, /forecastIngredient\(ingredient, forecastDates, controller\.signal\)/);
+  assert.match(managerForecast, /const predictions = forecast\.state === 'ready'/);
+  assert.match(managerForecast, /<Card id="mgr-forecast-v-actual" title="Projected demand"/);
   assert.doesNotMatch(managerForecast, /mgr-category-demand|CategoryDemandEmpty/);
-  assert.match(managerForecast, /<Card id="mgr-forecast-insights" title="Forecast Insights">/);
-  // The approved framework is rendered empty - the chart surface keeps its frame and the
-  // other two cards keep the system pending state. No sample value is reachable.
-  assert.match(managerForecast, /<ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points=\{trendWindow\}/);
-  // The window is the selected period's own dates, every one of them absent. This is what
-  // keeps the reference chart's date axis and gridlines alive; it must never become a real
-  // value or a measured zero.
-  assert.match(managerForecast, /const trendWindow = emptyForecastWindow\(trendFrom, trendTo\);/);
-  assert.match(managerForecast, /trendPeriod === 'This Week' \? businessWeekRange\(\) : businessDayRange\(trendDays\)/);
-  assert.match(managerForecast, /<ForecastInsightsEmpty \/>/);
+  assert.match(managerForecast, /<Card id="mgr-forecast-insights" title="Forecast information">/);
+  assert.match(managerForecast, /<ForecastVsActualChart ariaLabel="Forecasted ingredient demand by date" points=\{chartPoints\}/);
+  assert.match(managerForecast, /At least 14 consecutive daily usage records are required/);
   // The fixtures are labelled as invented in their own file too, so a reader of the data
   // module cannot mistake them for measurements.
   assert.match(SAMPLES, /is invented and internally consistent\s+\/\/ on purpose/);

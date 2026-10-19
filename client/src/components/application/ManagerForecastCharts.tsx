@@ -27,8 +27,8 @@ import {
 // does not restyle them.
 //
 // Every number these components draw comes from the caller. They never fetch, never
-// compute a prediction and never invent a value; the production route passes nothing
-// until a real forecasting service exists.
+// compute a prediction and never invent a value; the production page supplies only
+// values returned by the ingredient-scoped forecasting API.
 
 // The reference chart's two value slots are named for their first user. Forecasting
 // renames them for display only: slot `usage` carries the Forecast series and slot `waste`
