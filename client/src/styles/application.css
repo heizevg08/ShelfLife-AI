@@ -24585,7 +24585,7 @@ section.sl-card:has(.sl-filter-popover) {
   color: var(--sl-success);
   background: var(--sl-success-bg);
 }
-n .sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v200 {
+.sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v200 {
   grid-template-columns: repeat(4,minmax(0,1fr));
   align-items: stretch;
   gap: clamp(.75rem,.6rem + .35vw,1rem);
@@ -24739,23 +24739,20 @@ n .sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v200 {
   display: flex;
 }
 .sl-superadmin-dashboard-v49.sl-staff-usage-v150 .sl-superadmin-dashboard-kpis-v201 .sl-sa-kpi[data-tone=brand] {
-  border-color: #d7eee4;
   border-top-color: var(--sl-brand);
-  background: linear-gradient(110deg,#f7fffb,#fff);
+  background: var(--sl-surface);
 }
 .sl-superadmin-dashboard-v49.sl-staff-usage-v150 .sl-superadmin-dashboard-kpis-v201 .sl-sa-kpi[data-tone=info] {
-  background: linear-gradient(110deg,#f6fbff,#fff);
-  border-color: #0c5797 #dceaf7 #dceaf7;
+  border-top-color: #0c5797;
+  background: var(--sl-surface);
 }
 .sl-superadmin-dashboard-v49.sl-staff-usage-v150 .sl-superadmin-dashboard-kpis-v201 .sl-sa-kpi[data-tone=attention] {
-  border-color: #f3e6c7;
   border-top-color: var(--sl-attention);
-  background: linear-gradient(110deg,#fffaf0,#fff);
+  background: var(--sl-surface);
 }
 .sl-superadmin-dashboard-v49.sl-staff-usage-v150 .sl-superadmin-dashboard-kpis-v201 .sl-sa-kpi[data-tone=critical] {
-  border-color: #f5d8dc;
   border-top-color: var(--sl-critical);
-  background: linear-gradient(110deg,#fff6f7,#fff);
+  background: var(--sl-surface);
 }
 .sl-security-activity-v78 .sl-v203-audit-layout {
   grid-template-columns: minmax(0,3fr) minmax(250px,1fr);

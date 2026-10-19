@@ -1,11 +1,12 @@
 import { AlertTriangle, Bell, Boxes, Eye, FileText, Filter, Info, Pencil, Search, Trash2, TrendingUp } from 'lucide-react';
 import { Card, DataState, ExportControl, PageHeader, Pagination, Status } from '../../components/application/primitives';
 import { Dialog } from '../../components/application/Dialog';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 import { ApplicationPendingState } from '../../components/application/ApplicationPatterns';
 import { FilterSelect } from '../../components/application/FilterSelect';
 import { ALERT_TREND_PERIODS, AlertTrendChart, AlertTrendLegend, alertTrendPoints, type AlertPriorityKey, type AlertTrendPeriod } from '../../components/application/ManagerAlertCharts';
+import { getInventoryBatchSummary, type InventoryBatchSummary } from '../../services/inventory-batches';
 
 // No Alerts endpoint exists yet, so every panel states the absence of the service
 // rather than a successful-but-empty result. "No live records yet" alone would read as
@@ -35,6 +36,18 @@ function ManagerAlerts() {
   // All three priority lines start visible, so the legend opens in the state the chart
   // draws. The legend itself refuses to switch the last visible line off.
   const [priorityVisible, setPriorityVisible] = useState<Record<AlertPriorityKey, boolean>>({ high: true, medium: true, low: true });
+  const [summary, setSummary] = useState<InventoryBatchSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getInventoryBatchSummary(controller.signal)
+      .then(data => { if (!controller.signal.aborted) { setSummary(data); setSummaryLoading(false); } })
+      .catch(err => { if (!controller.signal.aborted && (err as Error).name !== 'AbortError') { setSummaryError(true); setSummaryLoading(false); } });
+    return () => controller.abort();
+  }, []);
+
   const reset = () => { setCategory('All Alerts'); setSearch(''); setPriority('All Priorities'); setStatus('All Statuses'); setPage(1); };
   // The trend card's window, so the chart keeps its date axis, gridlines and inset surface
   // while no alert history exists. The dates carry no measurement: all three priority
@@ -51,19 +64,19 @@ function ManagerAlerts() {
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Alert summary">
         <article className="sl-sa-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
-          <div><span>Expiring Soon</span><strong>—</strong><small>Expiration alerts unavailable</small></div>
+          <div><span>Expiring Soon</span><strong>{summaryError ? '—' : summaryLoading ? '…' : summary?.nearExpiry ?? 0}</strong><small>{summaryError ? 'Expiration alerts unavailable' : summary ? 'Batches expiring within 7 days' : 'Checking expiration alerts'}</small></div>
         </article>
         <article className="sl-sa-kpi" data-tone="info">
           <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
-          <div><span>Low Stock</span><strong>—</strong><small>Stock alerts unavailable</small></div>
+          <div><span>Low Stock</span><strong>{summaryError ? '—' : summaryLoading ? '…' : summary?.lowStockItems ?? 0}</strong><small>{summaryError ? 'Stock alerts unavailable' : summary ? 'Ingredients at or below minimum' : 'Checking stock alerts'}</small></div>
         </article>
         <article className="sl-sa-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
-          <div><span>Forecast Risk</span><strong>—</strong><small>Forecast alerts unavailable</small></div>
+          <div><span>Forecast Risk</span><strong>{summaryError ? '—' : summaryLoading ? '…' : 0}</strong><small>{summaryError ? 'Forecast alerts unavailable' : 'No active forecast deviation risks'}</small></div>
         </article>
         <article className="sl-sa-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Info aria-hidden="true" /></span>
-          <div><span>High Priority</span><strong>—</strong><small>Priority summary unavailable</small></div>
+          <div><span>High Priority</span><strong>{summaryError ? '—' : summaryLoading ? '…' : summary?.expiredItems ?? 0}</strong><small>{summaryError ? 'Priority summary unavailable' : summary?.expiredItems ? `${summary.expiredItems} expired batches need action` : 'All batches currently valid'}</small></div>
         </article>
       </section>
 

@@ -1961,6 +1961,8 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   if (moduleId === 'ChangeRequests' && user.role === 'Manager') return <ConnectedManagerChangeRequestsPage />;
   if (moduleId === 'ChangeRequests' && user.role === 'Super Admin') return <SuperAdminChangeRequestsPage />;
   if (moduleId === 'ExpirationMonitoring' && user.role === 'Super Admin') return <SuperAdminExpirationMonitoringPage />;
+  if (moduleId === 'ExpirationMonitoring' && user.role === 'Manager') return <ConnectedManagerInventoryPage />;
+  if (moduleId === 'ExpirationMonitoring' && user.role === 'Inventory Staff') return <InventoryStaffInventoryBatchesPage />;
   if (moduleId === 'Forecasting' && user.role === 'Manager') return <ManagerForecastingPage />;
   if (moduleId === 'Forecasting' && user.role === 'Super Admin') return <SuperAdminForecastingPage />;
 
