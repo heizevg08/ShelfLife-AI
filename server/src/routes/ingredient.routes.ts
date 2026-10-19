@@ -31,10 +31,10 @@ export function ingredientRoutes(
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
   router.use(mongoInputGuard);
-  router.get('/categories', authorizeAdministration(['Admin', 'Manager', 'Inventory Staff']), actions.categories);
+  router.get('/categories', authorizeAdministration(['Super Admin', 'Admin', 'Manager', 'Inventory Staff']), actions.categories);
   router.get('/stock-in-options', authorizeAdministration(['Manager', 'Inventory Staff']), actions.stockInOptions);
   router.get('/summary', authorizeAdministration(['Admin', 'Manager']), actions.summary);
-  router.get('/', authorizeAdministration(['Admin', 'Manager']), actions.list);
+  router.get('/', authorizeAdministration(['Super Admin', 'Admin', 'Manager']), actions.list);
   router.post('/', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), actions.create);
   router.put('/:id', authorizeAdministration(['Admin']), secureJson({ limit: '100kb' }), actions.update);
   router.delete('/:id', authorizeAdministration(['Admin']), actions.remove);

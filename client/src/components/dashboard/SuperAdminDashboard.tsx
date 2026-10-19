@@ -1,16 +1,12 @@
-import { Link } from '../../routing/navigation';
-import { ArrowRight, ChartNoAxesCombined, CheckCircle2, FileText, PieChart, Users, UsersRound, type LucideIcon } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Box, Boxes, CheckCircle2, FileText, PieChart, Users, UsersRound, type LucideIcon } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { dashboardSummary, listAccounts, listAuditRecords, type DashboardSummary } from '../../services/administration';
 import { sessionDisplayName, type SessionUser } from '../../services/auth';
 import { buildAccountAnalytics } from '../../utils/account-analytics';
-import { Card, PageHeader } from '../application/primitives';
-import { FilterSelect } from '../application/FilterSelect';
-import { ForecastVsActualChart, ForecastVsActualLegend } from '../application/ManagerForecastCharts';
-import { emptyForecastWindow } from '../application/forecast-chart-data';
-import { businessDateInputValue, businessDayRange, businessWeekRange } from '../../utils/business-day';
-import { getForecastVsActual, listStockInIngredients, type ForecastVsActualResponse, type StockInIngredient } from '../../services/ingredients';
-import { formatHumanReadableText } from '../../utils/display-text';
+import { ApplicationDonutChart } from '../application/ApplicationPatterns';
+import { Card, DataState, PageHeader } from '../application/primitives';
+import { listIngredientCategories, listIngredients } from '../../services/ingredients';
+import { getInventoryBatchSummary } from '../../services/inventory-batches';
 
 const AUTO_REFRESH_MS = 15000;
 function ChartCardTitle({ Icon, children }: { Icon?: LucideIcon; children: ReactNode }) {
@@ -43,54 +39,6 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   const [auditCount, setAuditCount] = useState<number | null>(null);
   const [auditError, setAuditError] = useState(false);
 
-  // Forecast vs Actual chart state
-  const [trendPeriod, setTrendPeriod] = useState('This Week');
-  const [forecastSeriesVisible, setForecastSeriesVisible] = useState({ forecast: true, actual: true });
-  const [ingredients, setIngredients] = useState<StockInIngredient[] | null>(null);
-  const [selectedIngredient, setSelectedIngredient] = useState('');
-  const [trendData, setTrendData] = useState<ForecastVsActualResponse | null>(null);
-
-  const today = businessDateInputValue();
-  const trendDays = Number(trendPeriod.match(/\d+/)?.[0] ?? 30);
-  const { from: trendFrom, to: trendTo } = trendPeriod === 'This Week' ? businessWeekRange() : businessDayRange(trendDays);
-  const trendWindow = emptyForecastWindow(trendFrom, trendTo);
-  const forecastPeriodOptions = ['This Week', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days'].map(value => ({ value, label: value }));
-
-  useEffect(() => {
-    const abort = new AbortController();
-    listStockInIngredients(abort.signal)
-      .then(res => {
-        if (!abort.signal.aborted) setIngredients(res.ingredients);
-      })
-      .catch(() => {
-        if (!abort.signal.aborted) setIngredients([]);
-      });
-    return () => abort.abort();
-  }, []);
-
-  useEffect(() => {
-    const targetId = selectedIngredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
-    if (!targetId) {
-      setTrendData(null);
-      return;
-    }
-    const controller = new AbortController();
-    const days = trendPeriod === 'This Week' ? 7 : trendDays;
-    getForecastVsActual(targetId, days, controller.signal)
-      .then(res => {
-        if (!controller.signal.aborted) setTrendData(res);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setTrendData(null);
-      });
-    return () => controller.abort();
-  }, [selectedIngredient, ingredients, trendPeriod, trendDays]);
-
-  const ingredientOptions = useMemo(() => [
-    { value: '', label: 'Primary Ingredient' },
-    ...(ingredients ?? []).map(item => ({ value: item.id, label: formatHumanReadableText(item.name) }))
-  ], [ingredients]);
-
   useEffect(() => {
     const abort = new AbortController();
     setSummaryError(false); setAccountsError(false); setAuditError(false);
@@ -110,6 +58,36 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     return () => abort.abort();
   }, [refresh]);
 
+  // Ingredient Overview / Inventory Overview use the same live sources and states as the Admin dashboard.
+  const [ingredientCategories, setIngredientCategories] = useState<{ label: string; value: number }[] | null>(null);
+  const [ingredientCategoriesFailed, setIngredientCategoriesFailed] = useState(false);
+  const [inventorySummary, setInventorySummary] = useState<Awaited<ReturnType<typeof getInventoryBatchSummary>> | null>(null);
+  const [inventorySummaryFailed, setInventorySummaryFailed] = useState(false);
+  const [inventoryRetry, setInventoryRetry] = useState(0);
+
+  useEffect(() => {
+    const abort = new AbortController();
+    setIngredientCategoriesFailed(false);
+    listIngredientCategories(abort.signal)
+      .then(async ({ categories }) => {
+        const totals = await Promise.all(categories.map(async label => ({ label, value: (await listIngredients(1, 1, '', label, abort.signal)).total })));
+        if (!abort.signal.aborted) setIngredientCategories(totals);
+      })
+      .catch(() => { if (!abort.signal.aborted) setIngredientCategoriesFailed(true); });
+    return () => abort.abort();
+  }, []);
+
+  useEffect(() => {
+    const abort = new AbortController();
+    setInventorySummary(null);
+    setInventorySummaryFailed(false);
+    getInventoryBatchSummary(abort.signal)
+      .then(value => { if (!abort.signal.aborted) setInventorySummary(value); })
+      .catch(error => { if (!abort.signal.aborted && (error as Error).name !== 'AbortError') setInventorySummaryFailed(true); });
+    return () => abort.abort();
+  }, [inventoryRetry]);
+
+  const categoryStatus = ingredientCategoriesFailed ? 'Ingredient category data unavailable' : ingredientCategories === null ? 'Loading ingredient category data' : ingredientCategories.length ? undefined : 'No ingredient categories available';
   useEffect(() => {
     const interval = window.setInterval(() => setRefresh(value => value + 1), AUTO_REFRESH_MS);
     return () => window.clearInterval(interval);
@@ -128,9 +106,9 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   return <div className="sl-admin-view sl-superadmin-surface sl-superadmin-dashboard sl-superadmin-dashboard-v49 sl-staff-usage-v150 sl-superadmin-users-page-v60 sl-superadmin-users-page-v63 sl-superadmin-users-page-v64">
     <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
       <PageHeader eyebrow="Overview" title={`${greeting}, ${sessionDisplayName(user)}.`} />
-      <p className="sl-dashboard-description">Manage accounts, monitor inventory demand forecasts, and review system activity.</p>
+      <p className="sl-dashboard-description">Manage accounts and review system activity.</p>
     </div>
-    <section className="sl-sa-kpis sl-superadmin-kpis sl-superadmin-dashboard-kpis-v201" aria-label="System overview">
+    <section className="sl-sa-kpis sl-superadmin-kpis sl-kpi-reference-v201" aria-label="System overview">
       <article className="sl-sa-kpi sl-superadmin-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Total Users</span><strong>{totalUsers?.toLocaleString() ?? (summaryError && accountsError ? 'Unavailable' : 'Loading…')}</strong><small>System-wide accounts</small></div></article>
       <article className="sl-sa-kpi sl-superadmin-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><CheckCircle2 /></span><div><span>Active Accounts</span><strong>{summary ? summary.activeUsers.toLocaleString() : summaryError ? 'Unavailable' : 'Loading…'}</strong><small>{activePercentLabel === null ? 'Live account status' : `▲ ${activePercentLabel}% active`}</small></div></article>
       <article className="sl-sa-kpi sl-superadmin-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Inactive Accounts</span><strong>{summary ? summary.inactiveUsers.toLocaleString() : summaryError ? 'Unavailable' : 'Loading…'}</strong><small>{summary ? 'Deactivated accounts' : 'Account summary unavailable'}</small></div></article>
@@ -191,49 +169,16 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
       </Card>
     </section>
 
-    <section className="sl-sa-middle-row sl-sa-dashboard-activity-row-v319">
-      <Card
-        id="sl-sa-forecast"
-        title={<ChartCardTitle Icon={ChartNoAxesCombined}>Forecast vs. Actual</ChartCardTitle>}
-        action={
-          <div className="sl-mgr-fc-header-tools">
-            <ForecastVsActualLegend
-              visible={forecastSeriesVisible}
-              onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))}
-            />
-            {ingredients && ingredients.length > 1 && (
-              <FilterSelect
-                className="sl-dashboard-filter"
-                ariaLabel="Select ingredient for forecast trend"
-                value={selectedIngredient}
-                options={ingredientOptions}
-                onChange={setSelectedIngredient}
-              />
-            )}
-            <FilterSelect
-              className="sl-dashboard-filter"
-              ariaLabel="Forecast trend period"
-              value={trendPeriod}
-              options={forecastPeriodOptions}
-              onChange={setTrendPeriod}
-            />
-            <Link href="/Ingredients" className="sl-text-link" style={{ marginLeft: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8125rem' }}>
-              Ingredients <ArrowRight size={14} aria-hidden="true" />
-            </Link>
-          </div>
-        }
-      >
-        <div style={{ padding: '0.5rem 0' }}>
-          <ForecastVsActualChart
-            ariaLabel="Forecast versus actual ingredient consumption by date"
-            points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow}
-            meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }}
-            visible={forecastSeriesVisible}
-            calendarWeek={trendPeriod === 'This Week'}
-            emptyLabel="No live forecast records yet"
-            emptyDescription="Forecasted and actual ingredient consumption will appear when validated forecast and usage data are available."
-          />
-        </div>
+    <section className="sl-sa-analytics-row sl-sa-analytics-row-v317 sl-sa-overview-pair" aria-label="Inventory analytics">
+      <Card id="sl-sa-ingredient-overview" title={<ChartCardTitle Icon={Box}>Ingredient Overview</ChartCardTitle>}>
+        <ApplicationDonutChart ariaLabel="Ingredient category overview" centerLabel="Ingredients" items={ingredientCategories ?? []} unavailableMessage={categoryStatus} />
+      </Card>
+      <Card id="sl-sa-inventory-overview" title={<ChartCardTitle Icon={Boxes}>Inventory Overview</ChartCardTitle>}>
+        {inventorySummary
+          ? <ApplicationDonutChart ariaLabel="Current inventory batch status distribution" centerLabel="Batches" centerValue={inventorySummary.totalBatches} items={Object.entries(inventorySummary.statusCounts).map(([label, value]) => ({ label, value }))} />
+          : inventorySummaryFailed
+            ? <DataState kind="error" title="Inventory unavailable" description="The inventory batch service could not be reached." action={<button type="button" className="sl-button" onClick={() => setInventoryRetry(value => value + 1)}>Retry</button>} />
+            : <DataState kind="loading" title="Loading inventory" description="Retrieving current batch status totals." />}
       </Card>
     </section>
   </div>;

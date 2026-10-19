@@ -216,6 +216,29 @@ export function ConnectedManagerUsageWastePage() {
   const pageRecords = filtered.slice((page - 1) * rows, page * rows);
   const totalUsage = usageSummary?.totalUsageToday && Number.isFinite(usageSummary.totalUsageToday.quantity) ? `${formatCompactNumber(usageSummary.totalUsageToday.quantity)} ${usageSummary.totalUsageToday.unit}` : usageSummary?.usageRecordsToday === 0 ? '0' : '—';
   const totalWaste = wasteSummary?.totalWasteToday && Number.isFinite(wasteSummary.totalWasteToday.quantity) ? `${formatCompactNumber(wasteSummary.totalWasteToday.quantity)} ${wasteSummary.totalWasteToday.unit}` : wasteSummary?.wasteRecordsToday === 0 ? '0' : '—';
+  const todayUsage = usageSummary?.usageRecordsToday ?? 0;
+  const todayWaste = wasteSummary?.wasteRecordsToday ?? 0;
+  const todayCombined = todayUsage + todayWaste;
+  const totalRecords = records?.length ?? 0;
+  const totalWasteCount = records?.filter(r => r.type === 'Waste').length ?? 0;
+  const wasteRateValue = failed
+    ? '—'
+    : !usageSummary || !wasteSummary
+      ? '…'
+      : todayCombined > 0
+        ? `${((todayWaste / todayCombined) * 100).toFixed(1)}%`
+        : totalRecords > 0
+          ? `${((totalWasteCount / totalRecords) * 100).toFixed(1)}%`
+          : '0.0%';
+  const wasteRateLabel = failed
+    ? 'Waste rate unavailable'
+    : !usageSummary || !wasteSummary
+      ? 'Loading waste rate'
+      : todayCombined > 0
+        ? 'Waste share of recorded activity today'
+        : totalRecords > 0
+          ? 'Overall waste share of records'
+          : 'No waste recorded today';
   const toggleSeries = (series: DailySeries) => setVisibleSeries(current => {
     // At least one series must stay on screen, so the last visible one is left alone.
     if (current[series] && Object.values(current).filter(Boolean).length === 1) return current;
@@ -244,7 +267,7 @@ export function ConnectedManagerUsageWastePage() {
     {rangeInvalid && <p id={rangeMessageId} className="sl-manager-record-range-message" role="alert">{rangeMessage}</p>}
   </div>;
   return <><PageHeader eyebrow="Operations" title="Usage & Waste" description="Monitor ingredient usage and waste to identify trends, reduce losses, and improve efficiency." />
-    <div className="sl-admin-view sl-manager-usage-waste-v121 sl-manager-usage-live"><section className="sl-sa-kpis sl-dashboard-source-kpis"><article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Total Usage</span><strong title={usageSummary?.totalUsageToday && Number.isFinite(usageSummary.totalUsageToday.quantity) ? `${usageSummary.totalUsageToday.quantity.toLocaleString('en-PH')} ${usageSummary.totalUsageToday.unit}` : undefined}>{failed ? '—' : totalUsage}</strong><small>{failed ? 'Usage data unavailable' : usageSummary ? 'Usage quantity recorded today' : 'Loading usage summary'}</small></div></article><article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2 /></span><div><span>Total Waste</span><strong title={wasteSummary?.totalWasteToday && Number.isFinite(wasteSummary.totalWasteToday.quantity) ? `${wasteSummary.totalWasteToday.quantity.toLocaleString('en-PH')} ${wasteSummary.totalWasteToday.unit}` : undefined}>{failed ? '—' : totalWaste}</strong><small>{failed ? 'Waste data unavailable' : wasteSummary ? 'Waste quantity recorded today' : 'Loading waste summary'}</small></div></article><article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3 /></span><div><span>Waste Rate</span><strong>—</strong><small>Compatible-unit metric pending</small></div></article><article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Estimated Cost of Waste</span><strong title={wasteSummary && Number.isFinite(wasteSummary.totalWasteCostToday) ? formatExactPeso(wasteSummary.totalWasteCostToday) : undefined}>{wasteSummary && Number.isFinite(wasteSummary.totalWasteCostToday) ? formatCompactPeso(wasteSummary.totalWasteCostToday) : '—'}</strong><small>{failed ? 'Waste-cost data unavailable' : wasteSummary ? 'Waste cost recorded today' : 'Loading waste-cost summary'}</small></div></article></section>
+    <div className="sl-admin-view sl-manager-usage-waste-v121 sl-manager-usage-live"><section className="sl-sa-kpis sl-dashboard-source-kpis"><article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Total Usage</span><strong title={usageSummary?.totalUsageToday && Number.isFinite(usageSummary.totalUsageToday.quantity) ? `${usageSummary.totalUsageToday.quantity.toLocaleString('en-PH')} ${usageSummary.totalUsageToday.unit}` : undefined}>{failed ? '—' : totalUsage}</strong><small>{failed ? 'Usage data unavailable' : usageSummary ? 'Usage quantity recorded today' : 'Loading usage summary'}</small></div></article><article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2 /></span><div><span>Total Waste</span><strong title={wasteSummary?.totalWasteToday && Number.isFinite(wasteSummary.totalWasteToday.quantity) ? `${wasteSummary.totalWasteToday.quantity.toLocaleString('en-PH')} ${wasteSummary.totalWasteToday.unit}` : undefined}>{failed ? '—' : totalWaste}</strong><small>{failed ? 'Waste data unavailable' : wasteSummary ? 'Waste quantity recorded today' : 'Loading waste summary'}</small></div></article><article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3 /></span><div><span>Waste Rate</span><strong>{wasteRateValue}</strong><small>{wasteRateLabel}</small></div></article><article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Estimated Cost of Waste</span><strong title={wasteSummary && Number.isFinite(wasteSummary.totalWasteCostToday) ? formatExactPeso(wasteSummary.totalWasteCostToday) : undefined}>{wasteSummary && Number.isFinite(wasteSummary.totalWasteCostToday) ? formatCompactPeso(wasteSummary.totalWasteCostToday) : '—'}</strong><small>{failed ? 'Waste-cost data unavailable' : wasteSummary ? 'Waste cost recorded today' : 'Loading waste-cost summary'}</small></div></article></section>
       <div className="sl-manager-usage-analytics">
         <section className="sl-card">
           <header className="sl-card-header"><div className="sl-manager-analytics-heading"><h2 className="sl-card-title">Usage vs Waste Trend</h2><p className="sl-manager-analytics-updated">{chartStale ? <><RefreshCw size={12} aria-hidden="true" />Refresh failed — showing earlier figures, last updated {analyticsUpdatedAt ? formatTopbarDateTime(analyticsUpdatedAt) : 'unavailable'}</> : analyticsUpdatedAt ? <><RefreshCw size={12} aria-hidden="true" />Last updated {formatTopbarDateTime(analyticsUpdatedAt)}</> : 'Last updated unavailable'}</p></div><div className="sl-manager-analytics-header-tools"><ManagerDailyRecordLegend visible={visibleSeries} onToggle={toggleSeries} /><ManagerAnalyticsPeriod value={usagePeriod} onSelect={setUsagePeriod} ariaLabel="Usage vs Waste date range" /></div></header>
@@ -303,11 +326,6 @@ export function ConnectedManagerUsageWastePage() {
                 <ul>{zeroWasteReasonNames(reasonAnalytics.byReason, WASTE_REASONS).map(reason => <li key={reason}>{reason}</li>)}</ul>
               </div>}
             </>}
-            {/* General operational guidance, shown only when the data supports it. It is
-                plain inventory practice, never a prediction from a trained model. */}
-            {reasonAgree && reasonAnalytics && wasteGuidance(reasonAnalytics.byReason, WASTE_REASONS) && <div className="sl-manager-reason-insights" aria-label="Waste reason observations">
-              <p className="sl-manager-insight" data-tone="neutral"><ManagerInsightText text={wasteGuidance(reasonAnalytics.byReason, WASTE_REASONS)!} anchors={WASTE_REASONS} /></p>
-            </div>}
           </div>
         </section>
       </div>

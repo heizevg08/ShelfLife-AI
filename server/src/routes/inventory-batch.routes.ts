@@ -12,7 +12,7 @@ export function inventoryBatchRoutes(auth: AuthService, service: InventoryBatchS
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
   router.use(mongoInputGuard);
-  router.get('/summary', authorizeAdministration(['Admin', 'Manager', 'Inventory Staff']), actions.summary);
+  router.get('/summary', authorizeAdministration(['Super Admin', 'Admin', 'Manager', 'Inventory Staff']), actions.summary);
   router.get('/stock-in-summary', authorizeAdministration(['Manager', 'Inventory Staff']), actions.stockInSummary);
   router.get('/export.xlsx', authorizeAdministration(['Admin']), actions.exportXlsx);
   router.get('/', authorizeAdministration(['Admin', 'Manager', 'Inventory Staff']), actions.list);

@@ -137,9 +137,9 @@ test('the corrections fabricate no forecasting value', () => {
   const page = forecasting();
   // Every KPI keeps its truthful pending fallback copy when evaluation data is absent.
   assert.match(page, /<span>Forecast Accuracy<\/span>[\s\S]*?<strong>—<\/strong><small>Forecast data pending<\/small>/);
-  assert.match(page, /<span>Total Ingredients Forecasted<\/span><strong>—<\/strong>/);
-  assert.match(page, /<span>High Demand \(Next 7 Days\)<\/span><strong>—<\/strong>/);
-  assert.match(page, /<span>At-Risk Ingredients<\/span><strong>—<\/strong>/);
+  assert.match(page, /<span>Total Ingredients Forecasted<\/span>[\s\S]*?<strong>—<\/strong>/);
+  assert.match(page, /<span>High Demand \(Next 7 Days\)<\/span>[\s\S]*?<strong>—<\/strong>/);
+  assert.match(page, /<span>At-Risk Ingredients<\/span>[\s\S]*?<strong>—<\/strong>/);
   assert.match(page, /<ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available\." \/>/);
   // The panels fall back to trendWindow and ForecastInsightsEmpty when no live records exist.
   assert.match(page, /<ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points=\{[^}]*trendWindow\}/);

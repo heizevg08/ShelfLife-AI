@@ -40,22 +40,22 @@ test('Super Admin account rows reuse the Admin UserManagement role pill styling'
 test('Super Admin KPI cards use the authoritative all-account summary, including zero-role counts', () => {
   assert.match(table, /\(superAdmin \? dashboardSummary\(abort\.signal\) : accountSummary\(abort\.signal\)\)/);
   assert.match(table, /<span>Total Users<\/span><strong>\{summary \? totalUsers\.toLocaleString\(\) : '—'\}/);
-  assert.match(table, /<span>Active Accounts<\/span><strong>\{summary \? activeUsers\.toLocaleString\(\) : '—'\}/);
-  assert.match(table, /<span>Deactivated Accounts<\/span><strong>\{summary \? summary\.inactiveUsers\.toLocaleString\(\) : '—'\}/);
-  assert.match(table, /<span>Super Admin Accounts<\/span><strong>\{summary \? \(summary\.roleCounts\['Super Admin'\] \?\? 0\)\.toLocaleString\(\) : '—'\}/);
+  assert.match(table, /<span>Admin<\/span><strong>\{summary \? \(summary\.roleCounts\?\.Admin \?\? 0\)\.toLocaleString\(\) : '—'\}[\s\S]*?Admin accounts/);
+  assert.match(table, /<span>Managers<\/span><strong>\{summary \? \(summary\.roleCounts\?\.Manager \?\? 0\)\.toLocaleString\(\) : '—'\}[\s\S]*?Manager accounts/);
+  assert.match(table, /<span>Inventory Staff<\/span><strong>\{summary \? \(summary\.roleCounts\?\.\['Inventory Staff'\] \?\? 0\)\.toLocaleString\(\) : '—'\}[\s\S]*?Inventory Staff accounts/);
   assert.match(store, /totalUsers: totals\?\.totalUsers \?\? 0, activeUsers: totals\?\.activeUsers \?\? 0, inactiveUsers: activeOnly \? 0 : totals\?\.inactiveUsers \?\? 0, roleCounts/);
   assert.match(store, /users\.aggregate\(\[\{ \$match: roleFilter \}, \{ \$group: \{ _id: '\$role', count: \{ \$sum: 1 \} \} \}\]\)/);
   assert.match(policy, /summary: \(actor\?: Actor\) => store\.summary\(actor\?\.role === 'Admin' \? managedRoles\(actor\.role\) : null, actor\?\.role === 'Admin'/);
-  assert.match(table, /summary\.inactiveUsers\.toLocaleString\(\)/);
-  assert.match(table, /summary\.roleCounts\['Super Admin'\] \?\? 0/);
   assert.match(table, /const totalUsers = summary\?\.totalUsers/);
-  assert.match(table, /const activeUsers = summary\?\.activeUsers/);
   const kpiStart = table.indexOf('{superAdmin && <section className="sl-sa-kpis');
   const kpiEnd = table.indexOf('</section>}', kpiStart);
   const superAdminKpis = table.slice(kpiStart, kpiEnd);
   assert.match(superAdminKpis, /className="sl-sa-kpis sl-inventory-staff-kpis sl-admin-user-kpis sl-dashboard-kpis sl-superadmin-kpis sl-user-management-kpis"/);
   assert.equal((superAdminKpis.match(/className="sl-sa-kpi sl-inventory-staff-kpi" data-tone=/g) ?? []).length, 4);
-  assert.match(superAdminKpis, /data-tone="critical"><span className="sl-sa-kpi-icon"><ShieldCheck/);
+  // Same sequence, tones and icons as the Admin cards: Users (brand), Admin (info), Managers (attention), Inventory Staff (critical).
+  assert.deepEqual([...superAdminKpis.matchAll(/data-tone="(\w+)"/g)].map(m => m[1]), ['brand', 'info', 'attention', 'critical']);
+  assert.deepEqual([...superAdminKpis.matchAll(/<span>([^<]+)<\/span><strong>/g)].map(m => m[1]), ['Total Users', 'Admin', 'Managers', 'Inventory Staff']);
+  assert.doesNotMatch(superAdminKpis, /ShieldCheck|UserX|Deactivated Accounts|Active Accounts|Super Admin Accounts/);
 });
 
 test('Super Admin User Accounts table header fills the available table width', () => {

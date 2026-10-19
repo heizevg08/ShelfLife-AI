@@ -122,7 +122,12 @@ test('inventory batch API permits authorized Manager and Inventory Staff Stock-I
     assert.equal((await request(undefined)).status, 401);
     assert.equal((await request(manager)).status, 200);
     assert.equal((await request(admin, '?page=1&pageSize=10&category=Dairy&status=Low%20Stock')).status, 200);
-    assert.equal((await request(superAdmin, '/summary')).status, 403);
+    assert.equal((await request(superAdmin, '/summary')).status, 200);
+    assert.equal((await request(superAdmin)).status, 403);
+    assert.equal((await request(superAdmin, `/${batch.id}`)).status, 403);
+    assert.equal((await request(superAdmin, '/stock-in-summary')).status, 403);
+    assert.equal((await request(superAdmin, '/export.xlsx')).status, 403);
+    assert.equal((await request(superAdmin, '', 'POST', { ingredientId: '5'.repeat(24), dateReceived: '2030-01-10', quantity: 3, expirationDate: '2030-01-20', unitCost: 8 })).status, 403);
     const summaryResponse = await request(admin, '/summary'); assert.equal(summaryResponse.status, 200);
     const summary = await summaryResponse.json(); assert.equal(summary.inventoryValue, 32); assert.deepEqual(summary.categoryCounts, [{ label: 'Dairy', value: 1 }]);
     assert.equal((await request(staff, '/summary')).status, 200);

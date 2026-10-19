@@ -1,4 +1,4 @@
-import { Eye, EyeOff, FileText, Pencil, Search, ShieldCheck, Trash2, User, UserCheck, UserPlus, Users, UserX } from 'lucide-react';
+import { Eye, EyeOff, FileText, Pencil, Search, Trash2, User, UserCheck, UserPlus, Users, UserX } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { accountSummary, dashboardSummary, createAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
@@ -171,7 +171,6 @@ export function AccountsTable() {
   }
 
   const totalUsers = summary?.totalUsers ?? data?.total ?? 0;
-  const activeUsers = summary?.activeUsers ?? 0;
   return <>
     {!superAdmin && <section className="sl-sa-kpis sl-inventory-staff-kpis sl-admin-user-kpis sl-dashboard-kpis" aria-label="Active user management summary">
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Active Users</span><strong>{summary ? totalUsers.toLocaleString() : '—'}</strong><small>{summary ? 'Active authorized accounts' : 'Active account totals unavailable'}</small></div></article>
@@ -181,9 +180,9 @@ export function AccountsTable() {
     </section>}
     {superAdmin && <section className="sl-sa-kpis sl-inventory-staff-kpis sl-admin-user-kpis sl-dashboard-kpis sl-superadmin-kpis sl-user-management-kpis" aria-label="User management summary">
       <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Total Users</span><strong>{summary ? totalUsers.toLocaleString() : '—'}</strong><small>{summary ? 'System-wide accounts' : 'Account totals unavailable'}</small></div></article>
-      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UserCheck aria-hidden="true" /></span><div><span>Active Accounts</span><strong>{summary ? activeUsers.toLocaleString() : '—'}</strong><small>{summary ? 'Active lifecycle accounts' : 'Account totals unavailable'}</small></div></article>
-      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><UserX aria-hidden="true" /></span><div><span>Deactivated Accounts</span><strong>{summary ? summary.inactiveUsers.toLocaleString() : '—'}</strong><small>{summary ? 'Deactivated lifecycle accounts' : 'Account totals unavailable'}</small></div></article>
-      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ShieldCheck aria-hidden="true" /></span><div><span>Super Admin Accounts</span><strong>{summary ? (summary.roleCounts['Super Admin'] ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Across all lifecycle states' : 'Account totals unavailable'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UserCheck aria-hidden="true" /></span><div><span>Admin</span><strong>{summary ? (summary.roleCounts?.Admin ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Admin accounts' : 'Account totals unavailable'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Managers</span><strong>{summary ? (summary.roleCounts?.Manager ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Manager accounts' : 'Account totals unavailable'}</small></div></article>
+      <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Users aria-hidden="true" /></span><div><span>Inventory Staff</span><strong>{summary ? (summary.roleCounts?.['Inventory Staff'] ?? 0).toLocaleString() : '—'}</strong><small>{summary ? 'Inventory Staff accounts' : 'Account totals unavailable'}</small></div></article>
     </section>}
 
     <div className={superAdmin ? 'sl-v56-main-grid' : undefined}>

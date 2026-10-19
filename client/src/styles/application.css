@@ -1108,10 +1108,11 @@
     text-overflow: unset;
   }
   .sl-action-toast {
-    right: 1rem;
+    right: auto;
     left: 1rem;
-    max-width: none;
-    top: calc(var(--sl-topbar-height) + .5rem);
+    bottom: 1rem;
+    max-width: calc(100vw - 2rem);
+    top: auto;
     justify-content: space-between;
   }
   .sl-health-panel-header {
@@ -30352,10 +30353,10 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
   flex: none;
 }
 .sl-kpi-reference-v201 > .sl-sa-kpi .sl-sa-kpi-icon svg { width: 55%; height: 55%; }
-.sl-kpi-reference-v201 > .sl-sa-kpi > div { min-width: 0; gap: .1rem; display: grid; }
-.sl-kpi-reference-v201 > .sl-sa-kpi > div > span { color: var(--sl-muted); font: var(--sl-font-body); }
-.sl-kpi-reference-v201 > .sl-sa-kpi > div > strong { color: var(--sl-text); font: var(--sl-font-value); }
-.sl-kpi-reference-v201 > .sl-sa-kpi > div > small { color: var(--sl-muted); font: var(--sl-font-support); }
+.sl-kpi-reference-v201 > .sl-sa-kpi > div { min-width: 0; gap: 1px; display: grid; }
+.sl-kpi-reference-v201 > .sl-sa-kpi > div > span { color: var(--sl-muted); font-size: clamp(.875rem,.82rem + .15vw,.975rem); line-height: 1.35; }
+.sl-kpi-reference-v201 > .sl-sa-kpi > div > strong { color: var(--sl-text); font-size: clamp(1.75rem,1.55rem + .55vw,2.15rem); line-height: 1.05; }
+.sl-kpi-reference-v201 > .sl-sa-kpi > div > small { color: var(--sl-muted); font-size: clamp(.8125rem,.77rem + .13vw,.9rem); line-height: 1.4; }
 .sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=brand] {
   border-color: #d7eee4;
   border-top-color: var(--sl-brand);
@@ -31021,12 +31022,19 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 }
 
 /* Target-only cascade guard after the legacy role styles. */
+.sl-kpi-reference-v201 > .sl-sa-kpi { border: 1px solid var(--sl-border)!important; border-top-width: 3px!important; box-shadow: none!important; }
 .sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=brand] { border-color: #d7eee4!important; border-top-color: var(--sl-brand)!important; background: linear-gradient(110deg,#f7fffb,#fff)!important; }
+.sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=brand] .sl-sa-kpi-icon { color: #08764f!important; background: #e3f7ee!important; }
+.sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=brand] strong { color: var(--sl-text)!important; }
 .sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=info] { border-color: #0c5797 #dceaf7 #dceaf7!important; background: linear-gradient(110deg,#f6fbff,#fff)!important; }
 .sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=info] .sl-sa-kpi-icon { color: #0c5797!important; background: #e4f2ff!important; }
+.sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=info] strong { color: var(--sl-text)!important; }
 .sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=attention] { border-color: #f3e6c7!important; border-top-color: var(--sl-attention)!important; background: linear-gradient(110deg,#fffaf0,#fff)!important; }
 .sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=attention] .sl-sa-kpi-icon { color: #b97900!important; background: #fff1cf!important; }
+.sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=attention] strong { color: var(--sl-text)!important; }
 .sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=critical] { border-color: #f5d8dc!important; border-top-color: var(--sl-critical)!important; background: linear-gradient(110deg,#fff6f7,#fff)!important; }
+.sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=critical] .sl-sa-kpi-icon { color: #d92943!important; background: #ffe4e8!important; }
+.sl-kpi-reference-v201 > .sl-sa-kpi[data-tone=critical] strong { color: var(--sl-text)!important; }
 .sl-reference-records-table :is(th,td) { text-align: left!important; vertical-align: middle!important; height: auto!important; padding: clamp(.52rem,.45rem + .15vw,.66rem) clamp(.55rem,.45rem + .2vw,.72rem); }
 .sl-reference-records-table th { font-size: .7rem; font-weight: 650; }
 .sl-reference-records-table td { font-size: .75rem; }
@@ -31993,9 +32001,10 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-action-toast {
   z-index: 9999;
   position: fixed;
-  right: max(1.5rem,env(safe-area-inset-right));
-  top: calc(var(--sl-topbar-height) + 1rem);
-  bottom: auto;
+  left: max(1.5rem,env(safe-area-inset-left));
+  bottom: max(1.5rem,env(safe-area-inset-bottom));
+  right: auto;
+  top: auto;
   display: flex;
   align-items: center;
   gap: .75rem;
@@ -33744,6 +33753,36 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(5) { width: 27%; }
 .sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(6) { width: 18%; }
 .sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(7) { width: 9%; }
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status {
+  font-weight: 600;
+  font-size: .75rem;
+  padding: .22rem .65rem;
+  border-radius: var(--sl-radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status[data-tone="success"] {
+  color: #0d6832;
+  background: #e6f6ec;
+  border: 1px solid #b7e4c7;
+}
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status[data-tone="attention"] {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+}
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status[data-tone="critical"] {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+}
+.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status[data-tone="brand"] {
+  color: #075985;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+}
 /* Manager Forecasting empty body: the message lives outside the horizontal scroller on
    purpose. The scroller's canvas is 76rem wide, so a label centred inside it lands in the
    middle of the canvas; on a phone the visible port is ~369px and that centre falls past
@@ -34791,6 +34830,11 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-superadmin-dashboard .sl-sa-status-item { grid-template-columns:auto 1fr auto; gap:.5rem; display:grid; align-items:center; }
 .sl-superadmin-dashboard .sl-sa-status-label { color:var(--sl-text); }
 .sl-superadmin-dashboard .sl-sa-chart-message { margin:.8rem 0 0; color:var(--sl-muted); text-align:center; font:var(--sl-font-supporting); }
+@container (width>68.75rem) {
+  .sl-superadmin-dashboard .sl-sa-analytics-row-v317.sl-sa-overview-pair { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+.sl-superadmin-dashboard .sl-sa-overview-pair .sl-card-body { align-items:stretch; }
+.sl-superadmin-dashboard .sl-sa-overview-pair .sl-card-body > * { flex:1 1 auto; min-width:0; }
 @container (width<=68.75rem) {
   .sl-superadmin-dashboard .sl-sa-analytics-row-v317 { grid-template-columns:minmax(0,1fr); }
 }

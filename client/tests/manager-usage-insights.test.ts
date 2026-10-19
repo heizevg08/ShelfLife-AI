@@ -45,7 +45,7 @@ test('Manager callouts follow each card analytics response on its own period', (
   // peak callouts, generated from the chart's own daily points on that card's own period.
   assert.match(page, /dailyPeakInsight\(dailyPoints, 'usage', usagePeriod\)/);
   assert.match(page, /dailyPeakInsight\(dailyPoints, 'waste', usagePeriod\)/);
-  assert.match(page, /wasteGuidance\(reasonAnalytics\.byReason, WASTE_REASONS\)/);
+  assert.doesNotMatch(page, /sl-manager-reason-insights/);
   // The zero-count reasons are chips now, so the sentence helper is replaced by the name
   // list the chips are built from. Both read the same record counts.
   assert.match(page, /zeroWasteReasonNames\(reasonAnalytics\.byReason, WASTE_REASONS\)/);
@@ -55,7 +55,7 @@ test('Manager callouts follow each card analytics response on its own period', (
   assert.doesNotMatch(page, /topWasteIngredientInsight\(/);
   assert.doesNotMatch(page, /<p className="sl-manager-insight" data-tone="warm">/);
   assert.match(page, /reasonAnalytics\.total === 0 && <div className="sl-manager-reason-empty">/);
-  assert.match(page, /reasonAgree && reasonAnalytics && wasteGuidance\(reasonAnalytics\.byReason, WASTE_REASONS\) && <div className="sl-manager-reason-insights"/);
+  assert.doesNotMatch(page, /sl-manager-reason-insights/);
   assert.match(page, /\[usagePeriod, category, ingredientFilter, analyticsRevision\]/);
   assert.match(page, /\[wastePeriod, category, ingredientFilter, analyticsRevision\]/);
   assert.match(page, /FilterSelect ariaLabel="Filter usage and waste by date range" value=\{range\}/);
@@ -158,9 +158,8 @@ test('guidance appears only when the data supports it and never claims a model p
   // 'Other' has no single known remedy, so no guidance is invented for it.
   assert.equal(wasteGuidance({ Expired: 0, Spoiled: 0, Damaged: 0, 'Over-prepared': 0, Other: 2 }, reasons), null);
   assert.equal(wasteGuidance({ Expired: 0, Spoiled: 0, Damaged: 0, 'Over-prepared': 0, Other: 0 }, reasons), null);
-  // Every guidance sentence is plain operational advice: no model, prediction or forecast claim.
   const page = readFileSync(new URL('../src/components/application/ManagerUsageWastePage.tsx', import.meta.url), 'utf8');
-  assert.match(page, /wasteGuidance\(reasonAnalytics\.byReason, WASTE_REASONS\)/);
+  assert.doesNotMatch(page, /sl-manager-reason-insights/);
   assert.doesNotMatch(page, /AI recommends|our model|predicted waste|forecast suggests/i);
 });
 

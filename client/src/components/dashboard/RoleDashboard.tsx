@@ -7,7 +7,7 @@ import { Card, DataState, PageHeader, PlaceholderSummaryCards, PlaceholderTable,
 import { ForecastFlow, InventoryBatchDetailsDialog, WorkflowLink, WorkspaceLink } from '../application/ModulePage';
 import { AccountsTable } from '../application/AccountsTable';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
-import { listIngredientCategories, listIngredients } from '../../services/ingredients';
+import { getForecastAccuracy, listIngredientCategories, listIngredients, listStockInIngredients, type ForecastAccuracyResponse } from '../../services/ingredients';
 import { AuditTable } from '../application/AuditTable';
 import { sessionDisplayName } from '../../services/auth';
 import { getInventoryBatchSummary, listInventoryBatches, type InventoryBatch } from '../../services/inventory-batches';
@@ -149,8 +149,10 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
   const [summary, setSummary] = useState<Awaited<ReturnType<typeof getInventoryBatchSummary>> | null>(null);
   const [expirations, setExpirations] = useState<InventoryBatch[] | null>(null);
   const [requests, setRequests] = useState<ChangeRequest[] | null>(null);
+  const [accuracy, setAccuracy] = useState<ForecastAccuracyResponse | null>(null);
   const [inventoryError, setInventoryError] = useState(false);
   const [requestError, setRequestError] = useState(false);
+  const [accuracyError, setAccuracyError] = useState(false);
   const [batchDetail, setBatchDetail] = useState<InventoryBatch | null>(null);
   const [requestDetail, setRequestDetail] = useState<ChangeRequest | null>(null);
   useEffect(() => {
@@ -161,6 +163,13 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     listChangeRequests({ page: 1, pageSize: 10, status: 'PENDING', currentOnly: true }, controller.signal)
       .then(result => { if (!controller.signal.aborted) setRequests(result.items.slice(0, 5)); })
       .catch(() => { if (!controller.signal.aborted) setRequestError(true); });
+    listStockInIngredients(controller.signal)
+      .then(res => {
+        if (controller.signal.aborted || !res.ingredients.length) return null;
+        return getForecastAccuracy(res.ingredients[0].id, controller.signal);
+      })
+      .then(data => { if (!controller.signal.aborted && data) setAccuracy(data); })
+      .catch(() => { if (!controller.signal.aborted) setAccuracyError(true); });
     return () => controller.abort();
   }, []);
   const pendingState = (description: string) => <div className="sl-manager-reference-state"><ApplicationPendingState description={description} /></div>;
@@ -176,7 +185,7 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso /></span><div><span>Total Inventory Value</span><strong title={summary?.inventoryValue !== null && summary?.inventoryValue !== undefined && Number.isFinite(summary.inventoryValue) ? formatExactPeso(summary.inventoryValue) : undefined}>{inventoryError || summary?.inventoryValue === null || summary?.inventoryValue === undefined || !Number.isFinite(summary.inventoryValue) ? '—' : formatCompactPeso(summary.inventoryValue)}</strong><small>{inventoryError ? 'Inventory valuation unavailable' : !summary ? 'Loading inventory valuation' : summary.inventoryValue === null ? 'Some batches have no authoritative unit cost' : 'Current stock at authoritative unit cost'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Items Near Expiry (≤ 7 days)</span><strong>{summary?.nearExpiry ?? '—'}</strong><small>{inventoryError ? 'Expiration summary unavailable' : summary ? 'Batches requiring attention' : 'Loading expiration summary'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Low Stock Items</span><strong>{summary?.lowStockItems ?? '—'}</strong><small>{inventoryError ? 'Stock summary unavailable' : summary ? 'Items at or below minimum stock' : 'Loading stock summary'}</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span>{accuracy?.status === 'AVAILABLE' ? <><strong>{accuracy.metrics.accuracyScore}%</strong><small>Based on {accuracy.metrics.evaluatedDays} evaluated days</small></> : accuracy?.status === 'UNAVAILABLE' ? <><strong>—</strong><small>{accuracy.evaluatedDays}/{accuracy.minimumRequiredDays} evaluated days</small></> : <><strong>{accuracyError ? '—' : '…'}</strong><small>{accuracyError ? 'Forecast data unavailable' : 'Loading forecast accuracy'}</small></>}</div></article>
       </section>
 
       <section className="sl-manager-attention-grid" aria-label="Manager attention queue">

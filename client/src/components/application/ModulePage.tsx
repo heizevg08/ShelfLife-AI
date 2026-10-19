@@ -761,137 +761,6 @@ function SuperAdminIngredientsPage() {
           </div>
         </article>
       </section>
-
-      <div className="sl-sa-ingredients-layout">
-        <main className="sl-sa-ingredients-main">
-          <section className="sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records" aria-label="Ingredient catalogue">
-            <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
-              <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
-              <h2>Ingredient Records</h2>
-
-            </header>
-
-            <div className="sl-sa-ingredients-table-filters">
-              <div className="sl-sa-ingredients-filter-card" aria-label="Ingredient filters">
-            <label className="sl-sa-ingredients-search">
-              <span>Search ingredients</span>
-              <div>
-                <Search size={16} aria-hidden="true" />
-                <input
-                  type="search"
-                  value={searchDraft}
-                  onChange={event => setSearchDraft(event.target.value)}
-                  onKeyDown={event => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      applyFilters();
-                    }
-                  }}
-                  placeholder="Search by ingredient name or brand…"
-                />
-              </div>
-            </label>
-
-            <label>
-              <span>Category</span>
-              <FilterSelect ariaLabel="Filter ingredients by category" value={category} options={[{value:'All',label:'All Categories'},...INGREDIENT_CATEGORIES.map(value=>({value,label:value}))]} onChange={value => { setCategory(value); setPage(1); }}/>
-            </label>
-
-            <label>
-              <span>Supplier</span>
-              <FilterSelect ariaLabel="Supplier filter" value={supplierFilter} options={[{value:'All Suppliers',label:'All Suppliers'}]} onChange={value => { setSupplierFilter(value); setPage(1); }}/>
-            </label>
-
-            <label>
-              <span>Status</span>
-              <FilterSelect ariaLabel="Status filter" value={statusFilter} options={[{value:'All Statuses',label:'All Statuses'}]} onChange={value => { setStatusFilter(value); setPage(1); }}/>
-            </label>
-
-            <div className="sl-sa-ingredients-filter-actions">
-              <button type="button" className="sl-button" onClick={resetFilters}>Reset</button>
-              <ExportControl label="Export" menuId="sl-sa-ingredients-export-menu" />
-            </div>
-              </div>
-
-            </div>
-
-            <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell" role="region" aria-label="Live ingredient records" tabIndex={0}>
-              <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-security-activity-reference-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Ingredient Name</th>
-                    <th scope="col">Category</th>
-                    <th scope="col">Unit</th>
-                    <th scope="col">Default Shelf Life</th>
-                    <th scope="col">Brand</th>
-                    <th scope="col">Last Updated</th>
-                    <th scope="col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadError || !data || data.items.length === 0 ? (
-                    <tr className="sl-sa-records-dash-row sl-sa-ingredients-preview-row"><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td><span>—</span></td><td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label="Ingredient actions preview"><button type="button" className="sl-button sl-icon-button" aria-label="View ingredient" title="View" onClick={() => setPreviewAction('view')}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label="Edit ingredient" title="Edit" onClick={() => setPreviewAction('edit')}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label="Delete ingredient" title="Delete" onClick={() => setPreviewAction('delete')}><Trash2 size={16} aria-hidden="true" /></button></div></td></tr>
-                  ) : data.items.map(item => <tr key={item.id}>
-                    <td><span className="sl-sa-ingredient-name"><span className="sl-sa-ingredient-avatar" aria-hidden="true"><Leaf size={15} /></span><strong>{formatHumanReadableText(item.name)}</strong></span></td>
-                    <td><Status>{formatHumanReadableText(item.category)}</Status></td>
-                    <td>{item.unitOfMeasure}</td>
-                    <td>{item.defaultShelfLifeDays ? `${item.defaultShelfLifeDays} days` : '—'}</td>
-                    <td>{item.brand ? formatHumanReadableText(item.brand) : '—'}</td>
-                    <td>{formatUpdated(item.updatedAt)}</td>
-                    <td className="sl-sa-ingredients-actions-cell"><div className="sl-staff-waste-row-actions" aria-label={`${item.name} actions`}><button type="button" className="sl-button sl-icon-button" aria-label={`View ${item.name}`} title="View" onClick={() => setViewIngredient(item)}><Eye size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button" aria-label={`Edit ${item.name}`} title="Edit" onClick={() => openEdit(item)}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="sl-button sl-icon-button sl-staff-waste-delete" aria-label={`Delete ${item.name}`} title="Delete" onClick={() => { setDeleteError(''); setDeleteTarget(item); }}><Trash2 size={16} aria-hidden="true" /></button></div></td>
-                  </tr>)}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="sl-records-footer sl-staff-usage-footer sl-sa-ingredients-footer">
-              <label>
-                <span>Rows per page</span>
-                <select
-                  value={pageSize}
-                  aria-label="Rows per page"
-                  onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}
-                >
-                  <option value={10}>10</option>
-                  <option value={15}>15</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value={150}>150</option>
-                </select>
-              </label>
-              <span className="sl-staff-usage-pagination-note">
-                {data && data.total > 0 ? `Showing ${visibleStart}–${visibleEnd} of ${data.total} ingredients` : 'Showing 0 to 0 of 0 ingredients'}
-              </span>
-              <Pagination
-                compact
-                page={data?.page ?? page}
-                pageSize={data?.pageSize ?? pageSize}
-                total={data?.total ?? 0}
-                itemLabel="ingredients"
-                onPageChange={setPage}
-              />
-            </div>
-          </section>
-        </main>
-
-        <aside className="sl-sa-ingredients-rail" aria-label="Ingredient analytics">
-          <Card id="sa-ingredient-distribution" title="Ingredient Distribution">
-            <SuperAdminIngredientPending label="Ingredient distribution" compact />
-          </Card>
-
-          <Card id="sa-expiry-risk" title="Expiry Risk Overview">
-            <SuperAdminIngredientPending label="Expiry-risk analytics" compact />
-          </Card>
-
-          <Card id="sa-top-suppliers" title="Top Suppliers">
-            <SuperAdminIngredientPending label="Supplier analytics" compact />
-          </Card>
-
-          <Card id="sa-recent-ingredients" title="Recently Added Ingredients">
-            <SuperAdminIngredientPending label="Recent ingredient activity" compact />
-          </Card>
-        </aside>
-      </div>
     </div>
 
     <Dialog
@@ -1750,6 +1619,20 @@ function ManagerForecastingPage() {
   }, [recommendationsData, ingredient, ingredients]);
 
   const [forecastTableData, setForecastTableData] = useState<ForecastTableResponse | null>(null);
+  const [catalogSummary, setCatalogSummary] = useState<{ total: number; highDemand: number; atRisk: number } | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getForecastTable(1, 150, '', '', '', '', controller.signal)
+      .then(res => {
+        if (controller.signal.aborted) return;
+        const highDemand = res.items.filter(item => item.forecastedDemand > (item.avgDailyUsage * 30)).length;
+        const atRisk = res.items.filter(item => item.riskLevel === 'Critical' || item.riskLevel === 'High').length;
+        setCatalogSummary({ total: res.total, highDemand, atRisk });
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1777,9 +1660,9 @@ function ManagerForecastingPage() {
     <div className="sl-admin-view sl-mgr-forecast-page">
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Forecasting summary">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span>{accuracyData?.status === 'AVAILABLE' ? <><strong>{accuracyData.metrics.accuracyScore}%</strong><small>Based on {accuracyData.metrics.evaluatedDays} evaluated days</small></> : accuracyData?.status === 'UNAVAILABLE' && accuracyData.reason === 'INSUFFICIENT_EVALUATION_DATA' ? <><strong>—</strong><small>{accuracyData.evaluatedDays}/{accuracyData.minimumRequiredDays} evaluated days</small></> : <><strong>—</strong><small>Forecast data pending</small></>}</div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Forecast data pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Demand forecast pending</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At-Risk Ingredients</span><strong>—</strong><small>Risk forecast pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span>{catalogSummary || forecastTableData ? <><strong>{(catalogSummary?.total ?? forecastTableData?.total ?? 0).toLocaleString()}</strong><small>Active forecast models</small></> : <><strong>—</strong><small>Forecast data pending</small></>}</div></article>
+        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span>{catalogSummary || forecastTableData ? <><strong>{(catalogSummary?.highDemand ?? forecastTableData?.items.filter(item => item.forecastedDemand > (item.avgDailyUsage * 30)).length ?? 0).toLocaleString()}</strong><small>Ingredients with rising consumption</small></> : <><strong>—</strong><small>Demand forecast pending</small></>}</div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At-Risk Ingredients</span>{catalogSummary || forecastTableData ? <><strong>{(catalogSummary?.atRisk ?? forecastTableData?.items.filter(item => item.riskLevel === 'Critical' || item.riskLevel === 'High').length ?? 0).toLocaleString()}</strong><small>Shortage or stockout exposure</small></> : <><strong>—</strong><small>Risk forecast pending</small></>}</div></article>
       </section>
 
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
@@ -1814,7 +1697,7 @@ function ManagerForecastingPage() {
                   <td>{`${row.forecastedDemand.toFixed(1)} ${row.unit}`}</td>
                   <td>{row.recommendedAction}</td>
                   <td>
-                    <Status tone={row.riskLevel === 'Critical' ? 'critical' : row.riskLevel === 'High' ? 'attention' : row.riskLevel === 'Medium' ? 'brand' : 'neutral'}>
+                    <Status tone={row.riskLevel === 'Critical' ? 'critical' : row.riskLevel === 'High' ? 'attention' : row.riskLevel === 'Medium' ? 'brand' : 'success'}>
                       {row.riskLevel}
                     </Status>
                   </td>

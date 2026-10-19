@@ -1,34 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Clock3, FileText } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, FileText } from 'lucide-react';
 import { PageHeader } from '../../components/application/primitives';
 import { AuditTable } from '../../components/application/AuditTable';
 import { listAuditRecords, type AuditFilters } from '../../services/administration';
+import { formatDateTime } from '../../utils/date-time';
 
 // Security & Activity owns four audit KPIs and one shared Audit Logs table.
 //
-// Every number is a server-side count: each card issues a one-row query through
-// the same authorized GET /administration/audit-records contract the table uses
-// and reads that page's `total`, so no figure is derived from the rows that
-// happen to be loaded and none can be fabricated. The Active Sessions and
-// Security Alerts cards stay removed — no sessions or security-alert service
-// exists, and a card advertising a capability the product does not have is
-// misleading.
-//
-// KPI windows (documented on the cards and in the audit docs):
-//   Total Audit Events      all retained audit records — no window or filter
-//   Events (Last 30 Days)   rolling 30-day window, server-side on `timestamp`
-//   Successful Events       all retained records with status Success
-//   Failed Events           all retained records with status Failed
-// The status model is Success | Failed | Warning, so Total is deliberately not
-// the sum of Successful and Failed; Warning records belong to Total alone.
-const AUDIT_WINDOW_MS = 30 * 86400000;
-// Same 15-second cadence as the shared table's own poll, so the cards cannot
-// drift away from the records shown underneath them.
+// Every number is a server-side count or query:
+//   Total Audit Events   all retained audit records — no window or filter
+//   Success Rate         percentage of retained audit records with status Success
+//   Latest Activity      most recent recorded audit event timestamp
+//   Failed Events        all retained records with status Failed
+// The status model is Success | Failed | Warning.
 const KPI_REFRESH_MS = 15000;
 
-interface AuditKpis { total: number; recent: number; successful: number; failed: number }
+interface AuditKpis { total: number; successful: number; failed: number; latestTimestamp: string | null }
 
 // The backend counts the matching page and returns its total; a one-row page is
 // enough to read that total, so a count never transfers record payloads.
@@ -41,14 +30,15 @@ export default function SecurityActivity() {
 
   useEffect(() => {
     const abort = new AbortController();
-    const from = new Date(Date.now() - AUDIT_WINDOW_MS).toISOString();
     Promise.all([
       auditCount({}, abort.signal),
-      auditCount({ from }, abort.signal),
       auditCount({ status: 'Success' }, abort.signal),
       auditCount({ status: 'Failed' }, abort.signal),
+      listAuditRecords(1, 1, 'desc', {}, abort.signal).then(page => page.items[0]?.timestamp ?? null),
     ])
-      .then(([total, recent, successful, failed]) => { if (!abort.signal.aborted) setKpis({ total, recent, successful, failed }); })
+      .then(([total, successful, failed, latestTimestamp]) => {
+        if (!abort.signal.aborted) setKpis({ total, successful, failed, latestTimestamp });
+      })
       .catch(() => { if (!abort.signal.aborted) setKpis(null); });
     return () => abort.abort();
   }, [refresh]);
@@ -58,11 +48,19 @@ export default function SecurityActivity() {
     return () => window.clearInterval(interval);
   }, []);
 
+  const successRate = kpis && kpis.total > 0
+    ? `${Math.round((kpis.successful / kpis.total) * 100)}%`
+    : kpis?.total === 0 ? '100%' : undefined;
+
+  const latestActivityLabel = kpis?.latestTimestamp
+    ? formatDateTime(kpis.latestTimestamp)
+    : kpis && kpis.total === 0 ? 'None' : undefined;
+
   const cards = [
-    { tone: 'brand', Icon: FileText, label: 'Total Audit Events', value: kpis?.total, caption: kpis ? 'All retained audit records' : 'Audit summary unavailable' },
-    { tone: 'info', Icon: Clock3, label: 'Events (Last 30 Days)', value: kpis?.recent, caption: kpis ? 'Rolling 30-day window' : 'Audit summary unavailable' },
-    { tone: 'attention', Icon: CheckCircle2, label: 'Successful Events', value: kpis?.successful, caption: kpis ? 'Records with a Success outcome' : 'Audit summary unavailable' },
-    { tone: 'critical', Icon: AlertTriangle, label: 'Failed Events', value: kpis?.failed, caption: kpis ? 'Records with a Failed outcome' : 'Audit summary unavailable' },
+    { tone: 'brand', Icon: FileText, label: 'Total Audit Events', value: kpis?.total !== undefined ? kpis.total.toLocaleString() : '—', caption: kpis ? 'All retained audit records' : 'Audit summary unavailable' },
+    { tone: 'info', Icon: CheckCircle2, label: 'Success Rate', value: successRate ?? '—', caption: kpis ? `${kpis.successful.toLocaleString()} successful records` : 'Audit summary unavailable' },
+    { tone: 'attention', Icon: Activity, label: 'Latest Activity', value: latestActivityLabel ?? '—', caption: kpis?.latestTimestamp ? 'Most recent recorded event' : kpis ? 'No recorded events yet' : 'Audit summary unavailable' },
+    { tone: 'critical', Icon: AlertTriangle, label: 'Failed Events', value: kpis?.failed !== undefined ? kpis.failed.toLocaleString() : '—', caption: kpis ? 'Records with a Failed outcome' : 'Audit summary unavailable' },
   ] as const;
 
   return (

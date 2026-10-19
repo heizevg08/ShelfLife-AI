@@ -23,24 +23,21 @@ const authRoutes = read('../../server/src/routes/auth.routes.ts');
 const administrationRoutes = read('../../server/src/routes/administration.routes.ts');
 
 test('Security & Activity renders exactly four KPI cards from server-side counts', () => {
-  // Each card reads the `total` of a one-row query, so every figure is counted by the
-  // authorized backend rather than derived from whichever rows are currently loaded.
+  // Each card reads the `total` of a one-row query or the newest record timestamp,
+  // so figures are counted by the authorized backend rather than derived from whichever rows are currently loaded.
   assert.match(security, /listAuditRecords\(1, 1, 'desc', filters, signal\)\.then\(page => page\.total\)/);
-  // Documented windows: no filter (all retained), rolling 30 days, and the two supported
-  // outcome values of the Success | Failed | Warning status model.
-  assert.match(security, /const AUDIT_WINDOW_MS = 30 \* 86400000;/);
   assert.match(security, /auditCount\(\{\}, abort\.signal\)/, 'total uses no window or filter');
-  assert.match(security, /auditCount\(\{ from \}, abort\.signal\)/, 'recent uses the 30-day window');
   assert.match(security, /auditCount\(\{ status: 'Success' \}, abort\.signal\)/);
   assert.match(security, /auditCount\(\{ status: 'Failed' \}, abort\.signal\)/);
+  assert.match(security, /listAuditRecords\(1, 1, 'desc', \{\}, abort\.signal\)\.then\(page => page\.items\[0\]\?\.timestamp \?\? null\)/);
 
   const cards = security.slice(security.indexOf('const cards = ['), security.indexOf('] as const;', security.indexOf('const cards = [')));
   const labels = [...cards.matchAll(/label: '([^']+)'/g)].map(match => match[1]);
-  assert.deepEqual(labels, ['Total Audit Events', 'Events (Last 30 Days)', 'Successful Events', 'Failed Events']);
-  // No placeholder category and no literal number: every value is a fetched count.
-  for (const value of ['kpis?.total', 'kpis?.recent', 'kpis?.successful', 'kpis?.failed']) {
-    assert.ok(cards.includes(value), `${value} is a fetched count`);
-  }
+  assert.deepEqual(labels, ['Total Audit Events', 'Success Rate', 'Latest Activity', 'Failed Events']);
+  assert.ok(cards.includes('kpis?.total'));
+  assert.ok(cards.includes('successRate'));
+  assert.ok(cards.includes('latestActivityLabel'));
+  assert.ok(cards.includes('kpis?.failed'));
   assert.doesNotMatch(cards, /value: \d/, 'no KPI is hardcoded');
 });
 
