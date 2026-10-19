@@ -30,5 +30,6 @@ RUN python3 -m pip install --no-cache-dir -r ml/requirements-runtime.txt \
 ENV NODE_ENV=production
 ENV ML_PYTHON_EXECUTABLE=python3
 ENV ML_WORKER_SCRIPT=ml/src/10_persistent_inference_worker.py
+ENV ML_STARTUP_TIMEOUT_MS=90000
 
 CMD ["npm", "run", "start", "--workspace", "server"]

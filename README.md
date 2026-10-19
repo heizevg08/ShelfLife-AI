@@ -87,7 +87,7 @@ The Express API invokes the ML runtime through a small TypeScript integration la
 4. The worker runs `ml/src/09_selected_model_inference.py` to validate the six-feature contract and generate recursive consumption forecasts.
 5. `OperationalRiskService` and `OperationalRecommendationService` apply deterministic business logic to the forecast plus actual batch/expiry data — the model never mutates inventory.
 
-ML is opt-in locally: set `ML_PYTHON_EXECUTABLE` and `ML_WORKER_SCRIPT` in `server/.env`. Without them, the backend starts normally and ML endpoints remain unavailable. The Render Docker deployment sets both paths and starts the worker during backend startup, so a bad Python/runtime installation fails deployment rather than leaving a live API with a dead forecast endpoint.
+ML is opt-in locally: set `ML_PYTHON_EXECUTABLE` and `ML_WORKER_SCRIPT` in `server/.env`. Without them, the backend starts normally and ML endpoints remain unavailable. The Render Docker deployment sets both paths, gives a cold Python model load a 90-second startup budget, and starts the worker during backend startup, so a bad Python/runtime installation fails deployment rather than leaving a live API with a dead forecast endpoint.
 
 ## Local development
 
