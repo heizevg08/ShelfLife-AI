@@ -112,15 +112,18 @@ export async function startServer(config: Config, database: Database, shutdownTi
     await inventoryBatches?.ready();
     await usageRecords?.ready();
     await wasteRecords?.ready();
-    if (forecastWorker) {
-      stage = 'ml-runtime'; onStage(stage);
-      await forecastWorker.start();
-    }
     stage = 'http-listen'; onStage(stage);
     await new Promise<void>((resolve, reject) => {
       http.once('error', reject);
       http.listen(config.port, config.host, () => { http.off('error', reject); resolve(); });
     });
+    // Bind the HTTP port before the one-time Python model load. Render requires a
+    // web service to listen promptly; the worker can still fail startup cleanly
+    // after the process has become reachable instead of being killed mid-load.
+    if (forecastWorker) {
+      stage = 'ml-runtime'; onStage(stage);
+      await forecastWorker.start();
+    }
   } catch (error) {
     await stop();
     throw new StartupFailure(stage, error);

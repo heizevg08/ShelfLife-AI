@@ -133,7 +133,7 @@ test('configured forecast worker is ready before listening and is stopped before
     isConnected: () => connected,
   }, 5000, undefined, stage => stages.push(stage), undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, worker);
   await runtime.stop();
-  assert.deepEqual(stages, ['application-composition', 'database-connection', 'ml-runtime', 'http-listen']);
+  assert.deepEqual(stages, ['application-composition', 'database-connection', 'http-listen', 'ml-runtime']);
   assert.deepEqual(calls, ['connect', 'worker-start', 'worker-stop', 'disconnect']);
 });
 
