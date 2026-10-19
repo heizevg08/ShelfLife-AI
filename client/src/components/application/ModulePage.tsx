@@ -1510,6 +1510,7 @@ function ManagerForecastingPage() {
   const [dateTo, setDateTo] = useState('');
   const [category, setCategory] = useState('');
   const [ingredient, setIngredient] = useState('');
+  const [chartIngredient, setChartIngredient] = useState('');
   const [trendPeriod, setTrendPeriod] = useState('This Week');
   const [forecastSeriesVisible, setForecastSeriesVisible] = useState({ forecast: true, actual: true });
   const [search, setSearch] = useState('');
@@ -1540,6 +1541,7 @@ function ManagerForecastingPage() {
   }, []);
   const categoryOptions = useMemo(() => [{ value: '', label: 'All Categories' }, ...(categories ?? []).map(value => ({ value, label: formatHumanReadableText(value) }))], [categories]);
   const ingredientOptions = useMemo(() => [{ value: '', label: 'All Ingredients' }, ...(ingredients ?? []).filter(item => !category || item.category === category).map(item => ({ value: item.id, label: formatHumanReadableText(item.name) }))], [ingredients, category]);
+  const chartIngredientOptions = useMemo(() => (ingredients ?? []).map(item => ({ value: item.id, label: formatHumanReadableText(item.name) })), [ingredients]);
   const optionsLoading = categories === null || ingredients === null;
   const categoriesUnavailable = optionsFailed || optionsLoading || categoryOptions.length <= 1;
   const ingredientsUnavailable = optionsFailed || optionsLoading || ingredientOptions.length <= 1;
@@ -1580,7 +1582,7 @@ function ManagerForecastingPage() {
   const [recommendationsData, setRecommendationsData] = useState<RecommendationResponse | null>(null);
 
   useEffect(() => {
-    const targetIngredientId = ingredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
+    const targetIngredientId = chartIngredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
     if (!targetIngredientId) {
       setAccuracyData(null);
       setTrendData(null);
@@ -1601,11 +1603,11 @@ function ManagerForecastingPage() {
       setRecommendationsData(recs);
     });
     return () => controller.abort();
-  }, [ingredient, ingredients, trendPeriod, trendDays, today]);
+  }, [chartIngredient, ingredients, trendPeriod, trendDays, today]);
 
   const insights = useMemo<ForecastInsight[]>(() => {
     if (!recommendationsData || recommendationsData.status !== 'ADVISED') return [];
-    const targetIngredientId = ingredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
+    const targetIngredientId = chartIngredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
     const activeIngredient = (ingredients ?? []).find(item => item.id === targetIngredientId);
     const ingredientName = activeIngredient ? formatHumanReadableText(activeIngredient.name) : 'Selected Ingredient';
     const unitCost = activeIngredient?.standardUnitCost;
@@ -1616,7 +1618,7 @@ function ManagerForecastingPage() {
       ingredientName,
       unitCost,
     );
-  }, [recommendationsData, ingredient, ingredients]);
+  }, [recommendationsData, chartIngredient, ingredients]);
 
   const [forecastTableData, setForecastTableData] = useState<ForecastTableResponse | null>(null);
   const [catalogSummary, setCatalogSummary] = useState<{ total: number; highDemand: number; atRisk: number } | null>(null);
@@ -1636,9 +1638,7 @@ function ManagerForecastingPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const activeSearch = ingredient
-      ? (ingredients?.find(item => item.id === ingredient)?.name ?? search)
-      : search;
+    const activeSearch = search.trim() || (ingredient ? (ingredients?.find(item => item.id === ingredient)?.name ?? '') : '');
     const fromStr = tableDateWindow?.from ?? '';
     const toStr = tableDateWindow?.to ?? '';
 
@@ -1666,7 +1666,7 @@ function ManagerForecastingPage() {
       </section>
 
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
-        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow} meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
+        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend ingredient" value={chartIngredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '')} options={chartIngredientOptions} onChange={setChartIngredient} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow} meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
         <Card id="mgr-forecast-insights" title="Forecast Insights">{insights.length > 0 ? <ForecastInsightCards ariaLabel="Operational forecast insights and risk recommendations" insights={insights} /> : <ForecastInsightsEmpty />}</Card>
       </section>
 

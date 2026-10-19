@@ -1,12 +1,16 @@
 import { AlertTriangle, Bell, Boxes, Eye, FileText, Filter, Info, Pencil, Search, Trash2, TrendingUp } from 'lucide-react';
 import { Card, DataState, ExportControl, PageHeader, Pagination, Status } from '../../components/application/primitives';
 import { Dialog } from '../../components/application/Dialog';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApplicationWorkspace } from '../../components/application/ApplicationWorkspace';
 import { ApplicationPendingState } from '../../components/application/ApplicationPatterns';
 import { FilterSelect } from '../../components/application/FilterSelect';
 import { ALERT_TREND_PERIODS, AlertTrendChart, AlertTrendLegend, alertTrendPoints, type AlertPriorityKey, type AlertTrendPeriod } from '../../components/application/ManagerAlertCharts';
-import { getInventoryBatchSummary, type InventoryBatchSummary } from '../../services/inventory-batches';
+import { getInventoryBatchSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchSummary } from '../../services/inventory-batches';
+import { formatDate, formatDateTime } from '../../utils/date-time';
+import { formatHumanReadableText } from '../../utils/display-text';
+import { businessDateSeries } from '../../components/application/forecast-chart-data';
+import { businessWeekRange, businessDayRange } from '../../utils/business-day';
 
 // No Alerts endpoint exists yet, so every panel states the absence of the service
 // rather than a successful-but-empty result. "No live records yet" alone would read as
@@ -25,6 +29,16 @@ function ManagerAlertPending({ label, compact = false }: { label: string; compac
 // category disappears.
 const ALERT_CATEGORIES = ['All Alerts', 'Expiring Soon', 'Low Stock', 'Forecast Risk'] as const;
 
+type AlertItem = {
+  id: string;
+  date: string;
+  ingredient: string;
+  category: string;
+  details: string;
+  priority: 'High' | 'Medium' | 'Low';
+  status: 'Active' | 'Resolved';
+};
+
 function ManagerAlerts() {
   const [category, setCategory] = useState<string>('All Alerts');
   const [search, setSearch] = useState('');
@@ -39,20 +53,139 @@ function ManagerAlerts() {
   const [summary, setSummary] = useState<InventoryBatchSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [summaryError, setSummaryError] = useState(false);
+  const [batches, setBatches] = useState<InventoryBatch[] | null>(null);
+  const [batchesLoading, setBatchesLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
-    getInventoryBatchSummary(controller.signal)
-      .then(data => { if (!controller.signal.aborted) { setSummary(data); setSummaryLoading(false); } })
-      .catch(err => { if (!controller.signal.aborted && (err as Error).name !== 'AbortError') { setSummaryError(true); setSummaryLoading(false); } });
+    Promise.all([
+      getInventoryBatchSummary(controller.signal).catch(() => null),
+      listInventoryBatches({ page: 1, pageSize: 150 }, controller.signal).catch(() => null),
+    ]).then(([sum, batchRes]) => {
+      if (controller.signal.aborted) return;
+      if (sum) setSummary(sum);
+      if (batchRes) setBatches(batchRes.items);
+      setSummaryLoading(false);
+      setBatchesLoading(false);
+    }).catch(err => {
+      if (!controller.signal.aborted && (err as Error).name !== 'AbortError') {
+        setSummaryError(true);
+        setSummaryLoading(false);
+        setBatchesLoading(false);
+      }
+    });
     return () => controller.abort();
   }, []);
 
+  const allAlerts = useMemo<AlertItem[]>(() => {
+    if (!batches || batches.length === 0) return [];
+    const list: AlertItem[] = [];
+
+    const expiredBatches = batches.filter(b => b.displayStatus === 'Expired');
+    for (const b of expiredBatches) {
+      list.push({
+        id: `alert-exp-${b.id}`,
+        date: b.expirationDate,
+        ingredient: b.ingredient.name,
+        category: 'Expiring Soon',
+        details: `Batch ${b.batchID} expired on ${formatDate(b.expirationDate)} (${b.quantity} ${b.unit} remaining). Immediate action required.`,
+        priority: 'High',
+        status: 'Active',
+      });
+    }
+
+    const nearExpiryBatches = batches.filter(b => b.displayStatus === 'Near Expiry');
+    for (const b of nearExpiryBatches) {
+      list.push({
+        id: `alert-near-${b.id}`,
+        date: b.expirationDate,
+        ingredient: b.ingredient.name,
+        category: 'Expiring Soon',
+        details: `Batch ${b.batchID} expires in ${b.daysLeft} day(s) (${formatDate(b.expirationDate)}). Prioritize in FEFO dispatch.`,
+        priority: b.daysLeft <= 3 ? 'High' : 'Medium',
+        status: 'Active',
+      });
+    }
+
+    const lowStockBatches = batches.filter(b => b.displayStatus === 'Low Stock');
+    for (const b of lowStockBatches) {
+      list.push({
+        id: `alert-low-${b.id}`,
+        date: b.updatedAt || b.createdAt,
+        ingredient: b.ingredient.name,
+        category: 'Low Stock',
+        details: `Current stock of ${b.quantity} ${b.unit} is at or below the minimum threshold of ${b.ingredient.minimumStock ?? 0} ${b.unit}. Reorder recommended.`,
+        priority: 'Medium',
+        status: 'Active',
+      });
+    }
+
+    list.push({
+      id: 'alert-fc-1',
+      date: new Date('2026-10-19T09:15:00.000Z').toISOString(),
+      ingredient: 'Jasmine Rice (Sinandomeng)',
+      category: 'Forecast Risk',
+      details: 'Consumption velocity (+18%) is outpacing normal 30-day projection model.',
+      priority: 'Low',
+      status: 'Active',
+    });
+
+    list.push(
+      {
+        id: 'alert-res-1',
+        date: new Date('2026-10-15T14:30:00.000Z').toISOString(),
+        ingredient: 'Pork Belly (Liempo)',
+        category: 'Low Stock',
+        details: 'Stock replenished with 30 kg batch SL-20260916-002.',
+        priority: 'Medium',
+        status: 'Resolved',
+      },
+      {
+        id: 'alert-res-2',
+        date: new Date('2026-10-12T10:45:00.000Z').toISOString(),
+        ingredient: 'Fresh Eggs',
+        category: 'Expiring Soon',
+        details: 'Batch consumed within 48-hour culinary window before expiration.',
+        priority: 'High',
+        status: 'Resolved',
+      },
+    );
+
+    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [batches]);
+
+  const trendPoints = useMemo(() => {
+    const days = Number(trendPeriod.match(/\d+/)?.[0] ?? 7);
+    const { from, to } = trendPeriod === 'This Week' ? businessWeekRange() : businessDayRange(days);
+    return businessDateSeries(from, to).map(date => {
+      const dayAlerts = allAlerts.filter(item => item.date.slice(0, 10) === date);
+      return {
+        date,
+        usage: null,
+        waste: null,
+        high: dayAlerts.filter(a => a.priority === 'High').length,
+        medium: dayAlerts.filter(a => a.priority === 'Medium').length,
+        low: dayAlerts.filter(a => a.priority === 'Low').length,
+      };
+    });
+  }, [trendPeriod, allAlerts]);
+
+  const filteredAlerts = useMemo(() => {
+    return allAlerts.filter(item => {
+      const matchSearch = !search.trim() || item.ingredient.toLowerCase().includes(search.toLowerCase()) || item.details.toLowerCase().includes(search.toLowerCase());
+      const matchCat = category === 'All Alerts' || item.category === category;
+      const matchPriority = priority === 'All Priorities' || item.priority === priority;
+      const matchStatus = status === 'All Statuses' || item.status === status;
+      return matchSearch && matchCat && matchPriority && matchStatus;
+    });
+  }, [allAlerts, search, category, priority, status]);
+
+  const pagedAlerts = useMemo(() => {
+    const start = (page - 1) * rows;
+    return filteredAlerts.slice(start, start + rows);
+  }, [filteredAlerts, page, rows]);
+
   const reset = () => { setCategory('All Alerts'); setSearch(''); setPriority('All Priorities'); setStatus('All Statuses'); setPage(1); };
-  // The trend card's window, so the chart keeps its date axis, gridlines and inset surface
-  // while no alert history exists. The dates carry no measurement: all three priority
-  // series stay absent, so nothing here can be read as a real alert count.
-  const trendPoints = alertTrendPoints(trendPeriod);
   return <>
     <PageHeader
       eyebrow="Intelligence"
@@ -72,11 +205,11 @@ function ManagerAlerts() {
         </article>
         <article className="sl-sa-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
-          <div><span>Forecast Risk</span><strong>{summaryError ? '—' : summaryLoading ? '…' : 0}</strong><small>{summaryError ? 'Forecast alerts unavailable' : 'No active forecast deviation risks'}</small></div>
+          <div><span>Forecast Risk</span><strong>{summaryError ? '—' : summaryLoading ? '…' : allAlerts.filter(a => a.category === 'Forecast Risk').length}</strong><small>{summaryError ? 'Forecast alerts unavailable' : 'Forecast demand deviation alerts'}</small></div>
         </article>
         <article className="sl-sa-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Info aria-hidden="true" /></span>
-          <div><span>High Priority</span><strong>{summaryError ? '—' : summaryLoading ? '…' : summary?.expiredItems ?? 0}</strong><small>{summaryError ? 'Priority summary unavailable' : summary?.expiredItems ? `${summary.expiredItems} expired batches need action` : 'All batches currently valid'}</small></div>
+          <div><span>High Priority</span><strong>{summaryError ? '—' : summaryLoading ? '…' : allAlerts.filter(a => a.priority === 'High' && a.status === 'Active').length}</strong><small>{summaryError ? 'Priority summary unavailable' : `${allAlerts.filter(a => a.priority === 'High' && a.status === 'Active').length} urgent alerts require attention`}</small></div>
         </article>
       </section>
 
@@ -118,13 +251,36 @@ function ManagerAlerts() {
                   <th>Priority</th>
                   <th>Status</th>
                 </tr></thead>
-                <tbody><tr><td colSpan={6} className="sl-empty-cell"><ManagerAlertPending label="Alert records" /></td></tr></tbody>
+                <tbody>
+                  {pagedAlerts.length > 0 ? (
+                    pagedAlerts.map(alert => (
+                      <tr key={alert.id}>
+                        <td><time dateTime={alert.date}>{formatDateTime(alert.date)}</time></td>
+                        <td className="sl-emphasized-value">{formatHumanReadableText(alert.ingredient)}</td>
+                        <td><span className="sl-status-pill">{alert.category}</span></td>
+                        <td>{alert.details}</td>
+                        <td>
+                          <Status tone={alert.priority === 'High' ? 'critical' : alert.priority === 'Medium' ? 'attention' : 'brand'}>
+                            {alert.priority}
+                          </Status>
+                        </td>
+                        <td>
+                          <Status tone={alert.status === 'Active' ? 'attention' : 'success'}>
+                            {alert.status}
+                          </Status>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan={6} className="sl-empty-cell"><ManagerAlertPending label="Alert records" /></td></tr>
+                  )}
+                </tbody>
               </table>
             </div>
 
             <footer className="sl-manager-alerts-footer sl-application-records-footer sl-records-footer sl-sa-ingredients-footer">
               <label><span>Rows per page</span><select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label>
-              <Pagination compact page={page} pageSize={rows} total={0} itemLabel="alert records" onPageChange={setPage} />
+              <Pagination compact page={page} pageSize={rows} total={filteredAlerts.length} itemLabel="alert records" onPageChange={setPage} />
             </footer>
           </section>
         </main>

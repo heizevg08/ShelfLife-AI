@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Bell, CheckCheck, X, Check, ArrowUpRight } from 'lucide-react';
+import { Bell, CheckCheck, Check, ArrowUpRight } from 'lucide-react';
 import { formatDateTime } from '../../utils/date-time';
 import { currentUser } from '../../services/auth';
 import { apiClient } from '../../services/apiClient';
@@ -194,7 +194,7 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
       <Bell size={20} aria-hidden="true" />{unread > 0 && <span className="sl-notification-badge">{unread > 9 ? '9+' : unread}</span>}
     </button>
     {open && <section id="sl-notifications-panel" className="sl-notification-panel" role="dialog" aria-labelledby="sl-notifications-title">
-      <div className="sl-notification-header"><div><h2 id="sl-notifications-title">Notifications</h2></div><button type="button" className="sl-button sl-icon-button sl-close-button" aria-label="Close notifications" onClick={() => onChange(false)}><X size={17}/></button></div>
+      <div className="sl-notification-header"><div><h2 id="sl-notifications-title">Notifications</h2></div></div>
       <div className="sl-notification-tabs" role="tablist" aria-label="Notification filter"><button type="button" role="tab" aria-selected={filter === 'all'} className={filter === 'all' ? 'is-active' : ''} onClick={() => setFilter('all')}>All</button><button type="button" role="tab" aria-selected={filter === 'unread'} className={filter === 'unread' ? 'is-active' : ''} onClick={() => setFilter('unread')}>Unread <small>{unread > 9 ? '9+' : unread}</small></button><button type="button" role="tab" aria-selected={filter === 'requests'} className={filter === 'requests' ? 'is-active' : ''} onClick={() => setFilter('requests')}>Requests <small>{requests.length > 9 ? '9+' : requests.length}</small></button><button type="button" role="tab" aria-selected={filter === 'stock'} className={filter === 'stock' ? 'is-active' : ''} onClick={() => setFilter('stock')}>Stock <small>{stockItems.length > 9 ? '9+' : stockItems.length}</small></button></div>
       {actionError && <p className="sl-notification-error" role="alert">{actionError}</p>}
       {visibleItems.length > 0 && <div className="sl-notification-section-heading"><strong>{filter === 'requests' ? 'Requests' : filter === 'stock' ? 'New stock' : role === 'Manager' ? 'Recent notifications' : 'Recent updates'}</strong>{filter !== 'all' && filter !== 'unread' && <button type="button" onClick={() => { onChange(false); router.push(filter === 'stock' ? '/Inventory' : role === 'Manager' ? '/ChangeRequests' : '/MyRequests'); }}>View all</button>}</div>}

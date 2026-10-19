@@ -1108,8 +1108,8 @@
     text-overflow: unset;
   }
   .sl-action-toast {
-    right: auto;
-    left: 1rem;
+    right: 1rem;
+    left: auto;
     bottom: 1rem;
     max-width: calc(100vw - 2rem);
     top: auto;
@@ -2521,8 +2521,8 @@
   padding: .65rem .9rem;
   display: inline-flex;
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: calc(max(1.5rem, env(safe-area-inset-bottom)) + 3.75rem);
+  right: max(1.5rem, env(safe-area-inset-right));
 }
 .sl-back-to-top:hover {
   background: var(--sl-brand-hover);
@@ -3761,11 +3761,11 @@ section.sl-card:has(.sl-filter-popover) {
   background: lab(51.1826% 14.5871 49.0525);
 }
 .sl-back-to-top {
-  width: 54px;
-  height: 54px;
-  min-height: 54px;
-  bottom: 4.8rem;
-  right: 1.6rem;
+  width: 52px;
+  height: 52px;
+  min-height: 52px;
+  bottom: calc(max(1.5rem, env(safe-area-inset-bottom)) + 3.75rem);
+  right: max(1.5rem, env(safe-area-inset-right));
 }
 .sl-back-to-top svg {
   width: 22px;
@@ -25977,6 +25977,7 @@ section.sl-card:has(.sl-filter-popover) {
 }
 .sl-records-footer .sl-pagination {
   margin-left: auto;
+  margin-right: clamp(3.75rem, 5vw, 4.5rem);
 }
 @media (width<=760px){
   .sl-records-footer {
@@ -29335,6 +29336,7 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
   background: 0 0;
   border: 0;
   margin-left: auto;
+  margin-right: clamp(3.75rem, 5vw, 4.5rem);
   padding: 0;
 }
 :is(.sl-application-records,.sl-sa-account-pattern-records) :is(.sl-application-records-footer,.sl-records-footer) .sl-pagination:before,:is(.sl-application-records,.sl-sa-account-pattern-records) :is(.sl-application-records-footer,.sl-records-footer) .sl-pagination:after {
@@ -32001,9 +32003,9 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-action-toast {
   z-index: 9999;
   position: fixed;
-  left: max(1.5rem,env(safe-area-inset-left));
+  right: max(1.5rem,env(safe-area-inset-right));
   bottom: max(1.5rem,env(safe-area-inset-bottom));
-  right: auto;
+  left: auto;
   top: auto;
   display: flex;
   align-items: center;
@@ -34835,6 +34837,37 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 }
 .sl-superadmin-dashboard .sl-sa-overview-pair .sl-card-body { align-items:stretch; }
 .sl-superadmin-dashboard .sl-sa-overview-pair .sl-card-body > * { flex:1 1 auto; min-width:0; }
+.sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut-chart {
+  container-type:inline-size;
+  grid-template-rows:minmax(0,1fr) auto;
+  align-content:stretch;
+}
+.sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut-visual {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  justify-items:center;
+  gap:clamp(.75rem,2cqw,1.5rem);
+  width:min(100%,40rem);
+  margin-inline:auto;
+}
+.sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut {
+  width:clamp(8rem,27cqw,12rem);
+}
+.sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut-legend {
+  grid-template-columns:.66rem minmax(0,1fr) max-content;
+  width:100%;
+  min-width:0;
+  padding-inline:0;
+}
+@container (width<=30rem) {
+  .sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut-visual {
+    grid-template-columns:minmax(0,1fr);
+    width:min(100%,19rem);
+  }
+  .sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut {
+    width:clamp(8rem,38cqw,10rem);
+  }
+}
 @container (width<=68.75rem) {
   .sl-superadmin-dashboard .sl-sa-analytics-row-v317 { grid-template-columns:minmax(0,1fr); }
 }
