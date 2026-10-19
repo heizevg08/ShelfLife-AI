@@ -33324,6 +33324,57 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
     justify-self:end;
     margin-inline:0;
   }
+  .sl-manager-dashboard-v117 .sl-manager-expirations-table,
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table .sl-dashboard-source-table {
+    min-width:0;
+    table-layout:auto;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-expirations-table :is(thead,colgroup),
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table .sl-dashboard-source-table :is(thead,colgroup) {
+    display:none;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-expirations-table :is(tbody,tr,td),
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table .sl-dashboard-source-table :is(tbody,tr,td) {
+    display:block;
+    width:100%!important;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-expirations-table tbody,
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table .sl-dashboard-source-table tbody {
+    padding:.25rem .75rem .75rem;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-expirations-table tbody tr:has(td:not(.sl-empty-cell)),
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table .sl-dashboard-source-table tbody tr:has(td:not(.sl-empty-cell)) {
+    border:1px solid var(--sl-border-subtle);
+    border-radius:var(--sl-radius-md);
+    margin-top:.75rem;
+    padding:.35rem .75rem;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-expirations-table tbody td:not(.sl-empty-cell),
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table .sl-dashboard-source-table tbody td:not(.sl-empty-cell) {
+    text-align:right!important;
+    grid-template-columns:minmax(6.75rem,.42fr) minmax(0,1fr);
+    align-items:start;
+    gap:.75rem;
+    border:0;
+    padding:.45rem 0;
+    display:grid;
+  }
+  .sl-manager-dashboard-v117 .sl-manager-expirations-table tbody td:not(.sl-empty-cell)::before,
+  .sl-inventory-staff-dashboard-v140 .sl-inventory-staff-fefo-table .sl-dashboard-source-table tbody td:not(.sl-empty-cell)::before {
+    content:attr(data-label);
+    color:var(--sl-text-muted);
+    font:550 .75rem/1.5 "Inter",sans-serif;
+    letter-spacing:.045em;
+    text-align:left;
+    text-transform:uppercase;
+  }
+  .sl-user-accounts-table :is(th,td) {
+    padding:.6rem .65rem;
+  }
+  :is(.sl-application-records-table-shell,.sl-superadmin-table-scroll,.sl-sa-ingredients-table-scroll) {
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+  }
 }
 @media (max-width: 760px) {
   .sl-page-header-with-actions { align-items: stretch; flex-direction: column; }
