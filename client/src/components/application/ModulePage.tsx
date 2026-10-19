@@ -2049,7 +2049,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
       {content.summaryItems && <PlaceholderSummaryCards items={content.summaryItems} />}
       {(moduleId === 'InventoryBatches' || moduleId === 'ExpirationMonitoring') && <nav className="sl-module-tabs" aria-label="Inventory views">
         <Link href="/InventoryBatches" aria-current={moduleId === 'InventoryBatches' ? 'page' : undefined}>Inventory Batches</Link>
-        <Link href="/Ingredients">Ingredients</Link>
+        {user.role !== 'Inventory Staff' && <Link href="/Ingredients">Ingredients</Link>}
         {user.role !== 'Admin' && <Link href="/ExpirationMonitoring" aria-current={moduleId === 'ExpirationMonitoring' ? 'page' : undefined}>Expiration & FEFO</Link>}
       </nav>}
       {(moduleId === 'Usage' || moduleId === 'Waste') && <nav className="sl-module-tabs" aria-label="Transaction views"><Link href="/Usage" aria-current={moduleId === 'Usage' ? 'page' : undefined}>Usage Records</Link><Link href="/Waste" aria-current={moduleId === 'Waste' ? 'page' : undefined}>Waste Records</Link></nav>}
