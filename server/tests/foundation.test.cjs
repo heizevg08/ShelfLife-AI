@@ -19,6 +19,14 @@ test('startup diagnostics allowlist metadata and reject secret-bearing fields', 
   assert.equal(startupDiagnostic('configuration', new Error('Invalid configuration: JWT_SECRET=private-value')).message, undefined);
   assert.equal(startupDiagnostic('configuration', 'private-value').name, 'UnknownError');
   assert.deepEqual(startupDiagnostic('shutdown-registration', new TypeError('private-value')), { stage: 'shutdown-registration', name: 'TypeError' });
+  const workerError = Object.assign(new Error('mongodb://private:password@host model-path secret-token'), {
+    name: 'ForecastWorkerStartupError',
+    code: 'ML_WORKER_MODEL_CONTRACT_FAILED',
+  });
+  assert.deepEqual(startupDiagnostic('ml-runtime', workerError), {
+    stage: 'ml-runtime', name: 'ForecastWorkerStartupError', code: 'ML_WORKER_MODEL_CONTRACT_FAILED',
+  });
+  assert.equal(JSON.stringify(startupDiagnostic('ml-runtime', workerError)).includes('password'), false);
 });
 
 const config = { ...readConfig({ MONGO_URI: 'mongodb://test.invalid/foundation', NODE_ENV: 'test' }), port: 0 };

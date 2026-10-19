@@ -49,8 +49,8 @@ import { createOperationalRiskService, type OperationalRiskService } from './ser
 import { createOperationalRecommendationService, type OperationalRecommendationService } from './services/operational-recommendations';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'ml-runtime' | 'http-listen' | 'shutdown-registration';
-const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
-const safeCodes = new Set(['ECONNREFUSED', 'ENOTFOUND', 'ETIMEOUT', 'ETIMEDOUT', 'ESERVFAIL', 'ENODATA', 'ECONNRESET', 'EAI_AGAIN', 'EADDRINUSE', 'EADDRNOTAVAIL', 'EACCES', 'ERR_INVALID_ARG_TYPE', 'ERR_INVALID_ARG_VALUE']);
+const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError', 'ForecastWorkerStartupError']);
+const safeCodes = new Set(['ECONNREFUSED', 'ENOTFOUND', 'ETIMEOUT', 'ETIMEDOUT', 'ESERVFAIL', 'ENODATA', 'ECONNRESET', 'EAI_AGAIN', 'EADDRINUSE', 'EADDRNOTAVAIL', 'EACCES', 'ERR_INVALID_ARG_TYPE', 'ERR_INVALID_ARG_VALUE', 'ML_WORKER_START_TIMEOUT', 'ML_WORKER_SPAWN_FAILED', 'ML_WORKER_DEPENDENCY_UNAVAILABLE', 'ML_WORKER_ARTIFACT_MISSING', 'ML_WORKER_METADATA_CONTRACT_FAILED', 'ML_WORKER_MODEL_CONTRACT_FAILED', 'ML_WORKER_EXITED', 'ML_WORKER_PROTOCOL_ERROR']);
 
 // Allowlist metadata rather than redacting arbitrary driver messages or stacks.
 export function startupDiagnostic(stage: StartupStage, error: unknown) {

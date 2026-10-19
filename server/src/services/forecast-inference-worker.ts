@@ -57,6 +57,37 @@ interface PendingRequest {
 const STDERR_LIMIT = 4096;
 const STOP_GRACE_MS = 1000;
 
+// The Python process may include paths or model details in stderr. Keep the
+// original text local to this worker and expose only a fixed diagnostic code
+// at application startup.
+export class ForecastWorkerStartupError extends Error {
+  readonly code:
+    | 'ML_WORKER_START_TIMEOUT'
+    | 'ML_WORKER_SPAWN_FAILED'
+    | 'ML_WORKER_DEPENDENCY_UNAVAILABLE'
+    | 'ML_WORKER_ARTIFACT_MISSING'
+    | 'ML_WORKER_METADATA_CONTRACT_FAILED'
+    | 'ML_WORKER_MODEL_CONTRACT_FAILED'
+    | 'ML_WORKER_EXITED'
+    | 'ML_WORKER_PROTOCOL_ERROR';
+
+  constructor(
+    code: ForecastWorkerStartupError['code'],
+  ) {
+    super('Forecast worker startup failed.');
+    this.name = 'ForecastWorkerStartupError';
+    this.code = code;
+  }
+}
+
+function classifyStartupFailure(stderr: string): ForecastWorkerStartupError['code'] {
+  if (/ModuleNotFoundError|ImportError/.test(stderr)) return 'ML_WORKER_DEPENDENCY_UNAVAILABLE';
+  if (/FileNotFoundError|No such file or directory/.test(stderr)) return 'ML_WORKER_ARTIFACT_MISSING';
+  if (/metadata failed the worker contract/i.test(stderr)) return 'ML_WORKER_METADATA_CONTRACT_FAILED';
+  if (/model failed the worker contract/i.test(stderr)) return 'ML_WORKER_MODEL_CONTRACT_FAILED';
+  return 'ML_WORKER_EXITED';
+}
+
 function asError(error: unknown, fallback: string): Error {
   return error instanceof Error ? error : new Error(fallback);
 }
@@ -139,11 +170,6 @@ export function createForecastInferenceWorker(
 
   const rememberStderr = (chunk: Buffer | string) => {
     stderr = (stderr + chunk.toString()).slice(-STDERR_LIMIT);
-  };
-
-  const diagnosticSuffix = () => {
-    const message = stderr.trim();
-    return message ? ` Worker stderr: ${message}` : '';
   };
 
   const rejectPending = (error: Error) => {
@@ -242,9 +268,7 @@ export function createForecastInferenceWorker(
         if (settled) return;
         settled = true;
         process.kill();
-        rejectStart(
-          new Error(`Forecast worker startup timed out after ${config.mlStartupTimeoutMs} ms.${diagnosticSuffix()}`),
-        );
+        rejectStart(new ForecastWorkerStartupError('ML_WORKER_START_TIMEOUT'));
       }, config.mlStartupTimeoutMs);
 
       const finishStartupFailure = (error: Error) => {
@@ -257,17 +281,13 @@ export function createForecastInferenceWorker(
       process.stderr.on('data', rememberStderr);
 
       process.once('error', error => {
-        finishStartupFailure(
-          new Error(`Forecast worker failed to start.${diagnosticSuffix()} Cause: ${error.message}`),
-        );
+        finishStartupFailure(new ForecastWorkerStartupError('ML_WORKER_SPAWN_FAILED'));
         rejectPending(error);
         clearProcessState();
       });
 
       process.once('exit', (code, signal) => {
-        const error = new Error(
-          `Forecast worker exited unexpectedly (code=${code ?? 'null'}, signal=${signal ?? 'null'}).${diagnosticSuffix()}`,
-        );
+        const error = new ForecastWorkerStartupError(classifyStartupFailure(stderr));
         finishStartupFailure(error);
         rejectPending(error);
         clearProcessState();
@@ -281,13 +301,13 @@ export function createForecastInferenceWorker(
           try {
             value = JSON.parse(line.replace(/^\uFEFF/, ''));
           } catch {
-            finishStartupFailure(new Error('Forecast worker emitted malformed startup JSON.'));
+            finishStartupFailure(new ForecastWorkerStartupError('ML_WORKER_PROTOCOL_ERROR'));
             process.kill();
             return;
           }
 
           if (!isReadyMessage(value)) {
-            finishStartupFailure(new Error('Forecast worker did not emit the expected READY message.'));
+            finishStartupFailure(new ForecastWorkerStartupError('ML_WORKER_PROTOCOL_ERROR'));
             process.kill();
             return;
           }
