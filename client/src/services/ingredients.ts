@@ -42,3 +42,53 @@ export const createIngredient = (input: IngredientInput) => apiClient<{ ingredie
 
 export const updateIngredient = (id: string, input: IngredientInput) => apiClient<{ ingredient: Ingredient }>(`/ingredients/${id}`, { method: 'PUT', body: JSON.stringify(input), successMessage: 'Ingredient updated successfully.' });
 export const deleteIngredient = (id: string) => apiClient<void>(`/ingredients/${id}`, { method: 'DELETE', successMessage: 'Ingredient removed successfully.' });
+
+export interface ForecastAccuracyMetrics {
+  evaluatedDays: number;
+  minimumRequiredDays: number;
+  mae: number;
+  rmse: number;
+  wape: number | null;
+  accuracyScore: number | null;
+}
+
+export type ForecastAccuracyResponse =
+  | {
+      status: 'UNAVAILABLE';
+      reason: string;
+      evaluatedDays: number;
+      minimumRequiredDays: number;
+      ingredientId: string;
+      unit?: string;
+    }
+  | {
+      status: 'AVAILABLE';
+      ingredientId: string;
+      unit: string;
+      metrics: ForecastAccuracyMetrics;
+    };
+
+export interface ForecastVsActualPoint {
+  date: string;
+  forecast: number | null;
+  actual: number | null;
+}
+
+export interface ForecastVsActualResponse {
+  status: 'FOUND' | 'NOT_FOUND';
+  ingredientId?: string;
+  unit?: string;
+  points: ForecastVsActualPoint[];
+  meta?: {
+    ingredient: string;
+    unit: string;
+    asOf: string;
+    horizonDays: number;
+  };
+}
+
+export const getForecastAccuracy = (id: string, signal?: AbortSignal) =>
+  apiClient<ForecastAccuracyResponse>(`/ingredients/${id}/forecast-accuracy`, { signal });
+
+export const getForecastVsActual = (id: string, days = 30, signal?: AbortSignal) =>
+  apiClient<ForecastVsActualResponse>(`/ingredients/${id}/forecast-vs-actual?days=${days}`, { signal });

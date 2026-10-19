@@ -23,3 +23,14 @@ export function forecastInput(body: unknown): ForecastRequestInput {
   if (new Set(dates).size !== dates.length) invalid('forecastDates', 'Remove duplicate forecast dates');
   return { forecastDates: dates };
 }
+
+export function forecastTrendDays(query: unknown): number {
+  if (!query || typeof query !== 'object') return 30;
+  const raw = (query as Record<string, unknown>).days;
+  if (raw === undefined || raw === null || raw === '') return 30;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 90) {
+    invalid('days', 'Forecast evaluation trend days must be an integer between 1 and 90');
+  }
+  return parsed;
+}

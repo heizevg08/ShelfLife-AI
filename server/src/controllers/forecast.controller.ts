@@ -12,7 +12,8 @@ export function forecastControllers(service: OperationalForecastService): Record
     forecast: async (req, res) => {
       const id = objectId(req.params.id);
       const input = forecastInput(req.body);
-      const result = await service.forecast(id, input.forecastDates);
+      const actorId = res.locals.user?.id;
+      const result = await service.forecast(id, input.forecastDates, actorId);
       if (result.status === 'NOT_FOUND') {
         res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Ingredient not found', details: [] } });
         return;

@@ -11,6 +11,8 @@ import { recommendationControllers } from '../controllers/recommendation.control
 import type { OperationalForecastService } from '../services/operational-forecast';
 import type { OperationalRiskService } from '../services/operational-risk';
 import type { OperationalRecommendationService } from '../services/operational-recommendations';
+import type { ForecastEvaluationService } from '../services/forecast-evaluation-service';
+import { forecastEvaluationControllers } from '../controllers/forecast-evaluation.controller';
 import { mongoInputGuard, secureJson } from '../middleware/request-security.middleware';
 
 export function ingredientRoutes(
@@ -19,9 +21,11 @@ export function ingredientRoutes(
   forecast?: OperationalForecastService,
   risk?: OperationalRiskService,
   recommendations?: OperationalRecommendationService,
+  evaluation?: ForecastEvaluationService,
 ) {
   const router = Router(), actions = ingredientControllers(service);
   const forecastActions = forecast ? forecastControllers(forecast) : undefined;
+  const evaluationActions = evaluation ? forecastEvaluationControllers(evaluation) : undefined;
   const riskActions = risk ? riskControllers(risk) : undefined;
   const recommendationActions = recommendations ? recommendationControllers(recommendations) : undefined;
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
@@ -35,6 +39,10 @@ export function ingredientRoutes(
   router.put('/:id', authorizeAdministration(['Admin']), secureJson({ limit: '100kb' }), actions.update);
   router.delete('/:id', authorizeAdministration(['Admin']), actions.remove);
   if (forecastActions) router.post('/:id/forecast', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), forecastActions.forecast);
+  if (evaluationActions) {
+    router.get('/:id/forecast-accuracy', authorizeAdministration(['Admin', 'Manager']), evaluationActions.accuracy);
+    router.get('/:id/forecast-vs-actual', authorizeAdministration(['Admin', 'Manager']), evaluationActions.trend);
+  }
   if (riskActions) router.post('/:id/risk', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), riskActions.risk);
   if (recommendationActions) router.post('/:id/recommendations', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), recommendationActions.recommend);
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });

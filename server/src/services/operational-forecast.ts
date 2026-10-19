@@ -1,6 +1,7 @@
 import type { ForecastInferenceWorker, ForecastPrediction } from './forecast-inference-worker';
 import type { ForecastingHistoryResult } from './forecasting-history';
 import type { ForecastingHistoryStore } from './forecasting-history-store';
+import type { ForecastSnapshotStore } from './forecast-snapshot-store';
 
 type ForecastUnavailableReason = Extract<
   ForecastingHistoryResult,
@@ -26,15 +27,17 @@ export interface OperationalForecastService {
   forecast(
     ingredientId: string,
     forecastDates: readonly string[],
+    actorId?: string,
   ): Promise<OperationalForecastResult>;
 }
 
 export function createOperationalForecastService(
   histories: ForecastingHistoryStore,
   worker: ForecastInferenceWorker,
+  snapshots?: ForecastSnapshotStore,
 ): OperationalForecastService {
   return {
-    async forecast(ingredientId, forecastDates) {
+    async forecast(ingredientId, forecastDates, actorId) {
       const lookup = await histories.forIngredient(ingredientId);
 
       if (!lookup.found) {
@@ -57,6 +60,15 @@ export function createOperationalForecastService(
         history,
         forecastDates: [...forecastDates],
       });
+
+      if (snapshots && actorId) {
+        await snapshots.saveSnapshots({
+          ingredientId: lookup.history.ingredientId,
+          unit: lookup.history.unit,
+          createdBy: actorId,
+          predictions,
+        });
+      }
 
       return {
         status: 'FORECAST',

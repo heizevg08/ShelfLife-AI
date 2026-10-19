@@ -16,7 +16,7 @@ import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSumm
 import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
-import { createIngredient, deleteIngredient, getIngredientSummary, INGREDIENT_CATEGORIES, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type Ingredient, type IngredientInput, type StockInIngredient } from '../../services/ingredients';
+import { createIngredient, deleteIngredient, getForecastAccuracy, getForecastVsActual, getIngredientSummary, INGREDIENT_CATEGORIES, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type ForecastAccuracyResponse, type ForecastVsActualResponse, type Ingredient, type IngredientInput, type StockInIngredient } from '../../services/ingredients';
 import { getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
 import { getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
 import { getWasteSummary, listWasteRecords, type WasteReason, type WasteRecord, type WasteSummary } from '../../services/waste-records';
@@ -1620,18 +1620,42 @@ function ManagerForecastingPage() {
   const trendDays = Number(trendPeriod.match(/\d+/)?.[0] ?? 30);
   const { from: trendFrom, to: trendTo } = trendPeriod === 'This Week' ? businessWeekRange() : businessDayRange(trendDays);
   const trendWindow = emptyForecastWindow(trendFrom, trendTo);
+
+  const [accuracyData, setAccuracyData] = useState<ForecastAccuracyResponse | null>(null);
+  const [trendData, setTrendData] = useState<ForecastVsActualResponse | null>(null);
+
+  useEffect(() => {
+    const targetIngredientId = ingredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
+    if (!targetIngredientId) {
+      setAccuracyData(null);
+      setTrendData(null);
+      return;
+    }
+    const controller = new AbortController();
+    const days = trendPeriod === 'This Week' ? 7 : trendDays;
+    Promise.all([
+      getForecastAccuracy(targetIngredientId, controller.signal).catch(() => null),
+      getForecastVsActual(targetIngredientId, days, controller.signal).catch(() => null),
+    ]).then(([acc, trend]) => {
+      if (controller.signal.aborted) return;
+      setAccuracyData(acc);
+      setTrendData(trend);
+    });
+    return () => controller.abort();
+  }, [ingredient, ingredients, trendPeriod, trendDays]);
+
   return <>
     <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
     <div className="sl-admin-view sl-mgr-forecast-page">
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Forecasting summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span>{accuracyData?.status === 'AVAILABLE' ? <><strong>{accuracyData.metrics.accuracyScore}%</strong><small>Based on {accuracyData.metrics.evaluatedDays} evaluated days</small></> : accuracyData?.status === 'UNAVAILABLE' && accuracyData.reason === 'INSUFFICIENT_EVALUATION_DATA' ? <><strong>—</strong><small>{accuracyData.evaluatedDays}/{accuracyData.minimumRequiredDays} evaluated days</small></> : <><strong>—</strong><small>Forecast data pending</small></>}</div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span><strong>—</strong><small>Forecast data pending</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span><strong>—</strong><small>Demand forecast pending</small></div></article>
         <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At-Risk Ingredients</span><strong>—</strong><small>Risk forecast pending</small></div></article>
       </section>
 
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
-        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendWindow} meta={{ ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: 30 }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
+        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow} meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
         <Card id="mgr-forecast-insights" title="Forecast Insights"><ForecastInsightsEmpty /></Card>
       </section>
 

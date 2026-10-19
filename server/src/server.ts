@@ -47,6 +47,9 @@ import { createForecastingHistoryStore } from './services/forecasting-history-st
 import { createOperationalForecastService, type OperationalForecastService } from './services/operational-forecast';
 import { createOperationalRiskService, type OperationalRiskService } from './services/operational-risk';
 import { createOperationalRecommendationService, type OperationalRecommendationService } from './services/operational-recommendations';
+import { forecastSnapshotModel } from './models/forecast-snapshot';
+import { createForecastSnapshotStore } from './services/forecast-snapshot-store';
+import { createForecastEvaluationService, type ForecastEvaluationService } from './services/forecast-evaluation-service';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
@@ -81,11 +84,11 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService, operationalEvaluation?: ForecastEvaluationService) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations, config.trustProxy));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations, config.trustProxy, operationalEvaluation));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -214,10 +217,16 @@ if (require.main === module) {
     let operationalForecast: OperationalForecastService | undefined;
     let operationalRisk: OperationalRiskService | undefined;
     let operationalRecommendations: OperationalRecommendationService | undefined;
+    const forecastSnapshotStore = createForecastSnapshotStore(forecastSnapshotModel(driver));
+    const operationalEvaluation: ForecastEvaluationService = createForecastEvaluationService(
+      ingredientModel(driver),
+      usageRecordModel(driver),
+      forecastSnapshotStore,
+    );
     if (config.mlPythonExecutable && config.mlWorkerScript) {
       const forecastWorker = createForecastInferenceWorker(config);
       const forecastHistoryStore = createForecastingHistoryStore(usageRecordModel(driver), ingredientModel(driver));
-      operationalForecast = createOperationalForecastService(forecastHistoryStore, forecastWorker);
+      operationalForecast = createOperationalForecastService(forecastHistoryStore, forecastWorker, forecastSnapshotStore);
       operationalRisk = createOperationalRiskService(operationalForecast, ingredientModel(driver), inventoryBatchModel(driver));
       operationalRecommendations = createOperationalRecommendationService(operationalRisk);
     }
@@ -229,7 +238,7 @@ if (require.main === module) {
     const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, {
       loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange,
       secureCookies: config.nodeEnv === 'production', cookieSameSite: config.cookieSameSite, auditAuthenticationEvent,
-    }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations);
+    }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations, operationalEvaluation);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');
