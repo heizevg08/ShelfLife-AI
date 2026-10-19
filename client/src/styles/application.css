@@ -31129,21 +31129,21 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 }
 
 /* Super Admin's ancestor-scoped tone colors are bridged without recreating its shared KPI geometry. */
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=brand] .sl-sa-kpi-icon {
+:is(.sl-admin-view, .sl-superadmin-surface) .sl-dashboard-kpis > .sl-sa-kpi[data-tone=brand] .sl-sa-kpi-icon {
   color: var(--sl-brand);
   background: var(--sl-brand-subtle);
 }
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=brand] strong {
+:is(.sl-admin-view, .sl-superadmin-surface) .sl-dashboard-kpis > .sl-sa-kpi[data-tone=brand] strong {
   color: var(--sl-brand);
 }
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=attention] strong {
+:is(.sl-admin-view, .sl-superadmin-surface) .sl-dashboard-kpis > .sl-sa-kpi[data-tone=attention] strong {
   color: var(--sl-attention);
 }
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=critical] .sl-sa-kpi-icon {
+:is(.sl-admin-view, .sl-superadmin-surface) .sl-dashboard-kpis > .sl-sa-kpi[data-tone=critical] .sl-sa-kpi-icon {
   color: var(--sl-critical);
   background: var(--sl-critical-bg);
 }
-.sl-admin-view .sl-dashboard-kpis > .sl-sa-kpi[data-tone=critical] strong {
+:is(.sl-admin-view, .sl-superadmin-surface) .sl-dashboard-kpis > .sl-sa-kpi[data-tone=critical] strong {
   color: var(--sl-critical);
 }
 .sl-dashboard-source-layout .sl-card {
