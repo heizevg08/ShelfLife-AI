@@ -31,7 +31,6 @@ test('Super Admin surfaces share the approved application-wide palette, not a ro
 
 test('Super Admin tables retain horizontal scroll ownership on narrow screens', () => {
   assert.match(accounts, /sl-table-scroll sl-superadmin-table-scroll/);
-  assert.match(dashboard, /sl-table-scroll sl-superadmin-table-scroll/);
   assert.match(css, /\.sl-superadmin-table-scroll \{[\s\S]*?overflow-x:auto!important;/);
   assert.match(css, /\.sl-superadmin-users-page-v64 \.sl-superadmin-table \{ min-width:68rem!important; \}/);
 });

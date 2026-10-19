@@ -33,20 +33,20 @@ test('every Source-of-Truth-derived role and canonical route decision is enforce
       checked += 1;
     }
   }
-  assert.equal(Object.keys(canonicalWorkspaceAccess).length, 29);
-  assert.equal(checked, 116);
+  assert.equal(Object.keys(canonicalWorkspaceAccess).length, 28);
+  assert.equal(checked, 112);
 });
 
-test('Super Admin retains administration duties without operational oversight routes', () => {
-  const removed = ['/Ingredients', '/InventoryBatches', '/Usage', '/Waste', '/ChangeRequests', '/ExpirationMonitoring', '/Forecasting', '/Alerts', '/Reports'];
+test('Super Admin retains administration duties and ingredient access without operational execution routes', () => {
+  const removed = ['/InventoryBatches', '/Usage', '/Waste', '/ChangeRequests', '/ExpirationMonitoring', '/Forecasting', '/Alerts', '/Reports'];
   for (const path of removed) assert.equal(canOpenWorkspacePath('Super Admin', path), false, path);
-  for (const path of ['/SuperAdminDashboard', '/UserManagement', '/SecurityActivity', '/SystemSettings', '/AdministrativeAudit']) {
+  for (const path of ['/SuperAdminDashboard', '/Ingredients', '/UserManagement', '/SecurityActivity', '/AdministrativeAudit']) {
     assert.equal(canOpenWorkspacePath('Super Admin', path), true, path);
   }
   const shell = readFileSync(new URL('../src/components/application/ApplicationShell.tsx', import.meta.url), 'utf8');
   const dashboard = readFileSync(new URL('../src/components/dashboard/SuperAdminDashboard.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(shell, /System Oversight|Alert Queue|Change Request Queue|Waste & Forecast Reports/);
-  assert.doesNotMatch(dashboard, /ExpirationMonitoring|Critical \/ Expiring Ingredients|Waste Trend|Forecast Accuracy/);
+  assert.doesNotMatch(dashboard, /ExpirationMonitoring|Critical \/ Expiring Ingredients|Waste Trend/);
 });
 
 test('Manager Change Requests is selected inside the Vite route outlet', () => {

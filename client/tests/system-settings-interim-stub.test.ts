@@ -89,16 +89,16 @@ test('System Settings page stays read-only: no controls, no state, no backend bo
   assert.doesNotMatch(settings, /fetch\(|localStorage|typeof window/);
 });
 
-test('/SystemSettings remains reachable for Super Admin and denied for every other role', () => {
-  assert.deepEqual(canonicalWorkspaceAccess['/SystemSettings'], ['Super Admin']);
+test('/SystemSettings is removed from canonical workspace access and denied for all roles', () => {
+  assert.equal(canonicalWorkspaceAccess['/SystemSettings' as keyof typeof canonicalWorkspaceAccess], undefined);
   const roles = ['Super Admin', 'Admin', 'Manager', 'Inventory Staff'] as const;
   for (const role of roles) {
-    assert.equal(canOpenWorkspacePath(role, '/SystemSettings'), role === 'Super Admin', `${role} at /SystemSettings`);
+    assert.equal(canOpenWorkspacePath(role, '/SystemSettings'), false, `${role} at /SystemSettings`);
   }
 });
 
-test('Super Admin sidebar keeps the System Settings navigation entry', () => {
-  assert.match(navigation, /id: 'settings', path: '\/SystemSettings', label: 'System Settings'/);
+test('Super Admin sidebar removes the System Settings navigation entry', () => {
+  assert.doesNotMatch(navigation, /id: 'settings', path: '\/SystemSettings', label: 'System Settings'/);
 });
 
 // The legacy generic renderer still carries the retired settings preview branch.

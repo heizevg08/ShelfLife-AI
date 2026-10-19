@@ -44,9 +44,9 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const dashboardPath = dashboardPaths[user?.role ?? 'Super Admin'];
   const destinations = [{ label: 'Dashboard', Icon: LayoutDashboard, path: dashboardPath }, ...(user?.role === 'Super Admin' ? administrationAreas.filter(area => !('hidden' in area && area.hidden)) : user ? workspaceNavigation(user.role) : [])];
   const superAdminSearchEntries = user?.role === 'Super Admin' ? [
+    { label: 'Ingredients', path: '/Ingredients', Icon: Search, keywords: 'ingredients stock catalog categories unit shelf life supply inventory' },
     { label: 'User Accounts', path: '/UserManagement', Icon: Search, keywords: 'users accounts admin manager inventory staff create add user roles active deactivated' },
     { label: 'Recent Audit Logs', path: '/AdministrativeAudit', Icon: Search, keywords: 'audit logs actor action account created updated deactivated reactivated security activity' },
-    { label: 'System Configuration', path: '/SystemSettings', Icon: Search, keywords: 'settings configuration session policy notifications inventory rules policies' },
   ] : [];
   const searchIndex = [...destinations.map(item => ({ ...item, keywords: item.label })), ...superAdminSearchEntries];
   const searchMatches = searchQuery.trim()

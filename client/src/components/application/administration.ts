@@ -1,11 +1,10 @@
-import { ScrollText, Settings2, ShieldCheck, UsersRound } from 'lucide-react';
+import { Leaf, ScrollText, Settings2, ShieldCheck, UsersRound } from 'lucide-react';
 
 // Product responsibilities only; these definitions do not grant API permissions.
 export const administrationAreas = [
+  { id: 'ingredients', path: '/Ingredients', label: 'Ingredients', Icon: Leaf, summary: 'Manage ingredients catalog' },
   { id: 'accounts', path: '/UserManagement', label: 'Users', Icon: UsersRound, summary: 'Manage authorized user accounts' },
   { id: 'security', path: '/SecurityActivity', label: 'Security & Activity', Icon: ShieldCheck, summary: 'Protected security and audit activity' },
-  { id: 'settings', path: '/SystemSettings', label: 'System Settings', Icon: Settings2, summary: 'Application configuration' },
-
   { id: 'audit', path: '/AdministrativeAudit', label: 'Audit Logs', Icon: ScrollText, summary: 'Protected administrative audit records', hidden: true },
 ] as const;
 

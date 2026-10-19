@@ -1,15 +1,25 @@
 import { Link } from '../../routing/navigation';
-import { ArrowRight, FileText, UsersRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowRight, ChartNoAxesCombined, CheckCircle2, FileText, PieChart, Users, UsersRound, type LucideIcon } from 'lucide-react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { dashboardSummary, listAccounts, listAuditRecords, type DashboardSummary } from '../../services/administration';
 import { sessionDisplayName, type SessionUser } from '../../services/auth';
 import { buildAccountAnalytics } from '../../utils/account-analytics';
-import { Card, PageHeader} from '../application/primitives';
-import { AuditTable } from '../application/AuditTable';
+import { Card, PageHeader } from '../application/primitives';
+import { FilterSelect } from '../application/FilterSelect';
+import { ForecastVsActualChart, ForecastVsActualLegend } from '../application/ManagerForecastCharts';
+import { emptyForecastWindow } from '../application/forecast-chart-data';
+import { businessDateInputValue, businessDayRange, businessWeekRange } from '../../utils/business-day';
+import { getForecastVsActual, listStockInIngredients, type ForecastVsActualResponse, type StockInIngredient } from '../../services/ingredients';
+import { formatHumanReadableText } from '../../utils/display-text';
 
 const AUTO_REFRESH_MS = 15000;
-function ChartCardTitle({ children }: { children: string }) {
-  return <span className="sl-dashboard-card-heading"><span className="sl-sa-card-heading-copy"><span>{children}</span></span></span>;
+function ChartCardTitle({ Icon, children }: { Icon?: LucideIcon; children: ReactNode }) {
+  return (
+    <span className="sl-dashboard-card-heading">
+      {Icon && <span className="sl-application-card-icon"><Icon size={16} aria-hidden="true" /></span>}
+      <span className="sl-sa-card-heading-copy"><span>{children}</span></span>
+    </span>
+  );
 }
 
 export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
@@ -29,10 +39,57 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   const [summaryError, setSummaryError] = useState(false);
   const [accountsTotal, setAccountsTotal] = useState<number | null>(null);
   const [accountsError, setAccountsError] = useState(false);
-  // Only the count is needed here: the table body itself is the shared AuditTable, so
-  // this fetch exists purely for the "Audit Events (Last 30 Days)" KPI.
+  // Only the count is needed here: this fetch exists purely for the "Audit Events (Last 30 Days)" KPI.
   const [auditCount, setAuditCount] = useState<number | null>(null);
   const [auditError, setAuditError] = useState(false);
+
+  // Forecast vs Actual chart state
+  const [trendPeriod, setTrendPeriod] = useState('This Week');
+  const [forecastSeriesVisible, setForecastSeriesVisible] = useState({ forecast: true, actual: true });
+  const [ingredients, setIngredients] = useState<StockInIngredient[] | null>(null);
+  const [selectedIngredient, setSelectedIngredient] = useState('');
+  const [trendData, setTrendData] = useState<ForecastVsActualResponse | null>(null);
+
+  const today = businessDateInputValue();
+  const trendDays = Number(trendPeriod.match(/\d+/)?.[0] ?? 30);
+  const { from: trendFrom, to: trendTo } = trendPeriod === 'This Week' ? businessWeekRange() : businessDayRange(trendDays);
+  const trendWindow = emptyForecastWindow(trendFrom, trendTo);
+  const forecastPeriodOptions = ['This Week', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days'].map(value => ({ value, label: value }));
+
+  useEffect(() => {
+    const abort = new AbortController();
+    listStockInIngredients(abort.signal)
+      .then(res => {
+        if (!abort.signal.aborted) setIngredients(res.ingredients);
+      })
+      .catch(() => {
+        if (!abort.signal.aborted) setIngredients([]);
+      });
+    return () => abort.abort();
+  }, []);
+
+  useEffect(() => {
+    const targetId = selectedIngredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
+    if (!targetId) {
+      setTrendData(null);
+      return;
+    }
+    const controller = new AbortController();
+    const days = trendPeriod === 'This Week' ? 7 : trendDays;
+    getForecastVsActual(targetId, days, controller.signal)
+      .then(res => {
+        if (!controller.signal.aborted) setTrendData(res);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setTrendData(null);
+      });
+    return () => controller.abort();
+  }, [selectedIngredient, ingredients, trendPeriod, trendDays]);
+
+  const ingredientOptions = useMemo(() => [
+    { value: '', label: 'Primary Ingredient' },
+    ...(ingredients ?? []).map(item => ({ value: item.id, label: formatHumanReadableText(item.name) }))
+  ], [ingredients]);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -71,17 +128,17 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
   return <div className="sl-admin-view sl-superadmin-surface sl-superadmin-dashboard sl-superadmin-dashboard-v49 sl-staff-usage-v150 sl-superadmin-users-page-v60 sl-superadmin-users-page-v63 sl-superadmin-users-page-v64">
     <div className="sl-dashboard-heading sl-dashboard-heading-v8 sl-superadmin-dashboard-heading">
       <PageHeader eyebrow="Overview" title={`${greeting}, ${sessionDisplayName(user)}.`} />
-      <p className="sl-dashboard-description">Manage accounts and review protected system activity.</p>
+      <p className="sl-dashboard-description">Manage accounts, monitor inventory demand forecasts, and review system activity.</p>
     </div>
     <section className="sl-sa-kpis sl-superadmin-kpis sl-superadmin-dashboard-kpis-v201" aria-label="System overview">
       <article className="sl-sa-kpi sl-superadmin-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Total Users</span><strong>{totalUsers?.toLocaleString() ?? (summaryError && accountsError ? 'Unavailable' : 'Loading…')}</strong><small>System-wide accounts</small></div></article>
-      <article className="sl-sa-kpi sl-superadmin-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Active Accounts</span><strong>{summary ? summary.activeUsers.toLocaleString() : summaryError ? 'Unavailable' : 'Loading…'}</strong><small>{activePercentLabel === null ? 'Live account status' : `▲ ${activePercentLabel}% active`}</small></div></article>
+      <article className="sl-sa-kpi sl-superadmin-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><CheckCircle2 /></span><div><span>Active Accounts</span><strong>{summary ? summary.activeUsers.toLocaleString() : summaryError ? 'Unavailable' : 'Loading…'}</strong><small>{activePercentLabel === null ? 'Live account status' : `▲ ${activePercentLabel}% active`}</small></div></article>
       <article className="sl-sa-kpi sl-superadmin-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><UsersRound /></span><div><span>Inactive Accounts</span><strong>{summary ? summary.inactiveUsers.toLocaleString() : summaryError ? 'Unavailable' : 'Loading…'}</strong><small>{summary ? 'Deactivated accounts' : 'Account summary unavailable'}</small></div></article>
-      <article className="sl-sa-kpi sl-superadmin-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileText /></span><div><span>Audit Events (Last 30 Days)</span><strong>{auditCount !== null ? auditCount.toLocaleString() : auditError ? 'Unavailable' : 'Loading…'}</strong><small>{auditCount !== null ? 'Recorded in the last 30 days' : 'Audit summary unavailable'}</small></div></article>
+      <article className="sl-sa-kpi sl-superadmin-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><FileText /></span><div><span>Audit Events (Last 30 Days)</span><strong>{auditCount !== null ? auditCount.toLocaleString() : auditError ? 'Unavailable' : 'Loading…'}</strong><small>{auditCount !== null ? 'Recorded in the last 30 days' : 'Audit summary unavailable'}</small></div></article>
     </section>
 
     <section className="sl-sa-analytics-row sl-sa-analytics-row-v317">
-      <Card id="sl-sa-distribution" title={<ChartCardTitle>User Distribution</ChartCardTitle>}>
+      <Card id="sl-sa-distribution" title={<ChartCardTitle Icon={Users}>User Distribution</ChartCardTitle>}>
         <div className="sl-sa-distribution-content">
           <div className="sl-sa-distribution-bars" data-state={summaryState} aria-label="Account totals by role">
             {distributionData.map(item => (
@@ -101,7 +158,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
         </div>
       </Card>
 
-      <Card id="sl-sa-status" title={<ChartCardTitle>Account Status</ChartCardTitle>}>
+      <Card id="sl-sa-status" title={<ChartCardTitle Icon={PieChart}>Account Status</ChartCardTitle>}>
         <div className="sl-sa-status-content">
           <div className="sl-sa-status-layout">
             <div className="sl-sa-status-chart">
@@ -135,16 +192,49 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
     </section>
 
     <section className="sl-sa-middle-row sl-sa-dashboard-activity-row-v319">
-      <section id="sl-sa-recent-activity" className="sl-staff-usage-card sl-staff-usage-records" aria-labelledby="sl-sa-recent-activity-title">
-        <header className="sl-staff-usage-card-head sl-staff-usage-records-head">
-          <span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>
-          <h2 id="sl-sa-recent-activity-title">Recent System Activity</h2>
-          <div className="sl-staff-usage-head-actions"><Link href="/SecurityActivity" className="sl-staff-usage-viewall sl-v209-viewall-button">View All <ArrowRight size={14} aria-hidden="true" /></Link></div>
-        </header>
-        <div className="sl-table-scroll sl-superadmin-table-scroll sl-staff-usage-table-shell">
-          <AuditTable recent adminDashboard dashboardDetails />
+      <Card
+        id="sl-sa-forecast"
+        title={<ChartCardTitle Icon={ChartNoAxesCombined}>Forecast vs. Actual</ChartCardTitle>}
+        action={
+          <div className="sl-mgr-fc-header-tools">
+            <ForecastVsActualLegend
+              visible={forecastSeriesVisible}
+              onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))}
+            />
+            {ingredients && ingredients.length > 1 && (
+              <FilterSelect
+                className="sl-dashboard-filter"
+                ariaLabel="Select ingredient for forecast trend"
+                value={selectedIngredient}
+                options={ingredientOptions}
+                onChange={setSelectedIngredient}
+              />
+            )}
+            <FilterSelect
+              className="sl-dashboard-filter"
+              ariaLabel="Forecast trend period"
+              value={trendPeriod}
+              options={forecastPeriodOptions}
+              onChange={setTrendPeriod}
+            />
+            <Link href="/Ingredients" className="sl-text-link" style={{ marginLeft: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8125rem' }}>
+              Ingredients <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+        }
+      >
+        <div style={{ padding: '0.5rem 0' }}>
+          <ForecastVsActualChart
+            ariaLabel="Forecast versus actual ingredient consumption by date"
+            points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow}
+            meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }}
+            visible={forecastSeriesVisible}
+            calendarWeek={trendPeriod === 'This Week'}
+            emptyLabel="No live forecast records yet"
+            emptyDescription="Forecasted and actual ingredient consumption will appear when validated forecast and usage data are available."
+          />
         </div>
-      </section>
+      </Card>
     </section>
   </div>;
 }

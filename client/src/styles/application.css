@@ -27592,7 +27592,7 @@ nn .sl-sa-reports-superadmin-v286.sl-sa-batches-page .sl-sa-reports-inventory-fi
     align-items: flex-start;
   }
 }
-n .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] {
+.sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] {
   gap: clamp(.7rem,.55rem + .35vw,1rem);
 }
 .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-v66-settings-panel {
@@ -27750,7 +27750,7 @@ n .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] {
     align-items: flex-start;
   }
 }
-n .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] :is(.sl-v72-reset-button,.sl-settings-save-changes,.sl-v70-toggle):focus-visible {
+.sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] :is(.sl-v72-reset-button,.sl-settings-save-changes,.sl-v70-toggle):focus-visible {
   outline: 2px solid var(--sl-brand);
   outline-offset: 2px;
 }
