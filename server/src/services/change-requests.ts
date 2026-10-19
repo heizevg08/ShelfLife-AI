@@ -10,14 +10,34 @@ const parsedValue = (field: ChangeRequestTargetField, value: string) => ['minimu
 
 export function createChangeRequests(driver: Mongoose, requests: any, counters: any, ingredients: any, _batches: any, users: any, audits: any) {
   const name = (user: any) => `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || user?.name?.trim() || 'Unknown account';
-  const view = async (row: any) => {
-    const [ingredient, requester, reviewer] = await Promise.all([
-      ingredients.findById(row.ingredientId).select('_id name unitOfMeasure').lean().exec(),
-      users.findById(row.requestedBy).select('_id name firstName lastName').lean().exec(),
-      row.reviewedBy ? users.findById(row.reviewedBy).select('_id name firstName lastName').lean().exec() : null,
+  const formatRow = (row: any, ingredient: any, requester: any, reviewer: any) => ({
+    id: row._id.toString(), requestID: row.requestID, requestType: row.requestType, targetField: row.targetField,
+    ingredient: ingredient ? { id: ingredient._id.toString(), name: ingredient.name, unitOfMeasure: ingredient.unitOfMeasure } : undefined,
+    reason: row.reason, currentValue: row.currentValue, requestedValue: row.requestedValue, status: row.status,
+    requestedBy: { id: requester?._id?.toString() ?? row.requestedBy.toString(), name: name(requester) },
+    reviewedBy: reviewer ? { id: reviewer._id.toString(), name: name(reviewer) } : undefined,
+    reviewedAt: row.reviewedAt?.toISOString(), reviewNote: row.reviewNote,
+    createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
+  });
+  const viewMany = async (rows: any[]) => {
+    if (!rows.length) return [];
+    const rawIngredientId = (row: any) => (row.ingredientId?._id ?? row.ingredientId)?.toString();
+    const ingredientIds = [...new Set(rows.map(rawIngredientId).filter(Boolean))];
+    const userIds = [...new Set(rows.flatMap((row: any) => [row.requestedBy?.toString(), row.reviewedBy?.toString()]).filter(Boolean))];
+    const [ingredientRows, userRows] = await Promise.all([
+      ingredients.find({ _id: { $in: ingredientIds } }).select('_id name unitOfMeasure').lean().exec(),
+      users.find({ _id: { $in: userIds } }).select('_id name firstName lastName').lean().exec(),
     ]);
-    return { id: row._id.toString(), requestID: row.requestID, requestType: row.requestType, targetField: row.targetField, ingredient: ingredient ? { id: ingredient._id.toString(), name: ingredient.name, unitOfMeasure: ingredient.unitOfMeasure } : undefined, reason: row.reason, currentValue: row.currentValue, requestedValue: row.requestedValue, status: row.status, requestedBy: { id: requester?._id?.toString() ?? row.requestedBy.toString(), name: name(requester) }, reviewedBy: reviewer ? { id: reviewer._id.toString(), name: name(reviewer) } : undefined, reviewedAt: row.reviewedAt?.toISOString(), reviewNote: row.reviewNote, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
+    const ingredientMap = new Map(ingredientRows.map((item: any) => [item._id.toString(), item]));
+    const userMap = new Map(userRows.map((item: any) => [item._id.toString(), item]));
+    return rows.map((row: any) => formatRow(
+      row,
+      ingredientMap.get(rawIngredientId(row)),
+      userMap.get(row.requestedBy?.toString()),
+      row.reviewedBy ? userMap.get(row.reviewedBy.toString()) : null,
+    ));
   };
+  const view = async (row: any) => (await viewMany([row]))[0]!;
   const ensureRole = (actor: Actor) => { if (!['Inventory Staff', 'Manager', 'Super Admin'].includes(actor.role)) throw forbidden(); };
   return {
     async ingredientOptions(actor: Actor) {
@@ -29,8 +49,8 @@ export function createChangeRequests(driver: Mongoose, requests: any, counters: 
       ensureRole(actor); const filter: any = actor.role === 'Inventory Staff' ? { requestedBy: actor.id } : {};
       if (query.currentOnly) { filter.requestType = { $in: CHANGE_REQUEST_TYPES }; filter.targetField = { $in: CHANGE_REQUEST_TARGET_FIELDS }; }
       if (query.type) filter.requestType = query.type; if (query.status) filter.status = query.status; if (query.from || query.to) filter.createdAt = { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lt: query.to } : {}) };
-      if (query.search) { const rows = await requests.find(filter).sort({ createdAt: -1, _id: -1 }).populate('ingredientId', 'name').lean().exec(); const term = query.search.toLowerCase(); const items = rows.filter((row: any) => [row.requestID, row.ingredientId?.name].some(value => value?.toLowerCase().includes(term))); return { items: await Promise.all(items.slice((query.page - 1) * query.pageSize, query.page * query.pageSize).map(view)), page: query.page, pageSize: query.pageSize, total: items.length }; }
-      const total = await requests.countDocuments(filter), rows = await requests.find(filter).sort({ createdAt: -1, _id: -1 }).skip((query.page - 1) * query.pageSize).limit(query.pageSize).lean().exec(); return { items: await Promise.all(rows.map(view)), page: query.page, pageSize: query.pageSize, total };
+      if (query.search) { const rows = await requests.find(filter).sort({ createdAt: -1, _id: -1 }).populate('ingredientId', 'name').lean().exec(); const term = query.search.toLowerCase(); const items = rows.filter((row: any) => [row.requestID, row.ingredientId?.name].some(value => value?.toLowerCase().includes(term))); return { items: await viewMany(items.slice((query.page - 1) * query.pageSize, query.page * query.pageSize)), page: query.page, pageSize: query.pageSize, total: items.length }; }
+      const total = await requests.countDocuments(filter), rows = await requests.find(filter).sort({ createdAt: -1, _id: -1 }).skip((query.page - 1) * query.pageSize).limit(query.pageSize).lean().exec(); return { items: await viewMany(rows), page: query.page, pageSize: query.pageSize, total };
     },
     async detail(actor: Actor, id: string) { ensureRole(actor); const row = await requests.findById(id).lean().exec(); if (!row || (actor.role === 'Inventory Staff' && row.requestedBy.toString() !== actor.id)) throw new AdministrationError(404, 'NOT_FOUND', 'Change request not found'); return view(row); },
     async summary(actor: Actor) { if (actor.role !== 'Inventory Staff') throw forbidden(); const counts = await requests.aggregate([{ $match: { requestedBy: new driver.Types.ObjectId(actor.id), requestType: { $in: CHANGE_REQUEST_TYPES }, targetField: { $in: CHANGE_REQUEST_TARGET_FIELDS } } }, { $group: { _id: '$status', count: { $sum: 1 } } }]); const map = new Map<string, number>(counts.map((row: any) => [row._id, row.count])); return { totalRequests: [...map.values()].reduce((a, b) => a + b, 0), approved: map.get('APPROVED') ?? 0, pending: map.get('PENDING') ?? 0, rejected: map.get('REJECTED') ?? 0 }; },

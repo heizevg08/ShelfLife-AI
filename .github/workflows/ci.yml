@@ -1,0 +1,44 @@
+name: ShelfLife AI CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  verify:
+    name: Typecheck, Unit, Integration & ML Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Setup Python 3.14.7
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14.7"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Python ML runtime dependencies
+        run: python -m pip install -r ml/requirements-runtime.txt
+
+      - name: Run TypeScript typecheck (client & server)
+        run: npm run typecheck
+
+      - name: Run Client test suite
+        run: npm test --workspace client
+
+      - name: Run Server unit & integration test suite
+        run: npm test --workspace server
+
+      - name: Run ML test suite
+        run: python -m unittest discover -s ml/tests

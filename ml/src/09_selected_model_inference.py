@@ -17,6 +17,7 @@ Important boundaries:
 """
 
 from pathlib import Path
+import hashlib
 import platform
 import json
 
@@ -30,6 +31,9 @@ ML_ROOT = Path(__file__).resolve().parents[1]
 MODEL_PATH = ML_ROOT / "models" / "selected_random_forest.joblib"
 METADATA_PATH = (
     ML_ROOT / "models" / "selected_random_forest_metadata.json"
+)
+EXPECTED_MODEL_SHA256 = (
+    "14b76d5b108ad1a55b6f9e7c84b012623e6a506774ac0211ee9877e085ee6fc7"
 )
 
 EXPECTED_MODEL_NAME = (
@@ -56,6 +60,17 @@ EXPECTED_MODEL_PARAMETERS = {
     "n_jobs": -1,
     "random_state": 42,
 }
+
+
+def compute_model_sha256(
+    model_path: Path = MODEL_PATH,
+) -> str:
+    """Compute the SHA-256 digest of a persisted model artifact."""
+    digest = hashlib.sha256()
+    with model_path.open("rb") as model_file:
+        for chunk in iter(lambda: model_file.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def load_artifact_metadata() -> dict:
@@ -130,14 +145,24 @@ def validate_metadata_contract(
             )
             is False
         ),
+        "artifact_sha256_recorded": (
+            persistence.get("sha256")
+            == EXPECTED_MODEL_SHA256
+        ),
     }
 
 
 def load_selected_model():
-    """Load the trusted persisted selected-development model."""
+    """Load the trusted persisted selected-development model after SHA-256 verification."""
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
             f"Model artifact not found: {MODEL_PATH}"
+        )
+
+    actual_sha256 = compute_model_sha256(MODEL_PATH)
+    if actual_sha256 != EXPECTED_MODEL_SHA256:
+        raise RuntimeError(
+            "Model artifact failed SHA-256 integrity verification before deserialization."
         )
 
     return joblib.load(MODEL_PATH)

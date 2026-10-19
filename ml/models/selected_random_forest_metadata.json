@@ -44,6 +44,7 @@
   "persistence": {
     "format": "joblib",
     "trusted_source_only": true,
-    "cross_version_loading_assumed_safe": false
+    "cross_version_loading_assumed_safe": false,
+    "sha256": "14b76d5b108ad1a55b6f9e7c84b012623e6a506774ac0211ee9877e085ee6fc7"
   }
 }
