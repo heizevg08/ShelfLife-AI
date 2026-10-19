@@ -4726,12 +4726,15 @@ section.sl-card:has(.sl-filter-popover) {
   position: absolute;
   top: calc(100% + .55rem);
   right: 0;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .sl-notification-header {
   border-bottom: 1px solid var(--sl-border-subtle);
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  flex-shrink: 0;
   gap: 1rem;
   padding: 1rem;
   display: flex;
@@ -4746,6 +4749,7 @@ section.sl-card:has(.sl-filter-popover) {
   padding: .65rem 1rem;
   border-bottom: 1px solid var(--sl-border-subtle);
   background: var(--sl-surface-subtle);
+  flex-shrink: 0;
 }
 .sl-notification-tabs button {
   border: 1px solid transparent;
@@ -4789,6 +4793,7 @@ section.sl-card:has(.sl-filter-popover) {
   padding: .6rem 1rem .3rem;
   font-size: .75rem;
   color: var(--sl-muted);
+  flex-shrink: 0;
 }
 .sl-notification-section-heading button {
   background: none;
@@ -4849,6 +4854,8 @@ section.sl-card:has(.sl-filter-popover) {
   background: var(--sl-surface);
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
+  margin-top: auto;
 }
 .sl-notification-mark-read {
   border: 1px solid var(--sl-border);
@@ -4882,6 +4889,33 @@ section.sl-card:has(.sl-filter-popover) {
 }
 .sl-notification-list {
   display: grid;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  flex: 1 1 auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sl-border, #dddfd8) transparent;
+}
+.sl-notification-list::-webkit-scrollbar {
+  width: 6px;
+}
+.sl-notification-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sl-notification-list::-webkit-scrollbar-thumb {
+  background: var(--sl-border, #dddfd8);
+  border-radius: 999px;
+}
+.sl-notification-list::-webkit-scrollbar-thumb:hover {
+  background: var(--sl-muted, #8b9286);
+}
+.sl-notification-list::-webkit-scrollbar-button,
+.sl-notification-panel::-webkit-scrollbar-button,
+.sl-filter-select-menu::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 .sl-notification-item {
   border-bottom: 1px solid var(--sl-border-subtle);

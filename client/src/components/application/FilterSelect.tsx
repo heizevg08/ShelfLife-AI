@@ -22,7 +22,7 @@ export type FilterSelectProps = {
 type MenuPosition = { left: number; top: number; width: number; maxHeight: number; placement: 'above' | 'below' };
 const MENU_GAP = 4;
 const VIEWPORT_GUTTER = 8;
-const DEFAULT_MENU_MAX_HEIGHT = 17 * 16;
+const DEFAULT_MENU_MAX_HEIGHT = 22 * 16;
 
 /** Shared controlled select for application filtering surfaces. */
 export function FilterSelect({ value, options, onChange, ariaLabel, disabled = false, id, className, title }: FilterSelectProps) {
