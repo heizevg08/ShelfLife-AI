@@ -41,6 +41,14 @@ import { loginAttemptModel } from './models/login-attempt';
 import { createLoginLimiter, mongoLoginAttemptStore } from './services/login-limiter';
 import { provisionSecurityIndexes } from './services/security-indexes';
 import { createReportExports, type ReportExportService } from './services/report-export';
+import { createForecastInferenceWorker } from './services/forecast-inference-worker';
+import { createForecastingHistoryStore } from './services/forecasting-history-store';
+import { createOperationalForecastService } from './services/operational-forecast';
+import { createOperationalRiskService } from './services/operational-risk';
+import { createOperationalRecommendationService } from './services/operational-recommendations';
+import type { OperationalForecastService } from './services/operational-forecast';
+import type { OperationalRiskService } from './services/operational-risk';
+import type { OperationalRecommendationService } from './services/operational-recommendations';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
@@ -75,11 +83,11 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -208,12 +216,22 @@ if (require.main === module) {
     const wasteRecords = createWasteRecords(createWasteRecordStore(driver, wasteRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
     const changeRequests = createChangeRequests(driver, changeRequestModel(driver), changeRequestCounterModel(driver), ingredientModel(driver), inventoryBatchModel(driver), users, audits);
     const reports = createReportExports({ batches: inventoryBatchModel(driver), ingredients: ingredientModel(driver), usage: usageRecordModel(driver), waste: wasteRecordModel(driver), audits });
+    let operationalForecast: OperationalForecastService | undefined;
+    let operationalRisk: OperationalRiskService | undefined;
+    let operationalRecommendations: OperationalRecommendationService | undefined;
+    if (config.mlPythonExecutable && config.mlWorkerScript) {
+      const forecastWorker = createForecastInferenceWorker(config);
+      const forecastHistoryStore = createForecastingHistoryStore(usageRecordModel(driver), ingredientModel(driver));
+      operationalForecast = createOperationalForecastService(forecastHistoryStore, forecastWorker);
+      operationalRisk = createOperationalRiskService(operationalForecast, ingredientModel(driver), inventoryBatchModel(driver));
+      operationalRecommendations = createOperationalRecommendationService(operationalRisk);
+    }
     const database = createDatabase(driver);
     const indexedDatabase = { ...database, connect: async (uri: string) => {
       await database.connect(uri);
       await provisionSecurityIndexes(loginAttempts);
     } };
-    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange, secureCookies: config.nodeEnv === 'production', auditAuthenticationEvent }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports);
+    const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, { loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange, secureCookies: config.nodeEnv === 'production', auditAuthenticationEvent }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

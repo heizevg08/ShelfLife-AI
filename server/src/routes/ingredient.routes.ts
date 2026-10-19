@@ -5,10 +5,25 @@ import { authenticate } from '../middleware/auth.middleware';
 import { AdministrationError, authorizeAdministration } from '../middleware/administration.middleware';
 import { HttpError } from '../middleware/error.middleware';
 import { ingredientControllers } from '../controllers/ingredient.controller';
+import { forecastControllers } from '../controllers/forecast.controller';
+import { riskControllers } from '../controllers/risk.controller';
+import { recommendationControllers } from '../controllers/recommendation.controller';
+import type { OperationalForecastService } from '../services/operational-forecast';
+import type { OperationalRiskService } from '../services/operational-risk';
+import type { OperationalRecommendationService } from '../services/operational-recommendations';
 import { mongoInputGuard, secureJson } from '../middleware/request-security.middleware';
 
-export function ingredientRoutes(auth: AuthService, service: IngredientService) {
+export function ingredientRoutes(
+  auth: AuthService,
+  service: IngredientService,
+  forecast?: OperationalForecastService,
+  risk?: OperationalRiskService,
+  recommendations?: OperationalRecommendationService,
+) {
   const router = Router(), actions = ingredientControllers(service);
+  const forecastActions = forecast ? forecastControllers(forecast) : undefined;
+  const riskActions = risk ? riskControllers(risk) : undefined;
+  const recommendationActions = recommendations ? recommendationControllers(recommendations) : undefined;
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
   router.use(mongoInputGuard);
@@ -19,6 +34,9 @@ export function ingredientRoutes(auth: AuthService, service: IngredientService) 
   router.post('/', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), actions.create);
   router.put('/:id', authorizeAdministration(['Admin']), secureJson({ limit: '100kb' }), actions.update);
   router.delete('/:id', authorizeAdministration(['Admin']), actions.remove);
+  if (forecastActions) router.post('/:id/forecast', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), forecastActions.forecast);
+  if (riskActions) router.post('/:id/risk', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), riskActions.risk);
+  if (recommendationActions) router.post('/:id/recommendations', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), recommendationActions.recommend);
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });
   const error: ErrorRequestHandler = (value, _req, res, next) => {
     if (res.headersSent) { next(value); return; }
