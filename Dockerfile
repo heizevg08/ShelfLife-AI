@@ -5,7 +5,10 @@ FROM node:24-bookworm-slim AS node-runtime
 # The pinned model packages publish Python 3.14 wheels. Start from that runtime
 # and copy the project's pinned Node 24 toolchain rather than relying on a
 # distribution package with a different Node major version.
-FROM python:3.14-slim
+# The persisted joblib artifact records Python 3.14.7 in its metadata contract.
+# Pin the runtime to that exact patch release; the floating 3.14-slim tag can
+# advance independently and must not silently bypass the contract validation.
+FROM python:3.14.7-slim
 
 COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
 COPY --from=node-runtime /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
