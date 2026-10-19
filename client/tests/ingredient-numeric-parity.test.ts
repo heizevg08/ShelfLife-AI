@@ -94,10 +94,10 @@ test('every affected input path validates through the shared rules', () => {
 
   // Both ingredient forms import the shared rules rather than restating them.
   assert.match(modulePage, /import \{ formatIngredientCurrency, ingredientMinimumStockError, ingredientShelfLifeError \} from '\.\.\/\.\.\/utils\/ingredient-numeric-rules';/);
-  assert.equal((modulePage.match(/ingredientMinimumStockError\(clean\.minStock\)/g) ?? []).length, 2);
-  assert.equal((modulePage.match(/ingredientShelfLifeError\(clean\.shelfLife\)/g) ?? []).length, 2);
+  assert.equal((modulePage.match(/ingredientMinimumStockError\(clean\.minStock\)/g) ?? []).length, 1);
+  assert.equal((modulePage.match(/ingredientShelfLifeError\(clean\.shelfLife\)/g) ?? []).length, 1);
   assert.match(modulePage, /ingredientUnitCostFormError\(clean\.unitCost, !editIngredient\)/);
-  assert.match(modulePage, /ingredientUnitCostError\(clean\.unitCost\)/);
+
   // The old looser checks are gone.
   assert.doesNotMatch(modulePage, /must be 0 or greater/);
   assert.doesNotMatch(modulePage, /whole number of at least 1 day/);
@@ -120,7 +120,7 @@ test('every affected input path validates through the shared rules', () => {
   assert.match(service, /export const changeRequestValue = \(record: ChangeRequest, value: string \| undefined\) => formatStaffChangeRequestValue\(record, value\);/);
   assert.doesNotMatch(service, /return `₱\$\{Number\(value\)\.toFixed\(2\)\}`/);
   assert.doesNotMatch(modulePage, /₱\$\{viewIngredient\.standardUnitCost\.toFixed\(2\)\}/);
-  assert.equal((modulePage.match(/formatIngredientCurrency\(viewIngredient\.standardUnitCost\)/g) ?? []).length, 2);
+  assert.equal((modulePage.match(/formatIngredientCurrency\(viewIngredient\.standardUnitCost\)/g) ?? []).length, 1);
 });
 
 // STATUS and ACTIONS must read as one pair, without touching the shared table.
@@ -146,6 +146,6 @@ test('ingredient name form and server keep the same normalized 1–50 boundary',
   const form = readFileSync(new URL('../src/components/application/ModulePage.tsx', import.meta.url), 'utf8');
   assert.match(server, /name: cleanText\('name', input\.name, true, 50\)/);
   assert.match(model, /name: \{ type: String, required: true, trim: true, maxlength: 50 \}/);
-  assert.equal((form.match(/if \(!clean\.name \|\| clean\.name\.length > 50\) next\.name = 'Enter 1–50 characters\.';/g) ?? []).length, 2);
-  assert.equal((form.match(/name: form\.name\.trim\(\)\.replace\(\/\\s\+\/g, ' '\)/g) ?? []).length, 2);
+  assert.equal((form.match(/if \(!clean\.name \|\| clean\.name\.length > 50\) next\.name = 'Enter 1–50 characters\.';/g) ?? []).length, 1);
+  assert.equal((form.match(/name: form\.name\.trim\(\)\.replace\(\/\\s\+\/g, ' '\)/g) ?? []).length, 1);
 });

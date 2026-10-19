@@ -4,9 +4,10 @@ export type NotificationItem = {
   message: string;
   timestamp: string;
   read: boolean;
-  kind?: 'request' | 'stock';
+  kind?: 'request' | 'stock' | 'system' | 'security';
   requestId?: string;
   batchId?: string;
+  targetPath?: string;
   status?: string;
 };
 
