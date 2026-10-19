@@ -11,6 +11,7 @@ const schema = new Schema({
   standardUnitCost: { type: Number, min: 0, max: INGREDIENT_LIMITS.standardUnitCost },
   defaultShelfLifeDays: { type: Number, min: 1, max: INGREDIENT_LIMITS.defaultShelfLifeDays },
   createdBy: { type: Schema.Types.ObjectId, required: true, immutable: true, ref: 'User' },
+  isArchived: { type: Boolean, default: false, index: true },
 }, { timestamps: true, versionKey: false, collection: 'ingredients', strict: 'throw' });
 
 schema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });

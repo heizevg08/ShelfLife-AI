@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { Mongoose } = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { loginAttemptModel } = require('../dist/models/login-attempt');
+const { persistentSessionModel } = require('../dist/models/persistent-session');
 const { createLoginLimiter, mongoLoginAttemptStore, LOGIN_LIMIT } = require('../dist/services/login-limiter');
 const { provisionSecurityIndexes } = require('../dist/services/security-indexes');
 const { HttpError } = require('../dist/middleware/error.middleware');
@@ -14,9 +15,12 @@ test('Mongo login limiter provisions TTL cleanup and persists bounded hashed att
   t.after(async () => { await driver.disconnect(); await mongo.stop(); });
 
   const attempts = loginAttemptModel(driver);
-  await provisionSecurityIndexes(attempts);
+  const sessions = persistentSessionModel(driver);
+  await provisionSecurityIndexes(attempts, undefined, sessions);
   const indexes = await attempts.collection.listIndexes().toArray();
   assert.ok(indexes.some(index => index.name === 'login_attempt_expiry' && index.expireAfterSeconds === 0));
+  const sessionIndexes = await sessions.collection.listIndexes().toArray();
+  assert.ok(sessionIndexes.some(index => index.name === 'persistent_session_expiry' && index.expireAfterSeconds === 0));
 
   const limiter = createLoginLimiter(mongoLoginAttemptStore(attempts), () => new Date('2026-10-05T00:00:00.000Z'));
   const denied = async () => { throw new HttpError(401, 'Invalid email or password'); };

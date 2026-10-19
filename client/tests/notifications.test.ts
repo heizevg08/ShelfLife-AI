@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseNotifications } from '../src/components/application/Notifications';
+import { parseNotifications } from '../src/utils/notifications';
 
 const valid = { id: 'notice-1', title: 'Account updated', message: 'An account changed.', timestamp: '2026-09-16T00:00:00.000Z', read: false };
 

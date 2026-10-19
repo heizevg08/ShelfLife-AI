@@ -104,9 +104,9 @@ test('every affected input path validates through the shared rules', () => {
   assert.doesNotMatch(modulePage, /Number\.isFinite\(Number\(clean\.minStock\)\) \|\| Number\(clean\.minStock\) < 0 \|\| Number\(clean\.minStock\) > 1_000_000_000/);
 
   // My Requests checks the requested value against the rule for its own type.
-  assert.match(myRequests, /draft\.requestType==='MINIMUM_STOCK_CHANGE'\)next\.requestedValue=ingredientMinimumStockError\(draft\.requestedValue\.trim\(\)\)\?\?''/);
-  assert.match(myRequests, /draft\.requestType==='STANDARD_UNIT_COST_CHANGE'\)next\.requestedValue=ingredientUnitCostError\(draft\.requestedValue\.trim\(\)\)\?\?''/);
-  assert.match(myRequests, /draft\.requestType==='DEFAULT_SHELF_LIFE_CHANGE'\)next\.requestedValue=ingredientShelfLifeError\(draft\.requestedValue\.trim\(\)\)\?\?''/);
+  assert.match(myRequests, /draft\.requestType==='MINIMUM_STOCK_CHANGE'\?changeRequestMinimumStockError\(value\)/);
+  assert.match(myRequests, /draft\.requestType==='STANDARD_UNIT_COST_CHANGE'\?ingredientUnitCostError\(value\)/);
+  assert.match(myRequests, /draft\.requestType==='DEFAULT_SHELF_LIFE_CHANGE'\?ingredientShelfLifeError\(value\)/);
   assert.doesNotMatch(myRequests, /next\.requestedValue='Enter a valid value\.'/);
   assert.doesNotMatch(myRequests, /\['MINIMUM_STOCK_CHANGE','STANDARD_UNIT_COST_CHANGE','DEFAULT_SHELF_LIFE_CHANGE'\]\.includes\(draft\.requestType\)&&\(!Number\.isFinite/);
 

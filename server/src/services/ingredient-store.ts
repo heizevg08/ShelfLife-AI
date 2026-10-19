@@ -33,16 +33,17 @@ export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<
       createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
     };
   };
+  const activeFilter = { isArchived: { $ne: true } };
   return {
     async stockInOptions() {
-      const rows = await ingredients.find({}).select('_id name category unitOfMeasure standardUnitCost defaultShelfLifeDays').sort({ name: 1, _id: 1 }).lean().exec();
+      const rows = await ingredients.find(activeFilter).select('_id name category unitOfMeasure standardUnitCost defaultShelfLifeDays').sort({ name: 1, _id: 1 }).lean().exec();
       return rows.map(row => ({ id: row._id.toString(), name: row.name, category: row.category, unitOfMeasure: row.unitOfMeasure, ...(typeof row.standardUnitCost === 'number' ? { standardUnitCost: row.standardUnitCost } : {}), ...(typeof row.defaultShelfLifeDays === 'number' ? { defaultShelfLifeDays: row.defaultShelfLifeDays } : {}) }));
     },
     async summary() {
       const [total, categories, units] = await Promise.all([
-        ingredients.countDocuments({}).exec(),
-        ingredients.distinct('category').exec(),
-        ingredients.distinct('unitOfMeasure').exec(),
+        ingredients.countDocuments(activeFilter).exec(),
+        ingredients.distinct('category', activeFilter).exec(),
+        ingredients.distinct('unitOfMeasure', activeFilter).exec(),
       ]);
       return {
         total,
@@ -52,7 +53,7 @@ export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<
       };
     },
     async list(query: IngredientPageQuery) {
-      const filter: Record<string, unknown> = {};
+      const filter: Record<string, unknown> = { ...activeFilter };
       if (query.category) filter.category = query.category;
       if (query.unit) filter.unitOfMeasure = query.unit;
       if (query.search) filter.$or = [
@@ -79,7 +80,7 @@ export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<
     },
     async update(actor: Actor, id: string, input: IngredientInput) {
       const row = await driver.connection.transaction(async session => {
-        const result = await ingredients.findByIdAndUpdate(id, { $set: input }, { new: true, runValidators: true, session }).lean().exec() as Row | null;
+        const result = await ingredients.findOneAndUpdate({ _id: id, ...activeFilter }, { $set: input }, { new: true, runValidators: true, session }).lean().exec() as Row | null;
         if (!result) return null;
         await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined, action: 'UPDATE', targetType: 'Ingredient', targetId: result._id.toString(), targetName: result.name, module: 'Ingredients', status: 'Success', details: 'Ingredient master-data record updated' }], { session });
         return result;
@@ -90,9 +91,21 @@ export function createIngredientStore(driver: Mongoose, ingredients: ReturnType<
     },
     async remove(actor: Actor, id: string) {
       return driver.connection.transaction(async session => {
-        const row = await ingredients.findByIdAndDelete(id, { session }).lean().exec() as Row | null;
+        let referenced = false;
+        for (const modelName of ['InventoryBatch', 'UsageRecord', 'WasteRecord', 'ChangeRequest']) {
+          if (await driver.models[modelName]?.exists({ ingredientId: id }).session(session).exec()) {
+            referenced = true;
+            break;
+          }
+        }
+        const row = referenced
+          ? await ingredients.findOneAndUpdate({ _id: id, ...activeFilter }, { $set: { isArchived: true } }, { new: true, session }).lean().exec() as Row | null
+          : await ingredients.findOneAndDelete({ _id: id, ...activeFilter }, { session }).lean().exec() as Row | null;
         if (!row) return false;
-        await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined, action: 'DELETE', targetType: 'Ingredient', targetId: row._id.toString(), targetName: row.name, module: 'Ingredients', status: 'Success', details: 'Ingredient master-data record removed' }], { session });
+        const details = referenced
+          ? 'Ingredient master-data record archived to preserve historical records'
+          : 'Ingredient master-data record removed';
+        await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined, action: 'DELETE', targetType: 'Ingredient', targetId: row._id.toString(), targetName: row.name, module: 'Ingredients', status: 'Success', details }], { session });
         return true;
       });
     },

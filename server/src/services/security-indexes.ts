@@ -1,11 +1,17 @@
 import type { loginAttemptModel } from '../models/login-attempt';
+import type { persistentSessionModel } from '../models/persistent-session';
 import type { userModel } from '../models/user';
 
-export async function provisionSecurityIndexes(attempts: ReturnType<typeof loginAttemptModel>, users?: ReturnType<typeof userModel>) {
+export async function provisionSecurityIndexes(
+  attempts: ReturnType<typeof loginAttemptModel>,
+  users?: ReturnType<typeof userModel>,
+  sessions?: ReturnType<typeof persistentSessionModel>,
+) {
   // Additive provisioning avoids dropping or rebuilding indexes owned by current domain schemas.
   // Mongoose autoIndex is disabled in production, so the account email uniqueness constraint
   // must be explicitly created before the server accepts account writes.
   await users?.createIndexes();
+  await sessions?.createIndexes();
   await attempts.createIndexes();
   const indexes = await attempts.collection.listIndexes().toArray();
   const expiry = indexes.find(index => index.name === 'login_attempt_expiry');

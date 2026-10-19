@@ -22,7 +22,7 @@ export function createChangeRequests(driver: Mongoose, requests: any, counters: 
   return {
     async ingredientOptions(actor: Actor) {
       ensureRole(actor);
-      const rows = await ingredients.find({}).select(`_id name ${CHANGE_REQUEST_TARGET_FIELDS.join(' ')}`).sort({ name: 1 }).lean().exec();
+      const rows = await ingredients.find({ isArchived: { $ne: true } }).select(`_id name ${CHANGE_REQUEST_TARGET_FIELDS.join(' ')}`).sort({ name: 1 }).lean().exec();
       return { ingredients: rows.map((row: any) => ({ id: row._id.toString(), name: row.name, ...Object.fromEntries(CHANGE_REQUEST_TARGET_FIELDS.map(field => [field, row[field]])) })) };
     },
     async list(actor: Actor, query: any) {
@@ -48,7 +48,7 @@ export function createChangeRequests(driver: Mongoose, requests: any, counters: 
       return { totalRequests, pending, approved, rejected };
     },
     async create(actor: Actor, input: ChangeRequestInput) {
-      if (actor.role !== 'Inventory Staff') throw forbidden(); const ingredient = await ingredients.findById(input.ingredientId).select(CHANGE_REQUEST_TARGET_FIELDS.join(' ')).lean().exec(); if (!ingredient) throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found');
+      if (actor.role !== 'Inventory Staff') throw forbidden(); const ingredient = await ingredients.findById(input.ingredientId).select(`${CHANGE_REQUEST_TARGET_FIELDS.join(' ')} isArchived`).lean().exec(); if (!ingredient || ingredient.isArchived) throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found');
       return driver.connection.transaction(async (session: any) => { const now = new Date(), dateKey = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}`; const counter = await counters.findOneAndUpdate({ dateKey }, { $inc: { sequence: 1 } }, { new: true, upsert: true, setDefaultsOnInsert: true, session }).lean().exec(); const requestID = `REQ-${dateKey}-${String(counter.sequence).padStart(3, '0')}`; const created = await requests.create([{ ...input, currentValue: fieldValue(ingredient, input.targetField), requestID, status: 'PENDING', requestedBy: new driver.Types.ObjectId(actor.id) }], { session }); const row = created[0]; await audits.create([{ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: actor.role, action: 'CREATE', targetType: 'ChangeRequest', targetId: row._id.toString(), targetName: requestID, module: 'Change Requests', status: 'Success', details: `${typeLabel(input.requestType)} submitted` }], { session }); return view(row); });
     },
     async review(actor: Actor, id: string, status: 'APPROVED' | 'REJECTED', reviewNote?: string) {

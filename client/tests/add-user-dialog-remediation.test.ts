@@ -43,7 +43,7 @@ test('Add User form body keeps 24px clearance above the footer at every scroll p
   assert.doesNotMatch(accountBody, /padding:24px 24px 0/);
   // The shared rule still carries the zero bottom padding used by the other
   // `.sl-add-user-dialog` consumers; only the account form dialog overrides it.
-  assert.match(styles, /\.sl-add-user-dialog>\.sl-dialog-content \{\n  padding: 24px 24px 0!important;\n\}/);
+  assert.match(styles, /\.sl-add-user-dialog>\.sl-dialog-content \{\r?\n  padding: 24px 24px 0!important;\r?\n\}/);
 });
 
 test('Super Admin role options and server submission paths remain unchanged', () => {

@@ -1,5 +1,6 @@
 import type { ingredientModel } from '../models/ingredient';
 import type { usageRecordModel } from '../models/usage-record';
+import type { inventoryBatchModel } from '../models/inventory-batch';
 import type { ForecastSnapshotStore } from './forecast-snapshot-store';
 import {
   businessDateString,
@@ -55,9 +56,38 @@ export interface ForecastVsActualTrendResult {
   };
 }
 
+export interface ForecastTableRow {
+  id: string;
+  name: string;
+  category: string;
+  unit: string;
+  currentStock: number;
+  avgDailyUsage: number;
+  forecastedDemand: number;
+  recommendedAction: string;
+  riskLevel: 'Low' | 'Medium' | 'High' | 'Critical';
+}
+
+export interface ForecastTableQuery {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  category?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface ForecastTableResult {
+  items: ForecastTableRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface ForecastEvaluationService {
   evaluateAccuracy(ingredientId: string, referenceDate?: Date): Promise<ForecastAccuracyResult>;
   trendSeries(ingredientId: string, days?: number, referenceDate?: Date): Promise<ForecastVsActualTrendResult>;
+  tableOverview(query?: ForecastTableQuery): Promise<ForecastTableResult>;
 }
 
 function roundNumber(value: number, decimals: number): number {
@@ -69,6 +99,7 @@ export function createForecastEvaluationService(
   ingredients: ReturnType<typeof ingredientModel>,
   usageRecords: ReturnType<typeof usageRecordModel>,
   snapshotStore: ForecastSnapshotStore,
+  batches?: ReturnType<typeof inventoryBatchModel>,
 ): ForecastEvaluationService {
   return {
     async evaluateAccuracy(ingredientId, referenceDate = new Date()) {
@@ -257,6 +288,144 @@ export function createForecastEvaluationService(
           asOf: endDateStr,
           horizonDays: days,
         },
+      };
+    },
+
+    async tableOverview(query: ForecastTableQuery = {}) {
+      const page = Math.max(1, query.page ?? 1);
+      const pageSize = Math.max(1, Math.min(150, query.pageSize ?? 10));
+
+      const filter: Record<string, unknown> = {};
+      if (query.search) {
+        const escaped = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        filter.$or = [
+          { name: { $regex: escaped, $options: 'i' } },
+          { brand: { $regex: escaped, $options: 'i' } },
+        ];
+      }
+      if (query.category) {
+        filter.category = query.category;
+      }
+
+      const total = await ingredients.countDocuments(filter).exec();
+      const ingList = (await ingredients
+        .find(filter)
+        .sort({ name: 1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean()
+        .exec()) as Array<{
+          _id: { toString(): string };
+          name: string;
+          category: string;
+          unitOfMeasure: string;
+          minimumStock?: number;
+        }>;
+
+      const now = new Date();
+      const todayStr = businessDateString(now);
+      const todayMidnight = new Date(`${todayStr}T00:00:00.000Z`);
+
+      const usageFrom = query.from
+        ? new Date(`${query.from}T00:00:00.000Z`)
+        : new Date(todayMidnight.getTime() - 30 * 86_400_000);
+      const usageTo = query.to
+        ? new Date(`${query.to}T23:59:59.999Z`)
+        : new Date(todayMidnight.getTime() + 86_400_000);
+
+      const daysCount = Math.max(1, Math.round((usageTo.getTime() - usageFrom.getTime()) / 86_400_000));
+
+      const items: ForecastTableRow[] = [];
+
+      for (const ing of ingList) {
+        const ingIdStr = ing._id.toString();
+
+        // 1. Current Consumable Stock
+        let stock = 0;
+        let hasExpiringBatches = false;
+        if (batches) {
+          const stockBatches = (await batches
+            .find({
+              ingredientId: ing._id as any,
+              expirationDate: { $gte: todayMidnight },
+              quantity: { $gt: 0 },
+            })
+            .lean()
+            .exec()) as Array<{ quantity: number; expirationDate: Date }>;
+
+          stock = stockBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
+          hasExpiringBatches = stockBatches.some(b => {
+            const diffDays = Math.round((new Date(b.expirationDate).getTime() - now.getTime()) / 86_400_000);
+            return diffDays >= 0 && diffDays <= 7;
+          });
+        }
+
+        // 2. Average Daily Usage
+        const usageRows = (await usageRecords
+          .find({
+            ingredientId: ing._id as any,
+            dateUsed: { $gte: usageFrom, $lte: usageTo },
+          })
+          .select('quantityUsed')
+          .lean()
+          .exec()) as Array<{ quantityUsed: number }>;
+
+        const totalUsage = usageRows.reduce((sum, u) => sum + (u.quantityUsed || 0), 0);
+        const avgUsage = roundNumber(totalUsage / daysCount, 2);
+
+        // 3. 30-Day Forecast Demand
+        const fSnapshots = await snapshotStore.findSnapshots({
+          ingredientId: ingIdStr,
+          status: 'ACTIVE',
+          targetDateFrom: todayStr,
+        });
+
+        const fSum = fSnapshots.reduce((sum, s) => sum + (s.predictedQuantity || 0), 0);
+        const fDemand = roundNumber(
+          fSnapshots.length > 0 ? (fSum / fSnapshots.length) * 30 : avgUsage * 30,
+          1,
+        );
+
+        // 4. Recommendation & Risk Level
+        const minStock = ing.minimumStock ?? 10;
+        let riskLevel: 'Low' | 'Medium' | 'High' | 'Critical' = 'Low';
+        let recommendedAction = 'Maintain Stock';
+
+        if (stock <= 0) {
+          riskLevel = 'Critical';
+          recommendedAction = 'Immediate Stock-In';
+        } else if (stock < minStock || stock < avgUsage * 3) {
+          riskLevel = 'High';
+          recommendedAction = 'Reorder Stock';
+        } else if (hasExpiringBatches) {
+          riskLevel = 'Medium';
+          recommendedAction = 'FEFO Priority';
+        } else if (stock < avgUsage * 7) {
+          riskLevel = 'Medium';
+          recommendedAction = 'Monitor Stock';
+        } else if (fDemand > 0 && stock > fDemand * 2) {
+          riskLevel = 'Low';
+          recommendedAction = 'Reduce Orders (Surplus)';
+        }
+
+        items.push({
+          id: ingIdStr,
+          name: ing.name,
+          category: ing.category,
+          unit: ing.unitOfMeasure,
+          currentStock: roundNumber(stock, 1),
+          avgDailyUsage: avgUsage,
+          forecastedDemand: fDemand,
+          recommendedAction,
+          riskLevel,
+        });
+      }
+
+      return {
+        items,
+        total,
+        page,
+        pageSize,
       };
     },
   };

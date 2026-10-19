@@ -78,8 +78,8 @@ export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<
       && (!query.from || item.row.dateReceived >= query.from) && (!query.to || item.row.dateReceived <= query.to);
   });
   const createWithin = async (session: ClientSession, actor: Actor, input: StockInInput): Promise<string | null> => {
-    const ingredient = await ingredients.findById(input.ingredientId).select('_id name category unitOfMeasure minimumStock').session(session).lean().exec() as IngredientRow | null;
-    if (!ingredient) return null;
+    const ingredient = await ingredients.findById(input.ingredientId).select('_id name category unitOfMeasure minimumStock isArchived').session(session).lean().exec() as (IngredientRow & { isArchived?: boolean }) | null;
+    if (!ingredient || ingredient.isArchived) return null;
     const batchID = await reserveInventoryBatchID(input.dateReceived, async key => {
       const counter = await counters.findByIdAndUpdate(key, { $inc: { sequence: 1 } }, { upsert: true, new: true, setDefaultsOnInsert: true, session }).lean().exec();
       return counter!.sequence;

@@ -236,6 +236,26 @@ test('HTTP API gates forecast evaluation endpoints to Admin and Manager with tru
         meta: { ingredient: 'Chicken Breast', unit: 'kg', asOf: '2026-10-19', horizonDays: days },
       };
     },
+    async tableOverview(query = {}) {
+      return {
+        items: [
+          {
+            id: '1'.repeat(24),
+            name: 'Banana Ketchup',
+            category: 'Pantry',
+            unit: 'kg',
+            currentStock: 15.0,
+            avgDailyUsage: 1.25,
+            forecastedDemand: 33.6,
+            recommendedAction: 'Maintain Stock',
+            riskLevel: 'Low',
+          },
+        ],
+        total: 1,
+        page: 1,
+        pageSize: 10,
+      };
+    },
   };
 
   const app = createApp([], () => true, auth, undefined, undefined, dummyIngredientService, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, false, evaluationService);
@@ -288,6 +308,16 @@ test('HTTP API gates forecast evaluation endpoints to Admin and Manager with tru
     // 6. Invalid days parameter rejected with 400
     assert.equal((await request(manager, `/${validId}/forecast-vs-actual?days=999`)).status, 400);
     assert.equal((await request(manager, `/${validId}/forecast-vs-actual?days=invalid`)).status, 400);
+
+    // 7. Forecast table endpoint tests
+    assert.equal((await request(undefined, '/forecast-table')).status, 401);
+    assert.equal((await request(staff, '/forecast-table')).status, 403);
+    const tableRes = await request(manager, '/forecast-table?page=1&pageSize=10');
+    assert.equal(tableRes.status, 200);
+    const tableBody = await tableRes.json();
+    assert.equal(tableBody.total, 1);
+    assert.equal(tableBody.items[0].name, 'Banana Ketchup');
+    assert.equal(tableBody.items[0].currentStock, 15.0);
   } finally {
     http.close();
   }

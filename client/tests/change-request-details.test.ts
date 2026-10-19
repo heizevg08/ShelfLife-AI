@@ -63,7 +63,7 @@ test('Inventory Staff details are role-specific while Manager presentation remai
   const managerSource = source.slice(source.indexOf('export function ChangeRequestDetailsDialog'));
   assert.doesNotMatch(managerSource, /managerRows/);
   assert.match(managerSource, /closeLabel="Close review dialog"/);
-  assert.match(managerSource, /showClose\n    className="sl-change-request-review-dialog"/);
+  assert.match(managerSource, /showClose\r?\n    className="sl-change-request-review-dialog"/);
   assert.equal((managerSource.match(/>Close</g) ?? []).length, 0);
   assert.match(managerSource, /identityStatus=\{<Status tone=\{statusTone\(request\.status\)\}>/);
   assert.ok(managerSource.indexOf('callout={') < managerSource.indexOf('lead={'));
@@ -556,7 +556,7 @@ test('Manager Forecasting table keeps a real min-width and wins the CSS preceden
   assert.match(styles, /\.sl-mgr-forecast-tablewrap table \{\s*border-collapse: collapse;\s*width: 100%;\s*min-width: 900px;/);
   // Truthful unavailable state is preserved: no fabricated accuracy or demand figures.
   assert.match(page, /<ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available\." \/>/);
-  assert.match(page, /<span>Forecast Accuracy<\/span><strong>—<\/strong><small>Forecast data pending<\/small>/);
+  assert.match(page, /<span>Forecast Accuracy<\/span>[\s\S]*?<strong>—<\/strong><small>Forecast data pending<\/small>/);
 });
 
 test('Manager Inventory Overview ledger keeps a real min-width and wins the CSS precedence it lost', () => {
@@ -582,7 +582,7 @@ test('Manager Inventory Overview ledger keeps a real min-width and wins the CSS 
   // cascade silently resets the ledger to zero again.
   assert.ok(
     styles.indexOf('.sl-manager-inventory-live .sl-manager-inventory-directory .sl-application-records-table { min-width: 58rem; }') >
-      styles.indexOf(':is(.sl-application-records,.sl-sa-account-pattern-records) :is(.sl-application-records-table,.sl-sa-ingredients-table) {\n  table-layout: fixed;'),
+      styles.indexOf(':is(.sl-application-records,.sl-sa-account-pattern-records) :is(.sl-application-records-table,.sl-sa-ingredients-table) {'),
     'inventory min-width override must appear after the shared records-table rule'
   );
   // The legacy rule that never applied stays untouched, and the shared rule is not edited.
@@ -591,5 +591,5 @@ test('Manager Inventory Overview ledger keeps a real min-width and wins the CSS 
   // Manager authorization for the page.
   assert.match(workspace, /'\/Inventory': \['Manager'\]/);
   // Truthful valuation: a null summary never renders as a fabricated number.
-  assert.match(page, /summary\?\.inventoryValue === null \|\| summary\?\.inventoryValue === undefined \? '—' :/);
+  assert.match(page, /summary\?\.inventoryValue === null \|\| summary\?\.inventoryValue === undefined \|\| !Number\.isFinite\(summary\.inventoryValue\) \? '—' :/);
 });

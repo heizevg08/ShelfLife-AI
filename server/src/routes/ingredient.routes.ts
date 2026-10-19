@@ -40,6 +40,7 @@ export function ingredientRoutes(
   router.delete('/:id', authorizeAdministration(['Admin']), actions.remove);
   if (forecastActions) router.post('/:id/forecast', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), forecastActions.forecast);
   if (evaluationActions) {
+    router.get('/forecast-table', authorizeAdministration(['Admin', 'Manager']), evaluationActions.table);
     router.get('/:id/forecast-accuracy', authorizeAdministration(['Admin', 'Manager']), evaluationActions.accuracy);
     router.get('/:id/forecast-vs-actual', authorizeAdministration(['Admin', 'Manager']), evaluationActions.trend);
   }

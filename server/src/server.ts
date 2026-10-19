@@ -222,6 +222,7 @@ if (require.main === module) {
       ingredientModel(driver),
       usageRecordModel(driver),
       forecastSnapshotStore,
+      inventoryBatchModel(driver),
     );
     if (config.mlPythonExecutable && config.mlWorkerScript) {
       const forecastWorker = createForecastInferenceWorker(config);
@@ -233,7 +234,7 @@ if (require.main === module) {
     const database = createDatabase(driver, config.mongoDbName);
     const indexedDatabase = { ...database, connect: async (uri: string) => {
       await database.connect(uri);
-      await provisionSecurityIndexes(loginAttempts, users);
+      await provisionSecurityIndexes(loginAttempts, users, sessions);
     } };
     const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, {
       loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange,

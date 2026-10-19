@@ -45,22 +45,31 @@ const baseUrl = () => apiBaseUrl;
 // Every authenticated call must carry the bearer token. Only the sign-in, refresh and recovery
 // endpoints are anonymous, so the token is attached here rather than at each call site where it
 // could be forgotten.
+let cachedUser: SessionUser | null = null;
+let cachedToken: string | null = null;
+let inflightUser: Promise<SessionUser> | undefined;
 async function request(path: string, options: RequestInit = {}) {
   const accessToken = getAccessToken();
   const headers = new Headers(options.headers);
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+  if (options.method && options.method !== 'GET') { cachedUser = null; cachedToken = null; }
   const response = await fetch(`${baseUrl()}/api/auth/${path}`, { ...options, headers, credentials: 'include', cache: 'no-store' });
   if (response.status === 204) return;
   const body = await response.json();
   if (!response.ok) {
-    if (response.status === 401) clearSession();
+    if (response.status === 401) { cachedUser = null; cachedToken = null; clearSession(); }
     throw new AuthRequestError(response.status, typeof body.error === 'string' ? body.error : body.error?.message || 'Authentication failed');
   }
   return body;
 }
 async function userFromAccessToken(): Promise<SessionUser> {
-  const body = await request('me');
-  return body.user;
+  const token = getAccessToken();
+  if (token && cachedUser && cachedToken === token) return cachedUser;
+  return inflightUser ??= request('me').then(body => {
+    cachedUser = body.user;
+    cachedToken = getAccessToken();
+    return body.user as SessionUser;
+  }).finally(() => { inflightUser = undefined; });
 }
 let refreshing: Promise<SessionUser> | undefined;
 async function refreshSession(): Promise<SessionUser> {

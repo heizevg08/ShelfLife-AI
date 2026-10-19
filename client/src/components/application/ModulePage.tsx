@@ -16,7 +16,7 @@ import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSumm
 import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
-import { createIngredient, deleteIngredient, getForecastAccuracy, getForecastVsActual, getIngredientRecommendations, getIngredientSummary, INGREDIENT_CATEGORIES, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type AdvisoryItem, type ForecastAccuracyResponse, type ForecastVsActualResponse, type Ingredient, type IngredientInput, type RecommendationResponse, type StockInIngredient } from '../../services/ingredients';
+import { createIngredient, deleteIngredient, getForecastAccuracy, getForecastTable, getForecastVsActual, getIngredientRecommendations, getIngredientSummary, INGREDIENT_CATEGORIES, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type AdvisoryItem, type ForecastAccuracyResponse, type ForecastTableRow, type ForecastTableResponse, type ForecastVsActualResponse, type Ingredient, type IngredientInput, type RecommendationResponse, type StockInIngredient } from '../../services/ingredients';
 import { getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
 import { getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
 import { getWasteSummary, listWasteRecords, type WasteReason, type WasteRecord, type WasteSummary } from '../../services/waste-records';
@@ -1748,6 +1748,29 @@ function ManagerForecastingPage() {
     );
   }, [recommendationsData, ingredient, ingredients]);
 
+  const [forecastTableData, setForecastTableData] = useState<ForecastTableResponse | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const activeSearch = ingredient
+      ? (ingredients?.find(item => item.id === ingredient)?.name ?? search)
+      : search;
+    const fromStr = tableDateWindow?.from ?? '';
+    const toStr = tableDateWindow?.to ?? '';
+
+    getForecastTable(page, rows, activeSearch, category, fromStr, toStr, controller.signal)
+      .then(res => {
+        if (controller.signal.aborted) return;
+        setForecastTableData(res);
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setForecastTableData(null);
+      });
+
+    return () => controller.abort();
+  }, [page, rows, search, category, ingredient, ingredients, tableDateWindow]);
+
   return <>
     <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
     <div className="sl-admin-view sl-mgr-forecast-page">
@@ -1778,9 +1801,31 @@ function ManagerForecastingPage() {
             scroll canvas centres the label in the canvas rather than in what the Manager can
             see, which on a phone puts the explanation entirely off-screen and leaves the body
             looking blank. */}
-        <div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table"><thead><tr><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th></tr></thead></table></div>
-        <div className="sl-mgr-forecast-table-empty"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available." /></div>
-        <div className="sl-mgr-forecast-footer sl-application-records-footer sl-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="forecasts" onPageChange={setPage} /></div>
+        <div className="sl-mgr-forecast-tablewrap sl-application-records-table-shell"><table className="sl-application-records-table sl-data-table"><thead><tr><th>Ingredient</th><th>Category</th><th>Current Stock</th><th>Avg. Daily Usage</th><th>Forecasted Demand (Next 30 Days)</th><th>Recommended Action</th><th>Risk Level</th></tr></thead>
+          {forecastTableData && forecastTableData.items.length > 0 && (
+            <tbody>
+              {forecastTableData.items.map(row => (
+                <tr key={row.id}>
+                  <td><strong>{formatHumanReadableText(row.name)}</strong></td>
+                  <td>{formatHumanReadableText(row.category)}</td>
+                  <td>{`${row.currentStock.toFixed(1)} ${row.unit}`}</td>
+                  <td>{`${row.avgDailyUsage.toFixed(2)} ${row.unit}/day`}</td>
+                  <td>{`${row.forecastedDemand.toFixed(1)} ${row.unit}`}</td>
+                  <td>{row.recommendedAction}</td>
+                  <td>
+                    <Status tone={row.riskLevel === 'Critical' ? 'critical' : row.riskLevel === 'High' ? 'attention' : row.riskLevel === 'Medium' ? 'brand' : 'neutral'}>
+                      {row.riskLevel}
+                    </Status>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          )}
+        </table></div>
+        {(!forecastTableData || forecastTableData.items.length === 0) && (
+          <div className="sl-mgr-forecast-table-empty"><ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available." /></div>
+        )}
+        <div className="sl-mgr-forecast-footer sl-application-records-footer sl-records-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={forecastTableData?.total ?? 0} itemLabel="forecasts" onPageChange={setPage} /></div>
       </section>
     </div>
   </>;

@@ -6,7 +6,7 @@ const knownErrorTypes = new Set(['Error', 'HttpError', 'AdministrationError', 'V
 // Logs contain only allowlisted correlation metadata—never URLs, headers, IPs, bodies, credentials, tokens, or raw errors.
 export const requestDiagnostics: RequestHandler = (req, res, next) => {
   const requestId = randomUUID();
-  const scope = /^\/api\/(auth|health|users|dashboard|audit-records|ingredients|inventory-batches|usage-records|waste-records|change-requests)(?:\/|$)/.exec(req.path)?.[1] ?? 'other';
+  const scope = /^\/api\/(auth|health|users|dashboard|audit-records|ingredients|inventory-batches|usage-records|waste-records|change-requests|reports)(?:\/|$)/.exec(req.path)?.[1] ?? 'other';
   res.setHeader('X-Request-ID', requestId);
   res.once('finish', () => {
     if (res.statusCode < 400) return;

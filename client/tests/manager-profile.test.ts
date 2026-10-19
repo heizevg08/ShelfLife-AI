@@ -160,7 +160,7 @@ test('every authenticated call carries the bearer token', () => {
   // The token is attached inside the shared request helper. When it was only attached at the
   // /me call site, the self-service profile update and the password change both reached the
   // server unauthenticated and were refused with a 401.
-  assert.match(auth, /async function request\(path: string, options: RequestInit = \{\}\) \{\n  const accessToken = getAccessToken\(\);/);
+  assert.match(auth, /async function request\(path: string, options: RequestInit = \{\}\) \{\r?\n  const accessToken = getAccessToken\(\);/);
   assert.match(auth, /if \(accessToken\) headers\.set\('Authorization', `Bearer \$\{accessToken\}`\);/);
   assert.match(auth, /fetch\(`\$\{baseUrl\(\)\}\/api\/auth\/\$\{path\}`, \{ \.\.\.options, headers, credentials: 'include', cache: 'no-store' \}\)/);
   // No authenticated call may build its own Authorization header or skip the helper.

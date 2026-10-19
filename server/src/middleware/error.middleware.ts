@@ -20,5 +20,15 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _req, res, nex
     if (error.type === 'entity.too.large') { status = 413; message = 'Request body too large'; }
     if (error.type === 'encoding.unsupported' || error.type === 'charset.unsupported') { status = 415; message = 'Unsupported encoding'; }
   }
+  if (status >= 500 && process.env.NODE_ENV !== 'test') {
+    const isDev = process.env.NODE_ENV === 'development';
+    console.error(JSON.stringify({
+      event: 'unhandled_server_error',
+      timestamp: new Date().toISOString(),
+      requestId: res.getHeader('X-Request-ID'),
+      errorType: res.locals?.failureDiagnostic?.errorType ?? (error instanceof Error ? error.name : 'UnknownError'),
+      ...(isDev && error instanceof Error ? { message: error.message, stack: error.stack } : {}),
+    }));
+  }
   res.status(status).json({ error: { message } });
 };

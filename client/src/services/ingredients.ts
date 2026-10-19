@@ -121,3 +121,39 @@ export const getIngredientRecommendations = (id: string, forecastDates: string[]
     signal,
     errorFeedback: false,
   });
+
+export interface ForecastTableRow {
+  id: string;
+  name: string;
+  category: string;
+  unit: string;
+  currentStock: number;
+  avgDailyUsage: number;
+  forecastedDemand: number;
+  recommendedAction: string;
+  riskLevel: 'Low' | 'Medium' | 'High' | 'Critical';
+}
+
+export interface ForecastTableResponse {
+  items: ForecastTableRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export const getForecastTable = (
+  page = 1,
+  pageSize = 10,
+  search = '',
+  category = '',
+  from = '',
+  to = '',
+  signal?: AbortSignal,
+) => {
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  if (search) query.set('search', search);
+  if (category) query.set('category', category);
+  if (from) query.set('from', from);
+  if (to) query.set('to', to);
+  return apiClient<ForecastTableResponse>(`/ingredients/forecast-table?${query}`, { signal });
+};

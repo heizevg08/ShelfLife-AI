@@ -118,5 +118,21 @@ test('bulk Stock-In, Usage, and Waste commit atomically and roll back on any inv
     assert.equal((await post('/usage-records/bulk', { items: [{ ingredientId: ingredient._id.toString(), batchId: routeBatch.id, dateUsed: '2030-01-03', quantityUsed: 1, unit: 'kg' }] })).status, 400);
     assert.equal((await post('/waste-records/bulk', { items: [{ ingredientId: ingredient._id.toString(), batchId: routeBatch.id, dateWasted: '2030-01-03', quantityWasted: 1, reason: 'Unknown' }] })).status, 400);
     assert.equal((await post('/inventory-batches/bulk', { items: [{ ingredientId: ingredient._id.toString(), dateReceived: '2030-01-03', quantity: 1, expirationDate: '2030-03-01' }] }, managerToken)).status, 403);
+
+    const { createIngredientStore } = require('../dist/services/ingredient-store');
+    const ingredientStore = createIngredientStore(driver, Ingredients, Users, Audits);
+    const unreferenced = await Ingredients.create({ name: 'Unreferenced Spice', category: 'Pantry', unitOfMeasure: 'g', minimumStock: 1, standardUnitCost: 1, createdBy: staff._id });
+    assert.equal(await ingredientStore.remove(actor, unreferenced._id.toString()), true);
+    assert.equal(await Ingredients.findById(unreferenced._id).lean(), null);
+
+    assert.equal(await ingredientStore.remove(actor, other._id.toString()), true);
+    assert.equal(await ingredientStore.remove(actor, other._id.toString()), false);
+    const archivedDoc = await Ingredients.findById(other._id).lean();
+    assert.equal(archivedDoc?.isArchived, true);
+    const activeOptions = await ingredientStore.stockInOptions();
+    assert.equal(activeOptions.some(option => option.id === other._id.toString()), false);
+    await assert.rejects(() => inventory.createMany(actor, [{ ingredientId: other._id.toString(), dateReceived: new Date('2030-01-04'), quantity: 1, expirationDate: new Date('2030-02-04') }]), error => error.code === 'NOT_FOUND');
+    const historicalBatches = await inventory.list({ page: 1, pageSize: 50, sort: 'latest' }, new Date('2030-01-03T12:00:00.000Z'));
+    assert.equal(historicalBatches.items.some(batch => batch.ingredient.id === other._id.toString() && batch.ingredient.name === 'Other Ingredient'), true);
   } finally { http.closeAllConnections(); await new Promise(resolve => http.close(resolve)); }
 });

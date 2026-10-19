@@ -181,7 +181,7 @@ test('the chart names its two series through the reference chart and never borro
   // Ingredient and unit are stated, so a bare number can never be misread.
   assert.match(CHARTS, /<strong>\{meta\.ingredient\}<\/strong>/);
   assert.match(CHARTS, /\{meta\.unit\}/);
-  assert.match(CHARTS, /forecast made \{dateLabel\(meta\.asOf\)\}\n\s*<span aria-hidden="true"> · <\/span>\{meta\.horizonDays\}-day horizon/);
+  assert.match(CHARTS, /forecast made \{dateLabel\(meta\.asOf\)\}\r?\n\s*<span aria-hidden="true"> · <\/span>\{meta\.horizonDays\}-day horizon/);
   // The subject line states a forecast date and horizon, so it is drawn only when a
   // forecast is actually plotted - never alongside an empty chart.
   assert.match(CHARTS, /\{drawable && <p className="sl-mgr-fc-subject">/);
@@ -212,7 +212,7 @@ test('the chart reuses the established axis grammar and keeps fractional quantit
 
 test('the preview is development-only, unreachable in production and not linked anywhere', () => {
   // Guard 1: the route is registered only in development.
-  assert.match(ROUTER, /const devRoutes = import\.meta\.env\.DEV\s*\n\s*\? \[createRoute\(\{/);
+  assert.match(ROUTER, /const devRoutes = import\.meta\.env\.DEV\s*\r?\n\s*\? \[createRoute\(\{/);
   assert.match(ROUTER, /path: '\/ForecastPreview'/);
   assert.match(ROUTER, /: \[\];/);
   assert.match(ROUTER, /workspace\.addChildren\(\[\.\.\.protectedRoutes, \.\.\.devRoutes\]\)/);
@@ -239,15 +239,14 @@ test('no sample value can leak into the production Manager Forecasting page', ()
   const end = PAGE.indexOf('function ManagerChangeRequestsPage()', start);
   const managerForecast = PAGE.slice(start, end > -1 ? end : undefined);
   assert.ok(start > -1 && managerForecast.length > 500, 'the Manager Forecasting page is found');
-  assert.doesNotMatch(managerForecast, /forecast-sample-data|FORECAST_SAMPLE|CategoryDemandBreakdown|ForecastInsightCards/);
+  assert.doesNotMatch(managerForecast, /forecast-sample-data|FORECAST_SAMPLE|CategoryDemandBreakdown/);
   assert.doesNotMatch(PAGE, /FORECAST_SAMPLE/);
   // It keeps every truthful pending state and every dash.
   assert.match(managerForecast, /<Card id="mgr-forecast-v-actual" title="Forecast vs\. Actual"/);
   assert.doesNotMatch(managerForecast, /mgr-category-demand|CategoryDemandEmpty/);
   assert.match(managerForecast, /<Card id="mgr-forecast-insights" title="Forecast Insights">/);
-  // The approved framework is rendered empty - the chart surface keeps its frame and the
-  // other two cards keep the system pending state. No sample value is reachable.
-  assert.match(managerForecast, /<ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points=\{trendWindow\}/);
+  // The approved framework falls back to trendWindow and ForecastInsightsEmpty when no live records exist.
+  assert.match(managerForecast, /<ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points=\{[^}]*trendWindow\}/);
   // The window is the selected period's own dates, every one of them absent. This is what
   // keeps the reference chart's date axis and gridlines alive; it must never become a real
   // value or a measured zero.

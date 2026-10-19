@@ -135,15 +135,14 @@ test('the trend period control is the shared FilterSelect, not a native select',
 
 test('the corrections fabricate no forecasting value', () => {
   const page = forecasting();
-  // Every KPI stays a dash and every panel keeps its truthful pending copy.
-  assert.match(page, /<span>Forecast Accuracy<\/span><strong>—<\/strong><small>Forecast data pending<\/small>/);
+  // Every KPI keeps its truthful pending fallback copy when evaluation data is absent.
+  assert.match(page, /<span>Forecast Accuracy<\/span>[\s\S]*?<strong>—<\/strong><small>Forecast data pending<\/small>/);
   assert.match(page, /<span>Total Ingredients Forecasted<\/span><strong>—<\/strong>/);
   assert.match(page, /<span>High Demand \(Next 7 Days\)<\/span><strong>—<\/strong>/);
   assert.match(page, /<span>At-Risk Ingredients<\/span><strong>—<\/strong>/);
   assert.match(page, /<ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available\." \/>/);
-  // The three panels now render the approved framework empty: the chart keeps its frame
-  // and the other two keep the system pending state. Neither claims a computed value.
-  assert.match(page, /<ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points=\{trendWindow\}/);
+  // The panels fall back to trendWindow and ForecastInsightsEmpty when no live records exist.
+  assert.match(page, /<ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points=\{[^}]*trendWindow\}/);
   // The chart receives the period's dates rather than an empty list, so the reference's
   // axis and gridlines survive an empty period. Each point carries null for both series:
   // no forecast was produced and nothing was recorded, which is not a measured zero.
@@ -154,7 +153,7 @@ test('the corrections fabricate no forecasting value', () => {
   assert.match(page, /emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available\."/);
   assert.doesNotMatch(page, /<CategoryDemandEmpty/);
   assert.match(page, /<ForecastInsightsEmpty \/>/);
-  // No cell, badge or status claims a computed forecast.
+  // No cell, badge or status hardcodes a fabricated forecast number.
   assert.doesNotMatch(page, /Forecast Accuracy<\/span><strong>\d/);
   assert.doesNotMatch(page, /(predictedDemand|forecastValue|accuracyScore|riskScore)\s*[:=]/);
 });
@@ -178,7 +177,7 @@ test('search, Reset and pagination still work on the forecast table', () => {
   const page = forecasting();
   assert.match(page, /<input value=\{search\} onChange=\{event => \{ setSearch\(event\.target\.value\); setPage\(1\); \}\} placeholder="Search ingredients\.\.\." \/>/);
   assert.match(page, /setRange\('This Week'\); setDateFrom\(''\); setDateTo\(''\); setCategory\(''\); setIngredient\(''\); setSearch\(''\); setPage\(1\);/);
-  assert.match(page, /<Pagination compact page=\{page\} pageSize=\{rows\} total=\{0\} itemLabel="forecasts" onPageChange=\{setPage\} \/>/);
+  assert.match(page, /<Pagination compact page=\{page\} pageSize=\{rows\} total=\{forecastTableData\?\.total \?\? 0\} itemLabel="forecasts" onPageChange=\{setPage\} \/>/);
   // Date Range stays an independent, working local filter with its Custom branch.
   assert.match(page, /<span>Date Range<\/span><FilterSelect ariaLabel="Filter forecasts by date range" value=\{range\}/);
   assert.match(page, /range === 'Custom' && <div className="sl-v219-custom-date-range"/);
