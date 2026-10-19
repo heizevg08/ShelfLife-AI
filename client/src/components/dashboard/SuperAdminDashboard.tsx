@@ -147,7 +147,7 @@ export default function SuperAdminDashboard({ user }: { user: SessionUser }) {
               }}>
                 <div className="sl-sa-status-center">
                   <strong>{summary ? `${activeUsers.toLocaleString()} / ${summary.totalUsers.toLocaleString()}` : '— / —'}</strong>
-                  <small>active</small>
+                  <span>active</span>
                 </div>
               </div>
             </div>

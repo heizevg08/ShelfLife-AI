@@ -34828,7 +34828,7 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
   justify-content:center;
 }
 .sl-superadmin-dashboard .sl-sa-status-center strong { color:var(--sl-text); font-size:clamp(1.5rem,23cqw,2.25rem); line-height:1; white-space:nowrap; }
-.sl-superadmin-dashboard .sl-sa-status-center small { margin-top:clamp(.15rem,2cqw,.35rem); color:var(--sl-muted); font-size:clamp(.75rem,10cqw,.95rem); }
+.sl-superadmin-dashboard .sl-sa-status-center span { margin-top:clamp(.15rem,2cqw,.35rem); color:var(--sl-muted); font-size:clamp(.875rem,11cqw,1.125rem); line-height:1.15; }
 .sl-superadmin-dashboard .sl-sa-status-legend { min-width:8.5rem; display:grid; gap:.75rem; }
 .sl-superadmin-dashboard .sl-sa-status-item { grid-template-columns:auto 1fr auto; gap:.5rem; display:grid; align-items:center; }
 .sl-superadmin-dashboard .sl-sa-status-label { color:var(--sl-text); }
@@ -34859,7 +34859,7 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
   font-size:clamp(1.7rem,24cqw,2.75rem);
 }
 .sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut span {
-  font-size:clamp(.75rem,9cqw,1rem);
+  font-size:clamp(.875rem,10.5cqw,1.25rem);
   line-height:1.15;
 }
 .sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut-legend {
