@@ -1102,6 +1102,18 @@
     padding: var(--sl-space-6) var(--sl-space-4);
     gap: var(--sl-space-5);
   }
+  .sl-description {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+  .sl-action-toast {
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+    top: calc(var(--sl-topbar-height) + .5rem);
+    justify-content: space-between;
+  }
   .sl-health-panel-header {
     gap: var(--sl-space-3);
     padding: var(--sl-space-4);
