@@ -4739,6 +4739,132 @@ section.sl-card:has(.sl-filter-popover) {
   font: var(--sl-font-card-title);
   margin: 0;
 }
+.sl-notification-tabs {
+  display: flex;
+  gap: .35rem;
+  padding: .65rem 1rem;
+  border-bottom: 1px solid var(--sl-border-subtle);
+  background: var(--sl-surface-subtle);
+}
+.sl-notification-tabs button {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: .3rem .65rem;
+  border-radius: var(--sl-radius);
+  font: var(--sl-font-supporting);
+  font-weight: 550;
+  color: var(--sl-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  cursor: pointer;
+  transition: all .12s ease;
+}
+.sl-notification-tabs button:hover {
+  color: var(--sl-text);
+  background: color-mix(in srgb, var(--sl-border) 40%, transparent);
+}
+.sl-notification-tabs button.is-active {
+  background: var(--sl-surface);
+  color: var(--sl-brand);
+  border-color: var(--sl-border);
+  box-shadow: var(--sl-shadow-sm);
+}
+.sl-notification-tabs button small {
+  background: color-mix(in srgb, var(--sl-muted) 15%, transparent);
+  color: inherit;
+  padding: .05rem .35rem;
+  border-radius: 99px;
+  font-size: .7rem;
+}
+.sl-notification-tabs button.is-active small {
+  background: var(--sl-brand-light);
+  color: var(--sl-brand);
+}
+.sl-notification-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .6rem 1rem .3rem;
+  font-size: .75rem;
+  color: var(--sl-muted);
+}
+.sl-notification-section-heading button {
+  background: none;
+  border: none;
+  color: var(--sl-brand);
+  font-size: .75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+.sl-notification-open {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+.sl-notification-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sl-brand);
+  margin-top: .4rem;
+  flex-shrink: 0;
+}
+.sl-notification-item[data-read="true"] .sl-notification-dot {
+  opacity: 0;
+}
+.sl-notification-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+.sl-notification-copy strong {
+  font-size: .84rem;
+  color: var(--sl-text);
+}
+.sl-notification-copy span {
+  font-size: .78rem;
+  color: var(--sl-muted);
+  line-height: 1.35;
+}
+.sl-notification-copy time {
+  font-size: .72rem;
+  color: var(--sl-muted);
+  margin-top: .15rem;
+}
+.sl-notification-footer {
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--sl-border-subtle);
+  background: var(--sl-surface);
+  display: flex;
+  justify-content: flex-end;
+}
+.sl-notification-mark-read {
+  border: 1px solid var(--sl-border);
+  background: var(--sl-surface);
+  color: var(--sl-text);
+  font-size: .78rem;
+  padding: .35rem .75rem;
+  border-radius: var(--sl-radius);
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  cursor: pointer;
+}
+.sl-notification-mark-read:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
 .sl-notification-header p {
   color: var(--sl-muted);
   margin: .2rem 0 0;
@@ -28341,22 +28467,22 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   grid-column: 1;
 }
-n.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-waste {
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-waste {
   grid-column: 2;
 }
-n.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-distribution {
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-distribution {
   grid-column: 3;
 }
-n.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-forecast {
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-forecast {
   grid-column: 4;
 }
-n.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319>#sl-sa-expiring-items {
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319>#sl-sa-expiring-items {
   grid-column: 1/3;
 }
-n.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319>#sl-sa-recent-activity {
+.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319>#sl-sa-recent-activity {
   grid-column: 3/5;
 }
-n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
+.sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   grid-column: 1;
 }
 .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-waste {
