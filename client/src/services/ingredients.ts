@@ -92,3 +92,32 @@ export const getForecastAccuracy = (id: string, signal?: AbortSignal) =>
 
 export const getForecastVsActual = (id: string, days = 30, signal?: AbortSignal) =>
   apiClient<ForecastVsActualResponse>(`/ingredients/${id}/forecast-vs-actual?days=${days}`, { signal });
+
+export interface AdvisoryItem {
+  code: 'SHORTAGE' | 'EXPIRY_EXPOSURE' | 'SURPLUS' | 'EXPIRED_STOCK' | 'INCOMPLETE_HORIZON' | 'NO_ACTION';
+  level: 'ingredient' | 'batch' | 'note';
+  message: string;
+  quantity?: number;
+  unit?: string;
+  batchIndex?: number;
+  expirationDate?: string;
+}
+
+export type RecommendationResponse =
+  | { status: 'NOT_FOUND' }
+  | { status: 'UNAVAILABLE'; reason: string }
+  | {
+      status: 'ADVISED';
+      ingredientId: string;
+      unit: string;
+      recommendations: AdvisoryItem[];
+      notes: AdvisoryItem[];
+    };
+
+export const getIngredientRecommendations = (id: string, forecastDates: string[], signal?: AbortSignal) =>
+  apiClient<RecommendationResponse>(`/ingredients/${id}/recommendations`, {
+    method: 'POST',
+    body: JSON.stringify({ forecastDates }),
+    signal,
+    errorFeedback: false,
+  });

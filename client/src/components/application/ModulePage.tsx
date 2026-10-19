@@ -3,8 +3,8 @@ import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, C
 import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { APPLICATION_RECORD_PAGE_SIZES, ApplicationPendingState } from './ApplicationPatterns';
-import { ForecastInsightsEmpty, ForecastVsActualChart, ForecastVsActualLegend } from './ManagerForecastCharts';
-import { emptyForecastWindow } from './forecast-chart-data';
+import { ForecastInsightCards, ForecastInsightsEmpty, ForecastVsActualChart, ForecastVsActualLegend } from './ManagerForecastCharts';
+import { emptyForecastWindow, type ForecastInsight } from './forecast-chart-data';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 import { Dialog } from './Dialog';
 import { InventoryStaffAddButton } from './InventoryStaffModal';
@@ -16,12 +16,12 @@ import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSumm
 import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
-import { createIngredient, deleteIngredient, getForecastAccuracy, getForecastVsActual, getIngredientSummary, INGREDIENT_CATEGORIES, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type ForecastAccuracyResponse, type ForecastVsActualResponse, type Ingredient, type IngredientInput, type StockInIngredient } from '../../services/ingredients';
+import { createIngredient, deleteIngredient, getForecastAccuracy, getForecastVsActual, getIngredientRecommendations, getIngredientSummary, INGREDIENT_CATEGORIES, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type AdvisoryItem, type ForecastAccuracyResponse, type ForecastVsActualResponse, type Ingredient, type IngredientInput, type RecommendationResponse, type StockInIngredient } from '../../services/ingredients';
 import { getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
 import { getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
 import { getWasteSummary, listWasteRecords, type WasteReason, type WasteRecord, type WasteSummary } from '../../services/waste-records';
 import { formatDate, formatDateTime } from '../../utils/date-time';
-import { businessDateInputValue, businessDayRange, businessMonthRange, businessWeekRange } from '../../utils/business-day';
+import { businessDateInputValue, businessDayRange, businessMonthRange, businessWeekRange, shiftBusinessDate } from '../../utils/business-day';
 import { formatHumanReadableText } from '../../utils/display-text';
 import { inventoryBatchRecorderLabel } from '../../utils/inventory-batch-recorder';
 import { ConnectedManagerInventoryPage } from './ManagerInventoryPage';
@@ -1550,6 +1550,90 @@ export function SuperAdminForecastingPage() {
   </>;
 }
 
+function mapAdvisoriesToInsights(
+  recommendations: AdvisoryItem[],
+  notes: AdvisoryItem[],
+  ingredientName: string,
+  unitCost?: number,
+): ForecastInsight[] {
+  const allItems = [...recommendations, ...notes];
+  const items: ForecastInsight[] = [];
+
+  allItems.forEach((item, index) => {
+    let tone: ForecastInsight['tone'] = 'neutral';
+    let reason = item.message;
+    let evidence = item.message;
+    let action = 'Review inventory and plan accordingly.';
+
+    switch (item.code) {
+      case 'EXPIRED_STOCK':
+        tone = 'critical';
+        reason = 'Expired stock detected in current inventory.';
+        evidence = item.message;
+        action = 'Remove or isolate expired stock in accordance with kitchen safety procedures.';
+        break;
+      case 'EXPIRY_EXPOSURE':
+        tone = 'critical';
+        reason = 'Batch is projected to have leftover stock past its expiration date.';
+        evidence = item.message;
+        action = 'Prioritize this batch first (FEFO) in daily preparations or menu specials.';
+        break;
+      case 'SHORTAGE':
+        tone = 'attention';
+        reason = 'Projected inventory shortage based on forecasted consumption.';
+        evidence = item.message;
+        action = 'Review procurement schedule and initiate replenishment to avoid stockout.';
+        break;
+      case 'SURPLUS':
+        tone = 'neutral';
+        reason = item.level === 'note'
+          ? 'Minimum stock threshold is not configured.'
+          : 'Projected inventory surplus above minimum stock requirements.';
+        evidence = item.message;
+        action = item.level === 'note'
+          ? 'Configure a minimum stock level to enable automated surplus monitoring.'
+          : 'Delay or adjust upcoming purchase orders to prevent overstocking.';
+        break;
+      case 'INCOMPLETE_HORIZON':
+        tone = 'neutral';
+        reason = 'Forecast horizon does not fully cover the batch expiration date.';
+        evidence = item.message;
+        action = 'Continue monitoring as daily forecasting generates subsequent horizon predictions.';
+        break;
+      case 'NO_ACTION':
+        tone = 'positive';
+        reason = 'Inventory levels are healthy across the evaluated forecast window.';
+        evidence = item.message;
+        action = 'Maintain standard operational consumption and first-expiry, first-out rotation.';
+        break;
+      default:
+        tone = 'neutral';
+        break;
+    }
+
+    const batchLabel = item.batchIndex !== undefined ? `Batch #${item.batchIndex}` : 'All Batches';
+    const potentialWasteCost = (item.quantity !== undefined && typeof unitCost === 'number' && unitCost > 0)
+      ? Number((item.quantity * unitCost).toFixed(2))
+      : undefined;
+
+    items.push({
+      id: `rec-${item.code}-${index}`,
+      ingredient: ingredientName,
+      batchId: batchLabel,
+      reason,
+      evidence,
+      action,
+      tone,
+      potentialWasteQuantity: item.quantity,
+      unit: item.unit,
+      potentialWasteCost,
+      expiresOn: item.expirationDate,
+    });
+  });
+
+  return items;
+}
+
 function ManagerForecastingPage() {
   const [range, setRange] = useState('This Week');
   const [dateFrom, setDateFrom] = useState('');
@@ -1623,26 +1707,46 @@ function ManagerForecastingPage() {
 
   const [accuracyData, setAccuracyData] = useState<ForecastAccuracyResponse | null>(null);
   const [trendData, setTrendData] = useState<ForecastVsActualResponse | null>(null);
+  const [recommendationsData, setRecommendationsData] = useState<RecommendationResponse | null>(null);
 
   useEffect(() => {
     const targetIngredientId = ingredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
     if (!targetIngredientId) {
       setAccuracyData(null);
       setTrendData(null);
+      setRecommendationsData(null);
       return;
     }
     const controller = new AbortController();
     const days = trendPeriod === 'This Week' ? 7 : trendDays;
+    const forecastDates = Array.from({ length: 14 }, (_, i) => shiftBusinessDate(today, i + 1));
     Promise.all([
       getForecastAccuracy(targetIngredientId, controller.signal).catch(() => null),
       getForecastVsActual(targetIngredientId, days, controller.signal).catch(() => null),
-    ]).then(([acc, trend]) => {
+      getIngredientRecommendations(targetIngredientId, forecastDates, controller.signal).catch(() => null),
+    ]).then(([acc, trend, recs]) => {
       if (controller.signal.aborted) return;
       setAccuracyData(acc);
       setTrendData(trend);
+      setRecommendationsData(recs);
     });
     return () => controller.abort();
-  }, [ingredient, ingredients, trendPeriod, trendDays]);
+  }, [ingredient, ingredients, trendPeriod, trendDays, today]);
+
+  const insights = useMemo<ForecastInsight[]>(() => {
+    if (!recommendationsData || recommendationsData.status !== 'ADVISED') return [];
+    const targetIngredientId = ingredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
+    const activeIngredient = (ingredients ?? []).find(item => item.id === targetIngredientId);
+    const ingredientName = activeIngredient ? formatHumanReadableText(activeIngredient.name) : 'Selected Ingredient';
+    const unitCost = activeIngredient?.standardUnitCost;
+
+    return mapAdvisoriesToInsights(
+      recommendationsData.recommendations,
+      recommendationsData.notes,
+      ingredientName,
+      unitCost,
+    );
+  }, [recommendationsData, ingredient, ingredients]);
 
   return <>
     <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
@@ -1656,7 +1760,7 @@ function ManagerForecastingPage() {
 
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
         <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow} meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
-        <Card id="mgr-forecast-insights" title="Forecast Insights"><ForecastInsightsEmpty /></Card>
+        <Card id="mgr-forecast-insights" title="Forecast Insights">{insights.length > 0 ? <ForecastInsightCards ariaLabel="Operational forecast insights and risk recommendations" insights={insights} /> : <ForecastInsightsEmpty />}</Card>
       </section>
 
       <section className="sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records sl-mgr-forecast-records" aria-labelledby="mgr-ingredient-forecasts">
