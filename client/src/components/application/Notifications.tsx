@@ -102,8 +102,19 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
 
   useEffect(() => {
     void refresh();
-    const interval = window.setInterval(() => void refresh(), 30_000);
-    return () => window.clearInterval(interval);
+    const tick = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      void refresh();
+    };
+    const interval = window.setInterval(tick, 30_000);
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden) void refresh();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [refresh]);
   useEffect(() => {
     if (!open) return;

@@ -371,7 +371,23 @@ export function createForecastEvaluationService(
           .exec()) as Array<{ quantityUsed: number }>;
 
         const totalUsage = usageRows.reduce((sum, u) => sum + (u.quantityUsed || 0), 0);
-        const avgUsage = roundNumber(totalUsage / daysCount, 2);
+        let avgUsage = roundNumber(totalUsage / daysCount, 2);
+
+        if (avgUsage === 0) {
+          // Fallback to recent 7-day operational usage if the current week window has not accrued consumption yet
+          const fallbackRows = (await usageRecords
+            .find({
+              ingredientId: ing._id as any,
+              dateUsed: { $gte: new Date(todayMidnight.getTime() - 7 * 86_400_000), $lt: todayMidnight },
+            })
+            .select('quantityUsed')
+            .lean()
+            .exec()) as Array<{ quantityUsed: number }>;
+          const fallbackTotal = fallbackRows.reduce((sum, u) => sum + (u.quantityUsed || 0), 0);
+          if (fallbackTotal > 0) {
+            avgUsage = roundNumber(fallbackTotal / 7, 2);
+          }
+        }
 
         // 3. 30-Day Forecast Demand
         const fSnapshots = await snapshotStore.findSnapshots({

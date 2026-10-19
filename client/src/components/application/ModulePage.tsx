@@ -1562,7 +1562,8 @@ function mapAdvisoriesToInsights(
   allItems.forEach((item, index) => {
     let tone: ForecastInsight['tone'] = 'neutral';
     let reason = item.message;
-    let evidence = item.message;
+    const cleanFloatMessage = (msg: string) => msg.replace(/\b(\d+\.\d{3,})\b/g, (match) => Number(match).toFixed(2));
+    let evidence = cleanFloatMessage(item.message);
     let action = 'Review inventory and plan accordingly.';
 
     switch (item.code) {

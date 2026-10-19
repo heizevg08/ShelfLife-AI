@@ -43,22 +43,24 @@ export function deriveRecommendations(evaluation: Evaluated, unit: string): Reco
   );
 
   if (evaluation.expiredQuantity > 0) {
+    const expiredQty = Number(evaluation.expiredQuantity.toFixed(2));
     recommendations.push({
       code: 'EXPIRED_STOCK',
       level: 'ingredient',
-      message: `Measured expired stock of ${evaluation.expiredQuantity} ${unit} found. Isolate/remove per establishment procedure. This is measured inventory fact, not an ML prediction.`,
-      quantity: evaluation.expiredQuantity,
+      message: `Measured expired stock of ${expiredQty} ${unit} found. Isolate/remove per establishment procedure. This is measured inventory fact, not an ML prediction.`,
+      quantity: expiredQty,
       unit,
     });
   }
 
   const shortageFired = evaluation.shortageQty > 0;
   if (shortageFired) {
+    const shortageQty = Number(evaluation.shortageQty.toFixed(2));
     recommendations.push({
       code: 'SHORTAGE',
       level: 'ingredient',
-      message: `Projected shortage of ${evaluation.shortageQty} ${unit} over the evaluated forecast window. Review restocking.`,
-      quantity: evaluation.shortageQty,
+      message: `Projected shortage of ${shortageQty} ${unit} over the evaluated forecast window. Review restocking.`,
+      quantity: shortageQty,
       unit,
     });
   }
@@ -71,8 +73,9 @@ export function deriveRecommendations(evaluation: Evaluated, unit: string): Reco
     )
     .sort((a, b) => (a.expirationDate < b.expirationDate ? -1 : a.expirationDate > b.expirationDate ? 1 : 0));
   for (const batch of affected) {
-    const leftover =
+    const rawLeftover =
       batch.expiryEvaluation.status === 'EVALUATED' ? batch.expiryEvaluation.projectedLeftoverAtExpiry : 0;
+    const leftover = Number(rawLeftover.toFixed(2));
     recommendations.push({
       code: 'EXPIRY_EXPOSURE',
       level: 'batch',
@@ -92,11 +95,12 @@ export function deriveRecommendations(evaluation: Evaluated, unit: string): Reco
     if (shortageFired) {
       throw new Error('Recommendation invariant violated: SHORTAGE and SURPLUS both fired');
     }
+    const surplusVal = Number(surplus.value.toFixed(2));
     recommendations.push({
       code: 'SURPLUS',
       level: 'ingredient',
-      message: `Projected surplus of ${surplus.value} ${unit} above minimum stock. Review or delay additional stock-in.`,
-      quantity: surplus.value,
+      message: `Projected surplus of ${surplusVal} ${unit} above minimum stock. Review or delay additional stock-in.`,
+      quantity: surplusVal,
       unit,
     });
   } else if (surplus.status === 'MINIMUM_STOCK_NOT_CONFIGURED') {
