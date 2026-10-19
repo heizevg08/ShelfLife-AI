@@ -5,7 +5,7 @@ const schema = new Schema({
   userId: { type: Schema.Types.ObjectId, required: true, immutable: true },
   actorName: { type: String, trim: true, maxlength: 200, immutable: true },
   actorRole: { type: String, enum: ROLES, immutable: true },
-  action: { type: String, required: true, enum: ['CREATE', 'UPDATE', 'DELETE', 'DEACTIVATE', 'REACTIVATE', 'EXPORT'], immutable: true },
+  action: { type: String, required: true, enum: ['CREATE', 'UPDATE', 'DELETE', 'DEACTIVATE', 'REACTIVATE', 'EXPORT', 'LOGIN', 'LOGOUT'], immutable: true },
   targetType: { type: String, required: true, enum: ['User', 'Ingredient', 'Audit Records', 'Report', 'InventoryBatch', 'UsageRecord', 'WasteRecord', 'ChangeRequest'], immutable: true },
   targetId: { type: Schema.Types.ObjectId, immutable: true },
   targetName: { type: String, trim: true, maxlength: 200, immutable: true },

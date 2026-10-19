@@ -122,6 +122,9 @@ export function createInventoryBatchStore(driver: Mongoose, batches: ReturnType<
       const todayRows = receivedWithin(today.start, today.end);
       return { totalBatches: rows.length, stockInToday: todayRows.length, ingredientsReceivedToday: new Set(todayRows.map(item => item.ingredient._id.toString())).size, batchesReceivedThisMonth: receivedWithin(month.start, month.end).length, expiringSoonBatches: rows.filter(item => item.row.expirationDate >= now && item.row.expirationDate <= new Date(now.getTime() + 7 * 86_400_000)).length };
     },
+    async auditExport(actor, from, to, dataRows) {
+      await audits.create({ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined, action: 'EXPORT', targetType: 'Report', targetName: 'inventory-period-report', exportFormat: 'xlsx', module: 'Reports', status: 'Success', details: `${from ?? 'all-dates'}..${to ?? 'all-dates'}; ${dataRows} data rows` });
+    },
     async create(actor, input) {
       const id = await driver.connection.transaction(session => createWithin(session, actor, input));
       return id ? this.detail(id, new Date()) : null;

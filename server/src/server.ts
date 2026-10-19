@@ -18,6 +18,7 @@ import { createEmailChange } from './services/email-change';
 import { createEmailChangeStore } from './services/email-change-store';
 import type { AuthExtensions } from './routes/auth.routes';
 import { auditRecordModel } from './models/audit-record';
+import { withAuditRecordedNotifications } from './services/audit-events';
 import { createAdministration, type AdministrationService } from './services/administration';
 import { createAdministrationStore } from './services/administration-store';
 import { createAccountWelcomeEmail } from './services/account-welcome-email';
@@ -41,6 +42,11 @@ import { loginAttemptModel } from './models/login-attempt';
 import { createLoginLimiter, mongoLoginAttemptStore } from './services/login-limiter';
 import { provisionSecurityIndexes } from './services/security-indexes';
 import { createReportExports, type ReportExportService } from './services/report-export';
+import { createForecastInferenceWorker } from './services/forecast-inference-worker';
+import { createForecastingHistoryStore } from './services/forecasting-history-store';
+import { createOperationalForecastService, type OperationalForecastService } from './services/operational-forecast';
+import { createOperationalRiskService, type OperationalRiskService } from './services/operational-risk';
+import { createOperationalRecommendationService, type OperationalRecommendationService } from './services/operational-recommendations';
 
 type StartupStage = 'configuration' | 'database-connection' | 'application-composition' | 'http-listen' | 'shutdown-registration';
 const safeNames = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'MongoParseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError']);
@@ -53,7 +59,7 @@ export function startupDiagnostic(stage: StartupStage, error: unknown) {
   const code = typeof value?.code === 'string' && safeCodes.has(value.code) ? value.code
     : value?.code === 18 ? 'AUTHENTICATION_FAILED' : undefined;
   const message = stage === 'configuration' && value &&
-    /^Invalid configuration: (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE)(?:, (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE))*$/.test(value.message)
+    /^Invalid configuration: (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE|ML_PYTHON_EXECUTABLE|ML_WORKER_SCRIPT|ML_STARTUP_TIMEOUT_MS|ML_INFERENCE_TIMEOUT_MS)(?:, (?:NODE_ENV|HOST|PORT|MONGO_URI|CORS_ORIGINS|JWT_SECRET|TRUST_PROXY|COOKIE_SAME_SITE|ML_PYTHON_EXECUTABLE|ML_WORKER_SCRIPT|ML_STARTUP_TIMEOUT_MS|ML_INFERENCE_TIMEOUT_MS))*$/.test(value.message)
     ? value.message : undefined;
   return { stage, name, ...(code ? { code } : {}), ...(message ? { message } : {}) };
 }
@@ -75,11 +81,11 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;
-  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, config.trustProxy));
+  const http = createServer(createApp(config.corsOrigins, () => !stopping && database.isConnected(), auth, extensions, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations, config.trustProxy));
   let shutdown: Promise<number> | undefined;
   const stop = (): Promise<number> => {
     if (shutdown) return shutdown;
@@ -177,7 +183,11 @@ if (require.main === module) {
         return result.modifiedCount === 1;
       },
     });
-    const audits = auditRecordModel(driver);
+    const audits = withAuditRecordedNotifications(auditRecordModel(driver));
+    const auditAuthenticationEvent = async (action: 'LOGIN' | 'LOGOUT', actor: { id: string; name: string; role: string }) => {
+      await audits.create({ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: normalizeUserRole(actor.role) ?? undefined,
+        action, targetType: 'User', targetId: actor.id, targetName: 'Own account', module: 'Authentication', status: 'Success' });
+    };
     const emailChange = createEmailChange(createEmailChangeStore(driver, users, audits), createEmailChangeEmail(process.env));
     const profileUpdate = createProfileUpdate({
       byId: (id: string) => users.findById(id).lean().exec(),
@@ -201,6 +211,16 @@ if (require.main === module) {
     const wasteRecords = createWasteRecords(createWasteRecordStore(driver, wasteRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
     const changeRequests = createChangeRequests(driver, changeRequestModel(driver), changeRequestCounterModel(driver), ingredientModel(driver), inventoryBatchModel(driver), users, audits);
     const reports = createReportExports({ batches: inventoryBatchModel(driver), ingredients: ingredientModel(driver), usage: usageRecordModel(driver), waste: wasteRecordModel(driver), audits });
+    let operationalForecast: OperationalForecastService | undefined;
+    let operationalRisk: OperationalRiskService | undefined;
+    let operationalRecommendations: OperationalRecommendationService | undefined;
+    if (config.mlPythonExecutable && config.mlWorkerScript) {
+      const forecastWorker = createForecastInferenceWorker(config);
+      const forecastHistoryStore = createForecastingHistoryStore(usageRecordModel(driver), ingredientModel(driver));
+      operationalForecast = createOperationalForecastService(forecastHistoryStore, forecastWorker);
+      operationalRisk = createOperationalRiskService(operationalForecast, ingredientModel(driver), inventoryBatchModel(driver));
+      operationalRecommendations = createOperationalRecommendationService(operationalRisk);
+    }
     const database = createDatabase(driver);
     const indexedDatabase = { ...database, connect: async (uri: string) => {
       await database.connect(uri);
@@ -208,8 +228,8 @@ if (require.main === module) {
     } };
     const runtime = await startServer(config, indexedDatabase, 5000, auth, onStage, {
       loginLimiter, sessions: persistent, recovery, passwordChange, profileUpdate, emailChange,
-      secureCookies: config.nodeEnv === 'production', cookieSameSite: config.cookieSameSite,
-    }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports);
+      secureCookies: config.nodeEnv === 'production', cookieSameSite: config.cookieSameSite, auditAuthenticationEvent,
+    }, administration, ingredients, inventoryBatches, usageRecords, wasteRecords, changeRequests, reports, operationalForecast, operationalRisk, operationalRecommendations);
     onStage('shutdown-registration');
     registerShutdown(process, runtime.stop, code => process.exit(code));
     console.info('Backend listening');

@@ -81,7 +81,7 @@ export const moduleContent: Partial<Record<ModuleId, ModuleContent>> = {
       { label: 'Forecast accuracy', tone: 'success' },
       { label: 'High-risk ingredients', tone: 'critical' },
     ],
-    guide: [{ title: 'Inventory & expiration', text: 'Review stock and expiration information for the selected reporting period.' }, { title: 'Usage & waste', text: 'Compare recorded consumption and loss without replacing the underlying transactions.' }, { title: 'Permission-controlled export', text: 'CSV, XLSX and PDF export will be available when reporting and export permissions are connected.' }],
+    guide: [{ title: 'Inventory & expiration', text: 'Review stock and expiration information for the selected reporting period.' }, { title: 'Usage & waste', text: 'Compare recorded consumption and loss without replacing the underlying transactions.' }, { title: 'Permission-controlled export', text: 'XLSX export will be available when reporting and export permissions are connected.' }],
   },
   Alerts: {
     description: 'Review inventory conditions that require attention.', title: 'Alert feed',
@@ -114,11 +114,9 @@ export const previewFields = {
 export type PreviewId = keyof typeof previewFields;
 
 // UI choices are configured here so route components do not hardcode export formats.
-// TODO: Replace availability with permissions/capabilities returned by the reporting backend.
+// All roles export exclusively to XLSX, matching the Manager account implementation.
 export const reportExportFormats = [
-  { id: 'csv', label: 'CSV' },
   { id: 'xlsx', label: 'XLSX' },
-  { id: 'pdf', label: 'PDF' },
 ] as const;
 
 // Alert and change-request filter facets are intentionally backend-derived; no route-level values are hardcoded.

@@ -1,0 +1,49 @@
+{
+  "model_name": "ShelfLife AI Selected Global Random Forest Regression",
+  "model_stage": "selected-development-model",
+  "model_source": "ml/src/07_selected_random_forest_model.py",
+  "estimator": "RandomForestRegressor",
+  "target": "sale_amount",
+  "target_interpretation": "Observed perishable-product demand proxy from FreshRetailNet-50K; not actual restaurant ingredient consumption.",
+  "future_operational_target": "Aggregated ShelfLife AI UsageRecord.quantityUsed history once sufficient system-specific operational data exists.",
+  "feature_columns": [
+    "lag_1",
+    "lag_7",
+    "lag_14",
+    "rolling_mean_7",
+    "rolling_mean_14",
+    "day_of_week"
+  ],
+  "model_parameters": {
+    "n_estimators": 50,
+    "max_depth": 12,
+    "min_samples_leaf": 20,
+    "max_features": 1.0,
+    "n_jobs": -1,
+    "random_state": 42
+  },
+  "environment": {
+    "python": "3.14.7",
+    "scikit_learn": "1.9.1",
+    "joblib": "1.6.0",
+    "numpy": "2.5.3"
+  },
+  "evaluation_reference": {
+    "dataset": "FreshRetailNet-50K",
+    "evaluation_partition": "supplied 7-day EVAL partition",
+    "prediction_rows": 350000,
+    "mae": 0.408982,
+    "rmse": 0.681878
+  },
+  "known_limitations": [
+    "Stockout-induced demand censoring is not corrected; the model forecasts observed demand rather than unconstrained latent demand.",
+    "The seven-day Dataset A EVAL partition is an evaluation benchmark and does not define the production forecasting horizon.",
+    "FreshRetailNet-50K stock information is not mapped directly to ShelfLife AI InventoryBatch.",
+    "Inventory and expiry risk classification remains deterministic downstream business logic."
+  ],
+  "persistence": {
+    "format": "joblib",
+    "trusted_source_only": true,
+    "cross_version_loading_assumed_safe": false
+  }
+}

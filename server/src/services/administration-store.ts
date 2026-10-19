@@ -13,7 +13,9 @@ function account(user: PublicDocument): Account {
     ...(user.mustChangePassword ? { mustChangePassword: true } : {}),
     ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}), createdAt: user.createdAt.toISOString(), updatedAt: user.updatedAt.toISOString() };
 }
-const sorting = (query: PageQuery): Record<string, 1 | -1> => ({ [query.sortBy]: query.sortOrder === 'asc' ? 1 : -1, _id: query.sortOrder === 'asc' ? 1 : -1 });
+const sorting = (query: PageQuery): Record<string, 1 | -1> => query.sortBy === 'lastLoginAt' && query.sortOrder === 'desc'
+  ? { lastLoginAt: -1, createdAt: -1, _id: -1 }
+  : { [query.sortBy]: query.sortOrder === 'asc' ? 1 : -1, _id: query.sortOrder === 'asc' ? 1 : -1 };
 const escaped = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export function createAdministrationStore(driver: Mongoose, users: ReturnType<typeof userModel>, audits: ReturnType<typeof auditRecordModel>): AdministrationStore {
   const get = async (id: string, session?: ClientSession) => {
@@ -65,7 +67,17 @@ export function createAdministrationStore(driver: Mongoose, users: ReturnType<ty
       const filter: Record<string, unknown> = {};
       if (query.action) filter.action = query.action;
       if (query.module) filter.module = new RegExp(`^${escaped(query.module)}$`, 'i');
-      if (query.status) filter.status = query.status;
+      // The status model is Success | Failed | Warning with `default: 'Success'`
+      // (models/audit-record.ts), and every presentation surface honours that
+      // default: the API row mapper, the Audit Logs table, the Details
+      // formatter and the exported workbook all read a missing stored status as
+      // Success. The filter has to agree with them, otherwise a Status=Success
+      // query silently drops the records the same table labels Success — which
+      // is what happened to 121 legacy rows written before the field was
+      // stored. `null` in a $in matches an absent field, so Success now matches
+      // stored Success plus the model default, while Failed and Warning stay
+      // exact because a missing status is never one of those.
+      if (query.status) filter.status = query.status === 'Success' ? { $in: ['Success', null] } : query.status;
       if (query.from || query.to) filter.timestamp = { ...(query.from ? { $gte: query.from } : {}), ...(query.to ? { $lte: query.to } : {}) };
       const actorClauses: Record<string, unknown>[] = [];
       const rolesToMatch = query.actorRole ? [query.actorRole] : allowedActorRoles;

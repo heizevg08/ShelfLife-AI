@@ -4,10 +4,14 @@ import { useApplicationWorkspace } from '../../components/application/Applicatio
 
 export default function AdministrativeAudit() {
   const { user } = useApplicationWorkspace();
+  const superAdmin = user.role === 'Super Admin';
+  // The eyebrow follows the viewer's own navigation group: the Super Admin
+  // sidebar files Audit Logs under "Administration", while Admin files it under
+  // "Oversight". The removed OVERSIGHT group is never reintroduced for Super Admin.
   return <>
-    <PageHeader eyebrow="System Oversight" title="Audit Logs" description="View and monitor user activities and changes made within your establishment." />
+    <PageHeader eyebrow={superAdmin ? 'Administration' : 'Oversight'} title="Audit Logs" description="View and monitor user activities and changes made within your establishment." />
     <div className="sl-admin-view">
-      <AuditTable adminOverview={user.role === 'Admin'} />
+      <AuditTable adminOverview includeSuperAdminActors={superAdmin} />
     </div>
   </>;
 }

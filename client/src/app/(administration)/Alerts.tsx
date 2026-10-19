@@ -237,7 +237,7 @@ function BaseAlerts() {
                 <label><span>Branch</span><select defaultValue="All Branches"><option>All Branches</option></select></label>
                 <label className="sl-v219-date-range-field"><span>Date Range</span><select value={dateRange} onChange={event => setDateRange(event.target.value)}><option value="any">Any date</option><option value="week">Last week</option><option value="month">Last month</option><option value="year">Last year</option><option value="custom">Custom</option></select></label>
                 {dateRange === 'custom' && <div className="sl-v219-custom-date-range" aria-label="Custom alert date range"><label><span>From</span><input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => setDateFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => setDateTo(event.target.value)} /></label></div>}
-                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={() => { setDateRange('any'); setDateFrom(''); setDateTo(''); }}>Reset</button><button type="button" className="sl-button">Export</button></div>
+                <div className="sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={() => { setDateRange('any'); setDateFrom(''); setDateTo(''); }}>Reset</button><ExportControl unavailableMessage="XLSX export is not available for alert history yet." /></div>
               </div>
             </div>
 

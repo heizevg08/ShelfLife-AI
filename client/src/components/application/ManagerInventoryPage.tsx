@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Boxes, FileText, PackageX, Search, TrendingUp } from 'lucide-react';
-import { listIngredientCategories } from '../../services/ingredients';
+import { INGREDIENT_CATEGORIES } from '../../services/ingredients';
 import { getInventoryBatchSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary } from '../../services/inventory-batches';
 import { formatDate } from '../../utils/date-time';
 import { fefoUrgency } from '../../utils/fefo-urgency';
@@ -24,7 +24,6 @@ export function ConnectedManagerInventoryPage() {
   const [fefo, setFefo] = useState<InventoryBatch[] | null>(null);
   const [fefoFailed, setFefoFailed] = useState(false);
   const [summary, setSummary] = useState<InventoryBatchSummary | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [detail, setDetail] = useState<InventoryBatch | null>(null);
@@ -34,9 +33,8 @@ export function ConnectedManagerInventoryPage() {
     return Promise.all([
       listInventoryBatches({ page, pageSize, search: search.trim() || undefined, category: category || undefined, status: status || undefined }, signal),
       getInventoryBatchSummary(signal),
-      listIngredientCategories(signal),
-    ]).then(([records, nextSummary, categoryResult]) => {
-      setData(records); setSummary(nextSummary); setCategories(categoryResult.categories);
+    ]).then(([records, nextSummary]) => {
+      setData(records); setSummary(nextSummary);
     }).catch(error => { if ((error as Error).name !== 'AbortError') setFailed(true); }).finally(() => { if (!signal?.aborted) setLoading(false); });
   };
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => controller.abort(); }, [page, pageSize, search, category, status]);
@@ -67,7 +65,7 @@ export function ConnectedManagerInventoryPage() {
       </section>
       <section className="sl-manager-inventory-directory sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records" aria-label="Inventory records">
         <header className="sl-application-records-header sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileText /></span><h2>Inventory Records</h2></header>
-        <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-application-records-toolbar sl-sa-ingredients-filter-card" data-filter-layout="records-five"><label className="sl-application-records-search sl-sa-ingredients-search"><span>Search</span><span><Search size={17}/><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search ingredient or batch ID..." /></span></label><label><span>Category</span><FilterSelect ariaLabel="Filter inventory by category" value={category} options={[{value:'',label:'All Categories'},...categories.map(value => ({value: formatHumanReadableText(value), label: formatHumanReadableText(value)}))]} onChange={value => { setCategory(value); setPage(1); }}/></label><label><span>Stock Status</span><FilterSelect ariaLabel="Filter inventory by stock status" value={status} options={[{value:'',label:'All Statuses'},...['In Stock','Low Stock','Near Expiry','Expired'].map(value => ({value, label: value}))]} onChange={value => { setStatus(value as InventoryBatchDisplayStatus | ''); setPage(1); }}/></label><label><span>Expiration</span><FilterSelect ariaLabel="Filter inventory by expiration" value={expiration} options={['All','≤ 7 days','8–30 days','> 30 days'].map(value => ({value, label: value}))} onChange={value => { setExpiration(value); setPage(1); }}/></label><div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions"><button className="sl-button" type="button" onClick={reset}>Reset</button></div></div></div>
+        <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-application-records-toolbar sl-sa-ingredients-filter-card" data-filter-layout="records-five"><label className="sl-application-records-search sl-sa-ingredients-search"><span>Search</span><span><Search size={17}/><input value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search ingredient or batch ID..." /></span></label><label><span>Category</span><FilterSelect ariaLabel="Filter inventory by category" value={category} options={[{value:'',label:'All Categories'},...INGREDIENT_CATEGORIES.map(value => ({value, label:value}))]} onChange={value => { setCategory(value); setPage(1); }}/></label><label><span>Stock Status</span><FilterSelect ariaLabel="Filter inventory by stock status" value={status} options={[{value:'',label:'All Statuses'},...['In Stock','Low Stock','Near Expiry','Expired'].map(value => ({value, label: value}))]} onChange={value => { setStatus(value as InventoryBatchDisplayStatus | ''); setPage(1); }}/></label><label><span>Expiration</span><FilterSelect ariaLabel="Filter inventory by expiration" value={expiration} options={['All','≤ 7 days','8–30 days','> 30 days'].map(value => ({value, label: value}))} onChange={value => { setExpiration(value); setPage(1); }}/></label><div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions"><button className="sl-button" type="button" onClick={reset}>Reset</button></div></div></div>
         <div className="sl-application-records-table-shell sl-sa-ingredients-table-scroll"><table className="sl-application-records-table sl-records-table sl-sa-ingredients-table sl-data-table"><thead><tr>{['Ingredient','Batch ID','Category','Current Stock','Expiration Date','Days Left','Status'].map(value => <th key={value}>{value}</th>)}</tr></thead><tbody>{visible.length ? visible.map(batch => <tr key={batch.id} className="sl-detail-enabled-row" tabIndex={0} role="button" onClick={event => { detailTrigger.current = event.currentTarget; setDetail(batch); }} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); detailTrigger.current = event.currentTarget; setDetail(batch); } }}><td className="sl-emphasized-value">{formatHumanReadableText(batch.ingredient.name)}</td><td><span className="sl-canonical-identifier">{batch.batchID}</span></td><td>{formatHumanReadableText(batch.ingredient.category)}</td><td>{batch.quantity} {batch.unit}</td><td>{formatDate(batch.expirationDate)}</td><td>{batch.daysLeft}</td><td><Status tone={statusTone(batch.displayStatus)}>{batch.displayStatus}</Status></td></tr>) : emptyState(7, 'Inventory batches will appear here after stock is received.')}</tbody></table></div>
         <footer className="sl-application-records-footer sl-records-footer sl-sa-ingredients-footer"><label>Rows per page <select value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{PAGE_SIZES.map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={pageSize} total={data?.total ?? 0} itemLabel="inventory records" onPageChange={setPage} /></footer>
       </section>

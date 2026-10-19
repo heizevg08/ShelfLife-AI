@@ -4779,38 +4779,6 @@ section.sl-card:has(.sl-filter-popover) {
   font-size: .84rem;
   line-height: 1.45;
 }
-.sl-notification-panel { width: min(320px,100vw - 1.5rem); max-height:min(470px,100dvh - 90px); display:flex; flex-direction:column; overflow:hidden; }
-.sl-notification-header { align-items: center; flex:none; padding:.8rem .9rem .55rem; border-bottom:0; }
-.sl-notification-header > div { flex: 1; }
-.sl-notification-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:center; gap:.15rem; margin:.1rem .7rem .5rem; padding:.18rem; border-radius:9px; background:var(--sl-surface-subtle); flex:none; }
-.sl-notification-tabs button { display:flex; justify-content:center; align-items:center; gap:.35rem; min-height:29px; padding:.3rem .45rem; border:0; border-radius:7px; color:var(--sl-muted); background:transparent; font:inherit; font-size:.74rem; cursor:pointer; }
-.sl-notification-tabs button.is-active { color:var(--sl-text); background:var(--sl-surface); box-shadow:0 1px 3px rgb(0 0 0 / 10%); font-weight:600; }
-.sl-notification-section-heading { display:flex; align-items:center; justify-content:space-between; padding:.45rem .9rem .2rem; color:var(--sl-muted); font-size:.72rem; font-weight:600; }
-.sl-notification-section-heading button { border:0; padding:.25rem; color:var(--sl-brand); background:transparent; font:inherit; font-size:.72rem; cursor:pointer; }
-.sl-notification-tabs small { color:var(--sl-muted); font-size:.7rem; }
-.sl-notification-list { overflow:auto; min-height:0; }
-.sl-notification-item { position:relative; padding:.48rem .6rem; border-bottom:0; background:var(--sl-surface); }
-.sl-notification-item[data-read=false] { background:#edf3ff; }
-.sl-notification-open { display:flex; width:100%; min-height:42px; align-items:center; gap:.45rem; border:0; padding:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
-.sl-notification-open > svg { flex:none; margin-left:auto; color:var(--sl-muted); opacity:0; }
-.sl-notification-item:hover .sl-notification-open > svg { opacity:1; }
-.sl-notification-avatar { width:28px; height:28px; flex:none; display:grid; place-items:center; border-radius:50%; color:#087d60; background:#dcf4ea; }
-.sl-notification-dot { position:absolute; top:.65rem; right:.55rem; width:6px; height:6px; border-radius:50%; background:#6500ee; opacity:0; }
-.sl-notification-item[data-read=false] .sl-notification-dot { opacity:1; }
-.sl-notification-copy { flex:1; min-width:0; display:grid; gap:.1rem; padding-right:.35rem; }
-.sl-notification-copy strong { overflow:hidden; font-size:.72rem; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-.sl-notification-copy > span { overflow:hidden; color:var(--sl-muted); font-size:.67rem; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
-.sl-notification-copy time { margin-top:.02rem; color:var(--sl-muted); font-size:.62rem; }
-.sl-notification-review { display:flex; flex-wrap:wrap; align-items:center; gap:.45rem; margin:.65rem 0 0 1rem; }
-.sl-notification-review label { display:grid; flex:1 0 100%; gap:.25rem; color:var(--sl-muted); font-size:.75rem; }
-.sl-notification-review textarea { width:100%; resize:vertical; border:1px solid var(--sl-border); border-radius:8px; padding:.5rem; color:var(--sl-text); background:var(--sl-surface); font:inherit; }
-.sl-notification-review .sl-button { flex:1 1 0; justify-content:center; min-width:0; min-height:32px; gap:.3rem; }
-.sl-notification-review .sl-notification-review-choice { flex:0 0 5.25rem; min-height:30px; padding:.35rem .4rem; font-size:.76rem; }
-.sl-notification-error { margin:.25rem .9rem .6rem; color:var(--sl-critical); font-size:.8rem; }
-.sl-notification-footer { display:flex; gap:.5rem; flex:none; padding:.6rem .65rem; border-top:1px solid var(--sl-border-subtle); background:var(--sl-surface); }
-.sl-notification-footer .sl-button { min-height:33px; gap:.3rem; justify-content:center; padding:.4rem .5rem; font-size:.68rem; white-space:nowrap; }
-.sl-notification-mark-read { flex:1; }
-.sl-notification-footer .sl-button:disabled { opacity:.55; }
 .sl-account-form-intro {
   grid-row: 1;
   font-size: .86rem;
@@ -4933,6 +4901,7 @@ section.sl-card:has(.sl-filter-popover) {
     grid-column: auto!important;
   }
 }
+
 .sl-account-form .sl-role-option input[type=radio] {
   flex: 0 0 16px;
   order: 0;
@@ -5484,8 +5453,7 @@ section.sl-card:has(.sl-filter-popover) {
 .sl-add-user-dialog .sl-dialog-form-actions {
   background: var(--sl-surface);
   gap: 10px;
-  margin: 0 -24px;
-  padding: 20px 24px;
+  padding: 0;
 }
 .sl-add-user-dialog .sl-dialog-form-actions .sl-button {
   min-height: 42px;
@@ -5521,8 +5489,48 @@ section.sl-card:has(.sl-filter-popover) {
     padding-inline: 16px!important;
   }
   .sl-add-user-dialog .sl-dialog-form-actions {
-    margin-inline: -16px;
-    padding-inline: 16px;
+    padding-inline: 0;
+  }
+}
+
+/* Account creation keeps its title and submission controls available while
+   only the form body — the fields plus every validation message, all in normal
+   document flow — scrolls on short or zoomed viewports.
+
+   Root cause of the earlier clipping: `.sl-add-user-dialog > .sl-dialog-content`
+   (shared with every dialog that reuses that class) pins the body padding to
+   `24px 24px 0 !important`, so the account dialog's own `padding-bottom: 24px`
+   safety net was outranked at every width and the last role option / form-level
+   message ended flush against the footer divider. The account dialog now owns a
+   higher-specificity body rule (still gated by `:has(.sl-account-form)`, so no
+   other dialog inherits it) that restores uniform 24px top/bottom clearance. */
+.sl-area-dialog.sl-add-user-dialog:has(.sl-account-form)[open] {
+  max-height:calc(100dvh - 32px);
+  min-height:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.sl-area-dialog.sl-add-user-dialog:has(.sl-account-form)[open] > .sl-dialog-content {
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  flex:1 1 auto;
+  padding:24px!important;
+}
+.sl-area-dialog.sl-add-user-dialog:has(.sl-account-form)[open] > :is(.sl-popover-header,.sl-dialog-actions) {
+  flex:0 0 auto;
+}
+.sl-area-dialog.sl-add-user-dialog:has(.sl-account-form)[open] > .sl-dialog-actions {
+  background:var(--sl-surface);
+  padding:20px 24px;
+}
+@media (width<=520px) {
+  .sl-area-dialog.sl-add-user-dialog:has(.sl-account-form)[open] > .sl-dialog-content {
+    padding-inline:16px!important;
+  }
+  .sl-area-dialog.sl-add-user-dialog:has(.sl-account-form)[open] > .sl-dialog-actions {
+    padding-inline:16px;
   }
 }
 .sl-data-table .sl-account-actions {
@@ -9102,27 +9110,6 @@ section.sl-card:has(.sl-filter-popover) {
 .sl-superadmin-users-page-v56 .sl-v56-name {
   color: var(--sl-text);
   font-weight: 600;
-}
-.sl-superadmin-users-page-v56 .sl-v56-role-pill {
-  max-width: 100%;
-  font: var(--sl-font-label);
-  color: #165dcc;
-  background: #eaf2ff;
-  border-radius: 999px;
-  padding: .25rem .48rem;
-  display: inline-flex;
-}
-.sl-superadmin-users-page-v56 .sl-v56-role-pill[data-role=Super\ Admin] {
-  color: #2d55bd;
-  background: #e8edff;
-}
-.sl-superadmin-users-page-v56 .sl-v56-role-pill[data-role=Admin] {
-  color: var(--sl-success);
-  background: var(--sl-success-bg);
-}
-.sl-superadmin-users-page-v56 .sl-v56-role-pill[data-role=Manager] {
-  color: #9a6700;
-  background: #fff4d6;
 }
 .sl-superadmin-users-page-v56 .sl-v56-unavailable {
   color: var(--sl-muted);
@@ -18609,42 +18596,15 @@ section.sl-card:has(.sl-filter-popover) {
 .sl-admin-reports-v114 * {
   box-sizing: border-box;
 }
-.sl-admin-reports-filters {
-  border: 1px solid var(--sl-border);
-  border-radius: var(--sl-radius-lg);
-  background: var(--sl-surface);
-  box-shadow: var(--sl-shadow-sm);
-  grid-template-columns: minmax(12rem,1.35fr) repeat(3,minmax(9rem,1fr)) auto auto;
-  align-items: end;
-  gap: clamp(.5rem,.4rem + .2vw,.72rem);
-  padding: clamp(.65rem,.55rem + .25vw,.85rem);
-  display: grid;
-}
-.sl-admin-reports-filters label {
-  min-width: 0;
-  color: var(--sl-muted);
-  gap: .3rem;
-  font-size: clamp(.66rem,.62rem + .1vw,.75rem);
-  display: grid;
-}
-.sl-admin-reports-filters select,.sl-admin-reports-date,.sl-admin-reports-filters>.sl-button {
-  border-radius: var(--sl-radius-md);
-  min-width: 0;
-  height: clamp(2.45rem,2.25rem + .4vw,2.75rem);
-}
-.sl-admin-reports-filters select {
-  border: 1px solid var(--sl-border);
-  background: var(--sl-surface);
-  width: 100%;
-  color: var(--sl-text);
-  padding: 0 .65rem;
-}
 .sl-admin-reports-date {
   border: 1px solid var(--sl-border);
+  border-radius: var(--sl-radius-md);
   background: var(--sl-surface);
   color: var(--sl-muted);
   align-items: center;
   gap: .5rem;
+  height: clamp(2.45rem,2.25rem + .4vw,2.75rem);
+  min-width: 0;
   padding: 0 .7rem;
   display: flex;
 }
@@ -18654,10 +18614,6 @@ section.sl-card:has(.sl-filter-popover) {
   flex: 1;
   min-width: 0;
   overflow: hidden;
-}
-.sl-admin-reports-reset {
-  background: var(--sl-surface);
-  border: 1px solid var(--sl-border);
 }
 .sl-admin-reports-kpis {
   grid-template-columns: repeat(4,minmax(0,1fr));
@@ -18764,21 +18720,6 @@ section.sl-card:has(.sl-filter-popover) {
   font-size: clamp(.64rem,.6rem + .08vw,.71rem);
   font-weight: 700;
 }
-.sl-admin-report-name {
-  align-items: center;
-  gap: .55rem;
-  font-weight: 650;
-  display: flex;
-}
-.sl-admin-report-name i {
-  background: var(--sl-success-subtle);
-  width: 1.75rem;
-  height: 1.75rem;
-  color: var(--sl-success);
-  border-radius: 50%;
-  place-items: center;
-  display: grid;
-}
 .sl-admin-reports-row b {
   background: var(--sl-brand-subtle);
   color: var(--sl-brand);
@@ -18812,24 +18753,21 @@ section.sl-card:has(.sl-filter-popover) {
   right: 0;
 }
 @media (width<=1180px){
-  .sl-admin-reports-filters,.sl-admin-reports-kpis {
+  .sl-admin-reports-kpis {
     grid-template-columns: repeat(2,minmax(0,1fr));
   }
 }
 @media (width<=680px){
-  .sl-admin-reports-filters,.sl-admin-reports-kpis {
+  .sl-admin-reports-kpis {
     grid-template-columns: 1fr;
   }
-  .sl-admin-reports-filters>.sl-button,.sl-admin-reports-export .sl-download-control,.sl-admin-reports-export .sl-download-trigger {
+  .sl-admin-reports-export .sl-download-control,.sl-admin-reports-export .sl-download-trigger {
     width: 100%;
   }
 }
 @media (resolution>=1.25x){
   .sl-admin-reports-kpis {
     grid-template-columns: repeat(auto-fit,minmax(min(100%,12.5rem),1fr));
-  }
-  .sl-admin-reports-filters {
-    grid-template-columns: repeat(auto-fit,minmax(min(100%,10.5rem),1fr));
   }
 }
 .sl-manager-dashboard-v115 {
@@ -22950,8 +22888,6 @@ section.sl-card:has(.sl-filter-popover) {
   min-height: clamp(6.6rem,6rem + 2vw,8rem);
   padding: clamp(.8rem,.7rem + .35vw,1.15rem);
 }
-.sl-staff-waste-v159 .sl-staff-waste-kpis .sl-inventory-staff-kpi > div { min-width:0; }
-.sl-staff-waste-v159 .sl-staff-waste-kpis .sl-inventory-staff-kpi strong { display:block; min-width:0; max-width:100%; overflow-wrap:anywhere; font-size:clamp(1rem,1.1vw + .55rem,1.45rem); line-height:1.15; }
 .sl-staff-waste-v159 .sl-staff-waste-kpis .sl-inventory-staff-kpi[data-tone=info] {
   border-top-color: #0c5797;
 }
@@ -25641,26 +25577,30 @@ n .sl-superadmin-dashboard-v49 .sl-superadmin-dashboard-kpis-v200 {
   grid-template-columns: minmax(220px,1.25fr) repeat(4,minmax(115px,.55fr)) auto;
   align-items: end;
 }
-.sl-security-activity-v78 .sl-v219-custom-date-range {
-  border: 1px solid var(--sl-border);
-  border-radius: var(--sl-radius);
-  background: var(--sl-surface-subtle);
-  grid-column: 1/-1;
-  grid-template-columns: repeat(2,minmax(130px,1fr));
-  gap: clamp(.45rem,.35rem + .25vw,.7rem);
-  min-width: 0;
-  padding: clamp(.65rem,.55rem + .25vw,.85rem);
-  display: grid;
-}
-.sl-security-activity-v78 .sl-v219-custom-date-range input[type=date] {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-@media (width<=600px){
-  .sl-security-activity-v78 .sl-v219-custom-date-range {
-    grid-template-columns: 1fr;
-  }
+/* The Custom Date Range on this page is the shared .sl-v219-custom-date-range control
+   placed inside the approved audit toolbar (.sl-admin-audit-records
+   .sl-audit-filter-strip[data-layout="audit"]), exactly as Admin and Manager use it.
+   The Super Admin-only bordered/padded/full-row override that used to live here made
+   the two date inputs taller than every sibling control and pushed the toolbar to two
+   rows, so it is retired: shared sizing, gap, label and alignment now apply unchanged.
+   The toolbar grid rules own the From/To columns at every width. */
+/* Status is already spelled out for assistive technology, so the circular dot before
+   Success/Failed duplicated the same value with a second visual channel. Suppressed for
+   this page's audit table only, mirroring the existing .sl-data-table dot suppression;
+   badge colours, badge text and every other status component stay untouched. */
+.sl-security-activity-v78 .sl-application-records-table[data-layout="audit"] .sl-status-dot { display:none; }
+.sl-security-activity-v78 .sl-application-records-table[data-layout="audit"] .sl-status { gap:0; }
+/* Audit identities are immutable (SoT §22), so a record can still carry a name written
+   before the current 1-25 character account rule. The USER cell is clamped to one line
+   so such a name cannot inflate row height or push the table sideways; the full recorded
+   identity stays reachable through the cell's title attribute, and the stored value is
+   never rewritten, shortened in data, or re-derived. */
+.sl-audit-actor-cell {
+  display:block;
+  max-width:14rem;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 :is(.sl-sa-batches-page,.sl-sa-usage-page,.sl-sa-waste-page,.sl-mgr-cr-page).sl-staff-usage-v150 .sl-staff-usage-kpis .sl-inventory-staff-kpi[data-tone=success] {
   border-color: color-mix(in oklab,var(--sl-success) 24%,var(--sl-border));
@@ -28496,24 +28436,28 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   width: 4%;
 }
 .sl-superadmin-users-page-v64 .sl-user-accounts-table :is(th,td):nth-child(2) {
-  width: 16%;
+  width: 19%;
 }
 .sl-superadmin-users-page-v64 .sl-user-accounts-table :is(th,td):nth-child(3) {
-  width: 22%;
+  width: 25%;
 }
 .sl-superadmin-users-page-v64 .sl-user-accounts-table :is(th,td):nth-child(4) {
-  width: 13%;
+  width: 15%;
 }
 .sl-superadmin-users-page-v64 .sl-user-accounts-table :is(th,td):nth-child(5) {
-  width: 10%;
-}
-.sl-superadmin-users-page-v64 .sl-user-accounts-table :is(th,td):nth-child(6) {
   width: 11%;
 }
-.sl-superadmin-users-page-v64 .sl-user-accounts-table :is(th,td):nth-child(7),.sl-superadmin-users-page-v64 .sl-user-accounts-table :is(th,td):nth-child(8) {
-  width: 12%;
+.sl-superadmin-users-page-v64 .sl-user-accounts-table :is(th,td):nth-child(6) {
+  width: 15%;
 }
+.sl-superadmin-users-page-v64 .sl-user-accounts-table :is(th,td):nth-child(7) {
+  width: 11%;
+}
+/* Keep normal identities on one compact line; the full text stays in the DOM/title
+   and Account Details remains the complete-value path for long names and emails. */
 .sl-superadmin-users-page-v64 .sl-user-accounts-table td:nth-child(2),.sl-superadmin-users-page-v64 .sl-user-accounts-table td:nth-child(3) {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   overflow-wrap: normal;
   word-break: normal;
@@ -28554,7 +28498,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-superadmin-users-page-v64 .sl-user-accounts-table tbody .sl-v56-name {
   font-weight: 600;
 }
-.sl-superadmin-users-page-v64 .sl-user-accounts-table tbody :is(.sl-v56-role-pill,.sl-status) {
+.sl-superadmin-users-page-v64 .sl-user-accounts-table tbody :is(.sl-application-role-pill,.sl-status) {
   font-size: inherit;
   line-height: inherit;
 }
@@ -31002,10 +30946,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-dashboard-source-kpis > .sl-sa-kpi > div > strong {
   color: var(--sl-text);
-  font-size: clamp(1.45rem,1.3rem + .4vw,1.8rem);
+  font-size: clamp(1.75rem,1.55rem + .55vw,2.15rem);
   line-height: 1.05;
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 .sl-dashboard-source-kpis > .sl-sa-kpi > div > small {
   color: var(--sl-muted);
@@ -31339,12 +31281,10 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-application-records-toolbar[data-layout="users"] { grid-template-columns: minmax(14rem,1.6fr) repeat(2,minmax(9rem,.75fr)) auto; }
 .sl-application-records-toolbar[data-layout="ingredients"] { grid-template-columns: minmax(18rem,1.8fr) repeat(2,minmax(10rem,.8fr)) auto; gap: 1rem; }
 .sl-application-records-toolbar[data-layout="inventory-admin"] { grid-template-columns: minmax(14rem,1.5fr) repeat(2,minmax(9rem,.8fr)) auto; }
-.sl-application-records-toolbar[data-layout="reports"] { grid-template-columns: minmax(11rem,1.3fr) repeat(3,minmax(8rem,1fr)) auto auto; }
 .sl-application-records-table[data-layout="users"] :is(th,td) { width: auto; }
 .sl-application-records-table[data-layout="users"] :is(th,td):first-child { width: 3rem; }
-.sl-application-records-table:is([data-layout="users"],[data-layout="ingredients"],[data-layout="reports"]) { min-width: 58rem; }
+.sl-application-records-table:is([data-layout="users"],[data-layout="ingredients"]) { min-width: 58rem; }
 .sl-application-records-table[data-layout="inventory-admin"] { min-width: 76rem; }
-.sl-application-records-table[data-layout="reports"] :is(th,td):nth-child(2) { width: 34%; }
 .sl-application-records-overflow { overflow: visible; }
 .sl-application-records-overflow .sl-download-control { position: relative; }
 .sl-application-records-overflow .sl-download-menu { right: 0; left: auto; }
@@ -31435,8 +31375,8 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-application-pending-state .sl-supporting { font-size: clamp(.82rem,.76rem + .16vw,.94rem); line-height: 1.45; }
 .sl-application-pending-state .sl-status { font-size: clamp(.72rem,.68rem + .12vw,.82rem); }
 @media (width<=1100px) {
-  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"],[data-layout="reports"]) { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"],[data-layout="reports"]) :is(.sl-application-records-search,.sl-application-records-filter-actions) { grid-column: 1/-1; }
+  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"]) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"]) :is(.sl-application-records-search,.sl-application-records-filter-actions) { grid-column: 1/-1; }
 }
 @media (width<=760px) {
   .sl-application-records-header { align-items: flex-start; flex-wrap: wrap; }
@@ -31446,7 +31386,7 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-application-analytics-grid { grid-template-columns: 1fr; }
 }
 @media (width<=680px) {
-  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"],[data-layout="reports"]) { grid-template-columns: minmax(0,1fr); }
+  .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="inventory-admin"]) { grid-template-columns: minmax(0,1fr); }
   .sl-application-records-toolbar :is(.sl-application-records-search,.sl-application-records-filter-actions) { grid-column: auto; }
 }
 
@@ -31544,13 +31484,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   height: auto;
   padding: clamp(.55rem,.48rem + .14vw,.66rem) clamp(.65rem,.55rem + .2vw,.82rem);
 }
-/* The row-number column needs only enough width for its contents. Left at auto, the auto table
-   layout hands it a share of the free space, which pushes USER far from #. Pinning it to the
-   narrowest useful width balances the spacing without touching the global table rules. */
-.sl-admin-dashboard-records :is(.sl-reference-records-table,.sl-data-table) :is(th,td):first-child {
-  width: 3.25rem;
-  padding-inline: clamp(.5rem,.45rem + .14vw,.7rem);
-}
 .sl-admin-dashboard-records :is(.sl-reference-records-table,.sl-data-table) th {
   background: var(--sl-surface-subtle);
   color: var(--sl-text);
@@ -31563,6 +31496,12 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   color: var(--sl-text);
   border-bottom: 1px solid var(--sl-border-subtle);
   font: var(--sl-font-body);
+}
+.sl-admin-dashboard-records .sl-data-table[data-layout="admin-dashboard-audit"] :is(th,td):first-child {
+  box-sizing: border-box;
+  width: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
 }
 .sl-admin-dashboard-records .sl-empty-cell {
   white-space: normal;
@@ -31756,11 +31695,46 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   gap: var(--sl-space-4);
   display: grid;
 }
-.sl-admin-inventory-page > .sl-page-header .sl-description {
-  white-space: nowrap;
+/* Admin operational subtitles must remain readable at narrow widths. The earlier Inventory
+   override forced one line, so the shell clipped the sentence on tablet/mobile even though the
+   shared PageHeader supports normal wrapping. Reports uses the same explicit contract to prevent
+   a future page-specific ellipsis rule from turning its scope statement into partial text. */
+:is(.sl-admin-inventory-page,.sl-admin-reports-page) > .sl-page-header .sl-description {
+  max-width: 70ch;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+/* Admin KPI and record layouts respond to usable workspace width. */
+.sl-shell[data-role="Admin"] .sl-user-management-view,
+.sl-shell[data-role="Admin"] .sl-user-management-view > * { min-width:0; max-width:100%; }
+.sl-shell[data-role="Admin"] .sl-admin-view .sl-dashboard-kpis { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.sl-shell[data-role="Admin"] .sl-admin-view :is(.sl-application-records,.sl-application-records-filters,.sl-application-records-toolbar) { min-width:0; max-width:100%; }
+.sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-table-shell { width:100%; max-width:100%; min-width:0; overflow-x:auto; overscroll-behavior-inline:contain; }
+.sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-toolbar > *,
+.sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-toolbar > label,
+.sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-toolbar :is(input,.sl-filter-select,.sl-filter-select-trigger) { min-width:0; max-width:100%; }
+.sl-shell[data-role="Admin"] .sl-admin-view table .sl-status-dot { display:none; }
+@container (width<=62rem) {
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-dashboard-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="audit"]) { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="audit"]) > :is(.sl-application-records-search,.sl-admin-reports-date-group,.sl-application-records-filter-actions) { grid-column:1/-1; }
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-filter-actions { justify-self:stretch; margin-left:0; }
+}
+@container (width<=36rem) {
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-dashboard-kpis { grid-template-columns:minmax(0,1fr); }
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="audit"]) { grid-template-columns:minmax(0,1fr); }
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-toolbar:is([data-layout="users"],[data-layout="ingredients"],[data-layout="audit"]) > * { grid-column:auto; width:100%; }
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-filter-actions { align-items:stretch; flex-direction:column; }
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-filter-actions > :is(.sl-button,.sl-download-control),
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-application-records-filter-actions .sl-download-trigger { justify-content:center; width:100%; }
+  .sl-shell[data-role="Admin"] .sl-admin-view :is(.sl-button,.sl-icon-button,.sl-filter-select-trigger,input,select) { min-height:44px; }
+  .sl-shell[data-role="Admin"] .sl-admin-view :is(.sl-icon-button,.sl-pagination-arrow,.sl-page-number) { min-width:44px; }
+  .sl-shell[data-role="Admin"] .sl-admin-view .sl-search-clear { width:44px; height:44px; }
 }
 .sl-admin-audit-records .sl-audit-filter-strip {
-  grid-template-columns: minmax(13rem,1.4fr) minmax(9rem,1fr) repeat(4,minmax(7rem,1fr)) auto;
+  grid-template-columns: minmax(13rem,1.4fr) minmax(9rem,1fr) repeat(3,minmax(7rem,1fr)) auto;
   gap: .65rem;
   align-items: end;
   padding: .65rem .8rem;
@@ -31774,17 +31748,9 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   min-width: 0;
   width: 100%;
 }
-.sl-admin-audit-records .sl-audit-filter-strip > .sl-application-records-filter-actions,
-.sl-admin-report-records .sl-application-records-toolbar > .sl-application-records-filter-actions {
+.sl-admin-audit-records .sl-audit-filter-strip > .sl-application-records-filter-actions {
   align-self: end;
   flex-wrap: wrap;
-}
-.sl-admin-report-records .sl-admin-report-name {
-  white-space: normal;
-}
-.sl-admin-report-records .sl-application-records-toolbar[data-layout="reports"] {
-  grid-template-columns: minmax(12rem,1fr) minmax(12rem,1fr) minmax(max-content,auto);
-  align-items: end;
 }
 .sl-admin-reports-date-group {
   grid-template-columns: minmax(0,1fr);
@@ -31799,7 +31765,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-admin-reports-date-group > :is(label,.sl-v219-custom-date-range) {
   min-width: 0;
 }
-.sl-admin-reports-filters .sl-admin-reports-date select,
 .sl-admin-audit-records .sl-admin-reports-date select {
   border: 0;
   background: transparent;
@@ -31812,9 +31777,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   color: var(--sl-text);
   font: var(--sl-font-body);
   line-height: 1.45;
-}
-.sl-admin-report-records .sl-application-records-table :is(th,td):nth-child(2) {
-  text-align: left;
 }
 .sl-area-dialog.sl-account-details-dialog { width: min(38rem,calc(100vw - 2rem)); max-width: 38rem; }
 .sl-account-details-dialog > .sl-dialog-content { padding: 0!important; }
@@ -31936,6 +31898,15 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   padding-block: .72rem!important;
   padding-inline: clamp(.72rem,.62rem + .2vw,.92rem)!important;
 }
+/* Kenneth's catalogue input contract already bounds ingredient names and brands.
+   Preserve those accepted values in both Admin record tables by wrapping instead
+   of replacing the end of the value with an ellipsis. */
+:is(.sl-admin-ingredient-records,.sl-admin-inventory-records) .sl-application-records-table tbody td:not(.sl-application-row-actions-cell) {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .sl-admin-ingredient-records .sl-application-records-table th:first-child { width: 3.5rem; }
 .sl-admin-ingredient-records .sl-application-records-table th:nth-child(2) { width: 25%; }
 .sl-admin-ingredient-records .sl-application-records-table th:nth-child(3) { width: 13%; }
@@ -31957,51 +31928,27 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   font-size: inherit;
   line-height: inherit;
   text-align: left;
-  text-overflow: ellipsis;
   vertical-align: middle;
-  white-space: nowrap;
   cursor: pointer;
+  /* Ingredient names follow Kenneth's 25-letter/3-number catalogue contract,
+     so the accepted value stays readable here. The cell wraps instead of
+     clipping the name with an ellipsis; overflow-wrap also contains a value
+     without spaces. */
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .sl-admin-ingredient-records .sl-application-records-table :is(th,td):nth-child(2) { text-align: left!important; }
 .sl-admin-ingredient-records .sl-application-records-footer {
   border-top: 1px solid var(--sl-border-subtle);
   padding-block: 1rem;
 }
-.sl-admin-ingredient-records .sl-ingredient-actions {
-  justify-content: center;
-  gap: .45rem;
+/* Use the same centered action-cell contract as Manager-account rows. */
+:is(.sl-admin-ingredient-records,.sl-admin-inventory-records) .sl-application-row-actions-cell {
+  white-space: nowrap;
+  text-align: center!important;
 }
-.sl-admin-ingredient-records .sl-ingredient-actions .sl-account-action {
-  place-items: center;
-  flex: 0 0 38px;
-  width: 38px;
-  min-width: 38px;
-  height: 38px;
-  min-height: 38px;
-  padding: 0;
-  border-radius: 8px;
-  display: inline-grid;
-}
-.sl-admin-ingredient-records .sl-ingredient-actions .sl-account-action {
-  background: transparent;
-  border-color: transparent;
-}
-.sl-admin-ingredient-records .sl-ingredient-actions .sl-account-action-deactivate { color: var(--sl-critical); }
-.sl-admin-ingredient-records .sl-ingredient-actions :is(.sl-account-action-view,.sl-account-action-edit):hover:not(:disabled) {
-  color: var(--sl-brand);
-  background: var(--sl-brand-subtle);
-  border-color: color-mix(in srgb,var(--sl-brand) 42%,var(--sl-border));
-}
-.sl-admin-ingredient-records .sl-ingredient-actions .sl-account-action-deactivate:hover:not(:disabled),
-.sl-admin-ingredient-records .sl-ingredient-actions .sl-account-action-deactivate:focus-visible {
-  color: var(--sl-critical);
-  background: var(--sl-critical-bg);
-  border-color: var(--sl-critical);
-}
-.sl-admin-ingredient-records .sl-ingredient-actions .sl-account-action:focus-visible {
-  outline: 2px solid var(--sl-focus);
-  outline-offset: 2px;
-}
+
 .sl-area-dialog.sl-admin-ingredient-dialog {
   width: min(45rem,calc(100vw - 2rem))!important;
   max-width: 45rem!important;
@@ -32376,25 +32323,40 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-profile-tab-pending p { color: var(--sl-muted); max-width: 34rem; margin: .45rem 0 .85rem; font: var(--sl-font-body); }
 .sl-account-lifecycle-dialog.is-positive .sl-logout-icon {
   color: var(--sl-success);
-  background: var(--sl-success-subtle);
+  /* var(--sl-success-subtle) is declared nowhere in the cascade, so it resolved
+     to nothing and the success chip painted transparent while the warning chip
+     kept its tint. --sl-success-bg is the defined success tint of the palette. */
+  background: var(--sl-success-bg);
 }
-@media (width <= 1180px) {
-  .sl-admin-report-records .sl-application-records-toolbar[data-layout="reports"] { grid-template-columns: repeat(2,minmax(0,1fr)); }
+/* Deactivate and Reactivate share one body composition: the complete message
+   first, then the affected account's email on its own line beneath it. The
+   description uses natural content height, matching the approved Log Out
+   dialog, so neither lifecycle dialog is artificially taller than the shared
+   baseline; the email still wraps instead of truncating. */
+.sl-account-lifecycle-dialog .sl-confirmation-copy .sl-description .sl-account-lifecycle-message,
+.sl-account-lifecycle-dialog .sl-confirmation-copy .sl-description .sl-account-lifecycle-email {
+  display: block;
+}
+.sl-account-lifecycle-dialog .sl-confirmation-copy .sl-description .sl-account-lifecycle-email {
+  margin-top: var(--sl-space-2);
+  color: var(--sl-text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 @media (width >= 1000px) {
   .sl-admin-dashboard-records > .sl-staff-usage-table-shell,
-  :is(.sl-admin-user-records,.sl-admin-inventory-records,.sl-admin-audit-records,.sl-admin-report-records) > .sl-application-records-table-shell,
+  :is(.sl-admin-user-records,.sl-admin-inventory-records,.sl-admin-audit-records) > .sl-application-records-table-shell,
   .sl-admin-audit-records .sl-application-records-table-shell {
     overflow-x: visible;
   }
   .sl-admin-dashboard-records :is(.sl-reference-records-table,.sl-data-table),
-  :is(.sl-admin-user-records,.sl-admin-inventory-records,.sl-admin-audit-records,.sl-admin-report-records) .sl-application-records-table {
+  :is(.sl-admin-user-records,.sl-admin-inventory-records,.sl-admin-audit-records) .sl-application-records-table {
     table-layout: fixed;
     min-width: 0;
     width: 100%;
   }
   .sl-admin-dashboard-records :is(th,td),
-  :is(.sl-admin-user-records,.sl-admin-inventory-records,.sl-admin-audit-records,.sl-admin-report-records) .sl-application-records-table :is(th,td) {
+  :is(.sl-admin-user-records,.sl-admin-inventory-records,.sl-admin-audit-records) .sl-application-records-table :is(th,td) {
     white-space: normal;
     overflow-wrap: anywhere;
   }
@@ -32403,6 +32365,9 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   #admin-upcoming-expirations th:nth-child(3) { width: 21%; }
   #admin-upcoming-expirations th:nth-child(4) { width: 15%; }
   #admin-upcoming-expirations th:nth-child(5) { width: 19%; }
+  .sl-admin-dashboard-records .sl-data-table[data-layout="admin-dashboard-audit"] th:nth-child(2) { width: 30%; }
+  .sl-admin-dashboard-records .sl-data-table[data-layout="admin-dashboard-audit"] th:nth-child(3) { width: 18%; }
+  .sl-admin-dashboard-records .sl-data-table[data-layout="admin-dashboard-audit"] th:nth-child(5) { width: 7rem; }
   .sl-admin-user-records th:first-child { width: 3rem; }
   .sl-admin-user-records th:nth-child(2) { width: 17%; }
   .sl-admin-user-records th:nth-child(3) { width: 24%; }
@@ -32423,9 +32388,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-admin-audit-records th:nth-child(6) { width: 29%; }
   .sl-admin-audit-records th:nth-child(7) { width: 10%; }
   .sl-admin-audit-records th:first-child { width: 3rem; }
-  .sl-admin-report-records th:first-child { width: 3rem; }
-  .sl-admin-report-records th:nth-child(2) { width: 42%; }
-  .sl-admin-report-records th:nth-child(3) { width: 29%; }
 }
 @media (width < 1000px) {
   .sl-profile-layout { grid-template-columns: minmax(0,1fr); }
@@ -32593,7 +32555,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   .sl-staff-inventory-batch-details-dialog > .sl-dialog-actions .sl-button { justify-content:center; width:100%; }
 }
 @media (width <= 620px) {
-  .sl-admin-report-records .sl-application-records-toolbar[data-layout="reports"] { grid-template-columns: minmax(0,1fr); }
   .sl-admin-audit-records .sl-audit-filter-strip,
   .sl-admin-audit-records .sl-audit-specific-dates { grid-template-columns: minmax(0,1fr); }
   .sl-account-details-dialog .sl-account-details-grid { grid-template-columns: 1fr; }
@@ -33058,6 +33019,14 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 }
 .sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) .sl-application-donut {
   width:clamp(8rem,10vw,9.5rem);
+}
+.sl-superadmin-users-page-v64 .sl-user-accounts-table td:nth-child(2),
+.sl-superadmin-users-page-v64 .sl-user-accounts-table td:nth-child(3) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 .sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) .sl-application-donut-legend { padding-inline:0; }
 /* Stretch the card body to the grid-row height and let the donut chart own the
@@ -33581,11 +33550,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-manager-performance-summary td:not(:first-child) { width: 20%; }
 .sl-manager-performance-note { margin: 0; padding: .7rem .9rem; border-top: 1px solid var(--sl-border); }
 
-.sl-application-records-toolbar[data-filter-layout="records-four"] {
-  grid-template-columns: minmax(14rem,1.6fr) repeat(2,minmax(9rem,.8fr)) auto;
-  max-width: none;
-  min-width: 0;
-}
 .sl-application-records-toolbar[data-filter-layout="records-five"] {
   grid-template-columns: minmax(14rem,1.5fr) repeat(3,minmax(8.5rem,.72fr)) auto;
   max-width: none;
@@ -33911,13 +33875,58 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
     grid-column: auto;
   }
 }
-@media (width<=1180px) {
-  .sl-application-records-toolbar[data-filter-layout="records-four"] { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .sl-application-records-toolbar[data-filter-layout="records-four"] .sl-application-records-search { grid-column: 1 / -1; }
+/* Audit owns this layout because its optional two-field range changes the number
+   of controls mid-session. The strip is scoped to the audit toolbar only, so the
+   four-track generic template can never reclaim it and wrap its action buttons
+   onto an implicit second row. Card-width queries avoid viewport/sidebar
+   assumptions while the intact date group preserves semantic labels and
+   predictable focus order. */
+.sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"] {
+  grid-template-columns:minmax(10rem,1.35fr) repeat(3,minmax(7rem,.68fr)) auto;
 }
-@media (width<=760px) {
-  .sl-application-records-toolbar[data-filter-layout="records-four"] { grid-template-columns: minmax(0,1fr); }
-  .sl-application-records-toolbar[data-filter-layout="records-four"] .sl-application-records-search { grid-column: auto; }
+.sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"][data-custom="true"] {
+  grid-template-columns:minmax(9.5rem,1fr) minmax(7rem,.6fr) minmax(15rem,1.3fr) minmax(6.75rem,.85fr) minmax(6.75rem,.65fr) auto;
+}
+.sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"] > .sl-v219-custom-date-range {
+  grid-template-columns:repeat(2,minmax(7.2rem,1fr));
+  grid-column:auto;
+}
+.sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"] > .sl-application-records-filter-actions {
+  flex-wrap:nowrap;
+  grid-column:auto;
+  justify-self:end;
+  width:max-content;
+}
+@container (width<=64rem) {
+  .sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"],
+  .sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"][data-custom="true"] {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"] > .sl-application-records-search {
+    grid-column:1 / -1;
+  }
+  /* Standard mode pairs the actions with Status and Custom mode pairs the date
+     group beside Date Range, so no half-empty cell is left behind. The
+     shell-mirrored selectors below match the shared Admin ≤62rem full-span rule
+     at equal specificity and win by document order, without forking the Admin
+     and Super Admin copies of this workspace. */
+  .sl-shell .sl-admin-view .sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"] > .sl-application-records-filter-actions {
+    grid-column:auto;
+  }
+  .sl-shell .sl-admin-view .sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"][data-custom="true"] > .sl-application-records-filter-actions {
+    grid-column:1 / -1;
+  }
+}
+@container (width<=36rem) {
+  .sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"],
+  .sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"][data-custom="true"],
+  .sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"] > .sl-v219-custom-date-range {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .sl-admin-audit-records .sl-audit-filter-strip[data-layout="audit"] > :is(.sl-application-records-search,.sl-v219-custom-date-range,.sl-application-records-filter-actions) {
+    grid-column:auto;
+    width:100%;
+  }
 }
 /* Multi-item operational entry keeps repeated rows inside the established modal shell. */
 .sl-area-dialog.sl-inventory-staff-bulk-dialog {
@@ -34396,6 +34405,294 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 @media (max-width: 900px) { .sl-manager-reports-live .sl-manager-download-controls { grid-template-columns: minmax(12rem,1fr) minmax(14rem,1fr); } .sl-manager-reports-live .sl-manager-download-actions { grid-column: 1 / -1; } }
 @media (max-width: 600px) { .sl-manager-reports-live .sl-manager-download-controls { grid-template-columns: 1fr; } .sl-manager-reports-live .sl-manager-download-controls[data-custom="true"] { grid-template-columns: 1fr; } .sl-manager-reports-live .sl-manager-download-controls label, .sl-manager-reports-live .sl-manager-download-actions, .sl-manager-reports-live .sl-manager-download-actions > .sl-button { width: 100%; } .sl-manager-reports-live .sl-manager-download-actions, .sl-manager-reports-live .sl-manager-download-controls[data-custom="true"] .sl-manager-download-actions { grid-column: auto; } .sl-manager-reports-live .sl-manager-recent-downloads-table { min-width: 0; } }
 
+/* Super Admin uses the approved application-wide palette and semantic tokens, so the
+   role shares one visual language with Admin, Manager and Inventory Staff. Only its
+   overlay stacking order is role-owned here. */
+.sl-shell[data-role="Super Admin"] {
+  --sl-layer-header:20;
+  --sl-layer-dropdown:60;
+  --sl-layer-backdrop:80;
+  --sl-layer-dialog:90;
+  --sl-layer-toast:100;
+}
+.sl-shell[data-role="Super Admin"] .sl-topbar { z-index:var(--sl-layer-header); }
+.sl-shell[data-role="Super Admin"] :is(.sl-account-panel,.sl-download-menu,.sl-filter-popover) { z-index:var(--sl-layer-dropdown); }
+.sl-shell[data-role="Super Admin"] .sl-filter-select-menu { --sl-filter-select-overlay-layer:var(--sl-layer-dropdown); }
+.sl-shell[data-role="Super Admin"] .sl-area-dialog { z-index:var(--sl-layer-dialog); }
+.sl-shell[data-role="Super Admin"] .sl-action-toast { z-index:var(--sl-layer-toast); }
+
+.sl-superadmin-surface {
+  container-type:inline-size;
+  min-width:0;
+  max-width:100%;
+}
+.sl-superadmin-kpis {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  min-width:0;
+}
+.sl-superadmin-kpi { min-width:0; }
+.sl-superadmin-surface .sl-user-management-kpis { grid-template-columns:repeat(4,minmax(0,1fr)); }
+/* Security & Activity renders the same four-card audit KPI strip through the shared
+   sl-inventory-staff-kpis / sl-user-management-kpis contract, so its grid follows the
+   locked User Management rules below (4 -> 2 -> 2 -> 1) instead of the old 2-column
+   override that existed for the retired two-card layout. */
+/* The shared profile keeps its approved sections. Super Admin only frames them in the
+   application's standard surface, so the account view reads as part of the same design
+   system rather than owning a competing palette. */
+.sl-superadmin-surface.sl-superadmin-profile {
+  box-sizing:border-box;
+  padding:clamp(.75rem,1.4vw,1.35rem);
+  background:var(--sl-surface);
+  border:1px solid var(--sl-border-subtle);
+  border-radius:var(--sl-radius-lg);
+}
+.sl-superadmin-surface.sl-superadmin-profile .sl-profile-card {
+  border-color:var(--sl-border-subtle);
+}
+.sl-superadmin-table-scroll {
+  max-width:100%;
+  min-width:0;
+  overflow-x:auto!important;
+  overflow-y:hidden;
+  overscroll-behavior-inline:contain;
+  scrollbar-gutter:stable;
+  scrollbar-width:thin!important;
+}
+.sl-superadmin-users-page-v64 .sl-superadmin-table-scroll { scrollbar-gutter:auto; }
+.sl-superadmin-table-scroll::-webkit-scrollbar { display:block!important; height:.65rem; }
+.sl-superadmin-table-scroll::-webkit-scrollbar-thumb {
+  border:2px solid var(--sl-surface);
+  border-radius:var(--sl-radius-full);
+  background:var(--sl-border);
+}
+.sl-superadmin-table { min-width:52rem!important; }
+.sl-superadmin-users-page-v64 .sl-superadmin-table-scroll.sl-staff-usage-table-shell { overflow-x:auto!important; }
+.sl-superadmin-users-page-v64 .sl-superadmin-table { min-width:68rem!important; }
+.sl-admin-view.sl-superadmin-users-page-v56 { grid-template-columns:minmax(0,1fr); }
+.sl-superadmin-surface .sl-v56-main-grid { min-width:0; }
+@container (width<=68.75rem) {
+  .sl-superadmin-surface .sl-superadmin-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-superadmin-surface .sl-user-management-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-superadmin-surface .sl-sa-analytics-row { grid-template-columns:minmax(0,1fr); }
+}
+@container (width<=43.75rem) {
+  .sl-superadmin-surface .sl-superadmin-kpis { grid-template-columns:minmax(0,1fr); }
+  .sl-superadmin-surface .sl-user-management-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sl-superadmin-surface :is(.sl-sa-middle-row,.sl-sa-bottom-row) { grid-template-columns:minmax(0,1fr); }
+  .sl-superadmin-surface .sl-user-accounts-filter-card { grid-template-columns:minmax(0,1fr); }
+  .sl-superadmin-surface .sl-user-accounts-filter-card > * { grid-column:auto; width:100%; }
+}
+@container (width<=28.75rem) {
+  .sl-superadmin-surface .sl-user-management-kpis { grid-template-columns:minmax(0,1fr); }
+}
+@media (max-width:700px) {
+  .sl-shell[data-role="Super Admin"] .sl-area-dialog {
+    width:min(calc(100vw - 1rem),42rem);
+    max-height:calc(100dvh - 1rem);
+    overscroll-behavior:contain;
+  }
+  .sl-shell[data-role="Super Admin"] .sl-filter-select-menu { max-height:min(17rem,45dvh); }
+}
+/* Canonical table action controls: Super Admin is the visual and interaction owner
+   for every role. Keep action geometry stable even when a legacy button class is
+   also present on a role-specific table. */
+:is(.sl-data-table,.sl-application-records-table,.sl-records-table) :is(.sl-staff-waste-row-actions,.sl-application-row-actions) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: .35rem;
+}
+:is(.sl-data-table,.sl-application-records-table,.sl-records-table) :is(.sl-staff-waste-row-actions,.sl-application-row-actions) .sl-icon-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  color: var(--sl-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+:is(.sl-data-table,.sl-application-records-table,.sl-records-table) :is(.sl-staff-waste-row-actions,.sl-application-row-actions) .sl-icon-button > svg {
+  width: 16px;
+  height: 16px;
+}
+:is(.sl-data-table,.sl-application-records-table,.sl-records-table) :is(.sl-staff-waste-row-actions,.sl-application-row-actions) .sl-icon-button:hover:not(:disabled) {
+  color: var(--sl-text);
+  background: var(--sl-surface-subtle);
+  border-color: var(--sl-border);
+}
+:is(.sl-data-table,.sl-application-records-table,.sl-records-table) :is(.sl-staff-waste-row-actions,.sl-application-row-actions) .sl-icon-button:focus-visible {
+  outline: 2px solid var(--sl-focus);
+  outline-offset: 2px;
+}
+:is(.sl-data-table,.sl-application-records-table,.sl-records-table) :is(.sl-staff-waste-row-actions,.sl-application-row-actions) .sl-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+:is(.sl-data-table,.sl-application-records-table,.sl-records-table) :is(.sl-staff-waste-row-actions,.sl-application-row-actions) :is(.sl-staff-waste-delete,.sl-staff-usage-delete-action):not(:disabled) {
+  color: var(--sl-critical);
+}
+
+/* Super Admin account analytics — the role percentages use the complete account
+   population, while bar lengths compare each role with the largest role count. */
+.sl-superadmin-dashboard .sl-sa-analytics-row-v317 {
+  --sl-sa-active:#2f875d;
+  --sl-sa-inactive:#f3d79a;
+  --sl-sa-empty-ring:#e9ece6;
+  grid-template-columns:minmax(0,1.52fr) minmax(20rem,1fr);
+  gap:clamp(.75rem,1.2vw,1.25rem);
+  align-items:stretch;
+}
+.sl-superadmin-dashboard .sl-sa-analytics-row-v317 > .sl-card {
+  min-width:0;
+  min-height:0;
+  height:auto;
+  display:flex;
+  flex-direction:column;
+}
+.sl-superadmin-dashboard .sl-sa-analytics-row-v317 .sl-card-header {
+  min-height:52px;
+  padding:var(--sl-space-5) var(--sl-space-6);
+}
+.sl-superadmin-dashboard .sl-sa-analytics-row-v317 .sl-card-body {
+  flex:1;
+  min-height:0;
+  min-width:0;
+  padding:var(--sl-space-3) var(--sl-space-5) var(--sl-space-5);
+  display:flex;
+}
+.sl-superadmin-dashboard .sl-dashboard-card-heading {
+  gap:var(--sl-space-3);
+  display:flex;
+  align-items:center;
+}
+.sl-superadmin-dashboard .sl-sa-card-heading-copy { display:grid; gap:.18rem; }
+.sl-superadmin-dashboard .sl-sa-card-heading-copy > span { color:var(--sl-text); font:var(--sl-font-section-title); }
+.sl-superadmin-dashboard .sl-sa-card-heading-copy > small { color:var(--sl-muted); font:var(--sl-font-supporting); font-weight:400; }
+.sl-superadmin-dashboard .sl-sa-distribution-content,
+.sl-superadmin-dashboard .sl-sa-status-content { width:100%; min-width:0; }
+.sl-superadmin-dashboard .sl-sa-distribution-content {
+  display:grid;
+  align-content:center;
+  padding-inline:clamp(.5rem,1.1vw,1rem);
+}
+.sl-superadmin-dashboard .sl-sa-status-content { display:flex; align-items:center; }
+.sl-superadmin-dashboard .sl-sa-distribution-bars { display:grid; gap:.75rem; width:100%; }
+.sl-superadmin-dashboard .sl-sa-distribution-row {
+  display:grid;
+  grid-template-columns:minmax(9.5rem,12rem) minmax(7rem,1fr) 3.25rem 3rem;
+  grid-template-areas:"label track count percentage";
+  gap:clamp(.8rem,1.6vw,1.6rem);
+  align-items:center;
+}
+.sl-superadmin-dashboard .sl-sa-distribution-label {
+  grid-area:label;
+  gap:.5rem;
+  color:var(--sl-text);
+  font:var(--sl-font-body);
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  min-width:0;
+}
+.sl-superadmin-dashboard .sl-sa-status-dot { width:.5rem; height:.5rem; border-radius:50%; flex:0 0 auto; }
+.sl-superadmin-dashboard .sl-sa-progress-track {
+  grid-area:track;
+  height:.625rem;
+  border-radius:999px;
+  background:#ecebe5;
+  overflow:hidden;
+}
+.sl-superadmin-dashboard .sl-sa-progress-fill { height:100%; border-radius:inherit; transition:width .3s ease; }
+.sl-superadmin-dashboard .sl-sa-distribution-bars[data-state="loading"] .sl-sa-progress-fill,
+.sl-superadmin-dashboard .sl-sa-distribution-bars[data-state="error"] .sl-sa-progress-fill { width:0!important; }
+.sl-superadmin-dashboard .sl-sa-distribution-count { grid-area:count; text-align:right; font-variant-numeric:tabular-nums; }
+.sl-superadmin-dashboard .sl-sa-distribution-percentage { grid-area:percentage; text-align:right; color:var(--sl-muted); font-size:.82rem; font-variant-numeric:tabular-nums; }
+.sl-superadmin-dashboard .sl-sa-distribution-count,
+.sl-superadmin-dashboard .sl-sa-status-count { color:var(--sl-text); font-size:1.05rem; }
+.sl-superadmin-dashboard .sl-sa-status-layout {
+  width:100%;
+  gap:clamp(1rem,1.5vw,1.5rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.sl-superadmin-dashboard .sl-sa-status-donut {
+  width:clamp(8rem,10vw,9.5rem);
+  aspect-ratio:1;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+}
+.sl-superadmin-dashboard .sl-sa-status-center {
+  width:67%;
+  aspect-ratio:1;
+  border-radius:50%;
+  background:var(--sl-surface);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.sl-superadmin-dashboard .sl-sa-status-center strong { color:var(--sl-text); font-size:clamp(1.45rem,2vw,2rem); line-height:1; white-space:nowrap; }
+.sl-superadmin-dashboard .sl-sa-status-center small { margin-top:.35rem; color:var(--sl-muted); }
+.sl-superadmin-dashboard .sl-sa-status-legend { min-width:8.5rem; display:grid; gap:.75rem; }
+.sl-superadmin-dashboard .sl-sa-status-item { grid-template-columns:auto 1fr auto; gap:.5rem; display:grid; align-items:center; }
+.sl-superadmin-dashboard .sl-sa-status-label { color:var(--sl-text); }
+.sl-superadmin-dashboard .sl-sa-chart-message { margin:.8rem 0 0; color:var(--sl-muted); text-align:center; font:var(--sl-font-supporting); }
+@container (width<=68.75rem) {
+  .sl-superadmin-dashboard .sl-sa-analytics-row-v317 { grid-template-columns:minmax(0,1fr); }
+}
+@container (width<=43.75rem) {
+  .sl-superadmin-dashboard .sl-sa-analytics-row-v317 .sl-card-body { padding:var(--sl-space-3) var(--sl-space-4); }
+  .sl-superadmin-dashboard .sl-sa-distribution-row {
+    grid-template-columns:minmax(0,1fr) 2.75rem 3rem;
+    grid-template-areas:"label count percentage" "track track track";
+    gap:.5rem .75rem;
+  }
+  .sl-superadmin-dashboard .sl-sa-status-layout { flex-direction:column; }
+  .sl-superadmin-dashboard .sl-sa-status-donut { width:min(9.5rem,60vw); }
+  .sl-superadmin-dashboard .sl-sa-status-legend { width:min(100%,15rem); }
+}
+
+/* The Super Admin dashboard is a full-width overview; its nested activity grid
+   must not inherit the old four-column dashboard placement. */
+.sl-superadmin-dashboard.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 {
+  grid-template-columns:minmax(0,1fr);
+  width:100%;
+}
+.sl-superadmin-dashboard.sl-superadmin-dashboard-v49 .sl-sa-dashboard-activity-row-v319 > #sl-sa-recent-activity {
+  grid-column:1;
+  width:100%;
+  min-width:0;
+}
+.sl-superadmin-dashboard #sl-sa-recent-activity .sl-staff-usage-table-shell { width:100%; min-width:0; overflow-x:auto; }
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] {
+  width:100%;
+  min-width:64rem;
+  table-layout:fixed;
+}
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] :is(th,td) {
+  white-space:normal;
+  word-break:normal;
+  overflow-wrap:normal;
+  vertical-align:middle;
+  padding:.65rem .875rem;
+}
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] th { height:44px; }
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] tbody td:not(.sl-empty-cell) { line-height:1.5; }
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] :is(th,td):nth-child(1) { width:4%; }
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] :is(th,td):nth-child(2) { width:23%; }
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] :is(th,td):nth-child(3) { width:15%; }
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] :is(th,td):nth-child(4) { width:19%; }
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] :is(th,td):nth-child(5) { width:28%; }
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] :is(th,td):nth-child(6) { width:11%; }
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] td:nth-child(2),
+.sl-superadmin-dashboard #sl-sa-recent-activity table[data-layout="admin-dashboard-audit"] :is(th,td):is(:nth-child(1),:nth-child(3),:nth-child(4),:nth-child(6)) { white-space:nowrap; }
 /* My Requests keeps its custom-range controls and actions in one adaptive layout. */
 .sl-staff-requests-v162 .sl-staff-my-requests-records .sl-staff-my-requests-toolbar {
   align-items:end;
@@ -34657,9 +34954,48 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
     white-space:normal;
   }
 }
-/* Shared four-role profile. Identity, available account details and security controls remain tied
-   to the authenticated account; initials stand in for a profile photo because uploads are not
-   supported. */
+@media (width<=620px) {
+  /* Admin shell controls share the 44px mobile target baseline. */
+  .sl-shell[data-role="Admin"] :is(button,input,select,.sl-filter-select-trigger) { min-height:44px; }
+  .sl-shell[data-role="Admin"] button,
+  .sl-shell[data-role="Admin"] .sl-account-toggle { min-width:44px; }
+  .sl-shell[data-role="Admin"] main a {
+    align-items:center;
+    min-width:44px;
+    min-height:44px;
+    display:inline-flex;
+  }
+  .sl-shell[data-role="Admin"] :is(.sl-icon-button,.sl-pagination-arrow,.sl-page-number) { min-width:44px; }
+}
+
+/* Admin form and confirmation dialogs keep their header/actions visible while
+   the content body owns vertical scrolling on short viewports. The [open]
+   scope is required: these dialog classes stay statically mounted on the
+   always-rendered account dialogs, so an unscoped author display would
+   override the UA dialog:not([open]) display:none rule and paint closed
+   dialogs as stray surfaces behind the one active modal. */
+.sl-shell[data-role="Admin"] :is(.sl-add-user-dialog,.sl-account-lifecycle-dialog).sl-area-dialog[open] {
+  max-height:min(90vh,90dvh);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.sl-shell[data-role="Admin"] :is(.sl-add-user-dialog,.sl-account-lifecycle-dialog)[open] > .sl-dialog-content {
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+}
+.sl-shell[data-role="Admin"] :is(.sl-add-user-dialog,.sl-account-lifecycle-dialog)[open] > :is(.sl-popover-header,.sl-dialog-actions) {
+  flex:0 0 auto;
+}
+
+/* Shared four-role profile: the self-service endpoint owns name changes. The owner's approved
+   reference layout is reproduced for all four roles: First/Last Name rows, Email, and Sign-in &
+   security (password + 2-Step Verification). The Role row, the profile avatar and the profile-photo
+   upload block stay absent, and the notification-preference block was removed, so this page never
+   implies photo storage, a saved preference, an alert or a second factor that the server does not
+   actually perform. Controls whose backend is not built stay visible but disabled and truthfully
+   labelled. The identity initials live in the shell's topbar avatar rather than being repeated here. */
 .sl-profile-manager {
   container-name:sl-profile-manager;
   container-type:inline-size;
@@ -34667,14 +35003,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   gap:var(--sl-space-4);
   width:min(100%,64rem);
 }
-.sl-profile-reference-breadcrumb { display:flex; align-items:center; gap:.35rem; min-height:40px; padding:0 .75rem; border-bottom:1px solid var(--sl-border-subtle); color:var(--sl-muted); font-size:.84rem; }
-.sl-profile-reference-breadcrumb > [aria-current="page"] { display:inline-flex; align-items:center; gap:.3rem; color:var(--sl-text); font-weight:600; }
-.sl-profile-reference-identity { position:relative; display:flex; align-items:center; gap:1rem; min-height:165px; padding:1.2rem 1.5rem; overflow:hidden; background-color:var(--sl-surface); background-image:linear-gradient(90deg,transparent 49.7%,rgb(120 130 140 / 3%) 50%),linear-gradient(transparent 49.7%,rgb(120 130 140 / 3%) 50%); background-size:96px 96px; }
-.sl-profile-reference-avatar { display:grid; place-items:center; width:82px; height:82px; flex:none; border:3px solid var(--sl-surface); border-radius:50%; color:#fff; background:var(--sl-brand); box-shadow:0 0 0 1px var(--sl-border); font-size:1.45rem; font-weight:700; }
-.sl-profile-reference-identity h1 { margin:0; color:var(--sl-text); font-size:1.55rem; line-height:1.2; }
-.sl-profile-reference-identity p { margin:.3rem 0 0; color:var(--sl-muted); font-size:.9rem; }
-.sl-profile-reference-role { display:inline-flex; margin-top:.45rem; padding:.15rem .45rem; border-radius:999px; color:var(--sl-brand); background:var(--sl-brand-subtle); font-size:.7rem; font-weight:600; }
-.sl-profile-manager-rows .sl-profile-manager-row:last-child { border-bottom:0; }
 .sl-profile-manager > .sl-profile-card { min-width:0; }
 .sl-profile-manager .sl-profile-card-header {
   grid-template-columns:minmax(0,1fr);
@@ -34778,9 +35106,6 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
 .sl-profile-manager-password-done p { margin:0; }
 .sl-profile-manager-password-done .sl-button { width:auto; justify-self:start; }
 @container sl-profile-manager (max-width:34rem) {
-  .sl-profile-reference-identity { min-height:140px; gap:.8rem; padding:1rem; }
-  .sl-profile-reference-avatar { width:64px; height:64px; }
-  .sl-profile-reference-identity h1 { font-size:1.3rem; }
   .sl-profile-manager-row,
   .sl-profile-manager-rows[data-layout="security"] .sl-profile-manager-row {
     grid-template-columns:minmax(0,1fr);
@@ -34833,36 +35158,4 @@ n .sl-superadmin-dashboard-v49 .sl-sa-analytics-row-v317>#sl-sa-expiration {
   color:var(--sl-muted);
   text-decoration:none;
   cursor:not-allowed;
-}
-.sl-manager-alerts-page { display:grid; gap:1rem; }
-.sl-manager-alerts-card { min-width:0; overflow:hidden; border:1px solid var(--sl-border); border-radius:var(--sl-radius-lg); background:var(--sl-surface); box-shadow:var(--sl-shadow-sm); }
-.sl-manager-alerts-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 1.15rem; border-bottom:1px solid var(--sl-border-subtle); }
-.sl-manager-alerts-header h2 { margin:0; font:var(--sl-font-section-title); }
-.sl-manager-alerts-header p { margin:.2rem 0 0; color:var(--sl-muted); font-size:.85rem; }
-.sl-manager-alerts-actions,.sl-manager-alert-row-actions { display:flex; flex-wrap:wrap; align-items:center; gap:.45rem; }
-.sl-manager-alerts-tabs { display:flex; gap:.35rem; margin:.75rem 1rem; padding:.2rem; border-radius:9px; background:var(--sl-surface-subtle); }
-.sl-manager-alerts-tabs button { display:flex; align-items:center; gap:.4rem; min-height:34px; padding:.35rem .8rem; border:0; border-radius:7px; color:var(--sl-muted); background:transparent; font:inherit; cursor:pointer; }
-.sl-manager-alerts-tabs button.is-active { color:var(--sl-text); background:var(--sl-surface); box-shadow:0 1px 3px rgb(0 0 0 / 12%); }
-.sl-manager-alerts-tabs button span { color:var(--sl-muted); font-size:.75rem; }
-.sl-manager-alerts-list { max-height: min(62vh, 42rem); overflow:auto; padding:0 1rem 1rem; }
-.sl-manager-alert-row { position:relative; display:grid; grid-template-columns:2.4rem minmax(0,1fr) auto; align-items:center; gap:.8rem; padding:1rem .35rem; border-top:1px solid var(--sl-border-subtle); }
-.sl-manager-alert-row[data-read="false"] { background:linear-gradient(90deg,#f2f8ff,transparent 60%); }
-.sl-manager-alert-row[data-severity="critical"] .sl-manager-alert-icon { color:var(--sl-critical); background:#fff0f1; }
-.sl-manager-alert-row[data-severity="attention"] .sl-manager-alert-icon { color:var(--sl-attention); background:#fff6df; }
-.sl-manager-alert-icon { display:grid; place-items:center; width:2.35rem; height:2.35rem; border-radius:50%; background:var(--sl-surface-subtle); }
-.sl-manager-alert-copy { display:grid; gap:.2rem; min-width:0; }
-.sl-manager-alert-copy strong { color:var(--sl-text); font-size:.9rem; }
-.sl-manager-alert-copy span,.sl-manager-alert-copy small { overflow-wrap:anywhere; color:var(--sl-muted); font-size:.8rem; }
-.sl-manager-alert-row time { grid-column:2 / -1; color:var(--sl-muted); font-size:.72rem; }
-.sl-manager-alert-severity { padding:.2rem .55rem; border-radius:99px; color:var(--sl-text); background:var(--sl-surface-subtle); font-size:.72rem; white-space:nowrap; }
-.sl-manager-alert-row[data-severity="critical"] .sl-manager-alert-severity { color:var(--sl-critical); background:#fff0f1; }
-.sl-manager-alert-row .sl-button { min-height:34px; padding:.4rem .65rem; font-size:.75rem; white-space:nowrap; }
-.sl-admin-inventory-page .sl-application-records-table .sl-account-action-view { display:grid; place-items:center; width:36px; min-width:36px; height:36px; min-height:36px; padding:0; border:1px solid transparent; border-radius:8px; color:var(--sl-text); background:transparent; }
-.sl-admin-inventory-page .sl-application-records-table .sl-account-action-view:hover { border-color:var(--sl-border); background:var(--sl-surface-subtle); }
-.sl-admin-inventory-page .sl-application-records-table .sl-account-action-view:focus-visible { outline:2px solid var(--sl-focus); outline-offset:2px; }
-@media (max-width:700px) {
-  .sl-manager-alerts-header { align-items:flex-start; flex-direction:column; }
-  .sl-manager-alert-row { grid-template-columns:2.2rem minmax(0,1fr); align-items:start; }
-  .sl-manager-alert-row-actions { grid-column:2; }
-  .sl-manager-alert-row time { grid-column:2; }
 }

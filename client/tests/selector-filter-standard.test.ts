@@ -22,7 +22,7 @@ const toolbar = (source: string, startToken: string) => {
   assert.ok(start > -1, `toolbar marker "${startToken}" exists`);
   const endTwo = source.indexOf('</div></div>', start);
   const endPage = source.indexOf('Rows per page', start);
-  const end = endTwo > -1 ? endTwo : endPage;
+  const end = [endTwo, endPage].filter(value => value > start).reduce((nearest, value) => Math.min(nearest, value), Number.POSITIVE_INFINITY);
   assert.ok(end > start, `toolbar "${startToken}" has a bounded end`);
   return source.slice(start, end);
 };
@@ -48,7 +48,10 @@ test('every applicable role filter toolbar uses the shared FilterSelect', () => 
   assert.doesNotMatch(toolbar(MODULE, 'data-layout="inventory-admin"'), /<select/);
   assert.doesNotMatch(toolbar(AUDIT, 'sl-audit-filter-strip'), /<select/);
   assert.doesNotMatch(toolbar(ACCOUNTS, 'sl-user-accounts-filter-card'), /<select/);
-  assert.doesNotMatch(toolbar(REPORTS, 'sl-admin-reports-filters'), /<select/);
+  // Admin's report catalogue toolbar is gone: its report filter now lives in the shared
+  // Download Center, scoped to the reports the Admin role may export.
+  assert.doesNotMatch(REPORTS, /sl-admin-reports-filters|Filter reports by type/);
+  assert.match(REPORTS, /<ManagementReportDownloadCenter options=\{adminReportOptions\} onExported=\{handleExported\} \/>/);
 });
 
 test('every converted filter keeps its label, options, order and default', () => {
@@ -72,9 +75,17 @@ test('every converted filter keeps its label, options, order and default', () =>
 
 test('form fields and page-size selects stay native outside the filter toolbars', () => {
   // Page size is a control, not a filter: it must remain a native select.
-  for (const [name, source] of [['ModulePage', MODULE], ['Alerts', ALERTS], ['Reports', REPORTS], ['AccountsTable', ACCOUNTS], ['AuditTable', AUDIT], ['ManagerInventoryPage', INV], ['ManagerUsageWastePage', USAGE_WASTE], ['SecurityActivity', SECURITY]] as const) {
+  for (const [name, source] of [['ModulePage', MODULE], ['Alerts', ALERTS], ['AccountsTable', ACCOUNTS], ['AuditTable', AUDIT], ['ManagerInventoryPage', INV], ['ManagerUsageWastePage', USAGE_WASTE]] as const) {
     assert.match(source, /Rows per page[\s\S]{0,40}<select/, `${name} keeps its native page-size select`);
   }
+  // SecurityActivity's own Audit Logs tab no longer hand-rolls a second table: it renders the
+  // shared AuditTable, so the page-size select lives in AuditTable (asserted above) and must not
+  // be reimplemented here. Reusing the one table keeps filtering, pagination and export in a
+  // single place instead of drifting into two copies.
+  // Single table, not two: extra opt-in props are tolerated, but the page must keep
+  // delegating to the shared component with the audit overview configuration.
+  assert.match(SECURITY, /<AuditTable adminOverview includeSuperAdminActors showSummary=\{false\}[^>]*\/>/);
+  assert.doesNotMatch(SECURITY, /Rows per page/);
   // Transaction form fields keep native selects so the browser's own validity and
   // keyboard handling still apply inside the dialogs. The Manager recording dialogs ARE the
   // locked Inventory Staff bulk dialog, so those controls are asserted on that shared component.

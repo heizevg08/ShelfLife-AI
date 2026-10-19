@@ -1,6 +1,8 @@
 import { apiClient } from './apiClient';
 import type { Page } from './administration';
 
+export const INGREDIENT_CATEGORIES = ['Dairy', 'Produce', 'Bakery', 'Pantry', 'Meat', 'Seafood', 'Frozen', 'Beverages', 'Other'] as const;
+
 export interface Ingredient {
   id: string;
   name: string;

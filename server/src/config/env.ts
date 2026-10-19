@@ -8,6 +8,10 @@ export interface Config {
   corsOrigins: string[];
   trustProxy: boolean;
   cookieSameSite: 'lax' | 'none';
+  mlPythonExecutable: string;
+  mlWorkerScript: string;
+  mlStartupTimeoutMs: number;
+  mlInferenceTimeoutMs: number;
 }
 
 // Validation errors contain field names only, never supplied values.
@@ -35,10 +39,21 @@ export function readConfig(env: NodeJS.ProcessEnv): Config {
   const rawCookieSameSite = env.COOKIE_SAME_SITE ?? 'lax';
   if (!['lax', 'none'].includes(rawCookieSameSite)) invalid.add('COOKIE_SAME_SITE');
   if (nodeEnv !== 'production' && rawCookieSameSite === 'none') invalid.add('COOKIE_SAME_SITE');
+  const mlPythonExecutable = env.ML_PYTHON_EXECUTABLE?.trim() ?? '';
+  const mlWorkerScript = env.ML_WORKER_SCRIPT?.trim() ?? '';
+  if (mlPythonExecutable && !/^\S+$/.test(mlPythonExecutable)) invalid.add('ML_PYTHON_EXECUTABLE');
+  if (mlWorkerScript && !/^\S+$/.test(mlWorkerScript)) invalid.add('ML_WORKER_SCRIPT');
+  const rawMlStartupTimeoutMs = env.ML_STARTUP_TIMEOUT_MS ?? '10000';
+  const mlStartupTimeoutMs = Number(rawMlStartupTimeoutMs);
+  if (!/^\d+$/.test(rawMlStartupTimeoutMs) || !Number.isSafeInteger(mlStartupTimeoutMs) || mlStartupTimeoutMs < 1) invalid.add('ML_STARTUP_TIMEOUT_MS');
+  const rawMlInferenceTimeoutMs = env.ML_INFERENCE_TIMEOUT_MS ?? '5000';
+  const mlInferenceTimeoutMs = Number(rawMlInferenceTimeoutMs);
+  if (!/^\d+$/.test(rawMlInferenceTimeoutMs) || !Number.isSafeInteger(mlInferenceTimeoutMs) || mlInferenceTimeoutMs < 1) invalid.add('ML_INFERENCE_TIMEOUT_MS');
   if (invalid.size) throw new Error(`Invalid configuration: ${[...invalid].join(', ')}`);
   return {
     nodeEnv: nodeEnv as Config['nodeEnv'], host, port, mongoUri,
     corsOrigins: [...new Set(corsOrigins)], trustProxy: rawTrustProxy === 'true',
     cookieSameSite: rawCookieSameSite as Config['cookieSameSite'],
+    mlPythonExecutable, mlWorkerScript, mlStartupTimeoutMs, mlInferenceTimeoutMs,
   };
 }

@@ -49,6 +49,11 @@ export function inventoryBatchPagination(query: Record<string, unknown>): Invent
   return result;
 }
 
+export function inventoryBatchExportQuery(query: Record<string, unknown>): InventoryBatchPageQuery {
+  for (const key of Object.keys(query)) if (!['from', 'to'].includes(key)) invalid(key);
+  return inventoryBatchPagination({ ...query, page: '1', pageSize: '150' });
+}
+
 export function stockInInput(body: unknown): StockInInput {
   if (!body || typeof body !== 'object' || Array.isArray(body)) invalid('body');
   const input = body as Record<string, unknown>;

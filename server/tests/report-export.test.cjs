@@ -64,7 +64,7 @@ test('more than 5,000 data rows fail closed instead of truncating', async () => 
   await assert.rejects(service({ batches }).table(reportQuery('inventory-summary', {})), error => error.status === 413);
 });
 
-test('route denies unauthenticated and non-Manager callers before report generation', async t => {
+test('route denies unauthenticated and non-report callers before report generation', async t => {
   let reads = 0;
   const auth = { authenticate: async header => { if (!header) throw new HttpError(401, 'Authentication required'); return { id: 'a'.repeat(24), role: header.slice(7) === 'manager' ? 'Manager' : header.slice(7) }; } };
   const reports = { table: async () => { reads++; return { columns: ['Name'], rows: [], dataRows: 0, empty: true }; }, audit: async () => {} };
@@ -72,28 +72,28 @@ test('route denies unauthenticated and non-Manager callers before report generat
   t.after(() => new Promise(resolve => server.close(resolve)));
   const url = `http://127.0.0.1:${server.address().port}/api/reports/operational/usage-consumption/preview?from=2026-10-14&to=2026-10-14`;
   assert.equal((await fetch(url)).status, 401);
-  for (const role of ['Admin', 'Inventory Staff', 'Super Admin']) assert.equal((await fetch(url, { headers: { Authorization: `Bearer ${role}` } })).status, 403);
+  for (const role of ['Inventory Staff', 'Super Admin']) assert.equal((await fetch(url, { headers: { Authorization: `Bearer ${role}` } })).status, 403);
   assert.equal(reads, 0);
   assert.equal((await fetch(url, { headers: { Authorization: 'Bearer manager' } })).status, 200);
   assert.equal(reads, 1);
-  const exportResponse = await fetch(url.replace('/preview?', '/export.csv?'), { headers: { Authorization: 'Bearer manager' } });
-  assert.equal(exportResponse.status, 200);
-  assert.match(exportResponse.headers.get('content-disposition') ?? '', /usage-consumption-2026-10-14-2026-10-14\.csv/);
-  assert.equal(exportResponse.headers.get('access-control-expose-headers'), 'Content-Disposition');
+  assert.equal((await fetch(url, { headers: { Authorization: 'Bearer Admin' } })).status, 200);
+  assert.equal(reads, 2);
+  const legacyCsv = await fetch(url.replace('/preview?', '/export.csv?'), { headers: { Authorization: 'Bearer manager' } });
+  assert.equal(legacyCsv.status, 404);
 });
 
-test('audit failure prevents CSV delivery', async t => {
+test('legacy CSV export route is unavailable', async t => {
   const auth = { authenticate: async () => ({ id: 'a'.repeat(24), role: 'Manager' }) };
   const reports = { table: async () => ({ columns: ['Name'], rows: [['Rice']], dataRows: 1, empty: false }), audit: async () => { throw new Error('audit unavailable'); } };
   const server = createApp([], () => true, auth, undefined, undefined, undefined, undefined, undefined, undefined, undefined, reports).listen(0);
   t.after(() => new Promise(resolve => server.close(resolve)));
   const response = await fetch(`http://127.0.0.1:${server.address().port}/api/reports/operational/inventory-summary/export.csv`);
-  assert.equal(response.status, 500);
+  assert.equal(response.status, 404);
   assert.doesNotMatch(response.headers.get('content-type') ?? '', /text\/csv/);
   assert.doesNotMatch(await response.text(), /Rice/);
 });
 
-test('recent exports route denies other roles and scopes history to the authenticated Manager', async t => {
+test('recent exports route denies other roles and scopes history to the authenticated account', async t => {
   let requestedActor;
   const auth = { authenticate: async header => { if (!header) throw new HttpError(401, 'Authentication required'); return { id: header === 'Bearer other' ? 'b'.repeat(24) : 'a'.repeat(24), role: header === 'Bearer manager' || header === 'Bearer other' ? 'Manager' : header.slice(7) }; } };
   const reports = { table: async () => { throw new Error('history must not read reports'); }, audit: async () => {}, recentExports: async actor => { requestedActor = actor; return [{ reportId: 'usage-consumption', format: 'xlsx', exportedAt: '2026-10-14T00:00:00.000Z', periodFrom: '2026-10-08', periodTo: '2026-10-14' }]; } };
@@ -101,11 +101,13 @@ test('recent exports route denies other roles and scopes history to the authenti
   t.after(() => new Promise(resolve => server.close(resolve)));
   const url = `http://127.0.0.1:${server.address().port}/api/reports/my-exports`;
   assert.equal((await fetch(url)).status, 401);
-  for (const role of ['Admin', 'Inventory Staff', 'Super Admin']) assert.equal((await fetch(url, { headers: { Authorization: `Bearer ${role}` } })).status, 403);
+  for (const role of ['Inventory Staff', 'Super Admin']) assert.equal((await fetch(url, { headers: { Authorization: `Bearer ${role}` } })).status, 403);
   assert.equal(requestedActor, undefined);
   assert.equal((await fetch(`${url}?userId=${'b'.repeat(24)}`, { headers: { Authorization: 'Bearer manager' } })).status, 400);
   assert.deepEqual(await (await fetch(url, { headers: { Authorization: 'Bearer manager' } })).json(), { items: [{ reportId: 'usage-consumption', format: 'xlsx', exportedAt: '2026-10-14T00:00:00.000Z', periodFrom: '2026-10-08', periodTo: '2026-10-14' }] });
   assert.equal(requestedActor, 'a'.repeat(24));
   await fetch(url, { headers: { Authorization: 'Bearer other' } });
   assert.equal(requestedActor, 'b'.repeat(24));
+  assert.equal((await fetch(url, { headers: { Authorization: 'Bearer Admin' } })).status, 200);
+  assert.equal(requestedActor, 'a'.repeat(24));
 });

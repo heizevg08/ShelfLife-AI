@@ -12,7 +12,9 @@ export function wasteRecordRoutes(auth: AuthService, service: WasteRecordService
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));
   router.use(mongoInputGuard);
-  router.get('/summary', authorizeAdministration(['Manager', 'Inventory Staff']), actions.summary);
+  // Admin Reports reads this aggregate only. Record-level list/detail access and every
+  // waste mutation remain restricted to Manager and Inventory Staff below.
+  router.get('/summary', authorizeAdministration(['Admin', 'Manager', 'Inventory Staff']), actions.summary);
   router.get('/reason-breakdown', authorizeAdministration(['Manager', 'Inventory Staff']), actions.reasonBreakdown);
   router.get('/analytics', authorizeAdministration(['Manager']), actions.analytics);
   router.get('/', authorizeAdministration(['Manager', 'Inventory Staff']), actions.list);

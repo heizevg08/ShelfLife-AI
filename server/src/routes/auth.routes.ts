@@ -10,7 +10,7 @@ import type { PasswordChange } from '../services/password-change';
 import type { ProfileUpdate } from '../services/profile-update';
 import type { EmailChange } from '../services/email-change';
 
-export interface AuthExtensions { loginLimiter?: LoginLimiter; sessions?: PersistentSessions; recovery?: PasswordRecovery; passwordChange?: PasswordChange; profileUpdate?: ProfileUpdate; emailChange?: EmailChange; secureCookies?: boolean; cookieSameSite?: 'lax' | 'none' }
+export interface AuthExtensions { loginLimiter?: LoginLimiter; sessions?: PersistentSessions; recovery?: PasswordRecovery; passwordChange?: PasswordChange; profileUpdate?: ProfileUpdate; emailChange?: EmailChange; secureCookies?: boolean; cookieSameSite?: 'lax' | 'none'; auditAuthenticationEvent?: (action: 'LOGIN' | 'LOGOUT', actor: { id: string; name: string; role: string }) => Promise<void> }
 
 export function authRoutes(auth: AuthService, origins: readonly string[] = [], extensions: AuthExtensions = {}) {
   const router = Router();
@@ -37,6 +37,7 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
         res.cookie(cookieName, session.token, { ...cookieOptions, expires: session.expiresAt });
       } else res.clearCookie(cookieName, cookieOptions);
     }
+    await extensions.auditAuthenticationEvent?.('LOGIN', result.user);
     res.json(result);
   });
   router.post('/refresh', async (req, res) => {
@@ -50,8 +51,11 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
   });
   router.post('/logout', async (req, res) => {
     verifyOrigin(req.headers.origin);
+    let actor: { id: string; name: string; role: string } | undefined;
+    try { actor = await auth.authenticate(req.headers.authorization); } catch { /* Best-effort audit attribution. */ }
     await extensions.sessions?.revoke(cookie(req.headers.cookie));
     res.clearCookie(cookieName, cookieOptions);
+    try { if (actor) await extensions.auditAuthenticationEvent?.('LOGOUT', actor); } catch { /* Logout remains successful after revocation. */ }
     res.status(204).end();
   });
   router.get('/password-reset/availability', (_req, res) => { res.json({ available: extensions.recovery?.available === true }); });

@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
-import { ChevronRight, Eye, EyeOff, UserRound } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from '../../routing/navigation';
-import { AuthRequestError, changePassword, completeEmailChange, emailChangeAvailability, requestEmailChange, sessionInitials, sessionDisplayName, updateProfile, type SessionUser } from '../../services/auth';
+import { AuthRequestError, changePassword, completeEmailChange, emailChangeAvailability, requestEmailChange, updateProfile, type SessionUser } from '../../services/auth';
 import { clearSession } from '../../services/session';
 import { publishActionFeedback } from '../../services/actionFeedback';
 import { Dialog } from './Dialog';
-import { formatDateTime } from '../../utils/date-time';
+import { PageHeader } from './primitives';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
 
-// The shared four-role profile uses initials as its avatar because profile-photo storage is not
-// supported. First and last names remain separately editable, and email self-service is offered
-// only to roles the backend authorizes when verified mail delivery is configured.
+// The shared four-role profile reproduces the owner's approved reference layout. First and last
+// name are separate authoritative fields. The Role row, the profile avatar and the profile-photo
+// upload block stay absent: photo storage was removed from project scope, and identity initials are
+// shown once, in the shell's topbar avatar, rather than repeated on this page. Email self-service is
+// offered only to the roles the backend authorizes, when verified mail delivery is configured.
 //
 // The notification preferences block was removed from the profile. No notification model, endpoint,
 // event producer, persistence or delivery exists in the backend, so this page must not imply a saved
@@ -75,6 +77,24 @@ function NameRow({ field, value, disabled, onSaved }: {
       <button ref={opener} type="button" className="sl-button sl-text-action sl-profile-manager-edit" disabled={disabled}
         onClick={start} aria-label={`Edit ${labels[field].toLowerCase()}`}>Edit</button>
     </dd>}
+  </div>;
+}
+
+function TwoStepRow({ returnFocus }: { returnFocus: RefObject<HTMLButtonElement | null> }) {
+  // No second factor is enforced by this server. The row matches the reference but must not claim
+  // "required by policy" or "enabled", so both badges and the action state the honest position.
+  return <div className="sl-profile-manager-row">
+    <dt>2-Step Verification</dt>
+    <dd>
+      <span className="sl-profile-manager-badge">Not available</span>
+      <span className="sl-profile-manager-badge">Not set up</span>
+    </dd>
+    <button ref={returnFocus} type="button" className="sl-button sl-text-action sl-profile-manager-action"
+      disabled aria-describedby="sl-profile-manager-twostep-note">Set up</button>
+    <p id="sl-profile-manager-twostep-note" className="sl-supporting sl-profile-manager-help">
+      2-Step Verification is not enforced yet. Sign-in is protected by your password, a login attempt
+      limit and session revocation on password change.
+    </p>
   </div>;
 }
 
@@ -273,6 +293,7 @@ export function ManagerProfilePage() {
   const { user, refreshIdentity } = useApplicationWorkspace();
   const [passwordOpen, setPasswordOpen] = useState(false);
   const passwordTrigger = useRef<HTMLButtonElement>(null);
+  const twoStepTrigger = useRef<HTMLButtonElement>(null);
   // A saved name is shown immediately while the shell re-resolves the identity, so the page, the
   // avatar initials and the account menu never disagree during the round trip.
   const [saved, setSaved] = useState<SessionUser | null>(null);
@@ -282,24 +303,21 @@ export function ManagerProfilePage() {
   }, [user, saved]);
   // Only the roles the backend authorizes may start a self-service email change.
   const canEditEmail = current.role === 'Super Admin' || current.role === 'Admin';
+  // Super Admin renders the shared presentation inside its own surface; every other role keeps
+  // the approved profile exactly as it is.
+  const surface = current.role === 'Super Admin' ? ' sl-superadmin-surface sl-superadmin-profile' : '';
   const name = (value?: string) => value && value.trim() ? value : 'Unavailable';
   const onSaved = (next: SessionUser, message: string) => { setSaved(next); publishActionFeedback({ kind: 'success', message }); refreshIdentity(); };
 
   return <>
-    <div className="sl-admin-view sl-profile-page sl-profile-manager sl-profile-reference">
-      <nav className="sl-profile-reference-breadcrumb" aria-label="Breadcrumb"><span>My Account</span><ChevronRight size={15} aria-hidden="true"/><span aria-current="page"><UserRound size={15} aria-hidden="true"/> Profile</span></nav>
-      <section className="sl-profile-reference-identity" aria-label="Profile identity">
-        <div className="sl-profile-reference-avatar" aria-hidden="true">{sessionInitials(current)}</div>
-        <div><h1>{sessionDisplayName(current)}</h1><p>{current.email}</p></div>
-      </section>
+    <PageHeader eyebrow="Account" title="My Profile" description="Keep your details and sign-in settings up to date." />
+    <div className={`sl-admin-view sl-profile-page sl-profile-manager${surface}`}>
       <section className="sl-profile-card" aria-labelledby="sl-profile-manager-details">
-        <header className="sl-profile-card-header"><h2 id="sl-profile-manager-details">Personal details</h2></header>
+        <header className="sl-profile-card-header"><h2 id="sl-profile-manager-details">Your details</h2></header>
         <dl className="sl-profile-manager-rows">
           <NameRow field="firstName" value={name(current.firstName)} onSaved={onSaved} disabled={false} />
           <NameRow field="lastName" value={name(current.lastName)} onSaved={onSaved} disabled={false} />
           <EmailRow value={name(current.email)} canEdit={canEditEmail} />
-          <SecurityRow label="Account created"><span className="sl-profile-manager-value">{formatDateTime(current.createdAt)}</span></SecurityRow>
-          <SecurityRow label="Last sign-in"><span className="sl-profile-manager-value">{current.lastLoginAt ? formatDateTime(current.lastLoginAt) : 'Not available'}</span></SecurityRow>
         </dl>
       </section>
 
@@ -312,6 +330,7 @@ export function ManagerProfilePage() {
             </button>}>
             <span className="sl-profile-manager-value sl-profile-manager-masked" aria-label="Password is set">••••••••••</span>
           </SecurityRow>
+          <TwoStepRow returnFocus={twoStepTrigger} />
         </dl>
       </section>
     </div>

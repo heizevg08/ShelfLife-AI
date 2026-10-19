@@ -9,7 +9,7 @@ export function AdministrationPage({ areaId }: { areaId: AdministrationAreaId })
   if (areaId === 'accounts') {
     return <>
       <PageHeader eyebrow="Administration" title="User Management" description="System-wide user, role, and account-access oversight." />
-      <div className="sl-admin-view sl-superadmin-users-page-v56 sl-superadmin-users-page-v57 sl-superadmin-users-page-v58 sl-superadmin-users-page-v59 sl-superadmin-users-page-v60 sl-superadmin-users-page-v61 sl-superadmin-users-page-v62 sl-superadmin-users-page-v63 sl-superadmin-users-page-v64">
+      <div className="sl-admin-view sl-superadmin-surface sl-superadmin-users-page-v56 sl-superadmin-users-page-v57 sl-superadmin-users-page-v58 sl-superadmin-users-page-v59 sl-superadmin-users-page-v60 sl-superadmin-users-page-v61 sl-superadmin-users-page-v62 sl-superadmin-users-page-v63 sl-superadmin-users-page-v64">
         <AccountsTable />
       </div>
     </>;
@@ -18,7 +18,7 @@ export function AdministrationPage({ areaId }: { areaId: AdministrationAreaId })
   if (areaId === 'security') {
     return <>
       <PageHeader eyebrow="Security & Activity" title={area.label} description="Read-only records of administrative account changes." />
-      <div className="sl-admin-view">
+      <div className="sl-admin-view sl-superadmin-surface sl-superadmin-security-administration">
         <SummaryCards items={[
           { label: 'Administrative audit', value: 'Connected', detail: 'Successful account changes', tone: 'success' },
           { label: 'Sign-in activity', value: '—', detail: 'Awaiting authentication-event service', tone: 'brand' },
@@ -40,7 +40,7 @@ export function AdministrationPage({ areaId }: { areaId: AdministrationAreaId })
 
   return <>
     <PageHeader eyebrow="System Settings" title="System Settings" description="Manage the global configuration of ShelfLife AI." />
-    <div className="sl-admin-view sl-superadmin-settings-v65">
+    <div className="sl-admin-view sl-superadmin-surface sl-superadmin-settings-v65">
       <nav className="sl-v65-settings-tabs" aria-label="System Settings sections">
         <button type="button" className="is-active">General</button>
         <button type="button">Security</button>

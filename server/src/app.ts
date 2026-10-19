@@ -14,6 +14,9 @@ import { ingredientRoutes } from './routes/ingredient.routes';
 import type { IngredientService } from './services/ingredients';
 import { inventoryBatchRoutes } from './routes/inventory-batch.routes';
 import type { InventoryBatchService } from './services/inventory-batches';
+import type { OperationalForecastService } from './services/operational-forecast';
+import type { OperationalRiskService } from './services/operational-risk';
+import type { OperationalRecommendationService } from './services/operational-recommendations';
 import { usageRecordRoutes } from './routes/usage-record.routes';
 import type { UsageRecordService } from './services/usage-records';
 import { wasteRecordRoutes } from './routes/waste-record.routes';
@@ -22,7 +25,7 @@ import { changeRequestRoutes } from './routes/change-request.routes';
 import { reportRoutes } from './routes/report.routes';
 import type { ReportExportService } from './services/report-export';
 
-export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, trustProxy = false) {
+export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService, trustProxy = false) {
   const app = express();
   app.disable('x-powered-by');
   // Render terminates TLS before forwarding one request hop to this process.
@@ -52,7 +55,7 @@ export function createApp(origins: readonly string[], isReady: () => boolean, au
       routes(req, res, next);
     });
   }
-  if (auth && ingredients) app.use('/api/ingredients', ingredientRoutes(auth, ingredients));
+  if (auth && ingredients) app.use('/api/ingredients', ingredientRoutes(auth, ingredients, operationalForecast, operationalRisk, operationalRecommendations));
   if (auth && inventoryBatches) app.use('/api/inventory-batches', inventoryBatchRoutes(auth, inventoryBatches));
   if (auth && usageRecords) app.use('/api/usage-records', usageRecordRoutes(auth, usageRecords));
   if (auth && wasteRecords) app.use('/api/waste-records', wasteRecordRoutes(auth, wasteRecords));
