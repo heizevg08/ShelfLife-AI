@@ -76,11 +76,14 @@
 }
 html:has(.sl-app),
 body:has(.sl-app) {
-  height: 100%;
-  overflow: hidden;
+  height: auto;
+  min-height: 100%;
+  overflow-y: auto;
 }
 html:has(.sl-shell[data-role=Manager]:has(.sl-manager-dashboard-v117)),
-body:has(.sl-shell[data-role=Manager]:has(.sl-manager-dashboard-v117)) {
+body:has(.sl-shell[data-role=Manager]:has(.sl-manager-dashboard-v117)),
+html:has(.sl-shell:has(.sl-manager-inventory-v119)),
+body:has(.sl-shell:has(.sl-manager-inventory-v119)) {
   height: auto;
   overflow-y: auto;
 }

@@ -434,6 +434,10 @@ function ManagerInventoryPage() {
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><PackageX /></span><div><span>Low Stock Items</span><strong>—</strong><small>Data unavailable</small></div></article>
         <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Total Inventory Value</span><strong>—</strong><small>Data unavailable</small></div></article>
       </div>
+      <div className="sl-manager-inventory-lower-grid">
+        <section className="sl-manager-inventory-panel sl-reference-records"><header><div><strong><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>FEFO Priority</strong><small>Top batches to use first (First Expire, First Out)</small></div><Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link></header><div className="sl-manager-inventory-table-shell"><table className="sl-data-table sl-reference-records-table" aria-label="FEFO priority batches"><thead><tr>{['Ingredient','Batch ID','Expiration Date','Days Left','Priority'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr aria-label="FEFO priority values unavailable">{Array.from({length:5}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table></div></section>
+        <section className="sl-manager-inventory-panel"><header><strong>Inventory by Category</strong><Link href="/ReportsAnalytics" className="sl-text-link">View Details <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="Category distribution unavailable" description="Category distribution requires live inventory records." /></div></section>
+      </div>
       <section className="sl-manager-inventory-directory sl-reference-records" aria-label="Inventory directory">
         <header className="sl-reference-records-heading"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><strong>Inventory Records</strong></header>
         <div className="sl-manager-inventory-filters">
@@ -452,10 +456,6 @@ function ManagerInventoryPage() {
         </div>
         <div className="sl-manager-inventory-footer sl-reference-records-footer"><label>Rows per page <select className="sl-admin-input" value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="inventory records" onPageChange={setPage} /></div>
       </section>
-      <div className="sl-manager-inventory-lower-grid">
-        <section className="sl-manager-inventory-panel sl-reference-records"><header><div><strong><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span>FEFO Priority</strong><small>Top batches to use first (First Expire, First Out)</small></div><Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link></header><div className="sl-manager-inventory-table-shell"><table className="sl-data-table sl-reference-records-table" aria-label="FEFO priority batches"><thead><tr>{['Ingredient','Batch ID','Expiration Date','Days Left','Priority'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody><tr aria-label="FEFO priority values unavailable">{Array.from({length:5}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table></div></section>
-        <section className="sl-manager-inventory-panel"><header><strong>Inventory by Category</strong><Link href="/ReportsAnalytics" className="sl-text-link">View Details <ArrowRight size={14}/></Link></header><div className="sl-manager-panel-empty"><DataState kind="empty" title="Category distribution unavailable" description="Category distribution requires live inventory records." /></div></section>
-      </div>
     </div>
   </>;
 }

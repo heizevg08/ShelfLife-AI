@@ -219,18 +219,6 @@ function ManagerAlerts() {
       </section>
 
       <div className="sl-manager-alerts-layout">
-        <aside className="sl-manager-alerts-rail" aria-label="Alert analytics">
-          <Card id="manager-alert-trends" title="Alert Trends" action={<div className="sl-manager-alerts-trend-tools"><AlertTrendLegend visible={priorityVisible} onToggle={key => setPriorityVisible(current => ({ ...current, [key]: !current[key] }))} /><label className="sl-manager-alerts-card-select"><span className="sl-sr-only">Trend period</span><FilterSelect ariaLabel="Alert trend period" value={trendPeriod} options={ALERT_TREND_PERIODS.map(value => ({ value, label: value }))} onChange={value => setTrendPeriod(value as AlertTrendPeriod)} /></label></div>}>
-            <AlertTrendChart
-              ariaLabel="Alerts raised per day, split by priority"
-              points={trendPoints}
-              visible={priorityVisible}
-              period={trendPeriod}
-              emptyLabel="No alerts to track yet"
-              emptyDescription="Once alerts are raised, each day's count is plotted here, one line per priority."
-            />
-          </Card>
-        </aside>
         <main className="sl-manager-alerts-main">
           <section className="sl-manager-alerts-records-card sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records" aria-label="Alert records">
             <header className="sl-application-records-header sl-staff-usage-card-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>Alert Records</h2></header>
