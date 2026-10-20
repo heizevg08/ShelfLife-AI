@@ -33802,7 +33802,8 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-manager-alerts-v134 .sl-manager-alerts-rail>.sl-card>.sl-card-body { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; }
 .sl-manager-alerts-v134 .sl-manager-alerts-rail>.sl-card:has(#manager-alert-trends)>.sl-card-body { padding: 0 0 var(--sl-space-4); }
 .sl-manager-alerts-v134 .sl-manager-alerts-rail>.sl-card:has(#manager-alert-trends) .sl-card-header { align-items: center; flex-wrap: wrap; gap: .5rem 1rem; border-bottom: 0; }
-.sl-manager-alerts-live .sl-manager-daily-frame svg { height: clamp(18.5rem,26vw,23rem); }
+.sl-manager-alerts-live .sl-manager-daily-frame svg,
+.sl-mgr-forecast-page .sl-manager-daily-frame svg { height: clamp(20.5rem, 28vw, 24.5rem); }
 .sl-manager-usage-live .sl-manager-usage-pending { min-height: clamp(8rem,12vw,11.5rem); }
 /* Manager Forecasting card-header period control. It is the shared FilterSelect - the same
    control as the Manager Usage & Waste analytics period - so the app keeps one select
@@ -34159,8 +34160,8 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
    reference's own row height. */
 .sl-mgr-fc-insights-empty { min-height: 0; padding: var(--sl-space-4); }
 .sl-mgr-fc-insights-empty .sl-mgr-fc-pending { min-height: 4.5rem; }
-.sl-mgr-fc-insight-placeholder { min-height: 1.9rem; border-left-color: var(--sl-border); background: var(--sl-surface-subtle); }
-.sl-mgr-fc-insight-placeholder i { display: block; width: 55%; height: .5rem; border-radius: var(--sl-radius-full); background: var(--sl-border); }
+.sl-mgr-fc-insight-placeholder { min-height: 3.8rem; border: 1px solid #e5e7eb; border-radius: 14px; background: #fafaf9; gap: .6rem; }
+.sl-mgr-fc-insight-placeholder i { display: block; width: 55%; height: .55rem; border-radius: var(--sl-radius-full); background: #e5e7eb; animation: sl-pulse 1.5s ease-in-out infinite; }
 .sl-mgr-fc-insight-placeholder i:first-child { width: 35%; }
 .sl-mgr-fc-insight-placeholder i:last-child { width: 70%; }
 
@@ -35714,58 +35715,6 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-}
-.sl-mgr-alert-search-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  background: var(--sl-surface-subtle, #f4f7f5);
-  border-radius: 9999px;
-  padding: 0.25rem 0.75rem;
-  color: var(--sl-muted, #66756f);
-  border: 1px solid var(--sl-border-subtle, #e5e7eb);
-  transition: all 0.15s ease;
-}
-.sl-mgr-alert-search-wrap:focus-within {
-  border-color: #145b37;
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(20, 91, 55, 0.1);
-}
-.sl-mgr-alert-search-input {
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 0.8rem;
-  color: var(--sl-text, #17352c);
-  width: 120px;
-}
-.sl-mgr-alert-search-input::placeholder {
-  color: #899691;
-}
-.sl-mgr-alert-filters {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding-bottom: 0.25rem;
-}
-.sl-mgr-alert-pill {
-  border: none;
-  background: transparent;
-  color: #4f5f59;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.2rem 0.75rem;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.sl-mgr-alert-pill:hover {
-  background: #eef3f0;
-  color: #17352c;
-}
-.sl-mgr-alert-pill.is-active {
-  background: #145b37;
-  color: #ffffff;
 }
 .sl-mgr-alert-list {
   display: flex;

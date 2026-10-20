@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Bell, Box, Boxes, CalendarClock, ClipboardList, FileText, ListChecks, ListOrdered, PhilippinePeso, Plus, Search, TrendingUp, TriangleAlert, UsersRound, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Bell, Box, Boxes, CalendarClock, ClipboardList, FileText, ListChecks, ListOrdered, PhilippinePeso, Plus, TrendingUp, TriangleAlert, UsersRound, type LucideIcon } from 'lucide-react';
 import { Link, useRouter } from '../../routing/navigation';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
 import { ApplicationDonutChart, ApplicationPendingState } from '../application/ApplicationPatterns';
@@ -268,9 +268,6 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     return { days, maxScale, calloutText };
   }, [allBatches]);
 
-  const [alertFilter, setAlertFilter] = useState<'All' | 'High' | 'Medium' | 'Low'>('All');
-  const [alertSearch, setAlertSearch] = useState('');
-
   const alertItems = useMemo(() => {
     if (!allBatches || allBatches.length === 0) return [];
     
@@ -379,15 +376,6 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
       return a.sortScore - b.sortScore;
     });
   }, [allBatches]);
-
-  const filteredAlerts = useMemo(() => {
-    return alertItems.filter(item => {
-      if (alertFilter !== 'All' && item.priority !== alertFilter) return false;
-      if (alertSearch.trim() && !item.ingredient.toLowerCase().includes(alertSearch.toLowerCase())) return false;
-      return true;
-    });
-  }, [alertItems, alertFilter, alertSearch]);
-
 
   const pendingState = (description: string) => <div className="sl-manager-reference-state"><ApplicationPendingState description={description} /></div>;
   const openRequest = async (request: ChangeRequest, trigger: HTMLTableRowElement) => {
@@ -550,47 +538,18 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
         <Card
           id="manager-alert-records"
           title={<DashboardCardTitle Icon={Bell}>Alert Records</DashboardCardTitle>}
-          action={
-            <div className="sl-mgr-alert-search-wrap">
-              <Search size={14} aria-hidden="true" />
-              <input
-                type="text"
-                className="sl-mgr-alert-search-input"
-                placeholder="Search alerts..."
-                value={alertSearch}
-                onChange={e => setAlertSearch(e.target.value)}
-                maxLength={50}
-                aria-label="Search alerts"
-              />
-            </div>
-          }
+          action={<Link href="/Alerts" className="sl-text-link">View All <ArrowRight size={14}/></Link>}
         >
           <div className="sl-mgr-alert-card-body">
-
-            <div className="sl-mgr-alert-filters" role="tablist" aria-label="Filter alerts by priority">
-              {(['All', 'High', 'Medium', 'Low'] as const).map(p => (
-                <button
-                  key={p}
-                  type="button"
-                  className={`sl-mgr-alert-pill ${alertFilter === p ? 'is-active' : ''}`}
-                  onClick={() => setAlertFilter(p)}
-                  role="tab"
-                  aria-selected={alertFilter === p}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-
             <div className="sl-mgr-alert-list">
-              {filteredAlerts.length > 0 ? (
+              {alertItems.length > 0 ? (
                 <>
-                  {filteredAlerts.some(a => a.group === 'ACT NOW') && (
+                  {alertItems.some(a => a.group === 'ACT NOW') && (
                     <div className="sl-mgr-alert-section">
                       <span className="sl-mgr-alert-section-title">ACT NOW</span>
-                      {filteredAlerts
+                      {alertItems
                         .filter(a => a.group === 'ACT NOW')
-                        .slice(0, 3)
+                        .slice(0, 2)
                         .map(alert => (
                           <div className="sl-mgr-alert-item" key={alert.id} data-tone={alert.tone}>
                             <div className="sl-mgr-alert-item-left">
@@ -606,12 +565,12 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
                     </div>
                   )}
 
-                  {filteredAlerts.some(a => a.group === 'PLAN THIS WEEK') && (
+                  {alertItems.some(a => a.group === 'PLAN THIS WEEK') && (
                     <div className="sl-mgr-alert-section">
                       <span className="sl-mgr-alert-section-title">PLAN THIS WEEK</span>
-                      {filteredAlerts
+                      {alertItems
                         .filter(a => a.group === 'PLAN THIS WEEK')
-                        .slice(0, 3)
+                        .slice(0, 2)
                         .map(alert => (
                           <div className="sl-mgr-alert-item" key={alert.id} data-tone={alert.tone}>
                             <div className="sl-mgr-alert-item-left">
@@ -632,16 +591,16 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
               ) : allBatches === null ? (
                 <DataState kind="loading" title="Loading alerts" description="Retrieving current inventory alerts." />
               ) : (
-                <DataState kind="empty" title="No matching alerts" description="No alerts match the selected priority or search filter." />
+                <DataState kind="empty" title="No alerts" description="There are no urgent inventory alerts at this time." />
               )}
             </div>
 
             <div className="sl-mgr-alert-footer">
               <span className="sl-mgr-alert-count">
-                Showing {Math.min(filteredAlerts.length, 6)} of {alertItems.length} alerts
+                Showing top {Math.min(alertItems.length, 4)} of {alertItems.length} alerts
               </span>
               <Link href="/Alerts" className="sl-mgr-alert-view-all">
-                View all <ArrowRight size={13} aria-hidden="true" />
+                View all alerts <ArrowRight size={13} aria-hidden="true" />
               </Link>
             </div>
           </div>
