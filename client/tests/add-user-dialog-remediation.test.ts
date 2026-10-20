@@ -48,6 +48,6 @@ test('Add User form body keeps 24px clearance above the footer at every scroll p
 
 test('Super Admin role options and server submission paths remain unchanged', () => {
   assert.match(accounts, /superAdmin \? \['Admin', 'Manager', 'Inventory Staff'\]/);
-  assert.match(accounts, /if \(mode === 'create'\) await createAccount\(\{ \.\.\.input, password: fields\.password \}\)/);
+  assert.match(accounts, /if \(mode === 'create'\) await createAccount\(\{ \.\.\.input, personalEmail: fields\.personalEmail\.trim\(\)\.toLowerCase\(\) \}\)/);
   assert.match(accounts, /error instanceof ApiError/);
 });

@@ -556,7 +556,7 @@ test('Manager Forecasting table keeps a real min-width and wins the CSS preceden
   assert.match(styles, /\.sl-mgr-forecast-tablewrap table \{\s*border-collapse: collapse;\s*width: 100%;\s*min-width: 900px;/);
   // Truthful unavailable state is preserved: no fabricated accuracy or demand figures.
   assert.match(page, /<ApplicationPendingState description="Ingredient forecasts will appear when the forecasting service is available\." \/>/);
-  assert.match(page, /<span>Forecast Accuracy<\/span>[\s\S]*?<strong>—<\/strong><small>Forecast data pending<\/small>/);
+  assert.match(page, /<span>Forecast Accuracy<\/span>[\s\S]*?<strong>—<\/strong><small>Forecast pending<\/small>/);
 });
 
 test('Manager Inventory Overview ledger keeps a real min-width and wins the CSS precedence it lost', () => {

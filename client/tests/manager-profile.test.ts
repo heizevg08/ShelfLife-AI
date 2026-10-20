@@ -229,10 +229,10 @@ test('all four role routes resolve to the same approved profile presentation', (
 test('the shared profile rules are component-scoped and container-owned', () => {
   const start = styles.indexOf('/* Shared four-role profile:');
   assert.ok(start >= 0, 'the shared profile rule block must exist');
-  const rules = styles.slice(start);
+  const rules = styles.slice(start, styles.indexOf('/* Manager Dashboard: Stock Status & Expiring in Next 7 Days Cards */', start));
   assert.match(rules, /\.sl-profile-manager \{[\s\S]*?container-name:sl-profile-manager;[\s\S]*?container-type:inline-size;/);
   assert.match(rules, /@container sl-profile-manager \(max-width:34rem\)[\s\S]*?grid-template-columns:minmax\(0,1fr\);/);
   assert.doesNotMatch(rules, /\[data-role=/);
   assert.doesNotMatch(rules, /sl-profile-self-service/);
-  assert.doesNotMatch(rules, /sl-manager-(?!password)[a-z-]*/);
+  assert.doesNotMatch(rules, /\bsl-manager-(?!profile-password)/);
 });

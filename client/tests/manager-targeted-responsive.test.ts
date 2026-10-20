@@ -12,7 +12,7 @@ test('Manager Usage and Alerts tables override the shared zero minimum inside th
   assert.match(usage, /sl-manager-usage-records sl-application-records[\s\S]*?sl-application-records-table-shell sl-sa-ingredients-table-scroll"><table className="sl-application-records-table/);
   assert.match(usage, /\['Activity Date','Ingredient','Type','Quantity','Batch ID','Details \/ Reason','Recorded By'\]/);
   assert.match(alerts, /sl-manager-alerts-records-card sl-application-records[\s\S]*?sl-manager-alerts-table-wrap sl-application-records-table-shell sl-sa-ingredients-table-scroll/);
-  assert.match(alerts, /<th>Date &amp; Time<\/th>[\s\S]*?<th>Status<\/th>/);
+  assert.match(alerts, /<th>Alert Date<\/th>[\s\S]*?<th>Status<\/th>/);
   for (const rule of [
     '.sl-manager-usage-live .sl-manager-usage-records .sl-application-records-table { min-width: 54rem; }',
     '.sl-manager-alerts-v134 .sl-manager-alerts-records-card .sl-application-records-table { min-width: 44rem; }',
@@ -20,7 +20,7 @@ test('Manager Usage and Alerts tables override the shared zero minimum inside th
     assert.ok(css.indexOf(rule) > sharedRule, `${rule} must win the shared zero minimum`);
   }
   assert.match(css, /:is\(\.sl-manager-dashboard-v116,[^\n]+\) :is\(\.sl-dashboard-reference-table,[^\n]+\) \{\s*max-width: 100%;\s*min-width: 0;\s*overflow-x: auto;/);
-  assert.match(alerts, /<td colSpan=\{6\} className="sl-empty-cell"><ManagerAlertPending label="Alert records" \/>/);
+  assert.match(alerts, /<td colSpan=\{6\} className="sl-empty-cell">\{[\s\S]*?<DataState kind="empty" title="No matching alerts"/);
   assert.match(css, /@media \(max-width: 760px\) \{\s*\.sl-manager-alerts-v134 \.sl-manager-alerts-table-wrap \.sl-manager-alerts-pending \{\s*width: min\(100%, calc\(100vw - 4rem\)\);\s*margin-inline: 0;/);
 });
 

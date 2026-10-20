@@ -42,7 +42,7 @@ test('Super Admin KPI cards use the authoritative all-account summary, including
   assert.match(table, /<span>Total Users<\/span><strong>\{summary \? totalUsers\.toLocaleString\(\) : '—'\}/);
   assert.match(table, /<span>Admin<\/span><strong>\{summary \? \(summary\.roleCounts\?\.Admin \?\? 0\)\.toLocaleString\(\) : '—'\}[\s\S]*?Admin accounts/);
   assert.match(table, /<span>Managers<\/span><strong>\{summary \? \(summary\.roleCounts\?\.Manager \?\? 0\)\.toLocaleString\(\) : '—'\}[\s\S]*?Manager accounts/);
-  assert.match(table, /<span>Inventory Staff<\/span><strong>\{summary \? \(summary\.roleCounts\?\.\['Inventory Staff'\] \?\? 0\)\.toLocaleString\(\) : '—'\}[\s\S]*?Inventory Staff accounts/);
+  assert.match(table, /<span>Inventory Staff<\/span><strong>\{summary \? \(summary\.roleCounts\?\.\['Inventory Staff'\] \?\? 0\)\.toLocaleString\(\) : '—'\}[\s\S]*?Staff accounts/);
   assert.match(store, /totalUsers: totals\?\.totalUsers \?\? 0, activeUsers: totals\?\.activeUsers \?\? 0, inactiveUsers: activeOnly \? 0 : totals\?\.inactiveUsers \?\? 0, roleCounts/);
   assert.match(store, /users\.aggregate\(\[\{ \$match: roleFilter \}, \{ \$group: \{ _id: '\$role', count: \{ \$sum: 1 \} \} \}\]\)/);
   assert.match(policy, /summary: \(actor\?: Actor\) => store\.summary\(actor\?\.role === 'Admin' \? managedRoles\(actor\.role\) : null, actor\?\.role === 'Admin'/);

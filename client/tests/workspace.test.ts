@@ -106,7 +106,7 @@ test("Inventory Staff Today's Usage displays the authoritative record count", ()
   const dashboard = readFileSync(new URL('../src/components/dashboard/RoleDashboard.tsx', import.meta.url), 'utf8');
   const usageStore = readFileSync(new URL('../../server/src/services/usage-record-store.ts', import.meta.url), 'utf8');
   assert.match(dashboard, /const usageValue = usageSummaryFailed \|\| usageSummary === null \? '\\u2014' : usageSummary\.usageRecordsToday/);
-  assert.match(dashboard, /const usageHelper = usageSummaryFailed \? 'Usage summary unavailable' : usageSummary === null \? 'Loading usage summary' : 'Usage records logged today'/);
+  assert.match(dashboard, /const usageHelper = usageSummaryFailed \? 'Usage unavailable' : usageSummary === null \? 'Loading usage' : 'Usage logged today'/);
   assert.match(dashboard, /<span>Today&apos;s Usage<\/span><strong>\{usageValue\}<\/strong><small>\{usageHelper\}<\/small>/);
   assert.doesNotMatch(dashboard, /usageTotalsByUnitToday\.map|totalUsageToday\.quantity|sl-dashboard-usage-value|data-density/);
   assert.match(usageStore, /usageRecordsToday: todayItems\.length/);

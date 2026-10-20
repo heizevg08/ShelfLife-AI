@@ -8,7 +8,7 @@ test('Inventory Staff lower grid gives Pending Requests desktop room and stacks 
   const primitives = readFileSync(new URL('../src/components/application/primitives.tsx', import.meta.url), 'utf8');
   const requestService = readFileSync(new URL('../src/services/change-requests.ts', import.meta.url), 'utf8');
   const rulesStart = styles.lastIndexOf('/* Inventory Staff Dashboard: My Pending Requests owns this compact table geometry. */');
-  const rulesEnd = styles.indexOf('/* My Requests keeps its custom-range controls and actions in one adaptive layout. */', rulesStart);
+  const rulesEnd = styles.indexOf('/* Admin shell controls share the 44px mobile target baseline. */', rulesStart);
   const effectiveRules = styles.slice(rulesStart, rulesEnd);
   const cardSource = primitives.slice(primitives.indexOf('export function Card('));
 
@@ -52,8 +52,8 @@ test('Manager Pending Requests keeps desktop alignment and becomes a complete mo
   const styles = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
   const dashboard = readFileSync(new URL('../src/components/dashboard/RoleDashboard.tsx', import.meta.url), 'utf8');
 
-  assert.match(styles, /\.sl-manager-dashboard-v117 \.sl-manager-requests-table :is\(th,td\):not\(:first-child\) \{ text-align:center!important; \}/);
-  assert.match(styles, /\.sl-manager-dashboard-v117 \.sl-manager-dashboard-table tbody td:not\(\.sl-empty-cell\) \{\s*font:400 1rem\/1\.5 "Inter",sans-serif;/);
+  assert.match(styles, /\.sl-manager-dashboard-v117 \.sl-manager-requests-table :is\(th,td\):last-child \{ text-align:center!important; \}/);
+  assert.match(styles, /\.sl-manager-dashboard-v117 \.sl-manager-dashboard-table tbody td:not\(\.sl-empty-cell\) \{\s*font:400 \.875rem\/1\.35 "Inter",sans-serif;/);
   assert.match(styles, /@media \(max-width:640px\)[\s\S]*?\.sl-manager-dashboard-v117 \.sl-manager-requests-table thead,[\s\S]*?\.sl-manager-dashboard-v117 \.sl-manager-requests-table colgroup \{ display:none; \}/);
   assert.match(styles, /content:attr\(data-label\)/);
   assert.match(dashboard, /<td data-label="Request ID">[\s\S]*?<td data-label="Request Type">[\s\S]*?<td data-label="Submitted By">[\s\S]*?<td data-label="Status">/);

@@ -7,7 +7,8 @@ test('Inventory Staff My Requests follows Inventory Batches search proportions a
   const inventoryModule = readFileSync(new URL('../src/components/application/ModulePage.tsx', import.meta.url), 'utf8');
   const styles = readFileSync(new URL('../src/styles/application.css', import.meta.url), 'utf8');
   const rulesStart = styles.lastIndexOf('/* My Requests keeps its custom-range controls and actions in one adaptive layout. */');
-  const myRequestsRules = styles.slice(rulesStart);
+  const rulesEnd = styles.indexOf('/* Inventory Staff Dashboard: My Pending Requests owns this compact table geometry. */', rulesStart);
+  const myRequestsRules = styles.slice(rulesStart, rulesEnd);
 
   assert.match(route, /sl-staff-my-requests-records"><header[^>]*><span className="sl-staff-usage-head-icon"><FileInput aria-hidden="true" \/><\/span><h2>Requests<\/h2>/);
   assert.match(route, /sl-staff-requests-toolbar sl-staff-my-requests-toolbar">/);

@@ -38,7 +38,9 @@ test('Admin renders the single shared download center with the Manager layout sc
 
 test('Admin report KPIs stay truthful while Recent Downloads replaces the catalogue', () => {
   assert.match(admin, /getWasteSummary\(abort\.signal\)/);
-  assert.match(admin, /wasteSummary\.totalWasteCostToday\.toLocaleString/);
+  // The KPI scans as a compact peso value while the exact amount stays in its title.
+  assert.match(admin, /formatCompactPeso\(wasteSummary\.totalWasteCostToday\)/);
+  assert.match(admin, /formatExactPeso\(wasteSummary\.totalWasteCostToday\)/);
   assert.match(admin, /getInventoryBatchSummary\(abort\.signal\)/);
   assert.match(admin, /listIngredients\(1, 1, '', '', abort\.signal\)/);
   // The Manager standard Recent Downloads section is rendered for Admin with the same
