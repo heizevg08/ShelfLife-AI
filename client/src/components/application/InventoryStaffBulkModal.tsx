@@ -69,7 +69,26 @@ export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, i
     if (!open) return;
     reset();
     if (mode === 'stock') setRows(current => current.map(item => item.date ? item : { ...item, date: today }));
-    if (mode !== 'stock' && initialIngredientId) void listInventoryBatches({ page: 1, pageSize: 150, ingredientId: initialIngredientId, sort: 'fefo' }).then(result => setBatches({ [initialIngredientId]: result.items })).catch(() => setBatches({ [initialIngredientId]: [] }));
+    if (mode !== 'stock' && initialIngredientId) {
+      void listInventoryBatches({ page: 1, pageSize: 150, ingredientId: initialIngredientId, sort: 'fefo' })
+        .then(result => {
+          setBatches(current => ({ ...current, [initialIngredientId]: result.items }));
+          if (mode === 'waste' && initialBatchId) {
+            const matchedBatch = result.items.find(b => b.id === initialBatchId);
+            if (matchedBatch) {
+              setRows(current => current.map((r, i) => i === 0 ? {
+                ...r,
+                ingredientId: initialIngredientId,
+                batchId: initialBatchId,
+                quantity: matchedBatch.quantity > 0 ? String(matchedBatch.quantity) : r.quantity,
+                date: r.date || today,
+                reason: matchedBatch.displayStatus === 'Expired' ? 'Expired' : r.reason,
+              } : r));
+            }
+          }
+        })
+        .catch(() => setBatches(current => ({ ...current, [initialIngredientId]: [] })));
+    }
   }, [open, mode, initialIngredientId, initialBatchId]);
   const update = (key: string, field: Field, value: string) => {
     interacted.current[key] = { ...interacted.current[key], [field]: true };
