@@ -173,7 +173,7 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
       }
 
       const requestPagePromise: Promise<RequestPage> = user.role === 'Manager' || user.role === 'Inventory Staff'
-        ? apiClient<RequestPage>(`/change-requests${user.role === 'Manager' ? '?status=PENDING&pageSize=30' : '?pageSize=30'}`)
+        ? apiClient<RequestPage>(`/change-requests${user.role === 'Manager' ? '?status=PENDING&pageSize=50' : '?pageSize=50'}`)
         : Promise.resolve({ items: [] });
       const stockPagePromise: Promise<StockPage> = user.role === 'Manager' || user.role === 'Admin'
         ? listInventoryBatches({ page: 1, pageSize: 30, sort: 'latest' })
