@@ -228,19 +228,19 @@ function InventoryStaffUsagePage() {
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Usage summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
-          <div><span>Total Usage Today</span><strong>{usageMetric(usageSummary?.totalUsageToday ? `${usageSummary.totalUsageToday.quantity} ${usageSummary.totalUsageToday.unit}` : undefined)}</strong><small>Usage quantity recorded today</small></div>
+          <div><span>Total Usage Today</span><strong>{usageMetric(usageSummary?.totalUsageToday ? `${usageSummary.totalUsageToday.quantity} ${usageSummary.totalUsageToday.unit}` : undefined)}</strong><small>Quantity used today</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info">
           <span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span>
-          <div><span>Usage Records Today</span><strong>{usageMetric(usageSummary?.usageRecordsToday)}</strong><small>Usage transactions recorded today</small></div>
+          <div><span>Usage Records Today</span><strong>{usageMetric(usageSummary?.usageRecordsToday)}</strong><small>Transactions today</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
-          <div><span>Most Used Ingredient</span><strong>{usageMetric(usageSummary?.mostUsedIngredient ?? undefined)}</strong><small>Based on recorded usage</small></div>
+          <div><span>Most Used Ingredient</span><strong>{usageMetric(usageSummary?.mostUsedIngredient ?? undefined)}</strong><small>Top ingredient today</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
-          <div><span>Ingredients Used This Week</span><strong>{usageMetric(usageSummary?.ingredientsUsedThisWeek)}</strong><small>Distinct ingredients used this week</small></div>
+          <div><span>Ingredients Used This Week</span><strong>{usageMetric(usageSummary?.ingredientsUsedThisWeek)}</strong><small>Distinct items this week</small></div>
         </article>
       </section></div>
 
@@ -307,7 +307,7 @@ function InventoryStaffStockInPage() {
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-stockin-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Stock-in summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Truck aria-hidden="true" /></span><div><span>Stock-In Today</span><strong>{metric(stockSummary?.stockInToday)}</strong><small>{metricHelper(stockSummary?.stockInToday===1?'Batch received today':'Batches received today')}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Ingredients Received Today</span><strong>{metric(stockSummary?.ingredientsReceivedToday)}</strong><small>{metricHelper('Distinct ingredients today')}</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Batches Received This Month</span><strong>{metric(stockSummary?.batchesReceivedThisMonth)}</strong><small>{metricHelper('Batches received this month')}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><ClipboardCheck aria-hidden="true" /></span><div><span>Batches Received This Month</span><strong>{metric(stockSummary?.batchesReceivedThisMonth)}</strong><small>{metricHelper('Received this month')}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 aria-hidden="true" /></span><div><span>Expiring Soon Batches</span><strong>{metric(stockSummary?.expiringSoonBatches)}</strong><small>{metricHelper('Within 7 days')}</small></div></article>
       </section></div>
       <div className="sl-staff-stockin-layout"><main className="sl-staff-stockin-main"><section className="sl-application-records sl-sa-ingredients-table-card sl-staff-usage-card sl-staff-usage-records sl-sa-account-pattern-records sl-staff-stockin-history" aria-labelledby="staff-stockin-history-title">
@@ -371,10 +371,10 @@ function InventoryStaffInventoryBatchesPage() {
     <div className="sl-admin-view sl-staff-inventory-v149">
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150">
         <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-inventory-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Inventory batch summary">
-          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>{kpiValue(batchSummary?.totalBatches)}</strong><small>{batchSummaryError ? 'Batch service unavailable' : 'Inventory batch records'}</small></div></article>
-          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Near Expiry ≤ 7 Days</span><strong>{kpiValue(batchSummary?.nearExpiry)}</strong><small>{batchSummaryError ? 'Expiration service unavailable' : 'Batches expiring soon'}</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Boxes /></span><div><span>Total Batches</span><strong>{kpiValue(batchSummary?.totalBatches)}</strong><small>{batchSummaryError ? 'Batches unavailable' : 'Current batches'}</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Near Expiry ≤ 7 Days</span><strong>{kpiValue(batchSummary?.nearExpiry)}</strong><small>{batchSummaryError ? 'Expiry unavailable' : 'Expiring soon'}</small></div></article>
           <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>Low Stock Items</span><strong>{kpiValue(batchSummary?.lowStockItems)}</strong><small>{batchSummaryError ? 'Stock summary unavailable' : 'Below minimum stock'}</small></div></article>
-          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>{kpiValue(batchSummary?.expiredItems)}</strong><small>{batchSummaryError ? 'Expiration service unavailable' : 'Batches past their expiration date'}</small></div></article>
+          <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Clock3 /></span><div><span>Expired Batches</span><strong>{kpiValue(batchSummary?.expiredItems)}</strong><small>{batchSummaryError ? 'Expiry unavailable' : 'Past expiry'}</small></div></article>
         </section>
       </div>
 

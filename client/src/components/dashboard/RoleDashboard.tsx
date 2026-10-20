@@ -540,13 +540,13 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
   const requestStatusTone = (request: ChangeRequest) => request.status === 'APPROVED' ? 'success' as const : request.status === 'REJECTED' ? 'critical' as const : 'attention' as const;
   const openRequest = async (id: string) => { try { setDetail(await getChangeRequest(id)); } catch { setDetail(null); } };
   const usageValue = usageSummaryFailed || usageSummary === null ? '\u2014' : usageSummary.usageRecordsToday;
-  const usageHelper = usageSummaryFailed ? 'Usage summary unavailable' : usageSummary === null ? 'Loading usage summary' : 'Usage records logged today';
+  const usageHelper = usageSummaryFailed ? 'Usage unavailable' : usageSummary === null ? 'Loading usage' : 'Usage logged today';
 
   return <div className="sl-admin-view sl-inventory-staff-dashboard-v140 sl-dashboard-source-layout">
       <DashboardHeading userName={userName} source description="Your inventory overview for today. Keep track, record accurately, and help reduce food waste." />
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-dashboard-source-kpis" aria-label="Inventory staff dashboard summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileText aria-hidden="true" /></span><div><span>Today&apos;s Usage</span><strong>{usageValue}</strong><small>{usageHelper}</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>{inventorySummary?.totalBatches ?? '—'}</strong><small>{inventorySummaryFailed ? 'Batch service unavailable' : 'Live inventory batches'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span><div><span>Total Batches</span><strong>{inventorySummary?.totalBatches ?? '—'}</strong><small>{inventorySummaryFailed ? 'Batches unavailable' : 'Current batches'}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><TriangleAlert aria-hidden="true" /></span><div><span>Expiring Soon</span><strong>{inventorySummary?.nearExpiry ?? '—'}</strong><small>{inventorySummaryFailed ? 'Expiration service unavailable' : 'Within 7 days'}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList aria-hidden="true" /></span><div><span>Low Stock</span><strong>{inventorySummary?.lowStockItems ?? '—'}</strong><small>{inventorySummaryFailed ? 'Stock summary unavailable' : 'Below minimum stock'}</small></div></article>
       </section>
