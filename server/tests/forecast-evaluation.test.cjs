@@ -210,6 +210,19 @@ test('HTTP API gates forecast evaluation endpoints to Admin and Manager with tru
   };
 
   const evaluationService = {
+    async evaluateOverallAccuracy() {
+      return {
+        status: 'AVAILABLE',
+        metrics: {
+          evaluatedDays: 14,
+          minimumRequiredDays: 7,
+          mae: 2.1,
+          rmse: 2.5,
+          wape: 0.12,
+          accuracyScore: 88.0,
+        },
+      };
+    },
     async evaluateAccuracy(ingId) {
       if (ingId === '4'.repeat(24)) return { status: 'NOT_FOUND' };
       return {
@@ -309,7 +322,16 @@ test('HTTP API gates forecast evaluation endpoints to Admin and Manager with tru
     assert.equal((await request(manager, `/${validId}/forecast-vs-actual?days=999`)).status, 400);
     assert.equal((await request(manager, `/${validId}/forecast-vs-actual?days=invalid`)).status, 400);
 
-    // 7. Forecast table endpoint tests
+    // 7. Overall forecast accuracy endpoint tests
+    assert.equal((await request(undefined, '/forecast-accuracy')).status, 401);
+    assert.equal((await request(staff, '/forecast-accuracy')).status, 403);
+    const overallRes = await request(manager, '/forecast-accuracy');
+    assert.equal(overallRes.status, 200);
+    const overallBody = await overallRes.json();
+    assert.equal(overallBody.status, 'AVAILABLE');
+    assert.equal(overallBody.metrics.accuracyScore, 88.0);
+
+    // 8. Forecast table endpoint tests
     assert.equal((await request(undefined, '/forecast-table')).status, 401);
     assert.equal((await request(staff, '/forecast-table')).status, 403);
     const tableRes = await request(manager, '/forecast-table?page=1&pageSize=10');

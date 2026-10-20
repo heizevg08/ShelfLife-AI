@@ -74,6 +74,16 @@
   min-height: 100dvh;
   overflow-y: auto;
 }
+html:has(.sl-app),
+body:has(.sl-app) {
+  height: 100%;
+  overflow: hidden;
+}
+html:has(.sl-shell[data-role=Manager]:has(.sl-manager-dashboard-v117)),
+body:has(.sl-shell[data-role=Manager]:has(.sl-manager-dashboard-v117)) {
+  height: auto;
+  overflow-y: auto;
+}
 @supports (color:lab(0% 0 0)){
   .sl-app {
     --sl-brand: lab(18.3195% -16.4979 8.49563);

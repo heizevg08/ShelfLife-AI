@@ -34,13 +34,13 @@ export type ForecastAccuracyResult =
       reason: 'INSUFFICIENT_EVALUATION_DATA' | 'NO_FORECASTS' | 'NO_USAGE';
       evaluatedDays: number;
       minimumRequiredDays: number;
-      ingredientId: string;
+      ingredientId?: string;
       unit?: string;
     }
   | {
       status: 'AVAILABLE';
-      ingredientId: string;
-      unit: string;
+      ingredientId?: string;
+      unit?: string;
       metrics: ForecastAccuracyMetrics;
     };
 
@@ -87,6 +87,7 @@ export interface ForecastTableResult {
 
 export interface ForecastEvaluationService {
   evaluateAccuracy(ingredientId: string, referenceDate?: Date): Promise<ForecastAccuracyResult>;
+  evaluateOverallAccuracy?(referenceDate?: Date): Promise<ForecastAccuracyResult>;
   trendSeries(ingredientId: string, days?: number, referenceDate?: Date): Promise<ForecastVsActualTrendResult>;
   tableOverview(query?: ForecastTableQuery): Promise<ForecastTableResult>;
 }
@@ -217,6 +218,62 @@ export function createForecastEvaluationService(
           rmse,
           wape,
           accuracyScore,
+        },
+      };
+    },
+
+    async evaluateOverallAccuracy(referenceDate = new Date()) {
+      const allIngredients = (await ingredients
+        .find({})
+        .select('_id name unitOfMeasure')
+        .lean()
+        .exec()) as Array<{ _id: { toString(): string }; name: string; unitOfMeasure: string }>;
+
+      if (allIngredients.length === 0) {
+        return {
+          status: 'UNAVAILABLE' as const,
+          reason: 'NO_FORECASTS' as const,
+          evaluatedDays: 0,
+          minimumRequiredDays: EVALUATION_MINIMUM_REQUIRED_DAYS,
+        };
+      }
+
+      const results = await Promise.all(
+        allIngredients.map(ing => this.evaluateAccuracy(ing._id.toString(), referenceDate))
+      );
+
+      const availableResults = results.filter(
+        (r): r is Extract<ForecastAccuracyResult, { status: 'AVAILABLE' }> => r.status === 'AVAILABLE'
+      );
+
+      if (availableResults.length === 0) {
+        const insufficient = results.find(
+          r => r.status === 'UNAVAILABLE' && r.reason === 'INSUFFICIENT_EVALUATION_DATA'
+        ) as Extract<ForecastAccuracyResult, { status: 'UNAVAILABLE' }> | undefined;
+
+        return {
+          status: 'UNAVAILABLE' as const,
+          reason: (insufficient ? 'INSUFFICIENT_EVALUATION_DATA' : 'NO_FORECASTS') as 'INSUFFICIENT_EVALUATION_DATA' | 'NO_FORECASTS',
+          evaluatedDays: insufficient?.evaluatedDays ?? 0,
+          minimumRequiredDays: EVALUATION_MINIMUM_REQUIRED_DAYS,
+        };
+      }
+
+      const totalAccuracy = availableResults.reduce((sum, r) => sum + (r.metrics.accuracyScore ?? 0), 0);
+      const avgAccuracy = roundNumber(totalAccuracy / availableResults.length, 1);
+      const maxDays = Math.max(...availableResults.map(r => r.metrics.evaluatedDays));
+      const avgMae = roundNumber(availableResults.reduce((sum, r) => sum + r.metrics.mae, 0) / availableResults.length, 2);
+      const avgRmse = roundNumber(availableResults.reduce((sum, r) => sum + r.metrics.rmse, 0) / availableResults.length, 2);
+
+      return {
+        status: 'AVAILABLE' as const,
+        metrics: {
+          evaluatedDays: maxDays,
+          minimumRequiredDays: EVALUATION_MINIMUM_REQUIRED_DAYS,
+          mae: avgMae,
+          rmse: avgRmse,
+          wape: null,
+          accuracyScore: avgAccuracy,
         },
       };
     },

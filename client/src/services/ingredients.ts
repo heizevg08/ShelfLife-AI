@@ -90,6 +90,9 @@ export interface ForecastVsActualResponse {
 export const getForecastAccuracy = (id: string, signal?: AbortSignal) =>
   apiClient<ForecastAccuracyResponse>(`/ingredients/${id}/forecast-accuracy`, { signal });
 
+export const getGeneralForecastAccuracy = (signal?: AbortSignal) =>
+  apiClient<ForecastAccuracyResponse>('/ingredients/forecast-accuracy', { signal });
+
 export const getForecastVsActual = (id: string, days = 30, signal?: AbortSignal) =>
   apiClient<ForecastVsActualResponse>(`/ingredients/${id}/forecast-vs-actual?days=${days}`, { signal });
 
@@ -119,6 +122,7 @@ export const getIngredientRecommendations = (id: string, forecastDates: string[]
     method: 'POST',
     body: JSON.stringify({ forecastDates }),
     signal,
+    successMessage: false,
     errorFeedback: false,
   });
 

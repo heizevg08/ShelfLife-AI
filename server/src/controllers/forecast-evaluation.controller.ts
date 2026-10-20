@@ -5,8 +5,22 @@ import { forecastTrendDays } from '../validators/forecast';
 
 export function forecastEvaluationControllers(
   service: ForecastEvaluationService,
-): Record<'accuracy' | 'trend' | 'table', RequestHandler> {
+): Record<'accuracy' | 'overallAccuracy' | 'trend' | 'table', RequestHandler> {
   return {
+    overallAccuracy: async (_req, res) => {
+      if (service.evaluateOverallAccuracy) {
+        const result = await service.evaluateOverallAccuracy();
+        res.json(result);
+      } else {
+        res.json({
+          status: 'UNAVAILABLE',
+          reason: 'INSUFFICIENT_EVALUATION_DATA',
+          evaluatedDays: 0,
+          minimumRequiredDays: 7,
+        });
+      }
+    },
+
     accuracy: async (req, res) => {
       const id = objectId(req.params.id);
       const result = await service.evaluateAccuracy(id);

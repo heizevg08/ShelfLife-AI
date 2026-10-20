@@ -16,7 +16,7 @@ import { Card, DataState, ExportControl, PageHeader, Pagination, PlaceholderSumm
 import { modules, type ModuleId } from './workspace';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
-import { createIngredient, deleteIngredient, getForecastAccuracy, getForecastTable, getForecastVsActual, getIngredientRecommendations, getIngredientSummary, INGREDIENT_CATEGORIES, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type AdvisoryItem, type ForecastAccuracyResponse, type ForecastTableRow, type ForecastTableResponse, type ForecastVsActualResponse, type Ingredient, type IngredientInput, type RecommendationResponse, type StockInIngredient } from '../../services/ingredients';
+import { createIngredient, deleteIngredient, getForecastAccuracy, getGeneralForecastAccuracy, getForecastTable, getForecastVsActual, getIngredientRecommendations, getIngredientSummary, INGREDIENT_CATEGORIES, listIngredientCategories, listIngredients, listStockInIngredients, updateIngredient, type AdvisoryItem, type ForecastAccuracyResponse, type ForecastTableRow, type ForecastTableResponse, type ForecastVsActualResponse, type Ingredient, type IngredientInput, type RecommendationResponse, type StockInIngredient } from '../../services/ingredients';
 import { getInventoryBatch, getInventoryBatchSummary, getStockInSummary, listInventoryBatches, type InventoryBatch, type InventoryBatchDisplayStatus, type InventoryBatchSummary, type StockInSummary } from '../../services/inventory-batches';
 import { getUsageSummary, listUsageRecords, type UsageRecord, type UsageSummary } from '../../services/usage-records';
 import { getWasteSummary, listWasteRecords, type WasteReason, type WasteRecord, type WasteSummary } from '../../services/waste-records';
@@ -1459,11 +1459,26 @@ function ManagerForecastingPage() {
   const trendWindow = emptyForecastWindow(trendFrom, trendTo);
 
   const [accuracyData, setAccuracyData] = useState<ForecastAccuracyResponse | null>(null);
+  const [generalAccuracy, setGeneralAccuracy] = useState<ForecastAccuracyResponse | null>(null);
   const [trendData, setTrendData] = useState<ForecastVsActualResponse | null>(null);
   const [recommendationsData, setRecommendationsData] = useState<RecommendationResponse | null>(null);
 
+  const [forecastTableData, setForecastTableData] = useState<ForecastTableResponse | null>(null);
+  const [catalogSummary, setCatalogSummary] = useState<{ total: number; highDemand: number; atRisk: number } | null>(null);
+
+  // Determine chart default ingredient: prioritize FEFO risk (Critical/High), falling back to first alphabetical
+  const fefoPriorityIngredientId = useMemo(() => {
+    if (forecastTableData && forecastTableData.items.length > 0) {
+      const prioritized = forecastTableData.items.find(item => item.riskLevel === 'Critical' || item.riskLevel === 'High');
+      if (prioritized) return prioritized.id;
+    }
+    return ingredients && ingredients.length > 0 ? ingredients[0].id : '';
+  }, [forecastTableData, ingredients]);
+
+  const effectiveChartIngredient = chartIngredient || fefoPriorityIngredientId;
+
   useEffect(() => {
-    const targetIngredientId = chartIngredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
+    const targetIngredientId = effectiveChartIngredient;
     if (!targetIngredientId) {
       setAccuracyData(null);
       setTrendData(null);
@@ -1484,11 +1499,11 @@ function ManagerForecastingPage() {
       setRecommendationsData(recs);
     });
     return () => controller.abort();
-  }, [chartIngredient, ingredients, trendPeriod, trendDays, today]);
+  }, [effectiveChartIngredient, trendPeriod, trendDays, today]);
 
   const insights = useMemo<ForecastInsight[]>(() => {
     if (!recommendationsData || recommendationsData.status !== 'ADVISED') return [];
-    const targetIngredientId = chartIngredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '');
+    const targetIngredientId = effectiveChartIngredient;
     const activeIngredient = (ingredients ?? []).find(item => item.id === targetIngredientId);
     const ingredientName = activeIngredient ? formatHumanReadableText(activeIngredient.name) : 'Selected Ingredient';
     const unitCost = activeIngredient?.standardUnitCost;
@@ -1499,10 +1514,7 @@ function ManagerForecastingPage() {
       ingredientName,
       unitCost,
     );
-  }, [recommendationsData, chartIngredient, ingredients]);
-
-  const [forecastTableData, setForecastTableData] = useState<ForecastTableResponse | null>(null);
-  const [catalogSummary, setCatalogSummary] = useState<{ total: number; highDemand: number; atRisk: number } | null>(null);
+  }, [recommendationsData, effectiveChartIngredient, ingredients]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1514,6 +1526,14 @@ function ManagerForecastingPage() {
         setCatalogSummary({ total: res.total, highDemand, atRisk });
       })
       .catch(() => {});
+
+    getGeneralForecastAccuracy(controller.signal)
+      .then(res => {
+        if (controller.signal.aborted) return;
+        setGeneralAccuracy(res);
+      })
+      .catch(() => {});
+
     return () => controller.abort();
   }, []);
 
@@ -1536,18 +1556,20 @@ function ManagerForecastingPage() {
     return () => controller.abort();
   }, [page, rows, search, category, ingredient, ingredients, tableDateWindow?.from, tableDateWindow?.to]);
 
+  const displayAccuracy = generalAccuracy ?? accuracyData;
+
   return <>
     <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
     <div className="sl-admin-view sl-mgr-forecast-page">
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Forecasting summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span>{accuracyData?.status === 'AVAILABLE' ? <><strong>{accuracyData.metrics.accuracyScore}%</strong><small>Based on {accuracyData.metrics.evaluatedDays} evaluated days</small></> : accuracyData?.status === 'UNAVAILABLE' && accuracyData.reason === 'INSUFFICIENT_EVALUATION_DATA' ? <><strong>—</strong><small>{accuracyData.evaluatedDays}/{accuracyData.minimumRequiredDays} evaluated days</small></> : <><strong>—</strong><small>Forecast data pending</small></>}</div></article>
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span>{displayAccuracy?.status === 'AVAILABLE' ? <><strong>{displayAccuracy.metrics.accuracyScore}%</strong><small>Based on {displayAccuracy.metrics.evaluatedDays} evaluated days</small></> : displayAccuracy?.status === 'UNAVAILABLE' && displayAccuracy.reason === 'INSUFFICIENT_EVALUATION_DATA' ? <><strong>—</strong><small>{displayAccuracy.evaluatedDays}/{displayAccuracy.minimumRequiredDays} evaluated days</small></> : <><strong>—</strong><small>Forecast data pending</small></>}</div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><FileInput /></span><div><span>Total Ingredients Forecasted</span>{catalogSummary || forecastTableData ? <><strong>{(catalogSummary?.total ?? forecastTableData?.total ?? 0).toLocaleString()}</strong><small>Active forecast models</small></> : <><strong>—</strong><small>Forecast data pending</small></>}</div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CalendarDays /></span><div><span>High Demand (Next 7 Days)</span>{catalogSummary || forecastTableData ? <><strong>{(catalogSummary?.highDemand ?? forecastTableData?.items.filter(item => item.forecastedDemand > (item.avgDailyUsage * 30)).length ?? 0).toLocaleString()}</strong><small>Ingredients with rising consumption</small></> : <><strong>—</strong><small>Demand forecast pending</small></>}</div></article>
         <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle /></span><div><span>At-Risk Ingredients</span>{catalogSummary || forecastTableData ? <><strong>{(catalogSummary?.atRisk ?? forecastTableData?.items.filter(item => item.riskLevel === 'Critical' || item.riskLevel === 'High').length ?? 0).toLocaleString()}</strong><small>Shortage or stockout exposure</small></> : <><strong>—</strong><small>Risk forecast pending</small></>}</div></article>
       </section>
 
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
-        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend ingredient" value={chartIngredient || (ingredients && ingredients.length > 0 ? ingredients[0].id : '')} options={chartIngredientOptions} onChange={setChartIngredient} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow} meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
+        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend ingredient" value={effectiveChartIngredient} options={chartIngredientOptions} onChange={setChartIngredient} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow} meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
         <Card id="mgr-forecast-insights" title="Forecast Insights">{insights.length > 0 ? <ForecastInsightCards ariaLabel="Operational forecast insights and risk recommendations" insights={insights} /> : <ForecastInsightsEmpty />}</Card>
       </section>
 
