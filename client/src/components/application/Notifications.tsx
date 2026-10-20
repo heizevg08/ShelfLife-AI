@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Bell, CheckCheck, Check, ArrowUpRight, Shield, AlertTriangle } from 'lucide-react';
+import { Bell, CheckCheck, ArrowUpRight, Shield, AlertTriangle } from 'lucide-react';
 import { formatDateTime } from '../../utils/date-time';
 import { currentUser } from '../../services/auth';
 import { apiClient } from '../../services/apiClient';
-import { approveChangeRequest, rejectChangeRequest } from '../../services/change-requests';
 import { listInventoryBatches, getInventoryBatchSummary } from '../../services/inventory-batches';
 import { listAuditRecords } from '../../services/administration';
 import { useRouter } from '../../routing/navigation';
@@ -49,10 +48,6 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [storageKey, setStorageKey] = useState(STORAGE_KEY);
   const [role, setRole] = useState('');
-  const [busyId, setBusyId] = useState('');
-  const [rejectingId, setRejectingId] = useState('');
-  const [rejectNote, setRejectNote] = useState('');
-  const [actionError, setActionError] = useState('');
   const [filter, setFilter] = useState<'all' | 'unread' | 'requests' | 'stock' | 'security' | 'system'>('all');
 
   const refresh = useCallback(async () => {
@@ -300,20 +295,6 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
     }
   };
 
-  const review = async (item: NotificationItem, decision: 'approve' | 'reject') => {
-    if (!item.requestId || busyId) return;
-    if (decision === 'reject' && !rejectNote.trim()) { setActionError('Add a reason before rejecting this request.'); return; }
-    setBusyId(item.id); setActionError('');
-    try {
-      if (decision === 'approve') await approveChangeRequest(item.requestId);
-      else await rejectChangeRequest(item.requestId, rejectNote.trim());
-      setRejectingId(''); setRejectNote('');
-      await refresh();
-    } catch {
-      setActionError(decision === 'approve' ? 'Could not approve this request. Try again.' : 'Could not reject this request. Try again.');
-    } finally { setBusyId(''); }
-  };
-
   return <div className="sl-notifications" ref={container}>
     <button ref={trigger} className="sl-button sl-icon-button sl-notification-trigger" aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'} aria-haspopup="dialog" aria-expanded={open} aria-controls="sl-notifications-panel" onClick={() => onChange(!open)}>
       <Bell size={20} aria-hidden="true" />{unread > 0 && <span className="sl-notification-badge">{unread > 9 ? '9+' : unread}</span>}
@@ -343,7 +324,6 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
           </button>
         </>}
       </div>
-      {actionError && <p className="sl-notification-error" role="alert">{actionError}</p>}
       {visibleItems.length > 0 && <div className="sl-notification-section-heading">
         <strong>
           {filter === 'requests' ? 'Requests'
@@ -351,7 +331,6 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
             : filter === 'security' ? 'Security & Access'
             : filter === 'system' ? 'System & Alerts'
             : role === 'Super Admin' ? 'Recent system notifications'
-            : role === 'Manager' ? 'Recent notifications'
             : 'Recent updates'}
         </strong>
         {filter !== 'all' && filter !== 'unread' && <button type="button" onClick={() => {
@@ -376,9 +355,6 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
           </span>
           <ArrowUpRight size={15} aria-hidden="true"/>
         </button>
-        {item.kind === 'request' && role === 'Manager' && item.status === 'PENDING' && <div className="sl-notification-review">
-          {rejectingId === item.id ? <><label><span>Reason for rejection</span><textarea value={rejectNote} onChange={event => setRejectNote(event.target.value)} rows={2} maxLength={500} /></label><button type="button" className="sl-button" disabled={!!busyId} onClick={() => { setRejectingId(''); setRejectNote(''); setActionError(''); }}>Cancel</button><button type="button" className="sl-button sl-button-danger" disabled={!!busyId || !rejectNote.trim()} onClick={() => void review(item, 'reject')}>{busyId === item.id ? 'Rejecting…' : 'Confirm reject'}</button></> : <><button type="button" className="sl-button sl-notification-review-choice" disabled={!!busyId} onClick={() => { setRejectingId(item.id); setRejectNote(''); setActionError(''); }}>Reject</button><button type="button" className="sl-button sl-button-primary sl-notification-review-choice" disabled={!!busyId} onClick={() => void review(item, 'approve')}><Check size={15}/>{busyId === item.id ? 'Approving…' : 'Approve'}</button></>}
-        </div>}
       </article>)}</div> : <div className="sl-notification-empty">
         <Bell size={24} aria-hidden="true"/>
         <strong>
