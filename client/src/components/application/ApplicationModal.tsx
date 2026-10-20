@@ -27,18 +27,30 @@ export function ApplicationModal({
   showClose?: boolean;
   className?: string;
 }) {
-  return <Dialog
-    open={open}
-    onDismiss={onDismiss}
-    returnFocus={returnFocus}
-    busy={busy}
-    showClose={showClose}
-    actions={actions}
-    className={`sl-application-modal${className ? ` ${className}` : ''}`}
-    title={<span className="sl-application-modal-title"><span className="sl-application-card-icon"><Icon aria-hidden="true" /></span><span><strong>{title}</strong><small>{subtitle}</small></span></span>}
-  >
-    <section className="sl-application-modal-card">{children}</section>
-  </Dialog>;
+  return (
+    <Dialog
+      open={open}
+      onDismiss={onDismiss}
+      returnFocus={returnFocus}
+      busy={busy}
+      showClose={showClose}
+      actions={actions}
+      className={`sl-application-modal${className ? ` ${className}` : ''}`}
+      title={
+        <span className="sl-application-modal-title">
+          <span className="sl-application-card-icon">
+            <Icon aria-hidden="true" />
+          </span>
+          <span>
+            <strong>{title}</strong>
+            <small>{subtitle}</small>
+          </span>
+        </span>
+      }
+    >
+      <section className="sl-application-modal-card">{children}</section>
+    </Dialog>
+  );
 }
 
 export function ApplicationModalForm({
@@ -68,12 +80,34 @@ export function ApplicationModalForm({
   busy?: boolean;
   className?: string;
 }) {
-  return <form id={formId} ref={formRef} className={`sl-application-modal-form${className ? ` ${className}` : ''}`} noValidate onSubmit={onSubmit}>
-    {children}
-    {message && <p className={`sl-inline-notice sl-application-modal-message${messageRole === 'alert' ? ' sl-inline-notice-error' : ''}`} role={messageRole}>{message}</p>}
-    <div className="sl-application-modal-actions">
-      <button type="button" className="sl-button" disabled={busy} onClick={onSecondary}>{secondaryLabel}</button>
-      <button type="submit" className="sl-button sl-button-primary" disabled={busy}>{PrimaryIcon && <PrimaryIcon size={16} aria-hidden="true" />}{primaryLabel}</button>
-    </div>
-  </form>;
+  return (
+    <form
+      id={formId}
+      ref={formRef}
+      className={`sl-application-modal-form${className ? ` ${className}` : ''}`}
+      noValidate
+      onSubmit={onSubmit}
+    >
+      {children}
+      {message && (
+        <p
+          className={`sl-inline-notice sl-application-modal-message${
+            messageRole === 'alert' ? ' sl-inline-notice-error' : ''
+          }`}
+          role={messageRole}
+        >
+          {message}
+        </p>
+      )}
+      <div className="sl-application-modal-actions">
+        <button type="button" className="sl-button" disabled={busy} onClick={onSecondary}>
+          {secondaryLabel}
+        </button>
+        <button type="submit" className="sl-button sl-button-primary" disabled={busy}>
+          {PrimaryIcon && <PrimaryIcon size={16} aria-hidden="true" />}
+          {primaryLabel}
+        </button>
+      </div>
+    </form>
+  );
 }
