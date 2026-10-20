@@ -158,7 +158,7 @@ export default function ShelfLifeLogin() {
   />;
 
   return (
-    <div className="sl-app sl-login">
+    <div className={`sl-app sl-login${firstLogin ? ' sl-login-first-setup' : ''}`}>
       <main className="sl-login-layout">
         <section className="sl-login-intro" aria-labelledby="sl-product-title">
           <header className="sl-login-brand"><a href="/ShelfLifeAILogin" aria-label="ShelfLife AI — return to clean login" className="sl-login-home"><Brand inverse login /></a></header>

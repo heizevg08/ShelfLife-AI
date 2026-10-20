@@ -99,6 +99,12 @@
 .sl-first-login-policy-link button, .sl-first-login-terms-header button, .sl-first-login-terms-secondary { min-height: 38px; padding: 0 12px; border: 1px solid #cbd8cd; border-radius: 7px; color: #175a35; background: #fff; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
 .sl-first-login-policy-link button:hover, .sl-first-login-terms-header button:hover, .sl-first-login-terms-secondary:hover { background: #edf5ee; }
 .sl-first-login-policy-link button:disabled { opacity: .55; cursor: not-allowed; }
+.sl-login-first-setup .sl-login-form-heading .sl-description { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.5; }
+.sl-login-first-setup .sl-first-login-policy-link { gap: 16px; margin: 4px 0 0; padding: 16px; }
+.sl-login-first-setup .sl-first-login-policy-link > div { min-width: 0; }
+.sl-login-first-setup .sl-first-login-policy-link h2 { margin-bottom: 4px; font-size: 16px; line-height: 1.4; }
+.sl-login-first-setup .sl-first-login-policy-link p { font-size: 14px; line-height: 1.5; }
+.sl-login-first-setup .sl-first-login-policy-link button { flex: 0 0 auto; min-height: 44px; padding: 0 16px; font-size: 14px; }
 .sl-first-login-terms-page { padding: 0 clamp(18px, 5vw, 72px) 48px; background: #f5f7f3; }
 .sl-first-login-terms-header { display: flex; align-items: center; justify-content: space-between; max-width: 1100px; min-height: 76px; margin: 0 auto; border-bottom: 1px solid #e1e8e0; }
 .sl-first-login-terms-header > div { max-width: 190px; }
