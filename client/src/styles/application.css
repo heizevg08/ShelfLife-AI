@@ -33188,20 +33188,6 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-page-header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .sl-manager-attention-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; }
 .sl-manager-attention-grid > .sl-card { min-width: 0; }
-/* Manager Dashboard presentation pass: align live cards without changing their data semantics. */
-.sl-manager-dashboard-v117 .sl-dashboard-source-kpis { align-items: stretch; }
-.sl-manager-dashboard-v117 .sl-dashboard-source-kpis > .sl-sa-kpi {
-  align-items: center;
-  min-height: clamp(7.75rem,8vw,8.75rem);
-  height: 100%;
-}
-.sl-manager-dashboard-v117 .sl-dashboard-source-kpis > .sl-sa-kpi > div {
-  align-content: center;
-  grid-template-rows: auto auto minmax(2.5rem,auto);
-  min-width: 0;
-  height: 100%;
-}
-.sl-manager-dashboard-v117 .sl-dashboard-source-kpis > .sl-sa-kpi small { align-self: start; }
 .sl-manager-dashboard-v117 .sl-manager-attention-grid {
   grid-template-columns: repeat(2,minmax(0,1fr));
   align-items: stretch;
