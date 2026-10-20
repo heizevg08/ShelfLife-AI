@@ -1391,8 +1391,6 @@ function ManagerForecastingPage() {
   const [category, setCategory] = useState('');
   const [ingredient, setIngredient] = useState('');
   const [chartIngredient, setChartIngredient] = useState('');
-  const [chartViewMode, setChartViewMode] = useState<'depletion' | 'comparison'>('depletion');
-  const [futurePredictions, setFuturePredictions] = useState<Array<{ date: string; predictedConsumption: number }> | null>(null);
   const [trendPeriod, setTrendPeriod] = useState('This Week');
   const [forecastSeriesVisible, setForecastSeriesVisible] = useState({ forecast: true, actual: true });
   const [search, setSearch] = useState('');
@@ -1478,107 +1476,43 @@ function ManagerForecastingPage() {
     const targetIngredientId = effectiveChartIngredient;
     if (!targetIngredientId) {
       setTrendData(null);
-      setFuturePredictions(null);
       return;
     }
     const controller = new AbortController();
     setTrendData(null);
     const days = trendPeriod === 'This Week' ? 7 : trendDays;
-    const futureDates = Array.from({ length: days }, (_, i) => shiftBusinessDate(today, i + 1));
-    Promise.all([
-      getForecastVsActual(targetIngredientId, days, controller.signal).catch(() => null),
-      getIngredientFutureForecast(targetIngredientId, futureDates, controller.signal).catch(() => null),
-    ]).then(([trend, future]) => {
-      if (controller.signal.aborted) return;
-      setTrendData(trend);
-      if (future?.status === 'FORECAST' && future.predictions) {
-        setFuturePredictions(future.predictions);
-      } else {
-        setFuturePredictions(null);
-      }
-    });
-    return () => controller.abort();
-  }, [effectiveChartIngredient, trendPeriod, trendDays, today]);
-
-  const depletionResult = useMemo(() => {
-    const selectedItem = forecastTableData?.items.find(item => item.id === effectiveChartIngredient);
-    const ingredientMeta = ingredients?.find(item => item.id === effectiveChartIngredient);
-    const currentStock = selectedItem?.currentStock ?? 0;
-    const minimumStock = (ingredientMeta as unknown as { minimumStock?: number })?.minimumStock
-      ?? (selectedItem ? Math.round((selectedItem.avgDailyUsage || 1) * 3) : 10);
-    const avgDailyUsage = selectedItem?.avgDailyUsage && selectedItem.avgDailyUsage > 0
-      ? selectedItem.avgDailyUsage
-      : (selectedItem?.forecastedDemand ? selectedItem.forecastedDemand / 30 : 1);
-    const days = trendPeriod === 'This Week' ? 7 : trendDays;
-
-    const points: DailyPoint[] = [];
-    let remaining = Math.max(0, currentStock);
-    let stockoutDate: string | null = null;
-    let reorderDate: string | null = null;
-
-    points.push({
-      date: today,
-      usage: Math.round(remaining * 10) / 10,
-      waste: minimumStock,
-    });
-
-    const predictionMap = new Map((futurePredictions ?? []).map(p => [p.date, p.predictedConsumption]));
-
-    for (let i = 1; i <= days; i++) {
-      const dStr = shiftBusinessDate(today, i);
-      const dailyDemand = predictionMap.get(dStr) ?? avgDailyUsage;
-      remaining = Math.max(0, remaining - dailyDemand);
-
-      if (remaining <= minimumStock && !reorderDate) {
-        reorderDate = dStr;
-      }
-      if (remaining <= 0 && !stockoutDate) {
-        stockoutDate = dStr;
-      }
-
-      points.push({
-        date: dStr,
-        usage: Math.round(remaining * 10) / 10,
-        waste: minimumStock,
+    getForecastVsActual(targetIngredientId, days, controller.signal)
+      .then(trend => {
+        if (!controller.signal.aborted) setTrendData(trend);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setTrendData(null);
       });
-    }
-
-    const daysRemaining = avgDailyUsage > 0 ? Math.max(0, Math.round(currentStock / avgDailyUsage)) : 99;
-    const status: 'CRITICAL' | 'WARNING' | 'HEALTHY' =
-      (stockoutDate && points.findIndex(p => p.date === stockoutDate) <= 7) || currentStock <= minimumStock
-        ? 'CRITICAL'
-        : (reorderDate && points.findIndex(p => p.date === reorderDate) <= 7)
-        ? 'WARNING'
-        : 'HEALTHY';
-
-    return {
-      points,
-      meta: {
-        stockoutDate,
-        reorderDate,
-        daysRemaining,
-        status,
-        currentStock,
-        minimumStock,
-        avgDailyUsage,
-        unit: selectedItem?.unit ?? ingredientMeta?.unitOfMeasure ?? 'units',
-      },
-    };
-  }, [effectiveChartIngredient, forecastTableData, ingredients, futurePredictions, trendPeriod, trendDays, today]);
+    return () => controller.abort();
+  }, [effectiveChartIngredient, trendPeriod, trendDays]);
 
   useEffect(() => {
-    if (!fefoPriorityIngredientId) return;
+    const targetIngredientId = effectiveChartIngredient;
+    if (!targetIngredientId) {
+      setRecommendationsData(null);
+      return;
+    }
     const controller = new AbortController();
     const forecastDates = Array.from({ length: 14 }, (_, i) => shiftBusinessDate(today, i + 1));
-    getIngredientRecommendations(fefoPriorityIngredientId, forecastDates, controller.signal)
+    getIngredientRecommendations(targetIngredientId, forecastDates, controller.signal)
       .then(result => { if (!controller.signal.aborted) setRecommendationsData(result); })
       .catch(() => { if (!controller.signal.aborted) setRecommendationsData(null); });
     return () => controller.abort();
-  }, [fefoPriorityIngredientId, today]);
+  }, [effectiveChartIngredient, today]);
+
+  const activeChartIngredientName = useMemo(() => {
+    const found = (ingredients ?? []).find(item => item.id === effectiveChartIngredient);
+    return found ? formatHumanReadableText(found.name) : '';
+  }, [ingredients, effectiveChartIngredient]);
 
   const insights = useMemo<ForecastInsight[]>(() => {
     if (!recommendationsData || recommendationsData.status !== 'ADVISED') return [];
-    const targetIngredientId = fefoPriorityIngredientId;
+    const targetIngredientId = effectiveChartIngredient;
     const activeIngredient = (ingredients ?? []).find(item => item.id === targetIngredientId);
     const ingredientName = activeIngredient ? formatHumanReadableText(activeIngredient.name) : 'Selected Ingredient';
     const unitCost = activeIngredient?.standardUnitCost;
@@ -1589,7 +1523,7 @@ function ManagerForecastingPage() {
       ingredientName,
       unitCost,
     );
-  }, [recommendationsData, fefoPriorityIngredientId, ingredients]);
+  }, [recommendationsData, effectiveChartIngredient, ingredients]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1645,8 +1579,8 @@ function ManagerForecastingPage() {
       </section>
 
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
-        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend chartMode={chartViewMode} visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><div className="sl-fc-mode-toggle" role="group" aria-label="Forecast chart view mode"><button type="button" className={`sl-fc-mode-btn ${chartViewMode === 'depletion' ? 'is-active' : ''}`} onClick={() => setChartViewMode('depletion')}>Stock Run-Out</button><button type="button" className={`sl-fc-mode-btn ${chartViewMode === 'comparison' ? 'is-active' : ''}`} onClick={() => setChartViewMode('comparison')}>Forecast vs. Actual</button></div><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend ingredient" value={effectiveChartIngredient} options={chartIngredientOptions} onChange={setChartIngredient} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow} chartMode={chartViewMode} depletionPoints={depletionResult.points} depletionMeta={depletionResult.meta} meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
-        <Card id="mgr-forecast-insights" title="Forecast Insights">{insights.length > 0 ? <ForecastInsightCards ariaLabel="Operational forecast insights and risk recommendations" insights={insights} /> : <ForecastInsightsEmpty />}</Card>
+        <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend ingredient" value={effectiveChartIngredient} options={chartIngredientOptions} onChange={setChartIngredient} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow} meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: activeChartIngredientName || 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
+        <Card id="mgr-forecast-insights" title="Forecast Insights">{insights.length > 0 ? <ForecastInsightCards ariaLabel="Operational forecast insights and risk recommendations" insights={insights} ingredientName={activeChartIngredientName} /> : <ForecastInsightsEmpty />}</Card>
       </section>
 
       <section className="sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records sl-mgr-forecast-records" aria-labelledby="mgr-ingredient-forecasts">

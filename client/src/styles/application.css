@@ -34126,6 +34126,10 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 .sl-mgr-fc-insight-reason { margin: 0; color: var(--sl-text); font-weight: 600; font-size: .88rem; }
 .sl-mgr-fc-insight-evidence { margin: 0; color: var(--sl-muted); font-size: .82rem; line-height: 1.35; }
 .sl-mgr-fc-insight-waste { margin: 0; color: #b45309; background: #fffbeb; font-size: .78rem; font-weight: 600; padding: .15rem .45rem; border-radius: var(--sl-radius-sm); width: fit-content; }
+.sl-mgr-fc-insight-waste-inline { color: #92400e; font-weight: 500; }
+.sl-mgr-fc-insight-waste-inline strong { color: #78350f; font-weight: 700; }
+.sl-mgr-fc-insight-scope { display: flex; align-items: center; justify-content: flex-end; margin-top: -.25rem; margin-bottom: .1rem; }
+.sl-mgr-fc-insight-scope-pill { display: inline-flex; align-items: center; padding: .15rem .6rem; font-size: .75rem; font-weight: 600; border-radius: 9999px; background: #eef5f0; color: #1f7a4c; border: 1px solid #cbe3d4; }
 .sl-mgr-fc-insight-action { margin: 0; color: var(--sl-text); font-size: .82rem; line-height: 1.35; }
 .sl-mgr-fc-insight-action strong { color: var(--sl-text); font-weight: 600; }
 .sl-mgr-fc-insight-note { margin: .25rem 0 0; color: var(--sl-muted); font-size: .75rem; text-align: center; }
