@@ -16,6 +16,7 @@ This group delivery includes the frontend/backend baseline and the frozen ML inf
 - `ml/tests/test_single_series_equivalence.py` — single-series equivalence test
 - `ml/requirements-runtime.txt` — pinned ML dependencies
 - `docs/ML_EVALUATION_METHODOLOGY_AND_ARCHITECTURE.md` — academic defense reference, mathematical formulations, and forecast-vs-actual evaluation architecture
+- `docs/CAPSTONE_TECHNICAL_DELIVERY_DOCUMENTATION.md` — comprehensive capstone technical delivery document and system specification
 
 ## Machine learning — what it does and does not do
 
