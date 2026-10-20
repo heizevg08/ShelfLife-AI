@@ -393,12 +393,15 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
         <Card
           id="manager-stock-status"
           title={
-            <div className="sl-mgr-card-title-group">
-              <span className="sl-mgr-card-main-title">Stock Status</span>
-              <span className="sl-mgr-card-sub">
-                {summary ? `How your ${summary.totalBatches} batches are doing` : 'How your batches are doing'}
+            <span className="sl-dashboard-card-heading">
+              <span className="sl-application-card-icon"><Boxes aria-hidden="true" /></span>
+              <span className="sl-mgr-card-title-group">
+                <span className="sl-mgr-card-main-title">Stock Status</span>
+                <span className="sl-mgr-card-sub">
+                  {summary ? `How your ${summary.totalBatches} batches are doing` : 'How your batches are doing'}
+                </span>
               </span>
-            </div>
+            </span>
           }
         >
           {stockStatusData ? (
@@ -459,10 +462,13 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
         <Card
           id="manager-expiring-items"
           title={
-            <div className="sl-mgr-card-title-group">
-              <span className="sl-mgr-card-main-title">Expiring in the Next 7 Days</span>
-              <span className="sl-mgr-card-sub">How many batches expire each day</span>
-            </div>
+            <span className="sl-dashboard-card-heading">
+              <span className="sl-application-card-icon"><CalendarClock aria-hidden="true" /></span>
+              <span className="sl-mgr-card-title-group">
+                <span className="sl-mgr-card-main-title">Expiring in the Next 7 Days</span>
+                <span className="sl-mgr-card-sub">How many batches expire each day</span>
+              </span>
+            </span>
           }
           action={
             <div className="sl-mgr-expiring-legend" aria-hidden="true">
@@ -591,14 +597,6 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
               )}
             </div>
 
-            <div className="sl-mgr-alert-footer">
-              <span className="sl-mgr-alert-count">
-                Showing top {Math.min(alertItems.length, 4)} of {alertItems.length} alerts
-              </span>
-              <Link href="/Alerts" className="sl-mgr-alert-view-all">
-                View all alerts <ArrowRight size={13} aria-hidden="true" />
-              </Link>
-            </div>
           </div>
         </Card>
         <Card id="manager-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>Pending Requests</DashboardCardTitle>} action={<Link href="/ChangeRequests" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>

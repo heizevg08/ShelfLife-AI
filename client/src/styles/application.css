@@ -33210,7 +33210,7 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-manager-dashboard-v117 .sl-manager-attention-grid > .sl-card {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: auto;
 }
 .sl-manager-dashboard-v117 .sl-manager-attention-grid > .sl-card > .sl-card-body { flex: 1; }
 .sl-manager-dashboard-v117 .sl-manager-attention-grid .sl-empty-cell > .sl-application-pending-state { min-height: clamp(12rem,18vw,16rem); }
@@ -33220,8 +33220,8 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-manager-dashboard-v117 .sl-manager-reference-grid-three > .sl-card:nth-child(3) { grid-area:expiry; }
 .sl-manager-dashboard-v117 .sl-manager-reference-grid-three > .sl-card:nth-child(-n+2) { min-height:13rem; }
 .sl-shell[data-role=Manager]:has(.sl-manager-dashboard-v117) {
-  height:auto;
-  overflow:visible;
+  height:100dvh;
+  overflow-y:auto;
 }
 .sl-shell[data-role=Manager]:has(.sl-manager-dashboard-v117) .sl-workspace { min-height:100dvh; }
 .sl-manager-dashboard-v117 .sl-dashboard-reference-table { overflow-x:auto; overflow-y:hidden; }
@@ -33239,10 +33239,10 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
   }
 }
 .sl-manager-dashboard-v117 .sl-manager-dashboard-table :is(th,td) { text-align:left!important; }
-.sl-manager-dashboard-v117 .sl-manager-requests-table :is(th,td):not(:first-child) { text-align:center!important; }
+.sl-manager-dashboard-v117 .sl-manager-requests-table :is(th,td):last-child { text-align:center!important; }
 .sl-manager-dashboard-v117 .sl-manager-requests-table td:last-child .sl-status { margin-inline:auto; }
 .sl-manager-dashboard-v117 .sl-manager-dashboard-table tbody td:not(.sl-empty-cell) {
-  font:400 1rem/1.5 "Inter",sans-serif;
+  font:400 .875rem/1.35 "Inter",sans-serif;
 }
 .sl-manager-dashboard-v117 .sl-manager-expirations-table col:nth-child(1) { width:31%; }
 .sl-manager-dashboard-v117 .sl-manager-expirations-table col:nth-child(2) { width:23%; }
@@ -35617,13 +35617,15 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 .sl-mgr-card-main-title { font-size: 1.125rem; font-weight: 700; color: var(--sl-text); letter-spacing: -0.01em; }
 .sl-mgr-card-sub { font-size: 0.8125rem; font-weight: 400; color: var(--sl-muted); }
 
-.sl-mgr-stock-body, .sl-mgr-expiring-body { display: flex; flex-direction: column; height: 100%; min-height: 270px; gap: 0.85rem; }
+.sl-manager-dashboard-v117 .sl-manager-reference-grid > .sl-card { display:flex; flex-direction:column; }
+.sl-manager-dashboard-v117 .sl-manager-reference-grid > .sl-card > .sl-card-body { flex:1; padding:1rem 1.25rem 1.25rem; }
+.sl-mgr-stock-body, .sl-mgr-expiring-body { display: flex; flex:1; flex-direction: column; width:100%; min-height:0; gap: 0.85rem; }
 
 .sl-mgr-stock-hero { display: flex; align-items: baseline; gap: 0.45rem; margin-bottom: 0.2rem; }
 .sl-mgr-stock-hero-val { font-size: 2.25rem; font-weight: 800; color: var(--sl-text); line-height: 1; letter-spacing: -0.02em; }
 .sl-mgr-stock-hero-label { font-size: 0.875rem; font-weight: 500; color: var(--sl-muted); }
 
-.sl-mgr-stock-rows { display: flex; flex-direction: column; gap: 0.65rem; flex: 1; }
+.sl-mgr-stock-rows { display: flex; flex-direction: column; gap: 0.65rem; }
 .sl-mgr-stock-row { display: grid; grid-template-columns: 7.25rem 1fr 2rem; align-items: center; gap: 0.75rem; }
 .sl-mgr-stock-row-info { display: flex; align-items: center; gap: 0.45rem; font-size: 0.875rem; font-weight: 500; color: var(--sl-text); }
 .sl-mgr-stock-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
@@ -35631,7 +35633,7 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 .sl-mgr-stock-bar-fill { height: 100%; border-radius: 9999px; transition: width 0.3s ease; }
 .sl-mgr-stock-row-count { font-size: 0.92rem; font-weight: 700; color: var(--sl-text); text-align: right; }
 
-.sl-mgr-stock-alert-banner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; padding: 0.65rem 0.85rem; margin-top: auto; }
+.sl-mgr-stock-alert-banner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; min-height:3.5rem; padding: 0.65rem 0.85rem; margin-top:auto; }
 .sl-mgr-stock-alert-icon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: #fef3c7; color: #d97706; flex-shrink: 0; }
 .sl-mgr-stock-alert-text { font-size: 0.82rem; color: #92400e; flex: 1; }
 .sl-mgr-stock-alert-text strong { color: #78350f; font-weight: 700; }
@@ -35653,7 +35655,7 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 .sl-mgr-expiring-col-bar { width: 30px; max-width: 80%; border-radius: 6px 6px 0 0; }
 .sl-mgr-expiring-col-date { position: absolute; bottom: -1.35rem; font-size: 0.72rem; color: var(--sl-muted); white-space: nowrap; font-weight: 500; }
 
-.sl-mgr-expiring-alert-banner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fef2f2; border: 1px solid #fee2e2; border-radius: 10px; padding: 0.65rem 0.85rem; margin-top: auto; }
+.sl-mgr-expiring-alert-banner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fef2f2; border: 1px solid #fee2e2; border-radius: 10px; min-height:3.5rem; padding: 0.65rem 0.85rem; margin-top:auto; }
 .sl-mgr-expiring-alert-icon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: #fee2e2; color: #dc2626; flex-shrink: 0; }
 .sl-mgr-expiring-alert-text { font-size: 0.82rem; color: #991b1b; flex: 1; }
 .sl-mgr-expiring-alert-text strong { color: #7f1d1d; font-weight: 700; }
@@ -35708,12 +35710,13 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 
 
 /* Manager Dashboard: Alert Records Card (replaces Upcoming Expirations) */
-#manager-alert-records .sl-card-body {
+.sl-manager-dashboard-v117 .sl-manager-attention-grid > .sl-card:first-child > .sl-card-body {
   padding: 1rem 1.25rem 1rem;
 }
 .sl-mgr-alert-card-body {
   display: flex;
   flex-direction: column;
+  width:100%;
   gap: 0.75rem;
 }
 .sl-mgr-alert-list {
@@ -35754,6 +35757,7 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
   align-items: center;
   gap: 0.65rem;
   min-width: 0;
+  flex:1;
 }
 .sl-mgr-alert-dot {
   width: 7px;
@@ -35800,27 +35804,8 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
   background: #f8eccf;
   color: #92400e;
 }
-.sl-mgr-alert-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0.15rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid var(--sl-border-subtle, #f3f4f6);
-}
-.sl-mgr-alert-count {
-  font-size: 0.78rem;
-  color: #66756f;
-}
-.sl-mgr-alert-view-all {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #145b37;
-  text-decoration: none;
-}
-.sl-mgr-alert-view-all:hover {
-  text-decoration: underline;
+@media (max-width:640px) {
+  .sl-manager-dashboard-v117 :is(.sl-mgr-stock-alert-banner,.sl-mgr-expiring-alert-banner) { flex-wrap:wrap; }
+  .sl-manager-dashboard-v117 :is(.sl-mgr-stock-alert-link,.sl-mgr-expiring-alert-link) { margin-left:auto; }
+  .sl-manager-dashboard-v117 .sl-mgr-stock-row { grid-template-columns:6.5rem minmax(0,1fr) 2rem; gap:.5rem; }
 }

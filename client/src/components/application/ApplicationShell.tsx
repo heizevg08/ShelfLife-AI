@@ -135,9 +135,9 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
 
   useEffect(() => {
     // A newly opened module always begins at the top, in every role. Two containers can
-    // carry the scroll: the shell scrolls (.sl-app, overflow-y: auto) on most routes,
-    // while the Manager Dashboard deliberately scrolls the document instead. Resetting
-    // both on a pathname change covers either case plus browser back/forward, and stays
+    // carry the scroll: the shell scrolls (.sl-app, overflow-y: auto) on dashboard routes,
+    // while some pages may scroll the document. Resetting both on a pathname change covers
+    // either case plus browser back/forward, and stays
     // out of the way of filter, pagination and dialog state changes, which do not alter
     // the pathname. The reset is instant rather than smooth, so a reduced-motion
     // preference is respected by default. Table and dialog scrolling are untouched
