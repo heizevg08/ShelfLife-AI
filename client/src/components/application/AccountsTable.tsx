@@ -30,16 +30,30 @@ function utf8Length(value: string) {
 export function AccountsTable() {
   const { user } = useApplicationWorkspace();
   const superAdmin = user.role === 'Super Admin';
-  const assignableRoles: ManagedRole[] = superAdmin ? ['Admin', 'Manager', 'Inventory Staff'] : ['Manager', 'Inventory Staff'];
+  const assignableRoles: ManagedRole[] = superAdmin
+    ? ['Admin', 'Manager', 'Inventory Staff']
+    : ['Manager', 'Inventory Staff'];
+
   const [assignedRole, setAssignedRole] = useState<ManagedRole>(superAdmin ? 'Admin' : 'Manager');
-  const [page, setPage] = useState(1), [pageSize, setPageSize] = useState(10), [sort, setSort] = useState(superAdmin ? 'lastLoginAt' : 'createdAt'), [refresh, setRefresh] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sort, setSort] = useState(superAdmin ? 'lastLoginAt' : 'createdAt');
+  const [refresh, setRefresh] = useState(0);
+
   const [directorySearch, setDirectorySearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All Roles');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [data, setData] = useState<Page<Account> | null>(null), [loadError, setLoadError] = useState(false);
-  const [mode, setMode] = useState<'create' | 'view' | 'edit' | 'lifecycle' | null>(null), [selected, setSelected] = useState<Account | null>(null);
-  const [fields, setFields] = useState(blank), [errors, setErrors] = useState<Record<string, string>>({}), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
+
+  const [data, setData] = useState<Page<Account> | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [mode, setMode] = useState<'create' | 'view' | 'edit' | 'lifecycle' | null>(null);
+  const [selected, setSelected] = useState<Account | null>(null);
+
+  const [fields, setFields] = useState(blank);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
