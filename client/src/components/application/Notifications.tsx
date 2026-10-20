@@ -3,7 +3,7 @@ import { Bell, CheckCheck, ArrowUpRight, Shield, AlertTriangle } from 'lucide-re
 import { formatDateTime } from '../../utils/date-time';
 import { currentUser } from '../../services/auth';
 import { apiClient } from '../../services/apiClient';
-import { listInventoryBatches, getInventoryBatchSummary } from '../../services/inventory-batches';
+import { listInventoryBatches } from '../../services/inventory-batches';
 import { listAuditRecords } from '../../services/administration';
 import { useRouter } from '../../routing/navigation';
 
@@ -51,8 +51,10 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
   const [filter, setFilter] = useState<'all' | 'unread' | 'requests' | 'stock' | 'security' | 'system'>('all');
 
   const refresh = useCallback(async () => {
+    let resolvedRole = role;
     try {
       const user = await currentUser();
+      resolvedRole = user.role;
       setRole(user.role);
       const key = `${STORAGE_KEY}.${user.id}`;
       setStorageKey(key);
@@ -60,14 +62,12 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
       const readIds = new Set(previous.filter(item => item.read).map(item => item.id));
 
       if (user.role === 'Super Admin') {
-        const [auditPage, batchSummary] = await Promise.all([
-          listAuditRecords(1, 25, 'desc').catch(() => ({ items: [], page: 1, pageSize: 25, total: 0 })),
-          getInventoryBatchSummary().catch(() => null),
-        ]);
+        const auditPage = await listAuditRecords(1, 25, 'desc');
 
         const adminItems: NotificationItem[] = [];
 
         for (const record of auditPage.items) {
+          if (record.targetType !== 'User' && record.targetType !== 'Audit Records') continue;
           const timestamp = record.timestamp;
           if (!timestamp || !Number.isFinite(Date.parse(timestamp))) continue;
 
@@ -101,11 +101,6 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
             message = `${record.actor.name} (${record.actor.role}) signed in`;
             kind = 'security';
             targetPath = '/SecurityActivity';
-          } else if (record.action === 'CREATE' || record.action === 'UPDATE' || record.action === 'DELETE') {
-            title = `${record.targetType || 'System'} ${record.action.toLowerCase()}`;
-            message = record.details || record.detailsDisplay || `${record.actor.name} performed ${record.action.toLowerCase()} on ${record.targetName || record.targetType}`;
-            kind = 'system';
-            targetPath = '/AdministrativeAudit';
           }
 
           if (title && message) {
@@ -117,49 +112,6 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
               read: readIds.has(`audit:${record.id}`),
               kind,
               targetPath,
-            });
-          }
-        }
-
-        if (batchSummary) {
-          const nowIso = new Date().toISOString();
-          if (batchSummary.expiredItems > 0) {
-            const alertId = `system:expired:${batchSummary.expiredItems}`;
-            const existing = previous.find(p => p.id === alertId);
-            adminItems.push({
-              id: alertId,
-              title: 'Critical: Expired inventory items',
-              message: `${batchSummary.expiredItems} expired batch${batchSummary.expiredItems > 1 ? 'es require' : ' requires'} immediate disposal`,
-              timestamp: existing?.timestamp || nowIso,
-              read: readIds.has(alertId),
-              kind: 'system',
-              targetPath: '/Alerts',
-            });
-          }
-          if (batchSummary.nearExpiry > 0) {
-            const alertId = `system:near-expiry:${batchSummary.nearExpiry}`;
-            const existing = previous.find(p => p.id === alertId);
-            adminItems.push({
-              id: alertId,
-              title: 'Urgent: Batches near expiry',
-              message: `${batchSummary.nearExpiry} batch${batchSummary.nearExpiry > 1 ? 'es are' : ' is'} nearing expiration within 7 days`,
-              timestamp: existing?.timestamp || nowIso,
-              read: readIds.has(alertId),
-              kind: 'system',
-              targetPath: '/Alerts',
-            });
-          }
-          if (batchSummary.lowStockItems > 0) {
-            const alertId = `system:low-stock:${batchSummary.lowStockItems}`;
-            const existing = previous.find(p => p.id === alertId);
-            adminItems.push({
-              id: alertId,
-              title: 'Alert: Low stock threshold reached',
-              message: `${batchSummary.lowStockItems} ingredient${batchSummary.lowStockItems > 1 ? 's are' : ' is'} below minimum stock level`,
-              timestamp: existing?.timestamp || nowIso,
-              read: readIds.has(alertId),
-              kind: 'system',
-              targetPath: '/Alerts',
             });
           }
         }
@@ -206,9 +158,9 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
       try { localStorage.setItem(key, JSON.stringify(next)); } catch { /* Storage is optional. */ }
     } catch {
       // Keep the last successful notification list available during temporary API outages.
-      setItems(current => current.length ? current : loadNotifications(storageKey));
+      setItems(current => resolvedRole === 'Super Admin' ? [] : current.length ? current : loadNotifications(storageKey));
     }
-  }, [storageKey]);
+  }, [role, storageKey]);
 
   useEffect(() => {
     void refresh();
