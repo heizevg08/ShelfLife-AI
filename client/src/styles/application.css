@@ -35599,6 +35599,17 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 
 
 /* Manager Dashboard: Stock Status & Expiring in Next 7 Days Cards */
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-kpi > div { min-width: 0; }
+.sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-kpi > div > strong { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.sl-shell[data-role="Inventory Staff"] .sl-staff-waste-kpis .sl-inventory-staff-kpi:nth-child(2) strong,
+.sl-shell[data-role="Inventory Staff"] .sl-staff-waste-kpis .sl-inventory-staff-kpi:nth-child(3) strong {
+  font-size: clamp(1.15rem,1rem + .45vw,1.55rem);
+  line-height: 1.15;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .sl-manager-dashboard-heading { width: 100%; align-self: stretch; justify-content: flex-start; }
 .sl-manager-dashboard-heading > .sl-page-header { width: 100%; min-width: 0; }
 .sl-mgr-card-title-group { display: flex; flex-direction: column; gap: 0.15rem; }
