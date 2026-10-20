@@ -35564,3 +35564,49 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-mgr-expiring-alert-text strong { color: #7f1d1d; font-weight: 700; }
 .sl-mgr-expiring-alert-link { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.82rem; font-weight: 600; color: #dc2626; text-decoration: none; white-space: nowrap; }
 .sl-mgr-expiring-alert-link:hover { text-decoration: underline; }
+
+/* Character counter for bounded textareas */
+.sl-char-counter {
+  display: block;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--sl-muted);
+  margin-top: 0.25rem;
+}
+.sl-char-counter[data-near-limit="true"] {
+  color: var(--sl-attention, #d97706);
+  font-weight: 600;
+}
+.sl-char-counter[data-at-limit="true"] {
+  color: var(--sl-critical, #dc2626);
+  font-weight: 700;
+}
+
+
+/* Streamlined Alert Records Details and Status Indicators */
+.sl-alert-details-cell {
+  color: var(--sl-text);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.sl-alert-status-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--sl-muted);
+}
+.sl-alert-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sl-status-active .sl-alert-status-dot {
+  background-color: #d97706;
+}
+.sl-status-resolved .sl-alert-status-dot {
+  background-color: #16a34a;
+}

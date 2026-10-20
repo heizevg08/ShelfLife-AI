@@ -81,6 +81,11 @@ function ManagerAlerts() {
     if (!batches || batches.length === 0) return [];
     const list: AlertItem[] = [];
 
+    const formatQty = (q: number) => {
+      const rounded = Number(q.toFixed(2));
+      return Number.isFinite(rounded) ? rounded.toLocaleString() : String(q);
+    };
+
     const expiredBatches = batches.filter(b => b.displayStatus === 'Expired');
     for (const b of expiredBatches) {
       list.push({
@@ -88,7 +93,7 @@ function ManagerAlerts() {
         date: b.expirationDate,
         ingredient: b.ingredient.name,
         category: 'Expiring Soon',
-        details: `Batch ${b.batchID} · Expired ${formatDate(b.expirationDate)} · ${b.quantity} ${b.unit} remaining`,
+        details: `Expired · ${formatQty(b.quantity)} ${b.unit} remaining (${b.batchID})`,
         priority: 'High',
         status: 'Active',
       });
@@ -101,7 +106,7 @@ function ManagerAlerts() {
         date: b.expirationDate,
         ingredient: b.ingredient.name,
         category: 'Expiring Soon',
-        details: `Batch ${b.batchID} · ${b.daysLeft}d remaining (${formatDate(b.expirationDate)}) · ${b.quantity} ${b.unit}`,
+        details: `${b.daysLeft}d left · ${formatQty(b.quantity)} ${b.unit} (${b.batchID})`,
         priority: b.daysLeft <= 3 ? 'High' : 'Medium',
         status: 'Active',
       });
@@ -114,7 +119,7 @@ function ManagerAlerts() {
         date: b.updatedAt || b.createdAt,
         ingredient: b.ingredient.name,
         category: 'Low Stock',
-        details: `Stock: ${b.quantity} ${b.unit} · Minimum threshold: ${b.ingredient.minimumStock ?? 0} ${b.unit}`,
+        details: `${formatQty(b.quantity)} ${b.unit} remaining (Min: ${formatQty(b.ingredient.minimumStock ?? 0)} ${b.unit})`,
         priority: 'Medium',
         status: 'Active',
       });
@@ -125,7 +130,7 @@ function ManagerAlerts() {
       date: new Date('2026-10-19T09:15:00.000Z').toISOString(),
       ingredient: 'Jasmine Rice (Sinandomeng)',
       category: 'Forecast Risk',
-      details: 'Consumption +18% above 30-day baseline',
+      details: 'Demand +18% vs 30-day baseline',
       priority: 'Low',
       status: 'Active',
     });
@@ -233,7 +238,7 @@ function ManagerAlerts() {
             <div className="sl-application-records-filters sl-sa-ingredients-table-filters"><div className="sl-application-records-toolbar sl-sa-ingredients-filter-card" data-filter-layout="records-five" aria-label="Alert filters">
               <label className="sl-manager-alerts-search sl-application-records-search sl-sa-ingredients-search">
                 <span>Search Alerts</span>
-                <div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search alerts..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
+                <div><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search alerts..." maxLength={100} value={search} onChange={event => { setSearch(event.target.value.slice(0, 100)); setPage(1); }} /></div>
               </label>
               <label><span>Category</span><FilterSelect ariaLabel="Filter alerts by category" value={category} options={ALERT_CATEGORIES.map(value => ({ value, label: value }))} onChange={value => { setCategory(value); setPage(1); }} /></label>
               <label><span>Priority</span><FilterSelect ariaLabel="Filter alerts by priority" value={priority} options={['All Priorities','High','Medium','Low'].map(value => ({value, label: value}))} onChange={value => { setPriority(value); setPage(1); }}/></label>
@@ -257,17 +262,18 @@ function ManagerAlerts() {
                       <tr key={alert.id}>
                         <td><time dateTime={alert.date}>{formatDateTime(alert.date)}</time></td>
                         <td className="sl-emphasized-value">{formatHumanReadableText(alert.ingredient)}</td>
-                        <td><span className="sl-status-pill">{alert.category}</span></td>
-                        <td>{alert.details}</td>
+                        <td>{alert.category}</td>
+                        <td className="sl-alert-details-cell">{alert.details}</td>
                         <td>
                           <Status tone={alert.priority === 'High' ? 'critical' : alert.priority === 'Medium' ? 'attention' : 'brand'}>
                             {alert.priority}
                           </Status>
                         </td>
                         <td>
-                          <Status tone={alert.status === 'Active' ? 'attention' : 'success'}>
+                          <span className={`sl-alert-status-text sl-status-${alert.status.toLowerCase()}`}>
+                            <span className="sl-alert-status-dot" aria-hidden="true" />
                             {alert.status}
-                          </Status>
+                          </span>
                         </td>
                       </tr>
                     ))
