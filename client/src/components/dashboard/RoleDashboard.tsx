@@ -7,7 +7,7 @@ import { Card, DataState, PageHeader, PlaceholderSummaryCards, PlaceholderTable,
 import { ForecastFlow, InventoryBatchDetailsDialog, WorkflowLink, WorkspaceLink } from '../application/ModulePage';
 import { AccountsTable } from '../application/AccountsTable';
 import { accountSummary, type DashboardSummary } from '../../services/administration';
-import { getForecastAccuracy, listIngredientCategories, listIngredients, listStockInIngredients, type ForecastAccuracyResponse } from '../../services/ingredients';
+import { getGeneralForecastAccuracy, listIngredientCategories, listIngredients, type ForecastAccuracyResponse } from '../../services/ingredients';
 import { AuditTable } from '../application/AuditTable';
 import { sessionDisplayName } from '../../services/auth';
 import { getInventoryBatchSummary, listInventoryBatches, type InventoryBatch } from '../../services/inventory-batches';
@@ -176,12 +176,8 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     listChangeRequests({ page: 1, pageSize: 10, status: 'PENDING', currentOnly: true }, controller.signal)
       .then(result => { if (!controller.signal.aborted) setRequests(result.items.slice(0, 5)); })
       .catch(() => { if (!controller.signal.aborted) setRequestError(true); });
-    listStockInIngredients(controller.signal)
-      .then(res => {
-        if (controller.signal.aborted || !res.ingredients.length) return null;
-        return getForecastAccuracy(res.ingredients[0].id, controller.signal);
-      })
-      .then(data => { if (!controller.signal.aborted && data) setAccuracy(data); })
+    getGeneralForecastAccuracy(controller.signal)
+      .then(data => { if (!controller.signal.aborted) setAccuracy(data); })
       .catch(() => { if (!controller.signal.aborted) setAccuracyError(true); });
     return () => controller.abort();
   }, []);
