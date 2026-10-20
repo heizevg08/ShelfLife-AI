@@ -19876,7 +19876,7 @@ section.sl-card:has(.sl-filter-popover) {
 }
 .sl-mgr-forecast-analytics {
   grid-template-columns: minmax(0,1.9fr) minmax(17rem,1fr);
-  align-items: start;
+  align-items: stretch;
   gap: clamp(10px,1vw,14px);
   min-width: 0;
   display: grid;
@@ -19884,11 +19884,11 @@ section.sl-card:has(.sl-filter-popover) {
 .sl-mgr-forecast-analytics>.sl-card {
   flex-direction: column;
   min-width: 0;
-  height: auto;
+  height: 100%;
   display: flex;
 }
 .sl-mgr-forecast-analytics>.sl-card .sl-card-body {
-  flex: 0 1 auto;
+  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
