@@ -531,7 +531,7 @@ function InventoryStaffDashboardContent({ userName }: { userName: string }) {
     getInventoryBatchSummary(abort.signal)
       .then(summary => { if (!abort.signal.aborted) setInventorySummary({ totalIngredients: summary.totalIngredients, totalBatches: summary.totalBatches, nearExpiry: summary.nearExpiry, lowStockItems: summary.lowStockItems }); })
       .catch(() => { if (!abort.signal.aborted) setInventorySummaryFailed(true); });
-    void listChangeRequests({ page: 1, pageSize: 10, status: 'PENDING', currentOnly: true }, abort.signal).then(result => { if (!abort.signal.aborted) setPendingRequests(result.items); }).catch(() => { if (!abort.signal.aborted) setPendingRequestsFailed(true); });
+    void listChangeRequests({ page: 1, pageSize: 10, status: 'PENDING', currentOnly: true }, abort.signal).then(result => { if (!abort.signal.aborted) setPendingRequests(result.items.slice(0, 5)); }).catch(() => { if (!abort.signal.aborted) setPendingRequestsFailed(true); });
     void getUsageSummary(abort.signal).then(result => { if (!abort.signal.aborted) setUsageSummary(result); }).catch(() => { if (!abort.signal.aborted) setUsageSummaryFailed(true); });
     return () => abort.abort();
   }, []);
