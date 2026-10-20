@@ -136,8 +136,8 @@ function InventoryStaffWastePage() {
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150">
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-waste-kpis sl-superadmin-dashboard-kpis-v201 sl-staff-usage-kpis" aria-label="Waste summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Total Waste Today</span><strong title={summary?.totalWasteToday ? `${summary.totalWasteToday.quantity.toLocaleString('en-PH')} ${summary.totalWasteToday.unit}` : undefined}>{metric(summary?.totalWasteToday ? `${formatCompactNumber(summary.totalWasteToday.quantity)} ${summary.totalWasteToday.unit}` : undefined)}</strong><small>Waste recorded today</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Most Wasted Ingredient</span><strong title={summary?.mostWastedIngredient ?? undefined}>{metric(summary?.mostWastedIngredient ?? undefined)}</strong><small>Top ingredient today</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3/></span><div><span>Common Waste Reason</span><strong title={summary?.commonWasteReason ?? undefined}>{metric(summary?.commonWasteReason ?? undefined)}</strong><small>Top reason today</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Leaf/></span><div><span>Most Wasted Ingredient</span><strong className="sl-kpi-text-value" title={summary?.mostWastedIngredient ?? undefined}>{metric(summary?.mostWastedIngredient ?? undefined)}</strong><small>Top ingredient today</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><BarChart3/></span><div><span>Common Waste Reason</span><strong className="sl-kpi-text-value" title={summary?.commonWasteReason ?? undefined}>{metric(summary?.commonWasteReason ?? undefined)}</strong><small>Top reason today</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingDown/></span><div><span>Total Waste Cost</span><strong title={summary ? formatExactPeso(summary.totalWasteCostToday) : undefined}>{metric(summary ? formatCompactPeso(summary.totalWasteCostToday) : undefined)}</strong><small>Waste cost today</small></div></article>
       </section>
       </div>
@@ -228,7 +228,7 @@ function InventoryStaffUsagePage() {
       <div className="sl-superadmin-dashboard-v49 sl-staff-usage-v150"><section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201" aria-label="Usage summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><UtensilsCrossed aria-hidden="true" /></span>
-          <div><span>Total Usage Today</span><strong>{usageMetric(usageSummary?.totalUsageToday ? `${usageSummary.totalUsageToday.quantity} ${usageSummary.totalUsageToday.unit}` : undefined)}</strong><small>Quantity used today</small></div>
+          <div><span>Total Usage Today</span><strong title={usageSummary?.totalUsageToday ? `${usageSummary.totalUsageToday.quantity.toLocaleString('en-PH')} ${usageSummary.totalUsageToday.unit}` : undefined}>{usageMetric(usageSummary?.totalUsageToday ? `${formatCompactNumber(usageSummary.totalUsageToday.quantity)} ${usageSummary.totalUsageToday.unit}` : undefined)}</strong><small>Quantity used today</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info">
           <span className="sl-sa-kpi-icon"><FileInput aria-hidden="true" /></span>
@@ -236,7 +236,7 @@ function InventoryStaffUsagePage() {
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span>
-          <div><span>Most Used Ingredient</span><strong>{usageMetric(usageSummary?.mostUsedIngredient ?? undefined)}</strong><small>Top ingredient today</small></div>
+          <div><span>Most Used Ingredient</span><strong className="sl-kpi-text-value" title={usageSummary?.mostUsedIngredient ?? undefined}>{usageMetric(usageSummary?.mostUsedIngredient ?? undefined)}</strong><small>Top ingredient today</small></div>
         </article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
@@ -559,7 +559,7 @@ function IngredientsAdminPage({ preview, setPreview }: { preview: PreviewId | nu
       <section className="sl-sa-kpis sl-inventory-staff-kpis sl-staff-usage-kpis sl-superadmin-dashboard-kpis-v201 sl-dashboard-kpis" aria-label="Ingredient summary">
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><Leaf /></span><div><span>Total Ingredients</span><strong>{summary ? summary.total.toLocaleString() : loadError ? 'Unavailable' : '—'}</strong><small>{summary ? 'Current ingredients' : loadError ? 'Ingredients unavailable' : 'Loading ingredients'}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Grid2X2 /></span><div><span>Categories</span><strong>{summary?.categories.length ?? '—'}</strong><small>{summary ? 'Catalog categories' : 'Loading categories'}</small></div></article>
-        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Tag /></span><div><span>Most Common Ingredient</span><strong title={summary?.mostCommonIngredient ?? undefined}>{summary?.mostCommonIngredient ?? '—'}</strong><small>{summary?.mostCommonIngredient ? 'Most used ingredient' : 'No usage records yet'}</small></div></article>
+        <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Tag /></span><div><span>Most Common Ingredient</span><strong className="sl-kpi-text-value" title={summary?.mostCommonIngredient ?? undefined}>{summary?.mostCommonIngredient ?? '—'}</strong><small>{summary?.mostCommonIngredient ? 'Most used ingredient' : 'No usage records yet'}</small></div></article>
         <article className="sl-sa-kpi sl-inventory-staff-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><Ruler /></span><div><span>Distinct Units</span><strong>{summary?.units.length ?? '—'}</strong><small>{summary ? 'Units in catalog' : 'Loading units'}</small></div></article>
       </section>
 
