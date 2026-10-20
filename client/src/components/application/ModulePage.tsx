@@ -1433,11 +1433,13 @@ function ManagerForecastingPage() {
   // These are reporting dates, not the model's future prediction horizon. No
   // forecast rows are available yet, but the selected filter still owns an
   // unambiguous calendar window for the future records request.
-  const tableDateWindow = range === 'This Week' ? businessWeekRange()
-    : range === 'Last 7 Days' ? businessDayRange(7)
-    : range === 'Last 30 Days' ? businessDayRange(30)
-    : range === 'This Month' ? businessMonthRange()
-    : dateFrom && dateTo && customRangeState(dateFrom, dateTo, null, today) === 'valid' ? { from: dateFrom, to: dateTo } : null;
+  const tableDateWindow = useMemo(() => (
+    range === 'This Week' ? businessWeekRange()
+      : range === 'Last 7 Days' ? businessDayRange(7)
+      : range === 'Last 30 Days' ? businessDayRange(30)
+      : range === 'This Month' ? businessMonthRange()
+      : dateFrom && dateTo && customRangeState(dateFrom, dateTo, null, today) === 'valid' ? { from: dateFrom, to: dateTo } : null
+  ), [range, dateFrom, dateTo, today]);
   const customState = range === 'Custom' ? customRangeState(dateFrom, dateTo, null, today) : 'valid';
   const rangeIncomplete = customState === 'incomplete';
   const rangeInvalid = customState !== 'valid' && !rangeIncomplete;
@@ -1532,7 +1534,7 @@ function ManagerForecastingPage() {
       });
 
     return () => controller.abort();
-  }, [page, rows, search, category, ingredient, ingredients, tableDateWindow]);
+  }, [page, rows, search, category, ingredient, ingredients, tableDateWindow?.from, tableDateWindow?.to]);
 
   return <>
     <PageHeader eyebrow="Intelligence" title="Forecasting" description="AI-assisted demand forecasting to help you plan purchases, reduce waste, and ensure ingredient availability." />
