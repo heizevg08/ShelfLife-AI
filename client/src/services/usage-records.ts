@@ -11,6 +11,7 @@ export interface UsageRecord {
   recordedBy: { id: string; name: string; firstName?: string; lastName?: string };
   createdAt: string;
 }
+
 export interface UsageSummary {
   totalUsageToday: { quantity: number; unit: string } | null;
   usageTotalsByUnitToday: Array<{ quantity: number; unit: string }>;
@@ -18,7 +19,14 @@ export interface UsageSummary {
   mostUsedIngredient: string | null;
   ingredientsUsedThisWeek: number;
 }
-export interface UsageInput { ingredientId: string; batchId: string; dateUsed: string; quantityUsed: number }
+
+export interface UsageInput {
+  ingredientId: string;
+  batchId: string;
+  dateUsed: string;
+  quantityUsed: number;
+}
+
 // Reporting counts are separate from the private ML quantity target.
 export interface UsageAnalytics {
   metric: 'record count';
@@ -27,7 +35,11 @@ export interface UsageAnalytics {
   dailyCounts: { date: string; count: number }[];
   unresolvedIngredientRecords: number;
 }
-export const getUsageAnalytics = (query: { from?: string; to?: string; ingredientId?: string; category?: string }, signal?: AbortSignal) => {
+
+export const getUsageAnalytics = (
+  query: { from?: string; to?: string; ingredientId?: string; category?: string },
+  signal?: AbortSignal
+) => {
   const params = new URLSearchParams();
   if (query.from) params.set('from', query.from);
   if (query.to) params.set('to', query.to);
@@ -36,22 +48,45 @@ export const getUsageAnalytics = (query: { from?: string; to?: string; ingredien
   return apiClient<UsageAnalytics>(`/usage-records/analytics${params.size ? `?${params}` : ''}`, { signal });
 };
 
-export function listUsageRecords(query: { page: number; pageSize: number; search?: string; ingredientId?: string; from?: string; to?: string }, signal?: AbortSignal) {
+export function listUsageRecords(
+  query: { page: number; pageSize: number; search?: string; ingredientId?: string; from?: string; to?: string },
+  signal?: AbortSignal
+) {
   const params = new URLSearchParams({ page: String(query.page), pageSize: String(query.pageSize) });
   if (query.search) params.set('search', query.search);
   if (query.ingredientId) params.set('ingredientId', query.ingredientId);
   if (query.from) params.set('from', query.from);
   if (query.to) params.set('to', query.to);
-  return apiClient<{ items: UsageRecord[]; page: number; pageSize: number; total: number }>(`/usage-records?${params}`, { signal });
+  return apiClient<{ items: UsageRecord[]; page: number; pageSize: number; total: number }>(
+    `/usage-records?${params}`,
+    { signal }
+  );
 }
-export const getUsageSummary = (signal?: AbortSignal, businessDate?: string) => apiClient<UsageSummary>(`/usage-records/summary${businessDate ? `?date=${encodeURIComponent(businessDate)}` : ''}`, { signal });
+
+export const getUsageSummary = (signal?: AbortSignal, businessDate?: string) =>
+  apiClient<UsageSummary>(`/usage-records/summary${businessDate ? `?date=${encodeURIComponent(businessDate)}` : ''}`, {
+    signal,
+  });
+
 export async function createUsageRecord(input: UsageInput) {
-  const result = await apiClient<{ record: UsageRecord }>('/usage-records', { method: 'POST', body: JSON.stringify(input), successMessage: false });
+  const result = await apiClient<{ record: UsageRecord }>('/usage-records', {
+    method: 'POST',
+    body: JSON.stringify(input),
+    successMessage: false,
+  });
   publishActionFeedback({ kind: 'success', message: 'Usage record saved successfully.' });
   return result.record;
 }
+
 export async function createUsageRecords(items: UsageInput[]) {
-  const result = await apiClient<{ count: number; records: UsageRecord[] }>('/usage-records/bulk', { method: 'POST', body: JSON.stringify({ items }), successMessage: false });
-  publishActionFeedback({ kind: 'success', message: `${result.count} usage ${result.count === 1 ? 'record' : 'records'} saved successfully.` });
+  const result = await apiClient<{ count: number; records: UsageRecord[] }>('/usage-records/bulk', {
+    method: 'POST',
+    body: JSON.stringify({ items }),
+    successMessage: false,
+  });
+  publishActionFeedback({
+    kind: 'success',
+    message: `${result.count} usage ${result.count === 1 ? 'record' : 'records'} saved successfully.`,
+  });
   return result.records;
 }
