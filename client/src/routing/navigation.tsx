@@ -34,6 +34,6 @@ export function useLocalSearchParams<T extends Record<string, string | undefined
 
 export function Link({ href, ...props }: Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & { href: Href }) {
   const workspace = useOptionalWorkspace();
-  if (workspace && !canOpenWorkspacePath(workspace.user.role, href)) return null;
+  if (workspace && !canOpenWorkspacePath(workspace.user.role, href.split(/[?#]/, 1)[0])) return null;
   return <RouterLink to={href} {...props} />;
 }

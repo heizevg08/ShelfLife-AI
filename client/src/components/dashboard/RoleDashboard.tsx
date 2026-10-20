@@ -447,7 +447,7 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
                     'All batches are currently in good operational shape.'
                   )}
                 </span>
-                <Link href="/Inventory" className="sl-mgr-stock-alert-link">
+                <Link href="/Inventory#inventory-records" className="sl-mgr-stock-alert-link">
                   Review <ArrowRight size={13} aria-hidden="true" />
                 </Link>
               </div>
