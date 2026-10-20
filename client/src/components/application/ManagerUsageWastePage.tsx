@@ -50,12 +50,22 @@ function ManagerInsightText({ text, anchors }: { text: string; anchors: readonly
 type CombinedRecord = { id: string; createdAt: string; operationalDate: string; ingredient: { id: string; name: string }; batch: { batchID: string }; type: 'Usage' | 'Waste'; quantity: number; unit: string; notes: string; recordedBy: { name: string; firstName?: string; lastName?: string } };
 
 export function ConnectedManagerUsageWastePage() {
-  const usageTrigger = useRef<HTMLButtonElement>(null); const wasteTrigger = useRef<HTMLButtonElement>(null);
+  const usageTrigger = useRef<HTMLButtonElement>(null);
+  const wasteTrigger = useRef<HTMLButtonElement>(null);
   const detailTrigger = useRef<HTMLButtonElement>(null);
-  const [records, setRecords] = useState<CombinedRecord[] | null>(null); const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null); const [wasteSummary, setWasteSummary] = useState<WasteSummary | null>(null); const [failed, setFailed] = useState(false);
+
+  const [records, setRecords] = useState<CombinedRecord[] | null>(null);
+  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
+  const [wasteSummary, setWasteSummary] = useState<WasteSummary | null>(null);
+  const [failed, setFailed] = useState(false);
+
   const [analyticsRevision, setAnalyticsRevision] = useState(0);
-  const [usageAnalytics, setUsageAnalytics] = useState<UsageAnalytics | null>(null); const [wasteAnalytics, setWasteAnalytics] = useState<WasteAnalytics | null>(null); const [analyticsFailed, setAnalyticsFailed] = useState(false);
-  const [reasonAnalytics, setReasonAnalytics] = useState<WasteAnalytics | null>(null); const [reasonFailed, setReasonFailed] = useState(false);
+  const [usageAnalytics, setUsageAnalytics] = useState<UsageAnalytics | null>(null);
+  const [wasteAnalytics, setWasteAnalytics] = useState<WasteAnalytics | null>(null);
+  const [analyticsFailed, setAnalyticsFailed] = useState(false);
+
+  const [reasonAnalytics, setReasonAnalytics] = useState<WasteAnalytics | null>(null);
+  const [reasonFailed, setReasonFailed] = useState(false);
   const [ingredients, setIngredients] = useState<StockInIngredient[]>([]);
   // Each analytics card selects its own Philippine period, and the records table keeps
   // a third, independent date filter. No control clears, detaches or overwrites another.
