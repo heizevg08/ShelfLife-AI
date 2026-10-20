@@ -24,8 +24,8 @@ export function DateRangeFilter({ value, from, to, onChange, onFromChange, onToC
   return <div className={`sl-admin-reports-date-group ${className}`.trim()} data-custom={value === 'custom'}>
     <label><span>{label}</span><div className="sl-admin-reports-date"><CalendarDays size={16} aria-hidden="true" /><FilterSelect ariaLabel={label} value={value} options={MANAGER_DATE_RANGE_OPTIONS.map(option => ({value: option.value, label: option.label}))} onChange={next => onChange(next as DateRangeValue)}/></div></label>
     {value === 'custom' && <div className="sl-v219-custom-date-range" aria-label={`Custom ${label.toLowerCase()}`}>
-      <label><span>From</span><input type="date" value={from} max={to || undefined} onChange={event => onFromChange(event.target.value)} /></label>
-      <label><span>To</span><input type="date" value={to} min={from || undefined} onChange={event => onToChange(event.target.value)} /></label>
+      <label><span>From</span><input type="date" min="2020-01-01" max={to || undefined} value={from} onChange={event => onFromChange(event.target.value)} /></label>
+      <label><span>To</span><input type="date" min={from || '2020-01-01'} max="2099-12-31" value={to} onChange={event => onToChange(event.target.value)} /></label>
     </div>}
   </div>;
 }

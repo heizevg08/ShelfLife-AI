@@ -214,7 +214,7 @@ export function AccountsTable() {
           <label className={superAdmin ? 'sl-sa-ingredients-search' : 'sl-application-records-search'}><span>Search users</span>
             <div role="search">
               <Search size={17} aria-hidden="true" />
-              <input type="search" value={directorySearch} placeholder="Search by name, email, or role..." aria-label="Search users"
+              <input type="search" value={directorySearch} placeholder="Search by name, email, or role..." aria-label="Search users" maxLength={100}
                 onChange={event => { setDirectorySearch(event.target.value); setPage(1); }} />
             </div>
           </label>
@@ -320,7 +320,9 @@ export function AccountsTable() {
                   setErrors(previous => ({ ...previous, [key]: error }));
                 }}
                 onChange={event => {
-                  const value = event.target.value;
+                  let value = event.target.value;
+                  const maxLen = key === 'email' ? 254 : key === 'password' ? 128 : NAME_LIMIT;
+                  if (value.length > maxLen) value = value.slice(0, maxLen);
                   setFields({ ...fields, [key]: value });
                   if (submitted || touched[key]) {
                     setErrors(previous => ({ ...previous, [key]: validateField(key, value), form: '' }));

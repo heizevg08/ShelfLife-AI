@@ -18,15 +18,19 @@ export function renderManagerRejectionForm({ note, setNote, error, setError, fie
     <label htmlFor="manager-rejection-reason">Rejection reason</label>
     <p id="manager-rejection-help" className="sl-field-help">Please explain why you're rejecting this request. Your reason will be saved with the request.</p>
     <textarea ref={field} id="manager-rejection-reason" rows={4} required value={note}
+      maxLength={500}
       aria-invalid={invalid}
       aria-describedby={invalid ? 'manager-rejection-help manager-rejection-error' : 'manager-rejection-help'}
       onInput={event => {
-        const next = (event.target as HTMLTextAreaElement).value;
+        const next = (event.target as HTMLTextAreaElement).value.slice(0, 500);
         setNote(next);
         // A later submit re-derives the message, so a valid value clears it now
         // and a whitespace-only value shows it again on the next attempt.
         if (next.trim()) setError('');
       }}/>
+    <span className="sl-char-counter" data-near-limit={note.length >= 450} data-at-limit={note.length >= 500} aria-live="polite">
+      {note.length} / 500
+    </span>
     {invalid && <p id="manager-rejection-error" className="sl-field-error" role="alert">{message}</p>}
   </form>;
 }

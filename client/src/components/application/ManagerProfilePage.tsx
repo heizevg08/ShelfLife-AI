@@ -63,7 +63,7 @@ function NameRow({ field, value, disabled, onSaved }: {
       <form className="sl-profile-manager-form" noValidate aria-busy={saving} onSubmit={submit}>
         <label className="sl-sr-only" htmlFor={`sl-profile-manager-${field}`}>{labels[field]}</label>
         <input ref={input} id={`sl-profile-manager-${field}`} type="text" value={draft} disabled={saving}
-          maxLength={60} autoComplete="off" aria-invalid={!!error}
+          maxLength={25} autoComplete="off" aria-invalid={!!error}
           aria-describedby={error ? `sl-profile-manager-${field}-error` : undefined}
           onChange={event => { setDraft(event.target.value); setError(''); }} />
         <div className="sl-profile-manager-form-actions">
@@ -175,7 +175,7 @@ function ManagerPasswordChange({ open, onDismiss, returnFocus }: PasswordChangeP
         <div className="sl-field">
           <label htmlFor="sl-profile-manager-current-password">Current password</label>
           <div className="sl-password-field">
-            <input id="sl-profile-manager-current-password" type={showCurrent ? 'text' : 'password'} autoComplete="current-password" disabled={pending}
+            <input id="sl-profile-manager-current-password" type={showCurrent ? 'text' : 'password'} autoComplete="current-password" maxLength={128} disabled={pending}
               data-initial-focus value={current} aria-invalid={!!currentError}
               aria-describedby={currentError ? 'sl-profile-manager-current-password-error' : undefined}
               onChange={event => { setCurrent(event.target.value); setCurrentError(''); setFormError(''); }} />
@@ -190,7 +190,7 @@ function ManagerPasswordChange({ open, onDismiss, returnFocus }: PasswordChangeP
         <div className="sl-field">
           <label htmlFor="sl-profile-manager-new-password">New password</label>
           <div className="sl-password-field">
-            <input id="sl-profile-manager-new-password" type={showNext ? 'text' : 'password'} autoComplete="new-password" disabled={pending}
+            <input id="sl-profile-manager-new-password" type={showNext ? 'text' : 'password'} autoComplete="new-password" maxLength={128} disabled={pending}
               value={next} aria-invalid={!!nextError}
               aria-describedby={nextError ? 'sl-profile-manager-new-password-help sl-profile-manager-new-password-error' : 'sl-profile-manager-new-password-help'}
               onChange={event => { setNext(event.target.value); setNextError(''); setFormError(''); }} />
@@ -206,7 +206,7 @@ function ManagerPasswordChange({ open, onDismiss, returnFocus }: PasswordChangeP
         <div className="sl-field">
           <label htmlFor="sl-profile-manager-confirm-password">Confirm new password</label>
           <div className="sl-password-field">
-            <input id="sl-profile-manager-confirm-password" type={showConfirm ? 'text' : 'password'} autoComplete="new-password" disabled={pending}
+            <input id="sl-profile-manager-confirm-password" type={showConfirm ? 'text' : 'password'} autoComplete="new-password" maxLength={128} disabled={pending}
               value={confirmation} aria-invalid={!!confirmError}
               aria-describedby={confirmError ? 'sl-profile-manager-confirm-password-error' : undefined}
               onChange={event => { setConfirmation(event.target.value); setConfirmError(''); setFormError(''); }} />
@@ -256,9 +256,9 @@ function EmailChange({ open, onDismiss, returnFocus }: PasswordChangeProps) {
       <button type="submit" form="sl-profile-email-form" className="sl-button sl-button-primary" disabled={pending}>{pending ? 'Working...' : step === 'request' ? 'Send code' : 'Verify email'}</button></>}>
     <form id="sl-profile-email-form" className="sl-profile-manager-password-form" noValidate aria-busy={pending} onSubmit={submit}>
       {step === 'request' ? <>
-        <div className="sl-field"><label htmlFor="sl-profile-new-email">New email</label><input id="sl-profile-new-email" type="email" autoComplete="email" value={email} disabled={pending} required
+        <div className="sl-field"><label htmlFor="sl-profile-new-email">New email</label><input id="sl-profile-new-email" type="email" autoComplete="email" maxLength={254} value={email} disabled={pending} required
           placeholder="name@shelflife.com" onChange={event => { setEmail(event.target.value); setError(''); }} /></div>
-        <div className="sl-field"><label htmlFor="sl-profile-email-password">Current password</label><input id="sl-profile-email-password" type="password" autoComplete="current-password" value={password} disabled={pending} required
+        <div className="sl-field"><label htmlFor="sl-profile-email-password">Current password</label><input id="sl-profile-email-password" type="password" autoComplete="current-password" maxLength={128} value={password} disabled={pending} required
           onChange={event => { setPassword(event.target.value); setError(''); }} /></div>
       </> : <div className="sl-field"><label htmlFor="sl-profile-email-code">Verification code</label><input id="sl-profile-email-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} disabled={pending} required
         aria-describedby="sl-profile-email-code-help" onChange={event => { setCode(event.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }} />

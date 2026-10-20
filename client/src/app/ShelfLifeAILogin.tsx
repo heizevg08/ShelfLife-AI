@@ -176,8 +176,8 @@ export default function ShelfLifeLogin() {
           </div>
           {firstLogin ? <form noValidate onSubmit={handleFirstPasswordChange} aria-labelledby="sl-login-title" aria-busy={isLoading}>
             {errors.auth && <div tabIndex={-1} className="sl-form-error" role="alert"><TriangleAlert size={18} aria-hidden="true" /><p>{errors.auth}</p></div>}
-            <div className="sl-field"><label htmlFor="sl-new-password">New password</label><input id="sl-new-password" type="password" autoComplete="new-password" value={newPassword} disabled={isLoading} onChange={event => { setNewPassword(event.target.value); setErrors({}); }} /></div>
-            <div className="sl-field"><label htmlFor="sl-confirm-password">Confirm new password</label><input id="sl-confirm-password" type="password" autoComplete="new-password" value={confirmPassword} disabled={isLoading} onChange={event => { setConfirmPassword(event.target.value); setErrors({}); }} /></div>
+            <div className="sl-field"><label htmlFor="sl-new-password">New password</label><input id="sl-new-password" type="password" autoComplete="new-password" maxLength={128} value={newPassword} disabled={isLoading} onChange={event => { setNewPassword(event.target.value); setErrors({}); }} /></div>
+            <div className="sl-field"><label htmlFor="sl-confirm-password">Confirm new password</label><input id="sl-confirm-password" type="password" autoComplete="new-password" maxLength={128} value={confirmPassword} disabled={isLoading} onChange={event => { setConfirmPassword(event.target.value); setErrors({}); }} /></div>
             <p className="sl-password-feedback sl-field-attention">Use at least 12 characters. You must change this password before you can access ShelfLife AI.</p>
             <section className="sl-first-login-policy-link" aria-labelledby="sl-first-login-policy-title">
               <div><h2 id="sl-first-login-policy-title">Terms and Privacy Policy</h2><p>{termsAccepted ? 'You accepted the policy. You can return to review it.' : 'Review and accept the policy before setting your password.'}</p></div>
@@ -188,7 +188,7 @@ export default function ShelfLifeLogin() {
             {errors.auth && <div ref={errorSummary} tabIndex={-1} id="sl-auth-error" className="sl-form-error" role="alert"><TriangleAlert size={18} aria-hidden="true" /><p>{errors.auth}</p></div>}
             <div className="sl-field">
               <label htmlFor="sl-email">Email</label>
-              <input id="sl-email" ref={emailInput} name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false}
+              <input id="sl-email" ref={emailInput} name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={254}
                 value={email} disabled={isLoading} placeholder="Enter your email" aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? 'sl-email-error' : undefined}
                 onChange={event => { setEmail(event.target.value); setErrors(previous => ({ ...previous, email: undefined, auth: undefined })); }} />
@@ -197,7 +197,7 @@ export default function ShelfLifeLogin() {
             <div className="sl-field">
               <label htmlFor="sl-password">Password</label>
               <div className="sl-password-field">
-                <input id="sl-password" ref={passwordInput} name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password"
+                <input id="sl-password" ref={passwordInput} name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" maxLength={128}
                   value={password} disabled={isLoading} placeholder="Enter your password" aria-invalid={!!errors.password}
                   aria-describedby="sl-password-feedback"
                   onKeyUp={event => setCapsLock(event.getModifierState('CapsLock'))}

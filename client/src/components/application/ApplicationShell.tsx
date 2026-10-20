@@ -504,6 +504,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
               <Search size={17} aria-hidden="true" />
               <input
                 value={searchQuery}
+                maxLength={100}
                 placeholder="Search pages and tools..."
                 aria-label="Search workspace pages and tools"
                 onFocus={() => setSearchOpen(true)}
