@@ -22,7 +22,25 @@ const auditActionByLabel: Record<string, AuditFilters['action']> = {
 // single-line, ellipsised USER cell because its immutable audit identities can carry
 // historical names that predate the current 1-25 character rule. Callers that do not
 // pass it (Admin Audit Logs, the dashboards) keep their existing cell markup exactly.
-export function AuditTable({ recent = false, adminOverview = false, adminDashboard = false, includeSuperAdminActors = false, showSummary = true, dashboardDetails = false, constrainActorCell = false }: { recent?: boolean; adminOverview?: boolean; adminDashboard?: boolean; includeSuperAdminActors?: boolean; showSummary?: boolean; dashboardDetails?: boolean; constrainActorCell?: boolean }) {
+export interface AuditTableProps {
+  recent?: boolean;
+  adminOverview?: boolean;
+  adminDashboard?: boolean;
+  includeSuperAdminActors?: boolean;
+  showSummary?: boolean;
+  dashboardDetails?: boolean;
+  constrainActorCell?: boolean;
+}
+
+export function AuditTable({
+  recent = false,
+  adminOverview = false,
+  adminDashboard = false,
+  includeSuperAdminActors = false,
+  showSummary = true,
+  dashboardDetails = false,
+  constrainActorCell = false,
+}: AuditTableProps) {
   const [page, setPage] = useState(1);
   const [refresh, setRefresh] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
