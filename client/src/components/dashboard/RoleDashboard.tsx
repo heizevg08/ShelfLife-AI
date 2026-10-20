@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Box, Boxes, CalendarClock, ClipboardList, FileText, ListChecks, ListOrdered, PhilippinePeso, Plus, Search, TrendingUp, TriangleAlert, UsersRound, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Bell, Box, Boxes, CalendarClock, ClipboardList, FileText, ListChecks, ListOrdered, PhilippinePeso, Plus, Search, TrendingUp, TriangleAlert, UsersRound, type LucideIcon } from 'lucide-react';
 import { Link, useRouter } from '../../routing/navigation';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
 import { ApplicationDonutChart, ApplicationPendingState } from '../application/ApplicationPatterns';
@@ -503,23 +503,25 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
       </section>
 
       <section className="sl-manager-attention-grid" aria-label="Manager attention queue">
-        <Card id="manager-alert-records" title="Alert Records">
-          <div className="sl-mgr-alert-card-body">
-            <div className="sl-mgr-alert-header-row">
-              <h2 className="sl-mgr-alert-title">Alert Records</h2>
-              <div className="sl-mgr-alert-search-wrap">
-                <Search size={14} aria-hidden="true" />
-                <input
-                  type="text"
-                  className="sl-mgr-alert-search-input"
-                  placeholder="Search alerts..."
-                  value={alertSearch}
-                  onChange={e => setAlertSearch(e.target.value)}
-                  maxLength={50}
-                  aria-label="Search alerts"
-                />
-              </div>
+        <Card
+          id="manager-alert-records"
+          title={<DashboardCardTitle Icon={Bell}>Alert Records</DashboardCardTitle>}
+          action={
+            <div className="sl-mgr-alert-search-wrap">
+              <Search size={14} aria-hidden="true" />
+              <input
+                type="text"
+                className="sl-mgr-alert-search-input"
+                placeholder="Search alerts..."
+                value={alertSearch}
+                onChange={e => setAlertSearch(e.target.value)}
+                maxLength={50}
+                aria-label="Search alerts"
+              />
             </div>
+          }
+        >
+          <div className="sl-mgr-alert-card-body">
 
             <div className="sl-mgr-alert-filters" role="tablist" aria-label="Filter alerts by priority">
               {(['All', 'High', 'Medium', 'Low'] as const).map(p => (
