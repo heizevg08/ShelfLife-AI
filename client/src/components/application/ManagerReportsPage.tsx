@@ -19,11 +19,11 @@ export const adminReportOptions: FilterSelectOption[] = [
 ];
 const reportOptions: FilterSelectOption[] = [
   ...adminReportOptions,
-  { value: 'demand-forecast', label: 'Demand Forecast', disabled: true },
-  { value: 'forecast-vs-actual', label: 'Forecast vs. Actual', disabled: true },
-  { value: 'forecast-accuracy', label: 'Forecast Accuracy', disabled: true },
-  { value: 'expiration-risk', label: 'Expiration Risk', disabled: true },
-  { value: 'ai-insights-recommendations', label: 'AI Insights & Recommendations', disabled: true },
+  { value: 'demand-forecast', label: 'Demand Forecast' },
+  { value: 'forecast-vs-actual', label: 'Forecast vs. Actual' },
+  { value: 'forecast-accuracy', label: 'Forecast Accuracy' },
+  { value: 'expiration-risk', label: 'Expiration Risk' },
+  { value: 'ai-insights-recommendations', label: 'AI Insights & Recommendations' },
 ];
 type Period = typeof periods[number];
 function reportWindow(period: Period, from: string, to: string) {

@@ -111,3 +111,57 @@ test('recent exports route denies other roles and scopes history to the authenti
   assert.equal((await fetch(url, { headers: { Authorization: 'Bearer Admin' } })).status, 200);
   assert.equal(requestedActor, 'a'.repeat(24));
 });
+
+test('forecasting and ML reports generate accurate rows and enforce PoLP', async t => {
+  const s = service({ batches: [batch], ingredients: [ingredient], usage: [{ ingredientId: key('i1'), unit: 'kg', quantityUsed: 2, dateUsed: date('2026-10-14') }] });
+  
+  // 1. Demand Forecast
+  const df = await s.table(reportQuery('demand-forecast', { from: '2026-10-14', to: '2026-10-14' }), date('2026-10-14'));
+  assert.equal(df.columns.length, 12);
+  assert.equal(df.rows.length, 1);
+  assert.equal(df.rows[0][2], 'i1'); // Ingredient ID
+  assert.equal(df.rows[0][3], 'Rice'); // Ingredient name
+  assert.equal(df.rows[0][6], 8); // Current Stock
+
+  // 2. Forecast vs Actual
+  const fva = await s.table(reportQuery('forecast-vs-actual', { from: '2026-10-14', to: '2026-10-14' }), date('2026-10-14'));
+  assert.equal(fva.columns.length, 10);
+  assert.equal(fva.rows.length, 1);
+  assert.equal(fva.rows[0][1], 'i1');
+  assert.equal(fva.rows[0][6], 2); // Actual usage
+
+  // 3. Forecast Accuracy
+  const fa = await s.table(reportQuery('forecast-accuracy', {}), date('2026-10-14'));
+  assert.equal(fa.columns.length, 12);
+  assert.equal(fa.rows.length, 1);
+  assert.equal(fa.rows[0][1], 'i1');
+
+  // 4. Expiration Risk
+  const er = await s.table(reportQuery('expiration-risk', {}), date('2026-10-14'));
+  assert.equal(er.columns.length, 14);
+  assert.equal(er.rows.length, 1);
+  assert.equal(er.rows[0][4], 'SL-1'); // Batch ID
+  assert.equal(er.rows[0][6], 6); // Days to expiry (2026-10-20 minus 2026-10-14)
+
+  // 5. AI Insights & Recommendations
+  const ai = await s.table(reportQuery('ai-insights-recommendations', {}), date('2026-10-14'));
+  assert.equal(ai.columns.length, 11);
+  assert.equal(ai.rows.length, 1);
+  assert.equal(ai.rows[0][1], 'i1');
+
+  // 6. PoLP Route Authorization
+  const auth = { authenticate: async header => ({ id: 'a'.repeat(24), role: header?.slice(7) === 'Admin' ? 'Admin' : 'Manager' }) };
+  const server = createApp([], () => true, auth, undefined, undefined, undefined, undefined, undefined, undefined, undefined, s).listen(0);
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const port = server.address().port;
+
+  // Admin is denied PoLP access to Manager-only forecasting reports
+  const adminRes = await fetch(`http://127.0.0.1:${port}/api/reports/operational/demand-forecast/preview`, { headers: { Authorization: 'Bearer Admin' } });
+  assert.equal(adminRes.status, 403);
+  const adminBody = await adminRes.json();
+  assert.equal(adminBody.error.code, 'FORBIDDEN');
+
+  // Manager is permitted
+  const mgrRes = await fetch(`http://127.0.0.1:${port}/api/reports/operational/demand-forecast/preview`, { headers: { Authorization: 'Bearer Manager' } });
+  assert.equal(mgrRes.status, 200);
+});

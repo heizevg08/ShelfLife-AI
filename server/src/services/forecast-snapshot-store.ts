@@ -17,7 +17,7 @@ export interface ForecastSnapshotInput {
 }
 
 export interface ForecastSnapshotQuery {
-  ingredientId: string;
+  ingredientId?: string;
   targetDateFrom?: string;
   targetDateTo?: string;
   status?: 'ACTIVE' | 'SUPERSEDED';
@@ -96,9 +96,11 @@ export function createForecastSnapshotStore(
     },
 
     async findSnapshots(query) {
-      const filter: Record<string, unknown> = {
-        ingredientId: query.ingredientId,
-      };
+      const filter: Record<string, unknown> = {};
+
+      if (query.ingredientId) {
+        filter.ingredientId = query.ingredientId;
+      }
 
       if (query.status) {
         filter.status = query.status;

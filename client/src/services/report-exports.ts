@@ -3,7 +3,15 @@ import { currentUser } from './auth';
 import { getAccessToken } from './session';
 import { ApiError, apiClient } from './apiClient';
 
-export type OperationalReportId = 'inventory-summary' | 'expiration-waste' | 'usage-consumption';
+export type OperationalReportId =
+  | 'inventory-summary'
+  | 'expiration-waste'
+  | 'usage-consumption'
+  | 'demand-forecast'
+  | 'forecast-vs-actual'
+  | 'forecast-accuracy'
+  | 'expiration-risk'
+  | 'ai-insights-recommendations';
 export type ReportPreview = { columns: string[]; rows: Array<Array<string | number | null>>; totalRows: number; empty: boolean };
 export type ReportRange = { from: string; to: string } | null;
 export type RecentExport = { reportId: OperationalReportId | 'management-workbook'; format: 'xlsx'; exportedAt: string; periodFrom?: string | null; periodTo?: string | null };

@@ -34,7 +34,7 @@ test('Download Center offers one shared XLSX action and no CSV service', () => {
   assert.doesNotMatch(service, /export\.csv|\.csv/);
 });
 
-test('Report filter exposes approved future reports only as disabled options', () => {
+test('Report filter exposes approved forecasting and intelligence reports as active options for Manager', () => {
   for (const [value, label] of [
     ['demand-forecast', 'Demand Forecast'],
     ['forecast-vs-actual', 'Forecast vs. Actual'],
@@ -42,7 +42,8 @@ test('Report filter exposes approved future reports only as disabled options', (
     ['expiration-risk', 'Expiration Risk'],
     ['ai-insights-recommendations', 'AI Insights & Recommendations'],
   ]) {
-    assert.ok(page.includes(`{ value: '${value}', label: '${label}', disabled: true }`));
+    assert.ok(page.includes(`{ value: '${value}', label: '${label}' }`));
+    assert.ok(!page.includes(`{ value: '${value}', label: '${label}', disabled: true }`));
   }
   assert.match(page, /type ReportSelection = OperationalReportId \| 'all'/);
 });

@@ -3,6 +3,7 @@ import type { ReportId, ReportQuery } from '../validators/report';
 
 type WorkbookField = { label: string; index?: number; publicId?: true };
 type WorkbookSheet = { name: string; id: ReportId; ingredientIdIndex: number; fields: WorkbookField[] };
+
 const sheets: WorkbookSheet[] = [
   { name: 'Inventory Summary', id: 'inventory-summary', ingredientIdIndex: 2, fields: [
     { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 3 }, { label: 'Batch ID', index: 5 }, { label: 'Category', index: 4 },
@@ -18,14 +19,60 @@ const sheets: WorkbookSheet[] = [
     { label: 'On Hand', index: 8 }, { label: 'Quantity Wasted', index: 11 }, { label: 'Unit', index: 9 },
     { label: 'Waste Cost (PHP)', index: 12 }, { label: 'Record Notes', index: 13 },
   ] },
+  { name: 'Demand Forecast', id: 'demand-forecast', ingredientIdIndex: 2, fields: [
+    { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 3 }, { label: 'Category', index: 4 },
+    { label: 'Current Stock', index: 6 }, { label: 'Unit', index: 5 }, { label: 'Avg Daily Usage', index: 7 },
+    { label: 'Forecasted Demand', index: 8 }, { label: 'Stock Coverage (Days)', index: 9 }, { label: 'Risk Level', index: 10 },
+    { label: 'Recommended Action', index: 11 },
+  ] },
+  { name: 'Forecast vs. Actual', id: 'forecast-vs-actual', ingredientIdIndex: 1, fields: [
+    { label: 'Date', index: 0 }, { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 2 },
+    { label: 'Category', index: 3 }, { label: 'Unit', index: 4 }, { label: 'Forecasted Demand', index: 5 },
+    { label: 'Actual Usage', index: 6 }, { label: 'Variance', index: 7 }, { label: 'Variance (%)', index: 8 },
+    { label: 'Status', index: 9 },
+  ] },
+  { name: 'Forecast Accuracy', id: 'forecast-accuracy', ingredientIdIndex: 1, fields: [
+    { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 2 }, { label: 'Category', index: 3 },
+    { label: 'Unit', index: 4 }, { label: 'Accuracy Score (%)', index: 5 }, { label: 'Evaluation Status', index: 6 },
+    { label: 'Evaluated Days', index: 7 }, { label: 'MAE', index: 8 }, { label: 'RMSE', index: 9 },
+    { label: 'WAPE (%)', index: 10 }, { label: 'Notes', index: 11 },
+  ] },
+  { name: 'Expiration Risk', id: 'expiration-risk', ingredientIdIndex: 1, fields: [
+    { label: 'Batch ID', index: 4 }, { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 2 },
+    { label: 'Category', index: 3 }, { label: 'Expiry Date', index: 5 }, { label: 'Days to Expiry', index: 6 },
+    { label: 'On Hand', index: 7 }, { label: 'Unit', index: 8 }, { label: 'Avg Daily Usage', index: 9 },
+    { label: 'Projected Excess', index: 10 }, { label: 'At-Risk Cost (PHP)', index: 11 }, { label: 'Risk Level', index: 12 },
+    { label: 'FEFO Action', index: 13 },
+  ] },
+  { name: 'AI Insights & Recommendations', id: 'ai-insights-recommendations', ingredientIdIndex: 1, fields: [
+    { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 2 }, { label: 'Category', index: 3 },
+    { label: 'Current Stock', index: 4 }, { label: 'Unit', index: 5 }, { label: 'Days of Supply', index: 6 },
+    { label: 'Risk Level', index: 7 }, { label: 'Action Priority', index: 8 }, { label: 'Recommended Action', index: 9 },
+    { label: 'Evidence & Operational Insight', index: 10 },
+  ] },
 ];
+
 const columnWidths: Record<string, number> = {
   'Ingredient ID': 18, Ingredient: 28, 'Batch ID': 22, Category: 18, 'On Hand': 15, Unit: 12,
-  'Expiry Date': 16, 'Usage Date': 16, 'Quantity Used': 17, 'Quantity Wasted': 18,
+  'Expiry Date': 16, 'Usage Date': 16, Date: 16, 'Quantity Used': 17, 'Quantity Wasted': 18,
   'Unit Cost (PHP)': 18, 'Unit Cost Source': 22, 'Inventory Value (PHP)': 22, 'Waste Cost (PHP)': 19, 'Record Notes': 40,
+  'Current Stock': 16, 'Avg Daily Usage': 18, 'Forecasted Demand': 20, 'Stock Coverage (Days)': 22,
+  'Risk Level': 15, 'Recommended Action': 28, 'Actual Usage': 16, Variance: 15, 'Variance (%)': 16, Status: 24,
+  'Accuracy Score (%)': 20, 'Evaluation Status': 18, 'Evaluated Days': 16, MAE: 14, RMSE: 14, 'WAPE (%)': 14, Notes: 40,
+  'Days to Expiry': 16, 'Projected Excess': 18, 'At-Risk Cost (PHP)': 20, 'FEFO Action': 34,
+  'Days of Supply': 16, 'Action Priority': 16, 'Evidence & Operational Insight': 45,
 };
-const numericFields = new Set(['On Hand', 'Quantity Used', 'Quantity Wasted', 'Unit Cost (PHP)', 'Inventory Value (PHP)', 'Waste Cost (PHP)']);
-const dateFields = new Set(['Usage Date', 'Expiry Date']);
+
+const numericFields = new Set([
+  'On Hand', 'Quantity Used', 'Quantity Wasted', 'Unit Cost (PHP)', 'Inventory Value (PHP)', 'Waste Cost (PHP)',
+  'Current Stock', 'Avg Daily Usage', 'Forecasted Demand', 'Stock Coverage (Days)',
+  'Actual Usage', 'Variance', 'Variance (%)',
+  'Accuracy Score (%)', 'Evaluated Days', 'MAE', 'RMSE', 'WAPE (%)',
+  'Days to Expiry', 'Projected Excess', 'At-Risk Cost (PHP)',
+  'Days of Supply',
+]);
+
+const dateFields = new Set(['Usage Date', 'Expiry Date', 'Date']);
 
 function reportNote(value: string | number | null): string | null {
   if (value === null || value === 'Complete') return null;
@@ -53,11 +100,15 @@ function reportTimestamp(value: Date) {
   }).format(value);
 }
 
+const CORE_REPORT_IDS = new Set<ReportId>(['inventory-summary', 'usage-consumption', 'expiration-waste']);
+
 export async function reportWorkbook(service: ReportExportService, period: ReportQuery, now = new Date(), selectedReport?: ReportId) {
   const { Workbook } = (await import('@excel.js/exceljs')).default;
   const workbook = new Workbook();
   const tables: ReportTable[] = [];
-  const selectedSheets = selectedReport ? sheets.filter(sheet => sheet.id === selectedReport) : sheets;
+  const selectedSheets = selectedReport
+    ? sheets.filter(sheet => sheet.id === selectedReport)
+    : sheets.filter(sheet => CORE_REPORT_IDS.has(sheet.id));
   for (const sheet of selectedSheets) {
     const query: ReportQuery = sheet.id === 'inventory-summary' ? { reportId: sheet.id } : { ...period, reportId: sheet.id };
     const table = await service.table(query, now);

@@ -213,10 +213,6 @@ if (require.main === module) {
     const usageRecords = createUsageRecords(createUsageRecordStore(driver, usageRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
     const wasteRecords = createWasteRecords(createWasteRecordStore(driver, wasteRecordModel(driver), inventoryBatchModel(driver), ingredientModel(driver), users, audits));
     const changeRequests = createChangeRequests(driver, changeRequestModel(driver), changeRequestCounterModel(driver), ingredientModel(driver), inventoryBatchModel(driver), users, audits);
-    const reports = createReportExports({ batches: inventoryBatchModel(driver), ingredients: ingredientModel(driver), usage: usageRecordModel(driver), waste: wasteRecordModel(driver), audits });
-    let operationalForecast: OperationalForecastService | undefined;
-    let operationalRisk: OperationalRiskService | undefined;
-    let operationalRecommendations: OperationalRecommendationService | undefined;
     const forecastSnapshotStore = createForecastSnapshotStore(forecastSnapshotModel(driver));
     const operationalEvaluation: ForecastEvaluationService = createForecastEvaluationService(
       ingredientModel(driver),
@@ -224,6 +220,19 @@ if (require.main === module) {
       forecastSnapshotStore,
       inventoryBatchModel(driver),
     );
+    const reports = createReportExports({
+      batches: inventoryBatchModel(driver),
+      ingredients: ingredientModel(driver),
+      usage: usageRecordModel(driver),
+      waste: wasteRecordModel(driver),
+      audits,
+      evaluation: operationalEvaluation,
+      snapshots: forecastSnapshotModel(driver),
+      snapshotStore: forecastSnapshotStore,
+    });
+    let operationalForecast: OperationalForecastService | undefined;
+    let operationalRisk: OperationalRiskService | undefined;
+    let operationalRecommendations: OperationalRecommendationService | undefined;
     if (config.mlPythonExecutable && config.mlWorkerScript) {
       const forecastWorker = createForecastInferenceWorker(config);
       const forecastHistoryStore = createForecastingHistoryStore(usageRecordModel(driver), ingredientModel(driver));

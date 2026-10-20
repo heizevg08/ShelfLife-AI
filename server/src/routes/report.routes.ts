@@ -4,9 +4,11 @@ import { authenticate } from '../middleware/auth.middleware';
 import { AdministrationError, authorizeAdministration } from '../middleware/administration.middleware';
 import { HttpError } from '../middleware/error.middleware';
 import { mongoInputGuard } from '../middleware/request-security.middleware';
-import { reportQuery, type ReportId } from '../validators/report';
+import { reportQuery, type ReportId, FORECAST_REPORT_IDS } from '../validators/report';
 import type { ReportExportService } from '../services/report-export';
 import { reportWorkbook } from '../services/report-workbook';
+
+const MANAGER_ONLY_REPORTS: ReadonlySet<string> = new Set(FORECAST_REPORT_IDS);
 
 export function reportRoutes(auth: AuthService, service: ReportExportService) {
   const router = Router();
@@ -24,6 +26,10 @@ export function reportRoutes(auth: AuthService, service: ReportExportService) {
   router.get('/operational/:reportId/preview', async (req, res, next) => {
     try {
       const query = reportQuery(req.params.reportId!, req.query);
+      const role = res.locals.user.role as string;
+      if (MANAGER_ONLY_REPORTS.has(query.reportId) && role !== 'Manager' && role !== 'Super Admin') {
+        throw new AdministrationError(403, 'FORBIDDEN', 'This report is restricted to Manager accounts');
+      }
       const table = await service.table(query);
       res.json({ columns: table.columns, rows: table.rows.slice(0, 25), totalRows: table.dataRows, empty: table.empty });
     } catch (error) { next(error); }
@@ -32,6 +38,11 @@ export function reportRoutes(auth: AuthService, service: ReportExportService) {
     let query;
     try { query = reportQuery(selectedReport ?? 'usage-consumption', req.query); }
     catch (error) { next(error); return; }
+    const role = res.locals.user.role as string;
+    if (MANAGER_ONLY_REPORTS.has(query.reportId) && role !== 'Manager' && role !== 'Super Admin') {
+      next(new AdministrationError(403, 'FORBIDDEN', 'This report is restricted to Manager accounts'));
+      return;
+    }
     const actor = { id: res.locals.user.id as string, name: `${res.locals.user.firstName ?? ''} ${res.locals.user.lastName ?? ''}`.trim(), role: (res.locals.user.role === 'Admin' ? 'Admin' : 'Manager') as 'Admin' | 'Manager' };
     const requestedReports = selectedReport
       ? [{ reportId: query.reportId, dataRows: 0 }]

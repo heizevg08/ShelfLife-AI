@@ -144,3 +144,49 @@ test('any oversized worksheet rejects the entire workbook without truncation', a
     await assert.rejects(reportWorkbook(service, query, new Date(), oversized), error => error.status === 413);
   }
 });
+
+test('forecasting report workbooks export individual sheets and enforce PoLP on XLSX endpoint', async t => {
+  const { Workbook } = (await import('@excel.js/exceljs')).default;
+  const mockTables = {
+    'demand-forecast': { columns: ['Record Type', 'Generated At (PHT)', 'Ingredient ID', 'Ingredient', 'Category', 'Unit', 'Current Stock', 'Avg Daily Usage', 'Forecasted Demand', 'Stock Coverage (Days)', 'Risk Level', 'Recommended Action'], rows: [['INGREDIENT_FORECAST', '2026-10-14 10:00:00', internalId, 'Rice', 'Dry', 'kg', 20, 2, 60, 10, 'Low', 'Maintain Stock']], dataRows: 1, empty: false },
+    'forecast-vs-actual': { columns: ['Date (PHT)', 'Ingredient ID', 'Ingredient', 'Category', 'Unit', 'Forecasted Demand', 'Actual Usage', 'Variance', 'Variance (%)', 'Status'], rows: [['2026-10-14', internalId, 'Rice', 'Dry', 'kg', 5, 4.5, -0.5, -10, 'Accurate (±10%)']], dataRows: 1, empty: false },
+    'forecast-accuracy': { columns: ['Generated At (PHT)', 'Ingredient ID', 'Ingredient', 'Category', 'Unit', 'Accuracy Score (%)', 'Evaluation Status', 'Evaluated Days', 'MAE', 'RMSE', 'WAPE (%)', 'Notes'], rows: [['2026-10-14 10:00:00', internalId, 'Rice', 'Dry', 'kg', 92.5, 'Evaluated', 14, 0.4, 0.6, 7.5, 'Accuracy target met']], dataRows: 1, empty: false },
+    'expiration-risk': { columns: ['Generated At (PHT)', 'Ingredient ID', 'Ingredient', 'Category', 'Batch ID', 'Expiration Date', 'Days to Expiry', 'On Hand Quantity', 'Unit', 'Avg Daily Usage', 'Projected Excess', 'At-Risk Cost (PHP)', 'Risk Level', 'FEFO Action'], rows: [['2026-10-14 10:00:00', internalId, 'Rice', 'Dry', 'SL-1', '2026-10-20', 6, 8, 'kg', 1, 2, 20, 'Medium', 'Priority Kitchen Prep (FEFO)']], dataRows: 1, empty: false },
+    'ai-insights-recommendations': { columns: ['Generated At (PHT)', 'Ingredient ID', 'Ingredient', 'Category', 'Current Stock', 'Unit', 'Days of Supply', 'Risk Level', 'Action Priority', 'Recommended Action', 'Evidence & Operational Insight'], rows: [['2026-10-14 10:00:00', internalId, 'Rice', 'Dry', 8, 'kg', 8, 'Medium', 'P3 - Moderate', 'Monitor Stock', 'Supply covers 8 days']], dataRows: 1, empty: false },
+  };
+  const mockService = {
+    table: async input => mockTables[input.reportId],
+    ingredientCodesForIds: async ids => new Map(ids.filter(id => id === internalId).map(id => [id, 'ING-000042'])),
+    auditWorkbook: async () => {},
+  };
+
+  const expectedSheets = [
+    ['demand-forecast', 'Demand Forecast'],
+    ['forecast-vs-actual', 'Forecast vs. Actual'],
+    ['forecast-accuracy', 'Forecast Accuracy'],
+    ['expiration-risk', 'Expiration Risk'],
+    ['ai-insights-recommendations', 'AI Insights & Recommendations'],
+  ];
+
+  for (const [id, sheetName] of expectedSheets) {
+    const res = await reportWorkbook(mockService, query, new Date('2026-10-14T02:00:00Z'), id);
+    const opened = new Workbook();
+    await opened.xlsx.load(res.buffer);
+    assert.deepEqual(opened.worksheets.map(s => s.name), [sheetName]);
+    assert.ok(opened.worksheets[0].getRow(5).values.includes('ING-000042'));
+    assert.ok(opened.worksheets[0].getRow(5).values.includes('Rice'));
+  }
+
+  // HTTP PoLP check: Admin forbidden, Manager allowed
+  const auth = { authenticate: async header => ({ id: 'a'.repeat(24), role: header?.slice(7) === 'Admin' ? 'Admin' : 'Manager' }) };
+  const server = createApp([], () => true, auth, undefined, undefined, undefined, undefined, undefined, undefined, undefined, mockService).listen(0);
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const port = server.address().port;
+
+  const adminRes = await fetch(`http://127.0.0.1:${port}/api/reports/operational/demand-forecast/export.xlsx?from=2026-10-14&to=2026-10-14`, { headers: { Authorization: 'Bearer Admin' } });
+  assert.equal(adminRes.status, 403);
+
+  const managerRes = await fetch(`http://127.0.0.1:${port}/api/reports/operational/demand-forecast/export.xlsx?from=2026-10-14&to=2026-10-14`, { headers: { Authorization: 'Bearer Manager' } });
+  assert.equal(managerRes.status, 200);
+  assert.match(managerRes.headers.get('content-disposition'), /demand-forecast-2026-10-14-2026-10-14\.xlsx/);
+});
