@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import type { ingredientModel } from '../models/ingredient';
 import type { usageRecordModel } from '../models/usage-record';
 import type { inventoryBatchModel } from '../models/inventory-batch';
@@ -346,7 +347,7 @@ export function createForecastEvaluationService(
         if (batches) {
           const stockBatches = (await batches
             .find({
-              ingredientId: ing._id as any,
+              ingredientId: new Types.ObjectId(ing._id.toString()) as any,
               expirationDate: { $gte: todayMidnight },
               quantity: { $gt: 0 },
             })
@@ -363,7 +364,7 @@ export function createForecastEvaluationService(
         // 2. Average Daily Usage
         const usageRows = (await usageRecords
           .find({
-            ingredientId: ing._id as any,
+            ingredientId: new Types.ObjectId(ing._id.toString()) as any,
             dateUsed: { $gte: usageFrom, $lte: usageTo },
           })
           .select('quantityUsed')
@@ -377,7 +378,7 @@ export function createForecastEvaluationService(
           // Fallback to recent 7-day operational usage if the current week window has not accrued consumption yet
           const fallbackRows = (await usageRecords
             .find({
-              ingredientId: ing._id as any,
+              ingredientId: new Types.ObjectId(ing._id.toString()) as any,
               dateUsed: { $gte: new Date(todayMidnight.getTime() - 7 * 86_400_000), $lt: todayMidnight },
             })
             .select('quantityUsed')
