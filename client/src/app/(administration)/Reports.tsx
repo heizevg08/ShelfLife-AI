@@ -10,6 +10,7 @@ import { Dialog } from '../../components/application/Dialog';
 import { ConnectedManagerReportsPage, ManagementReportDownloadCenter, ManagementReportRecentDownloads, adminReportOptions, useRecentReportDownloads } from '../../components/application/ManagerReportsPage';
 import { FilterSelect } from '../../components/application/FilterSelect';
 import { getWasteSummary, type WasteSummary } from '../../services/waste-records';
+import { formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
 
 function PendingPanel({ label, compact = false }: { label: string; compact?: boolean }) {
   return (
@@ -67,15 +68,15 @@ function AdminReports() {
   }, []);
   const inventoryValueLabel = inventorySummary === null || inventorySummary.inventoryValue === null
     ? '—'
-    : `₱${inventorySummary.inventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    : formatCompactPeso(inventorySummary.inventoryValue);
   return <div className="sl-admin-reports-page">
     <PageHeader eyebrow="Oversight" title="Reports" description="Generate and view reports on inventory, usage, waste, and ingredient data for your establishment." />
     <div className="sl-admin-view sl-admin-reports-v114">
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Cross-domain report summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso aria-hidden="true" /></span><div><span>Inventory Value</span><strong>{inventorySummaryFailed ? '—' : inventoryValueLabel}</strong><small>{inventorySummaryFailed ? 'Inventory valuation unavailable' : !inventorySummary ? 'Loading inventory valuation' : inventorySummary.inventoryValue === null ? 'Some batches lack authoritative unit cost' : 'Current authoritative inventory value'}</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2 aria-hidden="true" /></span><div><span>Estimated Waste Cost</span><strong>{wasteSummaryFailed ? '—' : wasteSummary ? `₱${wasteSummary.totalWasteCostToday.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}</strong><small>{wasteSummaryFailed ? 'Waste-cost summary unavailable' : wasteSummary ? 'Authoritative waste cost recorded today' : 'Loading waste-cost summary'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso aria-hidden="true" /></span><div><span>Inventory Value</span><strong title={inventorySummary?.inventoryValue == null ? undefined : formatExactPeso(inventorySummary.inventoryValue)}>{inventorySummaryFailed ? '—' : inventoryValueLabel}</strong><small>{inventorySummaryFailed ? 'Value unavailable' : !inventorySummary ? 'Loading value' : inventorySummary.inventoryValue === null ? 'Unit cost missing' : 'Stock valued at unit cost'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Trash2 aria-hidden="true" /></span><div><span>Estimated Waste Cost</span><strong title={wasteSummary ? formatExactPeso(wasteSummary.totalWasteCostToday) : undefined}>{wasteSummaryFailed ? '—' : wasteSummary ? formatCompactPeso(wasteSummary.totalWasteCostToday) : '—'}</strong><small>{wasteSummaryFailed ? 'Waste cost unavailable' : wasteSummary ? 'Waste cost today' : 'Loading waste cost'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Leaf aria-hidden="true" /></span><div><span>Total Ingredients</span><strong>{ingredientTotalFailed ? '—' : ingredientTotal?.toLocaleString() ?? '—'}</strong><small>{ingredientTotalFailed ? 'Ingredient service unavailable' : ingredientTotal === null ? 'Loading ingredient records' : 'Ingredient catalogue total'}</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList aria-hidden="true" /></span><div><span>Total Batches</span><strong>{inventorySummaryFailed ? '—' : inventorySummary?.totalBatches.toLocaleString() ?? '—'}</strong><small>{inventorySummaryFailed ? 'Inventory batch service unavailable' : !inventorySummary ? 'Loading inventory batches' : 'Live inventory batch records'}</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><ClipboardList aria-hidden="true" /></span><div><span>Total Batches</span><strong>{inventorySummaryFailed ? '—' : inventorySummary?.totalBatches.toLocaleString() ?? '—'}</strong><small>{inventorySummaryFailed ? 'Batches unavailable' : !inventorySummary ? 'Loading batches' : 'Current batches'}</small></div></article>
       </section>
 
       <div className="sl-manager-reports-live">

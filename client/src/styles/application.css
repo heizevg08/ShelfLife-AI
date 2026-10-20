@@ -35599,6 +35599,11 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 
 
 /* Manager Dashboard: Stock Status & Expiring in Next 7 Days Cards */
+/* Shared KPI text bounds for Super Admin, Admin, Manager, and Inventory Staff. */
+.sl-sa-kpis > .sl-sa-kpi > div { min-width: 0; max-width: 100%; }
+.sl-sa-kpis > .sl-sa-kpi > div > :is(span,strong,small) { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.sl-sa-kpis > .sl-sa-kpi > div > strong { font-size: clamp(1.5rem,1.1rem + .9vw,2.15rem); }
+.sl-sa-kpis > .sl-sa-kpi > div > small { min-height: 2.8em; }
 .sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-kpi > div { min-width: 0; }
 .sl-shell[data-role="Inventory Staff"] .sl-inventory-staff-kpi > div > strong { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .sl-shell[data-role="Inventory Staff"] .sl-staff-waste-kpis .sl-inventory-staff-kpi:nth-child(2) strong,
