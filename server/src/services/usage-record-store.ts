@@ -108,20 +108,18 @@ export function createUsageRecordStore(
     const ingredientIds = [...new Set(inputs.map(input => input.ingredientId))];
     const batchIds = [...new Set(inputs.map(input => input.batchId))];
 
-    const [ingredientRows, batchRows] = await Promise.all([
-      ingredients
-        .find({ _id: { $in: ingredientIds } })
-        .select('_id name unitOfMeasure')
-        .session(session)
-        .lean()
-        .exec() as Promise<IngredientRow[]>,
-      batches
-        .find({ _id: { $in: batchIds } })
-        .select('_id ingredientId batchID quantity unit')
-        .session(session)
-        .lean()
-        .exec() as Promise<BatchRow[]>,
-    ]);
+    const ingredientRows = (await ingredients
+      .find({ _id: { $in: ingredientIds } })
+      .select('_id name unitOfMeasure')
+      .session(session)
+      .lean()
+      .exec()) as IngredientRow[];
+    const batchRows = (await batches
+      .find({ _id: { $in: batchIds } })
+      .select('_id ingredientId batchID quantity unit')
+      .session(session)
+      .lean()
+      .exec()) as BatchRow[];
 
     const ingredientsById = new Map(ingredientRows.map(row => [row._id.toString(), row]));
     const batchesById = new Map(batchRows.map(row => [row._id.toString(), row]));
