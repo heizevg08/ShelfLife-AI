@@ -9,6 +9,12 @@ const schema = new Schema({
 
 schema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, name: 'login_attempt_expiry' });
 
+/**
+ * Create, or reuse, the model that counts failed logins per account.
+ *
+ * @param driver - the Mongoose instance, so tests can pass their own.
+ * @returns the login attempt model.
+ */
 export function loginAttemptModel(driver: Mongoose) {
   return driver.model('LoginAttempt', schema);
 }

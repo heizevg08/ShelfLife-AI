@@ -4,6 +4,12 @@ import { objectId } from '../validators/administration';
 import { forecastTrendDays } from '../validators/forecast';
 import { sendError } from '../middleware/error-response';
 
+/**
+ * Bind the forecast-evaluation handlers to a service instance.
+ *
+ * @param service - the forecast-evaluation service the handlers call.
+ * @returns one request handler per evaluation view.
+ */
 export function forecastEvaluationControllers(
   service: ForecastEvaluationService,
 ): Record<'accuracy' | 'overallAccuracy' | 'trend' | 'table', RequestHandler> {

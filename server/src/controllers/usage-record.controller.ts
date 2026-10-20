@@ -6,6 +6,12 @@ import { calendarDate } from '../validators/date';
 import { analyticsQuery } from '../validators/analytics';
 import { sendError } from '../middleware/error-response';
 
+/**
+ * Bind the usage-record handlers to a service instance.
+ *
+ * @param service - the usage-record service the handlers call.
+ * @returns one request handler per usage action.
+ */
 export function usageRecordControllers(service: UsageRecordService): Record<'list' | 'detail' | 'summary' | 'analytics' | 'create' | 'createMany', RequestHandler> {
   return {
     list: async (req, res) => { res.json(await service.list(usagePagination(req.query))); },

@@ -3,6 +3,12 @@ import type { AdministrationService } from '../services/administration';
 import { onAuditRecorded } from '../services/audit-events';
 import { accountInput, accountPagination, auditPagination, objectId, invalid } from '../validators/administration';
 
+/**
+ * Bind the administration handlers to a service instance.
+ *
+ * @param service - the administration service the handlers call.
+ * @returns one request handler per administrative action.
+ */
 export function administrationControllers(service: AdministrationService): Record<'list' | 'get' | 'create' | 'update' | 'deactivate' | 'reactivate' | 'delete' | 'summary' | 'audit' | 'exportAudit' | 'stream', RequestHandler> {
   const lifecycle = (active: boolean): RequestHandler => async (req, res) => {
     if (req.body && Object.keys(req.body).length) invalid('body', 'No fields are accepted');

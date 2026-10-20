@@ -9,6 +9,12 @@ const schema = new Schema({
 
 schema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, name: 'persistent_session_expiry' });
 
+/**
+ * Create, or reuse, the model for sessions that survive a restart.
+ *
+ * @param driver - the Mongoose instance, so tests can pass their own.
+ * @returns the persistent session model.
+ */
 export function persistentSessionModel(driver: Mongoose) {
   return driver.model('PersistentSession', schema);
 }

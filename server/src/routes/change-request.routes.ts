@@ -7,6 +7,13 @@ import type { ChangeRequestService } from '../services/change-requests';
 import { changeRequestControllers } from '../controllers/change-request.controller';
 import { mongoInputGuard, secureJson } from '../middleware/request-security.middleware';
 
+/**
+ * Register the change-request routes on a new router.
+ *
+ * @param auth - the auth service used to guard every route.
+ * @param service - the change-request service behind the handlers.
+ * @returns the configured router.
+ */
 export function changeRequestRoutes(auth: AuthService, service: ChangeRequestService) {
   const router = Router(), actions = changeRequestControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });

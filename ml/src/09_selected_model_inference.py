@@ -153,7 +153,7 @@ def validate_metadata_contract(
 
 
 def load_selected_model():
-    """Load the trusted persisted selected-development model after SHA-256 verification."""
+    """Load the selected model, after checking its SHA-256 hash."""
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
             f"Model artifact not found: {MODEL_PATH}"
@@ -162,7 +162,7 @@ def load_selected_model():
     actual_sha256 = compute_model_sha256(MODEL_PATH)
     if actual_sha256 != EXPECTED_MODEL_SHA256:
         raise RuntimeError(
-            "Model artifact failed SHA-256 integrity verification before deserialization."
+            "Model failed SHA-256 check before deserialization."
         )
 
     return joblib.load(MODEL_PATH)

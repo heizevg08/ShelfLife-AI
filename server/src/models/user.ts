@@ -10,12 +10,26 @@ const LEGACY_ROLE_ALIASES: Readonly<Record<string, UserRole>> = {
   InventoryStaff: 'Inventory Staff',
 };
 
+/**
+ * Map a stored role value onto a known role name.
+ *
+ * @param role - the raw value read from storage or a request.
+ * @returns the canonical role name, or null when the value is unknown.
+ */
 export function normalizeUserRole(role: unknown): UserRole | null {
   if (typeof role !== 'string') return null;
   if ((ROLES as readonly string[]).includes(role)) return role as UserRole;
   return LEGACY_ROLE_ALIASES[role] ?? null;
 }
 
+/**
+ * Roles exactly as the user collection stores them.
+ *
+ * Duplicates are dropped and unknown roles are kept, so a role this build does
+ * not know about is never silently rewritten in the database.
+ *
+ * @returns the stored role list.
+ */
 export function storedUserRoles(roles: readonly string[]): string[] {
   const requested = new Set(roles.map(normalizeUserRole).filter((role): role is UserRole => role !== null));
   return [
@@ -52,6 +66,13 @@ const schema = new Schema({
 schema.index({ personalEmail: 1 }, { unique: true, sparse: true, name: 'personalEmail_1' });
 
 export type UserRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
+
+/**
+ * Create, or reuse, the model for user accounts.
+ *
+ * @param driver - the Mongoose instance, so tests can pass their own.
+ * @returns the user model.
+ */
 export function userModel(driver: Mongoose) {
   return driver.model('User', schema);
 }
@@ -63,6 +84,13 @@ function isoTimestamp(value: unknown): string | undefined {
   }
   return undefined;
 }
+
+/**
+ * The user fields that may leave the server.
+ *
+ * @param user - the stored user record.
+ * @returns the record without its password hash.
+ */
 export function safeUser(user: UserRecord) {
   const role = normalizeUserRole(user.role) ?? user.role;
   const storedName = typeof user.name === 'string' ? user.name.trim() : '';

@@ -13,6 +13,14 @@ export const mongoInputGuard: RequestHandler = (req, _res, next) => {
   next();
 };
 
+/**
+ * Parse a JSON body with a size limit and strip keys that could reach a query.
+ *
+ * The strip guards against MongoDB operators arriving through user input.
+ *
+ * @param options - express.json options, such as the body size limit.
+ * @returns the configured body parser.
+ */
 export function secureJson(options: Parameters<typeof express.json>[0] = { limit: '100kb' }): RequestHandler {
   const parse = express.json(options);
   return (req, res, next) => {

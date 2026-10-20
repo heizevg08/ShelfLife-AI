@@ -4,6 +4,12 @@ import { ingredientInput, ingredientPagination } from '../validators/ingredient'
 import { objectId } from '../validators/administration';
 import { sendError } from '../middleware/error-response';
 
+/**
+ * Bind the ingredient handlers to a service instance.
+ *
+ * @param service - the ingredient service the handlers call.
+ * @returns one request handler per ingredient action.
+ */
 export function ingredientControllers(service: IngredientService): Record<'categories' | 'stockInOptions' | 'summary' | 'list' | 'create' | 'update' | 'remove', RequestHandler> {
   return {
     categories: async (_req, res) => { res.json({ categories: service.categories() }); },

@@ -18,4 +18,11 @@ schema.index({ ingredientId: 1, dateWasted: -1 });
 schema.index({ batchId: 1, dateWasted: -1 });
 
 export type WasteRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
+
+/**
+ * Create, or reuse, the model for waste records.
+ *
+ * @param driver - the Mongoose instance, so tests can pass their own.
+ * @returns the waste record model.
+ */
 export function wasteRecordModel(driver: Mongoose) { return driver.model('WasteRecord', schema); }

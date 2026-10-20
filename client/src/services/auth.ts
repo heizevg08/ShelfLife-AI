@@ -32,6 +32,14 @@ export function sessionDisplayName(user: Pick<SessionUser, 'name' | 'role'>): st
   return name || user.role;
 }
 
+/**
+ * Initials for a user avatar.
+ *
+ * Falls back from first and last name to the display name, and finally to the
+ * first letter of the role, so the avatar is never empty.
+ *
+ * @returns one or two uppercase letters.
+ */
 export function sessionInitials(user: Pick<SessionUser, 'name' | 'role'> & Partial<Pick<SessionUser, 'firstName' | 'lastName'>>): string {
   // Initials are taken from the account's own authoritative name parts whenever the backend
   // supplies them, so a saved First/Last Name change updates the avatar at once. When a part is
@@ -83,6 +91,16 @@ async function refreshSession(): Promise<SessionUser> {
   return typeof navigator !== 'undefined' && navigator.locks
     ? navigator.locks.request('shelflifeai-session', refresh) : refresh();
 }
+
+/**
+ * Read the signed-in user from the server.
+ *
+ * The server is asked rather than the stored copy, so a token that was revoked
+ * elsewhere cannot keep a session alive.
+ *
+ * @returns the session user.
+ * @throws ApiError when the session is missing or has expired.
+ */
 export async function currentUser(): Promise<SessionUser> {
   // The token is attached inside request(), so an empty token still fails closed with a 401
   // and falls through to the refresh path below.
@@ -92,6 +110,12 @@ export async function currentUser(): Promise<SessionUser> {
   }
   return refreshing ??= refreshSession().finally(() => { refreshing = undefined; });
 }
+
+/**
+ * End the session locally and ask the server to end it too.
+ *
+ * @returns resolves once the local session is cleared, even when the server call fails.
+ */
 export async function logout(): Promise<void> {
   const revoke = async () => { await request('logout', { method: 'POST' }); clearSession(); };
   if (typeof navigator !== 'undefined' && navigator.locks) await navigator.locks.request('shelflifeai-session', revoke);
@@ -113,6 +137,16 @@ export const completeEmailChange = (code: string) =>
   request('email/change/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) }) as Promise<{ message: string }>;
 export const requestPasswordReset = (email: string) => request('password-reset/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
 export const completePasswordReset = (token: string, password: string) => request('password-reset/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, password }) });
+
+/**
+ * Exchange credentials for a session and store the access token.
+ *
+ * @param email - the account email.
+ * @param password - the account password.
+ * @param rememberMe - keep the session across browser restarts.
+ * @returns the signed-in user.
+ * @throws ApiError when the credentials are rejected or the account is inactive.
+ */
 export async function login(email: string, password: string, rememberMe = false): Promise<SessionUser> {
   clearSession();
   const body = await request('login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, rememberMe }) });

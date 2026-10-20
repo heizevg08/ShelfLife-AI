@@ -2,6 +2,14 @@ import type { RequestHandler } from 'express';
 import type { AuthService } from '../services/auth';
 import { HttpError } from './error.middleware';
 
+/**
+ * Reject a request without a valid access token.
+ *
+ * On success the verified session user is attached for the handlers downstream.
+ *
+ * @param auth - the auth service that verifies tokens.
+ * @returns the middleware guarding protected routes.
+ */
 export function authenticate(auth: AuthService): RequestHandler {
   return async (req, res, next) => {
     try {

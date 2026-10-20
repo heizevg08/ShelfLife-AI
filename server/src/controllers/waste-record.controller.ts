@@ -5,6 +5,12 @@ import { wasteBulkInput, wasteInput, wastePagination } from '../validators/waste
 import { analyticsQuery } from '../validators/analytics';
 import { sendError } from '../middleware/error-response';
 
+/**
+ * Bind the waste-record handlers to a service instance.
+ *
+ * @param service - the waste-record service the handlers call.
+ * @returns one request handler per waste action.
+ */
 export function wasteRecordControllers(service: WasteRecordService): Record<'list' | 'detail' | 'summary' | 'reasonBreakdown' | 'analytics' | 'create' | 'createMany', RequestHandler> {
   return {
     list: async (req, res) => { res.json(await service.list(wastePagination(req.query))); },

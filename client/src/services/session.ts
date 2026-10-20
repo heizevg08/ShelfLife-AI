@@ -3,6 +3,11 @@
 let token: string | null = null;
 const key = 'shelflifeai.accessToken';
 
+/**
+ * The access token held for the current tab.
+ *
+ * @returns the token, or null when no one is signed in.
+ */
 export function getAccessToken(): string | null {
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
@@ -14,6 +19,11 @@ export function getAccessToken(): string | null {
   return token;
 }
 
+/**
+ * Store the access token used by later API calls.
+ *
+ * @param value - the token issued at login.
+ */
 export function setAccessToken(value: string) {
   token = value;
   try {
@@ -25,6 +35,10 @@ export function setAccessToken(value: string) {
   }
 }
 
+/**
+ * Forget the stored access token.
+ *
+ */
 export function clearSession() {
   token = null;
   try {

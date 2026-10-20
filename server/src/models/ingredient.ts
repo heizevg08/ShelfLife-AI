@@ -17,4 +17,11 @@ const schema = new Schema({
 schema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 export type IngredientRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
+
+/**
+ * Create, or reuse, the model for ingredients.
+ *
+ * @param driver - the Mongoose instance, so tests can pass their own.
+ * @returns the ingredient model.
+ */
 export function ingredientModel(driver: Mongoose) { return driver.model('Ingredient', schema); }

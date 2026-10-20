@@ -7,6 +7,13 @@ import { HttpError } from '../middleware/error.middleware';
 import { inventoryBatchControllers } from '../controllers/inventory-batch.controller';
 import { mongoInputGuard, secureJson } from '../middleware/request-security.middleware';
 
+/**
+ * Register the stock-batch routes on a new router.
+ *
+ * @param auth - the auth service used to guard every route.
+ * @param service - the inventory-batch service behind the handlers.
+ * @returns the configured router.
+ */
 export function inventoryBatchRoutes(auth: AuthService, service: InventoryBatchService) {
   const router = Router(), actions = inventoryBatchControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });

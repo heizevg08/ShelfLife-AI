@@ -1,6 +1,13 @@
 // The API reports liveness and combined readiness, not standalone database health.
 export interface SystemAvailability { backendAlive: boolean; backendReady: boolean; checkedAt: Date }
 
+/**
+ * Whether the API and its database are reachable.
+ *
+ * @param signal - aborts the probe when the banner unmounts.
+ * @returns the availability of each dependency.
+ * @throws ApiError when the health check itself cannot be reached.
+ */
 export async function getSystemAvailability(signal: AbortSignal): Promise<SystemAvailability> {
   const base = apiBaseUrl;
   const [live, ready] = await Promise.all(['live', 'ready'].map(async path => {

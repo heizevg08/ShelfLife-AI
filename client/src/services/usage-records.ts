@@ -48,6 +48,13 @@ export const getUsageAnalytics = (
   return apiClient<UsageAnalytics>(`/usage-records/analytics${params.size ? `?${params}` : ''}`, { signal });
 };
 
+/**
+ * One page of ingredient usage records.
+ *
+ * @param query - page, page size, search text, ingredient and date range.
+ * @param signal - aborts the request when the filters change again.
+ * @returns the page items with the matching total count.
+ */
 export function listUsageRecords(
   query: { page: number; pageSize: number; search?: string; ingredientId?: string; from?: string; to?: string },
   signal?: AbortSignal
@@ -68,6 +75,12 @@ export const getUsageSummary = (signal?: AbortSignal, businessDate?: string) =>
     signal,
   });
 
+/**
+ * Record one usage entry and deduct it from its batch.
+ *
+ * @returns the saved usage record.
+ * @throws ApiError when the quantity exceeds the batch or the date is invalid.
+ */
 export async function createUsageRecord(input: UsageInput) {
   const result = await apiClient<{ record: UsageRecord }>('/usage-records', {
     method: 'POST',
@@ -78,6 +91,12 @@ export async function createUsageRecord(input: UsageInput) {
   return result.record;
 }
 
+/**
+ * Record several usage entries in one request.
+ *
+ * @returns the saved usage records, in submission order.
+ * @throws ApiError when any row fails validation.
+ */
 export async function createUsageRecords(items: UsageInput[]) {
   const result = await apiClient<{ count: number; records: UsageRecord[] }>('/usage-records/bulk', {
     method: 'POST',

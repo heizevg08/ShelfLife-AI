@@ -106,7 +106,6 @@ function FormPreview({ id }: { id: PreviewId }) {
 }
 
 
-
 function InventoryStaffWastePage() {
   const router = useRouter();
   const params = useLocalSearchParams<{ recordWaste?: string; ingredientId?: string; batchId?: string }>();
@@ -679,7 +678,6 @@ function SuperAdminIngredientsPage() {
 }
 
 
-
 function SuperAdminInventoryBatchesPage() {
   const [batchSearch, setBatchSearch] = useState('');
   const [batchIngredient, setBatchIngredient] = useState('All Ingredients');
@@ -768,7 +766,6 @@ function SuperAdminInventoryBatchesPage() {
     </Dialog>
   </>;
 }
-
 
 
 function SuperAdminUsagePending({ label, compact = false }: { label: string; compact?: boolean }) {

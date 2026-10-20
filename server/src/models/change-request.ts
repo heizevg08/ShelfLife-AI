@@ -32,4 +32,10 @@ const schema = new Schema({
 }, { timestamps: true, versionKey: false, collection: 'changeRequests', strict: 'throw' });
 schema.index({ requestedBy: 1, createdAt: -1, _id: -1 });
 
+/**
+ * Create, or reuse, the model for change requests.
+ *
+ * @param driver - the Mongoose instance, so tests can pass their own.
+ * @returns the change-request model.
+ */
 export function changeRequestModel(driver: Mongoose) { return driver.model('ChangeRequest', schema); }

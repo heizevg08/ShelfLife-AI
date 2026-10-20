@@ -3,6 +3,12 @@ import { objectId } from '../validators/administration';
 import { changeRequestInput, changeRequestPeriodQuery, changeRequestQuery, reviewInput } from '../validators/change-request';
 import type { ChangeRequestService } from '../services/change-requests';
 
+/**
+ * Bind the change-request handlers to a service instance.
+ *
+ * @param service - the change-request service the handlers call.
+ * @returns one request handler per change-request action.
+ */
 export function changeRequestControllers(service: ChangeRequestService): Record<'list' | 'detail' | 'summary' | 'managerSummary' | 'ingredientOptions' | 'create' | 'approve' | 'reject', RequestHandler> {
   return {
     list: async (req, res) => {

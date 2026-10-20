@@ -7,6 +7,13 @@ import { HttpError } from '../middleware/error.middleware';
 import { administrationControllers } from '../controllers/administration.controller';
 import { secureJson } from '../middleware/request-security.middleware';
 
+/**
+ * Register the administration routes on a new router.
+ *
+ * @param auth - the auth service used to guard every route.
+ * @param service - the administration service behind the handlers.
+ * @returns the configured router.
+ */
 export function administrationRoutes(auth: AuthService, service: AdministrationService) {
   const router = Router();
   const actions = administrationControllers(service);

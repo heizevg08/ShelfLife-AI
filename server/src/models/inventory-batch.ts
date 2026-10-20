@@ -16,4 +16,11 @@ schema.index({ batchID: 1 }, { unique: true, collation: { locale: 'en', strength
 schema.index({ createdAt: -1, _id: -1 });
 
 export type InventoryBatchRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
+
+/**
+ * Create, or reuse, the model for stock batches.
+ *
+ * @param driver - the Mongoose instance, so tests can pass their own.
+ * @returns the inventory batch model.
+ */
 export function inventoryBatchModel(driver: Mongoose) { return driver.model('InventoryBatch', schema); }

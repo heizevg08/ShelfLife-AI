@@ -248,7 +248,6 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   }, []);
 
 
-
   const openArea = (id: AdministrationAreaId) => {
     drawer.current?.close();
     const area = administrationAreas.find(item => item.id === id);

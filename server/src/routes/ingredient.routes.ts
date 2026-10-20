@@ -15,6 +15,17 @@ import type { ForecastEvaluationService } from '../services/forecast-evaluation-
 import { forecastEvaluationControllers } from '../controllers/forecast-evaluation.controller';
 import { mongoInputGuard, secureJson } from '../middleware/request-security.middleware';
 
+/**
+ * Register the ingredient routes on a new router.
+ *
+ * @param auth - the auth service used to guard every route.
+ * @param service - the ingredient service behind the handlers.
+ * @param forecast - optional forecast service for the advisory views.
+ * @param risk - optional risk service for the expiry-risk views.
+ * @param recommendations - optional recommendation service.
+ * @param evaluation - optional evaluation service for accuracy views.
+ * @returns the configured router.
+ */
 export function ingredientRoutes(
   auth: AuthService,
   service: IngredientService,

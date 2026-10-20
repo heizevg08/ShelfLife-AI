@@ -49,6 +49,15 @@ export interface StockInInput {
   unitCost?: number;
 }
 
+/**
+ * One page of stock batches, optionally filtered and sorted.
+ *
+ * @param query - page, page size, search text, category, display status, date
+ * range and sort order; `eligibleFefo` keeps only batches still usable under
+ * first-expired-first-out.
+ * @param signal - aborts the request when the filters change again.
+ * @returns the page items with the matching total count.
+ */
 export function listInventoryBatches(
   query: {
     page: number;
@@ -79,20 +88,41 @@ export function listInventoryBatches(
   );
 }
 
+/**
+ * Headline counts, values and category totals for the inventory screens.
+ *
+ * @returns the inventory summary.
+ */
 export function getInventoryBatchSummary(signal?: AbortSignal) {
   return apiClient<InventoryBatchSummary>('/inventory-batches/summary', { signal });
 }
 
+/**
+ * One stock batch with its ingredient, remaining days and display status.
+ *
+ * @returns the batch.
+ * @throws ApiError when the batch no longer exists.
+ */
 export function getInventoryBatch(id: string, signal?: AbortSignal) {
   return apiClient<{ batch: InventoryBatch }>(`/inventory-batches/${encodeURIComponent(id)}`, { signal }).then(
     result => result.batch
   );
 }
 
+/**
+ * Stock-In counters for today and the current month.
+ *
+ * @returns the Stock-In summary.
+ */
 export function getStockInSummary(signal?: AbortSignal) {
   return apiClient<StockInSummary>('/inventory-batches/stock-in-summary', { signal });
 }
 
+/**
+ * Download the stock-batch report for a date range as XLSX.
+ *
+ * @param range - the date range to export; null exports every date.
+ */
 export function downloadInventoryPeriodXlsx(range: ReportRange) {
   const params = range ? `?${new URLSearchParams(range)}` : '';
   const suffix = range ? `${range.from}-${range.to}` : 'all-dates-all-dates';
@@ -103,6 +133,12 @@ export function downloadInventoryPeriodXlsx(range: ReportRange) {
   );
 }
 
+/**
+ * Record one stock-in batch and announce its new batch ID.
+ *
+ * @returns the saved batch.
+ * @throws ApiError when validation fails or the ingredient is unknown.
+ */
 export async function createStockIn(input: StockInInput) {
   const result = await apiClient<{ batch: InventoryBatch }>('/inventory-batches', {
     method: 'POST',
@@ -113,6 +149,12 @@ export async function createStockIn(input: StockInInput) {
   return result.batch;
 }
 
+/**
+ * Record several stock-in batches in one request.
+ *
+ * @returns the saved batches, in submission order.
+ * @throws ApiError when any row fails validation.
+ */
 export async function createStockIns(items: StockInInput[]) {
   const result = await apiClient<{ count: number; batches: InventoryBatch[] }>('/inventory-batches/bulk', {
     method: 'POST',

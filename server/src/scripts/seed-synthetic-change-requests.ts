@@ -39,7 +39,7 @@ async function main() {
   const now = new Date();
   const dateKey = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}`;
 
-  // Check current counter
+  // Resume numbering from the stored counter so re-running the seed keeps IDs unique.
   const counterDoc = await Counters.findOne({ dateKey }).lean().exec();
   let seq = counterDoc?.sequence ?? 2;
 
@@ -138,7 +138,7 @@ async function main() {
     }
   }
 
-  // Update counter
+  // Persist the last used sequence, so the next seed run continues after it.
   await Counters.findOneAndUpdate(
     { dateKey },
     { $set: { sequence: seq } },

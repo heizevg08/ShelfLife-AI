@@ -20,4 +20,11 @@ schema.index({ ingredientId: 1, targetDate: 1, status: 1 });
 schema.index({ generatedAt: 1 }, { expireAfterSeconds: 90 * 86400 });
 
 export type ForecastSnapshotRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
+
+/**
+ * Create, or reuse, the model for stored forecast snapshots.
+ *
+ * @param driver - the Mongoose instance, so tests can pass their own.
+ * @returns the forecast snapshot model.
+ */
 export function forecastSnapshotModel(driver: Mongoose) { return driver.model('ForecastSnapshot', schema); }

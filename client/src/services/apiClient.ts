@@ -16,6 +16,14 @@ export class ApiError extends Error {
 
 type ApiClientOptions = RequestInit & { successMessage?: string | false; errorFeedback?: boolean };
 
+/**
+ * Send a request to the API and unwrap the typed JSON response.
+ *
+ * @param path - API path beginning with a slash, without the API prefix.
+ * @param options - method, body, abort signal and toast behaviour.
+ * @returns the parsed response body.
+ * @throws ApiError when the server answers with an error status.
+ */
 export async function apiClient<T>(path: string, options: ApiClientOptions = {}): Promise<T> {
   const { successMessage = 'Changes saved successfully.', errorFeedback = true, ...requestOptions } = options;
   const method = (requestOptions.method ?? 'GET').toUpperCase();

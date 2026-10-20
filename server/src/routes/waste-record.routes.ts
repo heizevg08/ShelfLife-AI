@@ -7,6 +7,13 @@ import { HttpError } from '../middleware/error.middleware';
 import { wasteRecordControllers } from '../controllers/waste-record.controller';
 import { mongoInputGuard, secureJson } from '../middleware/request-security.middleware';
 
+/**
+ * Register the waste-record routes on a new router.
+ *
+ * @param auth - the auth service used to guard every route.
+ * @param service - the waste-record service behind the handlers.
+ * @returns the configured router.
+ */
 export function wasteRecordRoutes(auth: AuthService, service: WasteRecordService) {
   const router = Router(), actions = wasteRecordControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });

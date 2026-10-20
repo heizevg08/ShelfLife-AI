@@ -27,6 +27,18 @@ export interface IngredientInput {
   standardUnitCost?: number;
   defaultShelfLifeDays?: number;
 }
+
+/**
+ * One page of ingredients, newest filters applied.
+ *
+ * @param page - 1-based page number.
+ * @param pageSize - rows per page.
+ * @param search - free text matched against the ingredient name.
+ * @param category - restricts the page to one category.
+ * @param signal - aborts the request when the filters change again.
+ * @param unit - restricts the page to one unit of measure.
+ * @returns the page items with the matching total count.
+ */
 export function listIngredients(page = 1, pageSize = 25, search = '', category = '', signal?: AbortSignal, unit = '') {
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
   if (search) query.set('search', search);

@@ -7,6 +7,13 @@ import { HttpError } from '../middleware/error.middleware';
 import { usageRecordControllers } from '../controllers/usage-record.controller';
 import { mongoInputGuard, secureJson } from '../middleware/request-security.middleware';
 
+/**
+ * Register the usage-record routes on a new router.
+ *
+ * @param auth - the auth service used to guard every route.
+ * @param service - the usage-record service behind the handlers.
+ * @returns the configured router.
+ */
 export function usageRecordRoutes(auth: AuthService, service: UsageRecordService) {
   const router = Router(), actions = usageRecordControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });

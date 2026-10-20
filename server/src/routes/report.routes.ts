@@ -10,6 +10,13 @@ import { reportWorkbook } from '../services/report-workbook';
 
 const MANAGER_ONLY_REPORTS: ReadonlySet<string> = new Set(FORECAST_REPORT_IDS);
 
+/**
+ * Register the report and export routes on a new router.
+ *
+ * @param auth - the auth service used to guard every route.
+ * @param service - the report service behind the handlers.
+ * @returns the configured router.
+ */
 export function reportRoutes(auth: AuthService, service: ReportExportService) {
   const router = Router();
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });

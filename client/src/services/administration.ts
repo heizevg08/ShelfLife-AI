@@ -149,6 +149,13 @@ export async function streamAuditRecorded(
   }
 }
 
+/**
+ * Download the administration audit log as an XLSX file.
+ *
+ * @param filters - the filters currently applied to the audit screen.
+ * @param signal - aborts the download when the screen unmounts.
+ * @returns resolves once the browser has received the file.
+ */
 export async function downloadAuditXlsx(filters: AuditFilters, signal?: AbortSignal): Promise<void> {
   const { currentUser } = await import('./auth');
   const { getAccessToken } = await import('./session');

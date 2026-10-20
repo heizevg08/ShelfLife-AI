@@ -1,5 +1,11 @@
 import { Router } from 'express';
 
+/**
+ * Register the health and readiness probes on a new router.
+ *
+ * @param isReady - reports whether the database connection is usable.
+ * @returns the configured router.
+ */
 export function healthRoutes(isReady: () => boolean): Router {
   const router = Router();
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });

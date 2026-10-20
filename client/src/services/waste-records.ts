@@ -55,6 +55,14 @@ export const getWasteAnalytics = (
   return apiClient<WasteAnalytics>(`/waste-records/analytics${params.size ? `?${params}` : ''}`, { signal });
 };
 
+/**
+ * One page of waste records.
+ *
+ * @param query - page, page size, search text, waste reason, ingredient and
+ * date range.
+ * @param signal - aborts the request when the filters change again.
+ * @returns the page items with the matching total count.
+ */
 export function listWasteRecords(
   query: { page: number; pageSize: number; search?: string; reason?: WasteReason; ingredientId?: string; from?: string; to?: string },
   signal?: AbortSignal
@@ -74,6 +82,12 @@ export function listWasteRecords(
 export const getWasteSummary = (signal?: AbortSignal) =>
   apiClient<WasteSummary>('/waste-records/summary', { signal });
 
+/**
+ * Record one waste entry and deduct it from its batch.
+ *
+ * @returns the saved waste record.
+ * @throws ApiError when the quantity exceeds the batch or the date is invalid.
+ */
 export async function createWasteRecord(input: WasteInput) {
   const result = await apiClient<{ record: WasteRecord }>('/waste-records', {
     method: 'POST',
@@ -84,6 +98,12 @@ export async function createWasteRecord(input: WasteInput) {
   return result.record;
 }
 
+/**
+ * Record several waste entries in one request.
+ *
+ * @returns the saved waste records, in submission order.
+ * @throws ApiError when any row fails validation.
+ */
 export async function createWasteRecords(items: WasteInput[]) {
   const result = await apiClient<{ count: number; records: WasteRecord[] }>('/waste-records/bulk', {
     method: 'POST',

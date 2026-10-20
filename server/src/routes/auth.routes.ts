@@ -22,6 +22,14 @@ export interface AuthExtensions {
   auditAuthenticationEvent?: (action: 'LOGIN' | 'LOGOUT', actor: { id: string; name: string; role: string }) => Promise<void>;
 }
 
+/**
+ * Register the authentication routes on a new router.
+ *
+ * @param auth - the auth service behind the handlers.
+ * @param origins - extra origins allowed to call the session endpoints.
+ * @param extensions - optional hooks for password reset and email change.
+ * @returns the configured router.
+ */
 export function authRoutes(auth: AuthService, origins: readonly string[] = [], extensions: AuthExtensions = {}) {
   const router = Router();
   const limiter = extensions.loginLimiter ?? createLoginLimiter(memoryLoginAttemptStore());

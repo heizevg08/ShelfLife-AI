@@ -14,4 +14,11 @@ schema.index({ ingredientId: 1, dateUsed: -1 });
 schema.index({ batchId: 1, dateUsed: -1 });
 
 export type UsageRecord = InferSchemaType<typeof schema> & { _id: { toString(): string } };
+
+/**
+ * Create, or reuse, the model for usage records.
+ *
+ * @param driver - the Mongoose instance, so tests can pass their own.
+ * @returns the usage record model.
+ */
 export function usageRecordModel(driver: Mongoose) { return driver.model('UsageRecord', schema); }

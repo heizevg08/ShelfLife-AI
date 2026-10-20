@@ -5,6 +5,12 @@ import { objectId } from '../validators/administration';
 import { inventoryBatchWorkbook } from '../services/inventory-batch-workbook';
 import { sendError } from '../middleware/error-response';
 
+/**
+ * Bind the stock-batch handlers to a service instance.
+ *
+ * @param service - the inventory-batch service the handlers call.
+ * @returns one request handler per stock-batch action.
+ */
 export function inventoryBatchControllers(service: InventoryBatchService): Record<'list' | 'exportXlsx' | 'detail' | 'summary' | 'stockInSummary' | 'create' | 'createMany', RequestHandler> {
   return {
     list: async (req, res) => { res.json(await service.list(inventoryBatchPagination(req.query))); },
