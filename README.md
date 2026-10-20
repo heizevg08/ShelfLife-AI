@@ -15,6 +15,7 @@ This group delivery includes the frontend/backend baseline and the frozen ML inf
 - `ml/tests/test_persistent_inference_worker.py` — worker protocol test
 - `ml/tests/test_single_series_equivalence.py` — single-series equivalence test
 - `ml/requirements-runtime.txt` — pinned ML dependencies
+- `docs/ML_EVALUATION_METHODOLOGY_AND_ARCHITECTURE.md` — academic defense reference, mathematical formulations, and forecast-vs-actual evaluation architecture
 
 ## Machine learning — what it does and does not do
 
@@ -77,15 +78,19 @@ The persisted Random Forest is a **development model** trained on FreshRetailNet
 
 None required beyond the runtime environments below.
 
-## ML backend invocation
+## ML backend invocation & Evaluation Pipeline
 
-The Express API invokes the ML runtime through a small TypeScript integration layer:
+The Express API invokes the ML runtime through an integrated TypeScript service layer:
 
 1. `POST /api/ingredients/:id/forecast` (Admin/Manager only) accepts `forecastDates` and delegates to `OperationalForecastService`.
-2. `OperationalForecastService` loads the ingredient's contiguous usage history from MongoDB via `ForecastingHistoryStore`, then spawns a **persistent Python worker** (`ml/src/10_persistent_inference_worker.py`) using `ML_PYTHON_EXECUTABLE` and `ML_WORKER_SCRIPT`.
+2. `OperationalForecastService` loads the ingredient's contiguous usage history from MongoDB via `ForecastingHistoryStore`, then communicates with a **persistent Python worker** (`ml/src/10_persistent_inference_worker.py`) using `ML_PYTHON_EXECUTABLE` and `ML_WORKER_SCRIPT`.
 3. The worker loads and validates the frozen Random Forest artifact (`ml/models/selected_random_forest.joblib` + `ml/models/selected_random_forest_metadata.json`) once at startup, then serves JSON-lines inference requests over stdin/stdout.
-4. The worker runs `ml/src/09_selected_model_inference.py` to validate the six-feature contract and generate recursive consumption forecasts.
-5. `OperationalRiskService` and `OperationalRecommendationService` apply deterministic business logic to the forecast plus actual batch/expiry data — the model never mutates inventory.
+4. The worker executes `ml/src/09_selected_model_inference.py` to validate the six-feature contract and generate recursive consumption forecasts.
+5. Upon generating predictions, the system writes immutable point-in-time snapshots to `ForecastSnapshotStore` with `horizonDays`, `targetDate`, and `predictedQuantity`.
+6. `ForecastEvaluationService` provides truth-based forecast evaluation against completed kitchen consumption (`UsageRecord`), computing MAE, RMSE, WAPE, and an Accuracy Score across past calendar days:
+   - `GET /api/ingredients/:id/forecast-accuracy` — evaluates completed historical days (minimum 7 evaluated days; excludes the in-progress current day).
+   - `GET /api/ingredients/:id/forecast-vs-actual` — delivers paired daily actual vs. forecast trend series for analytical charting.
+7. `OperationalRiskService` and `OperationalRecommendationService` apply deterministic business logic to the forecast plus actual batch/expiry data — the model never mutates inventory.
 
 ML is opt-in: set `ML_PYTHON_EXECUTABLE` and `ML_WORKER_SCRIPT` in `server/.env`. Without them, the backend starts normally and ML endpoints remain unavailable.
 
