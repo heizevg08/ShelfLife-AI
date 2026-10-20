@@ -20,13 +20,13 @@ import { ChangeRequestDetailsDialog } from '../application/ChangeRequestDetailsD
 import { ManagerDailyRecordChart, type DailyPoint } from '../application/ManagerDailyRecordChart';
 import { businessDateInputValue, shiftBusinessDate } from '../../utils/business-day';
 
-function DashboardHeading({ userName, description, source = false, descriptionInHeader = false }: { userName: string; description?: string; source?: boolean; descriptionInHeader?: boolean }) {
+function DashboardHeading({ userName, description, source = false, descriptionInHeader = false, className = '' }: { userName: string; description?: string; source?: boolean; descriptionInHeader?: boolean; className?: string }) {
   const [greeting, setGreeting] = useState('Welcome');
   useEffect(() => {
     const update = () => { const hour = new Date().getHours(); setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'); };
     update(); const interval = window.setInterval(update, 30000); return () => window.clearInterval(interval);
   }, []);
-  return <div className={`sl-dashboard-heading sl-dashboard-heading-v8${source ? ' sl-dashboard-source-heading' : ''}`}><PageHeader eyebrow={descriptionInHeader ? 'Overview' : 'Dashboard'} title={`${greeting}, ${userName}.`} description={descriptionInHeader ? description : undefined} />{description && !descriptionInHeader && <p className="sl-dashboard-description">{description}</p>}</div>;
+  return <div className={`sl-dashboard-heading sl-dashboard-heading-v8${source ? ' sl-dashboard-source-heading' : ''}${className ? ` ${className}` : ''}`}><PageHeader eyebrow={descriptionInHeader ? 'Overview' : 'Dashboard'} title={`${greeting}, ${userName}.`} description={descriptionInHeader ? description : undefined} />{description && !descriptionInHeader && <p className="sl-dashboard-description">{description}</p>}</div>;
 }
 
 function DashboardCardTitle({ Icon, children }: { Icon: LucideIcon; children: ReactNode }) {
@@ -380,7 +380,7 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
   };
   const recordState = (columns: number, loading: boolean, failed: boolean, description: string) => <tr><td colSpan={columns} className="sl-empty-cell"><DataState kind={failed ? 'error' : loading ? 'loading' : 'empty'} title={failed ? 'Data unavailable' : loading ? 'Loading records' : 'No live records yet'} description={failed ? 'The service could not be reached.' : loading ? 'Retrieving current records.' : description} /></td></tr>;
   return <>
-    <DashboardHeading userName={userName} description="Review inventory priorities, pending decisions, and operational risk." descriptionInHeader />
+    <DashboardHeading userName={userName} description="Review inventory priorities, pending decisions, and operational risk." descriptionInHeader className="sl-manager-dashboard-heading" />
     <div className="sl-admin-view sl-manager-dashboard-v116 sl-manager-dashboard-v117">
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Manager inventory overview">
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso /></span><div><span>Total Inventory Value</span><strong title={summary?.inventoryValue !== null && summary?.inventoryValue !== undefined && Number.isFinite(summary.inventoryValue) ? formatExactPeso(summary.inventoryValue) : undefined}>{inventoryError || summary?.inventoryValue === null || summary?.inventoryValue === undefined || !Number.isFinite(summary.inventoryValue) ? '—' : formatCompactPeso(summary.inventoryValue)}</strong><small>{inventoryError ? 'Value unavailable' : !summary ? 'Loading value' : summary.inventoryValue === null ? 'Unit cost unavailable' : 'Stock valued at unit cost'}</small></div></article>

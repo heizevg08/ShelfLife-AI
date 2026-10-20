@@ -35599,6 +35599,8 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 
 
 /* Manager Dashboard: Stock Status & Expiring in Next 7 Days Cards */
+.sl-manager-dashboard-heading { width: 100%; align-self: stretch; justify-content: flex-start; }
+.sl-manager-dashboard-heading > .sl-page-header { width: 100%; min-width: 0; }
 .sl-mgr-card-title-group { display: flex; flex-direction: column; gap: 0.15rem; }
 .sl-mgr-card-main-title { font-size: 1.125rem; font-weight: 700; color: var(--sl-text); letter-spacing: -0.01em; }
 .sl-mgr-card-sub { font-size: 0.8125rem; font-weight: 400; color: var(--sl-muted); }
