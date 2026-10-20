@@ -202,19 +202,19 @@ function ManagerAlerts() {
       <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Alert summary">
         <article className="sl-sa-kpi" data-tone="brand">
           <span className="sl-sa-kpi-icon"><AlertTriangle aria-hidden="true" /></span>
-          <div><span>Expiring Soon</span><strong>{summaryError ? '—' : summaryLoading ? '…' : summary?.nearExpiry ?? 0}</strong><small>{summaryError ? 'Expiration alerts unavailable' : summary ? 'Batches expiring within 7 days' : 'Checking expiration alerts'}</small></div>
+          <div><span>Expiring Soon</span><strong>{summaryError ? '—' : summaryLoading ? '…' : summary?.nearExpiry ?? 0}</strong><small>{summaryError ? 'Expiry alerts unavailable' : summary ? 'Expiring within 7 days' : 'Checking expiry alerts'}</small></div>
         </article>
         <article className="sl-sa-kpi" data-tone="info">
           <span className="sl-sa-kpi-icon"><Boxes aria-hidden="true" /></span>
-          <div><span>Low Stock</span><strong>{summaryError ? '—' : summaryLoading ? '…' : summary?.lowStockItems ?? 0}</strong><small>{summaryError ? 'Stock alerts unavailable' : summary ? 'Ingredients at or below minimum' : 'Checking stock alerts'}</small></div>
+          <div><span>Low Stock</span><strong>{summaryError ? '—' : summaryLoading ? '…' : summary?.lowStockItems ?? 0}</strong><small>{summaryError ? 'Stock alerts unavailable' : summary ? 'Below minimum stock' : 'Checking stock alerts'}</small></div>
         </article>
         <article className="sl-sa-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
-          <div><span>Forecast Risk</span><strong>{summaryError ? '—' : summaryLoading ? '…' : allAlerts.filter(a => a.category === 'Forecast Risk').length}</strong><small>{summaryError ? 'Forecast alerts unavailable' : 'Forecast demand deviation alerts'}</small></div>
+          <div><span>Forecast Risk</span><strong>{summaryError ? '—' : summaryLoading ? '…' : allAlerts.filter(a => a.category === 'Forecast Risk').length}</strong><small>{summaryError ? 'Forecast alerts unavailable' : 'Demand deviation alerts'}</small></div>
         </article>
         <article className="sl-sa-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Info aria-hidden="true" /></span>
-          <div><span>High Priority</span><strong>{summaryError ? '—' : summaryLoading ? '…' : allAlerts.filter(a => a.priority === 'High' && a.status === 'Active').length}</strong><small>{summaryError ? 'Priority summary unavailable' : `${allAlerts.filter(a => a.priority === 'High' && a.status === 'Active').length} urgent alerts require attention`}</small></div>
+          <div><span>High Priority</span><strong>{summaryError ? '—' : summaryLoading ? '…' : allAlerts.filter(a => a.priority === 'High' && a.status === 'Active').length}</strong><small>{summaryError ? 'Priority data unavailable' : 'Needs immediate action'}</small></div>
         </article>
       </section>
 
