@@ -53,14 +53,14 @@ export default function SecurityActivity() {
     : kpis?.total === 0 ? '100%' : undefined;
 
   const latestActivityLabel = kpis?.latestTimestamp
-    ? formatDateTime(kpis.latestTimestamp)
+    ? new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(kpis.latestTimestamp))
     : kpis && kpis.total === 0 ? 'None' : undefined;
 
   const cards = [
-    { tone: 'brand', Icon: FileText, label: 'Total Audit Events', value: kpis?.total !== undefined ? kpis.total.toLocaleString() : '—', caption: kpis ? 'All retained audit records' : 'Audit summary unavailable' },
-    { tone: 'info', Icon: CheckCircle2, label: 'Success Rate', value: successRate ?? '—', caption: kpis ? `${kpis.successful.toLocaleString()} successful records` : 'Audit summary unavailable' },
-    { tone: 'attention', Icon: Activity, label: 'Latest Activity', value: latestActivityLabel ?? '—', caption: kpis?.latestTimestamp ? 'Most recent recorded event' : kpis ? 'No recorded events yet' : 'Audit summary unavailable' },
-    { tone: 'critical', Icon: AlertTriangle, label: 'Failed Events', value: kpis?.failed !== undefined ? kpis.failed.toLocaleString() : '—', caption: kpis ? 'Records with a Failed outcome' : 'Audit summary unavailable' },
+    { tone: 'brand', Icon: FileText, label: 'Total Audit Events', value: kpis?.total !== undefined ? kpis.total.toLocaleString() : '—', caption: kpis ? 'Retained events' : 'Audits unavailable' },
+    { tone: 'info', Icon: CheckCircle2, label: 'Success Rate', value: successRate ?? '—', caption: kpis ? `${kpis.successful.toLocaleString()} successful` : 'Audits unavailable' },
+    { tone: 'attention', Icon: Activity, label: 'Latest Activity', value: latestActivityLabel ?? '—', caption: kpis?.latestTimestamp ? 'Latest event' : kpis ? 'No events yet' : 'Audits unavailable' },
+    { tone: 'critical', Icon: AlertTriangle, label: 'Failed Events', value: kpis?.failed !== undefined ? kpis.failed.toLocaleString() : '—', caption: kpis ? 'Failed outcomes' : 'Audits unavailable' },
   ] as const;
 
   return (
@@ -79,7 +79,7 @@ export default function SecurityActivity() {
         {cards.map(({ tone, Icon, label, value, caption }) => (
           <article key={label} className="sl-sa-kpi sl-inventory-staff-kpi" data-tone={tone}>
             <span className="sl-sa-kpi-icon"><Icon aria-hidden="true" /></span>
-            <div><span>{label}</span><strong>{value !== undefined ? value.toLocaleString() : '—'}</strong><small>{caption}</small></div>
+            <div><span>{label}</span><strong className={label === 'Latest Activity' ? 'sl-kpi-text-value' : undefined} title={label === 'Latest Activity' && kpis?.latestTimestamp ? formatDateTime(kpis.latestTimestamp) : undefined}>{value}</strong><small>{caption}</small></div>
           </article>
         ))}
       </section>
