@@ -61,10 +61,10 @@ export function AdministrationPage({ areaId }: { areaId: AdministrationAreaId })
           </div>
 
           <div className="sl-v65-settings-form" aria-label="General system settings preview">
-            <label><span>System Name</span><input value="" placeholder="Configuration data pending" readOnly /></label>
-            <label><span>System Tagline</span><input value="" placeholder="Configuration data pending" readOnly /></label>
+            <label><span>System Name</span><input value="" placeholder="Configuration data pending" readOnly maxLength={100} /></label>
+            <label><span>System Tagline</span><input value="" placeholder="Configuration data pending" readOnly maxLength={100} /></label>
 
-            <label className="sl-v65-field-wide"><span>System Description</span><textarea value="" placeholder="Configuration data pending" readOnly /></label>
+            <label className="sl-v65-field-wide"><span>System Description</span><textarea value="" placeholder="Configuration data pending" readOnly maxLength={500} /></label>
 
             <label><span>Time Zone</span><select value="" disabled><option value="">Configuration data pending</option></select></label>
             <label><span>Date Format</span><select value="" disabled><option value="">Configuration data pending</option></select></label>

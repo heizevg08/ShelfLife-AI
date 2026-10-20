@@ -64,7 +64,7 @@ export function ManagementReportDownloadCenter({ options = reportOptions, onExpo
     <div className="sl-manager-download-controls" data-custom={period === 'Custom'}>
       <label><span>Date Range</span><FilterSelect ariaLabel="Choose date range" value={period} options={periods.map(value => ({ value, label: value }))} onChange={value => { setPeriod(value as Period); setFrom(''); setTo(''); setExportError(''); }} /></label>
       <label><span>Report</span><FilterSelect ariaLabel="Choose report" value={selectedReport} options={options} onChange={value => setSelectedReport(value as ReportSelection)} /></label>
-      {period === 'Custom' && <><label><span>From</span><input type="date" value={from} onChange={event => setFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={to} onChange={event => setTo(event.target.value)} /></label></>}
+      {period === 'Custom' && <><label><span>From</span><input type="date" value={from} min="2020-01-01" max={to || "2099-12-31"} onChange={event => setFrom(event.target.value)} /></label><label><span>To</span><input type="date" value={to} min={from || "2020-01-01"} max="2099-12-31" onChange={event => setTo(event.target.value)} /></label></>}
       <div className="sl-manager-download-actions">
         <button className="sl-button" type="button" disabled={exporting} onClick={resetDownloadCenter}>Reset</button>
         <ExportControl available disabled={!range} loading={exporting} onExport={exportSelected} />
