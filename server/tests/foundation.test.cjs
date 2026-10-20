@@ -187,7 +187,8 @@ test('render.yaml provisions Node 24 and isolated Python 3.14.7 ML worker runtim
   assert.match(renderYaml, /runtime:\s*node/);
   assert.match(renderYaml, /UV_UNMANAGED_INSTALL="\$PWD\/ml\/\.uv"/);
   assert.match(renderYaml, /UV_PYTHON_INSTALL_DIR="\$PWD\/ml\/\.uv-python"/);
-  assert.match(renderYaml, /venv ml\/\.venv --python 3\.14\.7/);
+  assert.match(renderYaml, /UV_PYTHON_DOWNLOADS=automatic/);
+  assert.match(renderYaml, /venv ml\/\.venv --managed-python --python 3\.14\.7/);
   assert.match(renderYaml, /pip install --python ml\/\.venv\/bin\/python -r ml\/requirements-runtime\.txt/);
   assert.match(renderYaml, /key:\s*NODE_VERSION\s+value:\s*"24"/);
   assert.match(renderYaml, /key:\s*ML_PYTHON_EXECUTABLE\s+value:\s*ml\/\.venv\/bin\/python/);

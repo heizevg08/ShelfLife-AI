@@ -71,6 +71,17 @@ export function ingredientRoutes(
     if (value instanceof HttpError) { res.status(value.status).json({ error: { code: value.status === 401 ? 'UNAUTHENTICATED' : 'REQUEST_FAILED', message: value.message, details: [] } }); return; }
     if (value?.code === 11000) { res.status(409).json({ error: { code: 'CONFLICT', message: 'An ingredient with that name already exists', details: [{ field: 'name', message: 'Use a unique ingredient name' }] } }); return; }
     if (value?.type === 'entity.parse.failed' || value?.type === 'entity.too.large') { res.status(value.type === 'entity.too.large' ? 413 : 400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: [] } }); return; }
+    // Log a bounded diagnosis without exposing request data or worker stderr.
+    const message = value instanceof Error ? value.message : '';
+    const reason = /ENOENT|FileNotFoundError|No such file/i.test(message) ? 'MISSING_RUNTIME_FILE'
+      : /ModuleNotFoundError|No module named/i.test(message) ? 'MISSING_PYTHON_DEPENDENCY'
+      : /startup timed out/i.test(message) ? 'WORKER_STARTUP_TIMEOUT'
+      : /inference timed out/i.test(message) ? 'WORKER_INFERENCE_TIMEOUT'
+      : /exited unexpectedly/i.test(message) ? 'WORKER_EXITED'
+      : /failed to start/i.test(message) ? 'WORKER_START_FAILED'
+      : /active inference request/i.test(message) ? 'WORKER_BUSY'
+      : /worker/i.test(message) ? 'WORKER_FAILURE' : 'UNCLASSIFIED';
+    console.error(JSON.stringify({ event: 'ingredient_request_failed', requestId: res.getHeader('X-Request-ID'), route: _req.route?.path, reason }));
     res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Unable to complete the request', details: [] } });
   };
   router.use(error);
