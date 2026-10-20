@@ -41,7 +41,7 @@ const weekdayLabel = (date: string, short: boolean) => (short ? shortWeekday : l
 // ceiling is the tightest multiple of that step at or above the busiest day, so the
 // domain follows the real data instead of a fixed template.
 export function dailyAxisScale(peak: number, intervals = 4) {
-  const safePeak = Math.max(0, Math.floor(peak));
+  const safePeak = Math.max(0, Math.ceil(peak));
   if (safePeak <= intervals) return { step: 1, ceiling: safePeak, ticks: Array.from({ length: safePeak + 1 }, (_, index) => index) };
   const magnitude = 10 ** Math.floor(Math.log10(safePeak / intervals));
   const step = [1, 2, 5, 10].map(multiplier => multiplier * magnitude).find(candidate => Math.ceil(safePeak / candidate) <= intervals) ?? Math.ceil(safePeak / intervals);
