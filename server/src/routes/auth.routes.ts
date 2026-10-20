@@ -10,77 +10,149 @@ import type { PasswordChange } from '../services/password-change';
 import type { ProfileUpdate } from '../services/profile-update';
 import type { EmailChange } from '../services/email-change';
 
-export interface AuthExtensions { loginLimiter?: LoginLimiter; sessions?: PersistentSessions; recovery?: PasswordRecovery; passwordChange?: PasswordChange; profileUpdate?: ProfileUpdate; emailChange?: EmailChange; secureCookies?: boolean; cookieSameSite?: 'lax' | 'none'; auditAuthenticationEvent?: (action: 'LOGIN' | 'LOGOUT', actor: { id: string; name: string; role: string }) => Promise<void> }
+export interface AuthExtensions {
+  loginLimiter?: LoginLimiter;
+  sessions?: PersistentSessions;
+  recovery?: PasswordRecovery;
+  passwordChange?: PasswordChange;
+  profileUpdate?: ProfileUpdate;
+  emailChange?: EmailChange;
+  secureCookies?: boolean;
+  cookieSameSite?: 'lax' | 'none';
+  auditAuthenticationEvent?: (action: 'LOGIN' | 'LOGOUT', actor: { id: string; name: string; role: string }) => Promise<void>;
+}
 
 export function authRoutes(auth: AuthService, origins: readonly string[] = [], extensions: AuthExtensions = {}) {
   const router = Router();
   const limiter = extensions.loginLimiter ?? createLoginLimiter(memoryLoginAttemptStore());
   const cookieName = extensions.secureCookies ? '__Secure-shelflife.refresh' : 'shelflife.refresh';
-  const cookieOptions = { httpOnly: true, secure: !!extensions.secureCookies, sameSite: extensions.cookieSameSite ?? 'lax', path: '/api/auth' };
+  const cookieOptions = {
+    httpOnly: true,
+    secure: !!extensions.secureCookies,
+    sameSite: extensions.cookieSameSite ?? 'lax',
+    path: '/api/auth',
+  };
+
   const cookie = (header?: string) => {
-    const values = (header || '').split(';').map(value => value.trim()).filter(value => value.startsWith(cookieName + '='));
+    const values = (header || '')
+      .split(';')
+      .map(value => value.trim())
+      .filter(value => value.startsWith(cookieName + '='));
     return values.length === 1 ? values[0].slice(cookieName.length + 1) : undefined;
   };
+
   const verifyOrigin = (origin?: string) => {
     if (!origin || !origins.includes(origin)) throw new HttpError(403, 'Request not allowed');
   };
-  router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
+
+  router.use((_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
+
   router.post('/login', async (req, res) => {
-    const result = await limiter.run(req.body?.email, req.ip ?? req.socket.remoteAddress ?? 'unknown', () => auth.login(req.body), seconds => res.setHeader('Retry-After', String(seconds)));
+    const result = await limiter.run(
+      req.body?.email,
+      req.ip ?? req.socket.remoteAddress ?? 'unknown',
+      () => auth.login(req.body),
+      seconds => res.setHeader('Retry-After', String(seconds))
+    );
     const previous = cookie(req.headers.cookie);
+
     if ((req.body?.rememberMe === true && !result.user.mustChangePassword) || previous) {
       verifyOrigin(req.headers.origin);
       if (!extensions.sessions) throw new HttpError(503, 'Persistent sessions unavailable');
+
       await extensions.sessions.revoke(previous);
+
       if (req.body?.rememberMe === true && !result.user.mustChangePassword) {
         const session = await extensions.sessions.create(result.user.id);
         res.cookie(cookieName, session.token, { ...cookieOptions, expires: session.expiresAt });
-      } else res.clearCookie(cookieName, cookieOptions);
+      } else {
+        res.clearCookie(cookieName, cookieOptions);
+      }
     }
+
     await extensions.auditAuthenticationEvent?.('LOGIN', result.user);
     res.json(result);
   });
+
   router.post('/refresh', async (req, res) => {
     verifyOrigin(req.headers.origin);
     if (!extensions.sessions) throw new HttpError(401, 'Authentication required');
+
     try {
       const { token, expiresAt, ...result } = await extensions.sessions.refresh(cookie(req.headers.cookie));
       res.cookie(cookieName, token, { ...cookieOptions, expires: expiresAt });
       res.json(result);
-    } catch (error) { res.clearCookie(cookieName, cookieOptions); throw error; }
+    } catch (error) {
+      res.clearCookie(cookieName, cookieOptions);
+      throw error;
+    }
   });
+
   router.post('/logout', async (req, res) => {
     verifyOrigin(req.headers.origin);
     let actor: { id: string; name: string; role: string } | undefined;
-    try { actor = await auth.authenticate(req.headers.authorization); } catch { /* Best-effort audit attribution. */ }
+
+    try {
+      actor = await auth.authenticate(req.headers.authorization);
+    } catch {
+      /* Best-effort audit attribution. */
+    }
+
     await extensions.sessions?.revoke(cookie(req.headers.cookie));
     res.clearCookie(cookieName, cookieOptions);
-    try { if (actor) await extensions.auditAuthenticationEvent?.('LOGOUT', actor); } catch { /* Logout remains successful after revocation. */ }
+
+    try {
+      if (actor) await extensions.auditAuthenticationEvent?.('LOGOUT', actor);
+    } catch {
+      /* Logout remains successful after revocation. */
+    }
+
     res.status(204).end();
   });
-  router.get('/password-reset/availability', (_req, res) => { res.json({ available: extensions.recovery?.available === true }); });
+
+  router.get('/password-reset/availability', (_req, res) => {
+    res.json({ available: extensions.recovery?.available === true });
+  });
+
   router.post('/password-reset/request', async (req, res) => {
     if (!extensions.recovery) throw new HttpError(503, 'Password recovery is awaiting email delivery setup');
     res.json(await extensions.recovery.request(req.body));
   });
+
   router.post('/password-reset/complete', async (req, res) => {
     if (!extensions.recovery) throw new HttpError(503, 'Password recovery unavailable');
     res.json(await extensions.recovery.complete(req.body));
   });
-  router.get('/me', authenticate(auth), (_req, res) => { res.json({ user: res.locals.user }); });
-  router.get('/email/change/availability', authenticate(auth), (_req, res) => { res.json({ available: extensions.emailChange?.available === true }); });
+
+  router.get('/me', authenticate(auth), (_req, res) => {
+    res.json({ user: res.locals.user });
+  });
+
+  router.get('/email/change/availability', authenticate(auth), (_req, res) => {
+    res.json({ available: extensions.emailChange?.available === true });
+  });
+
   router.post('/email/change/request', authenticate(auth), async (req, res, next) => {
     try {
       if (!extensions.emailChange) throw new HttpError(503, 'Email changes unavailable');
       res.json(await extensions.emailChange.request(res.locals.user.id as string, req.body));
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   });
+
   router.post('/email/change/complete', authenticate(auth), async (req, res, next) => {
     try {
       if (!extensions.emailChange) throw new HttpError(503, 'Email changes unavailable');
       res.json(await extensions.emailChange.complete(res.locals.user.id as string, req.body));
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   });
+
   // Self-service account update, available to every authenticated role. Only the caller's own
   // name parts are accepted; the sign-in identifier, role, account status and credential
   // fields are refused rather than silently ignored.
@@ -88,15 +160,21 @@ export function authRoutes(auth: AuthService, origins: readonly string[] = [], e
     try {
       if (!extensions.profileUpdate) throw new HttpError(503, 'Profile updates unavailable');
       res.json(await extensions.profileUpdate.update(res.locals.user.id as string, req.body));
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   });
+
   // Authenticated self-service change. The account is taken from the verified access token,
   // so this endpoint can only ever change the caller's own password.
   router.post('/password/change', authenticate(auth), async (req, res, next) => {
     try {
       if (!extensions.passwordChange) throw new HttpError(503, 'Password change unavailable');
       res.json(await extensions.passwordChange.change(res.locals.user.id as string, req.body));
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   });
+
   return router;
 }
