@@ -47,10 +47,10 @@ export function readConfig(env: NodeJS.ProcessEnv): Config {
   const mlWorkerScript = env.ML_WORKER_SCRIPT?.trim() ?? '';
   if (mlPythonExecutable && !/^\S+$/.test(mlPythonExecutable)) invalid.add('ML_PYTHON_EXECUTABLE');
   if (mlWorkerScript && !/^\S+$/.test(mlWorkerScript)) invalid.add('ML_WORKER_SCRIPT');
-  const rawMlStartupTimeoutMs = env.ML_STARTUP_TIMEOUT_MS ?? '10000';
+  const rawMlStartupTimeoutMs = env.ML_STARTUP_TIMEOUT_MS ?? (nodeEnv === 'production' ? '60000' : '10000');
   const mlStartupTimeoutMs = Number(rawMlStartupTimeoutMs);
   if (!/^\d+$/.test(rawMlStartupTimeoutMs) || !Number.isSafeInteger(mlStartupTimeoutMs) || mlStartupTimeoutMs < 1) invalid.add('ML_STARTUP_TIMEOUT_MS');
-  const rawMlInferenceTimeoutMs = env.ML_INFERENCE_TIMEOUT_MS ?? '5000';
+  const rawMlInferenceTimeoutMs = env.ML_INFERENCE_TIMEOUT_MS ?? (nodeEnv === 'production' ? '30000' : '5000');
   const mlInferenceTimeoutMs = Number(rawMlInferenceTimeoutMs);
   if (!/^\d+$/.test(rawMlInferenceTimeoutMs) || !Number.isSafeInteger(mlInferenceTimeoutMs) || mlInferenceTimeoutMs < 1) invalid.add('ML_INFERENCE_TIMEOUT_MS');
   if (invalid.size) throw new Error(`Invalid configuration: ${[...invalid].join(', ')}`);

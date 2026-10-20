@@ -20,6 +20,10 @@ services:
         value: ml/.venv/bin/python
       - key: ML_WORKER_SCRIPT
         value: ml/src/10_persistent_inference_worker.py
+      - key: ML_STARTUP_TIMEOUT_MS
+        value: "60000"
+      - key: ML_INFERENCE_TIMEOUT_MS
+        value: "30000"
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET
