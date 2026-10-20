@@ -44,7 +44,7 @@ test('the Manager profile reproduces the approved reference sections', () => {
   // No Role row is rendered anywhere.
   assert.doesNotMatch(manager, /<dt>Role<\/dt>|Set by your administrator/);
   // 2-Step Verification is present, with its truthful unavailable status.
-  assert.match(manager, /<dt>2-Step Verification<\/dt>/);
+  assert.doesNotMatch(manager, /<dt>2-Step Verification<\/dt>/);
   // The notification-preference block was removed: no model, endpoint or delivery exists to back it.
   assert.doesNotMatch(manager, /notificationRows|NotificationRow|sl-profile-manager-notification|sl-profile-manager-toggle/);
   assert.doesNotMatch(manager, />Notifications<\/h2>/);
@@ -124,12 +124,8 @@ test('every profile Edit control shares one underline-free treatment in every st
 
 test('unbacked controls are visible but disabled and truthfully labelled', () => {
   // 2-Step Verification is not enforced and must never claim to be required or enabled.
-  assert.match(manager, /2-Step Verification is not enforced yet/);
-  assert.match(manager, /<span className="sl-profile-manager-badge">Not available<\/span>/);
-  assert.match(manager, /<span className="sl-profile-manager-badge">Not set up<\/span>/);
+  assert.doesNotMatch(manager, /2-Step Verification/);
   assert.doesNotMatch(manager, /Required by policy|MFA Enforced|MFA Required/);
-  // The action that would start enrolment is disabled rather than faking a working second factor.
-  assert.match(manager, /disabled aria-describedby="sl-profile-manager-twostep-note">Set up<\/button>/);
 });
 
 test('the self-service name update is scoped to the caller and re-resolves the session', () => {

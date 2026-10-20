@@ -80,23 +80,6 @@ function NameRow({ field, value, disabled, onSaved }: {
   </div>;
 }
 
-function TwoStepRow({ returnFocus }: { returnFocus: RefObject<HTMLButtonElement | null> }) {
-  // No second factor is enforced by this server. The row matches the reference but must not claim
-  // "required by policy" or "enabled", so both badges and the action state the honest position.
-  return <div className="sl-profile-manager-row">
-    <dt>2-Step Verification</dt>
-    <dd>
-      <span className="sl-profile-manager-badge">Not available</span>
-      <span className="sl-profile-manager-badge">Not set up</span>
-    </dd>
-    <button ref={returnFocus} type="button" className="sl-button sl-text-action sl-profile-manager-action"
-      disabled aria-describedby="sl-profile-manager-twostep-note">Set up</button>
-    <p id="sl-profile-manager-twostep-note" className="sl-supporting sl-profile-manager-help">
-      2-Step Verification is not enforced yet. Sign-in is protected by your password, a login attempt
-      limit and session revocation on password change.
-    </p>
-  </div>;
-}
 
 type PasswordChangeProps = { open: boolean; onDismiss: () => void; returnFocus: RefObject<HTMLButtonElement | null> };
 
@@ -292,9 +275,7 @@ function SecurityRow({ label, children, action }: { label: string; children: Rea
 export function ManagerProfilePage() {
   const { user, refreshIdentity } = useApplicationWorkspace();
   const [passwordOpen, setPasswordOpen] = useState(false);
-  const passwordTrigger = useRef<HTMLButtonElement>(null);
-  const twoStepTrigger = useRef<HTMLButtonElement>(null);
-  // A saved name is shown immediately while the shell re-resolves the identity, so the page, the
+  const passwordTrigger = useRef<HTMLButtonElement>(null);  // A saved name is shown immediately while the shell re-resolves the identity, so the page, the
   // avatar initials and the account menu never disagree during the round trip.
   const [saved, setSaved] = useState<SessionUser | null>(null);
   const current = saved ?? user;
@@ -330,7 +311,6 @@ export function ManagerProfilePage() {
             </button>}>
             <span className="sl-profile-manager-value sl-profile-manager-masked" aria-label="Password is set">••••••••••</span>
           </SecurityRow>
-          <TwoStepRow returnFocus={twoStepTrigger} />
         </dl>
       </section>
     </div>

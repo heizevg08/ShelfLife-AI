@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Box, Boxes, CalendarClock, ClipboardList, FileText, ListChecks, ListOrdered, PhilippinePeso, Plus, TrendingUp, TriangleAlert, UsersRound, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Box, Boxes, CalendarClock, ClipboardList, FileText, ListChecks, ListOrdered, PhilippinePeso, Plus, Search, TrendingUp, TriangleAlert, UsersRound, type LucideIcon } from 'lucide-react';
 import { Link, useRouter } from '../../routing/navigation';
 import { useApplicationWorkspace } from '../application/ApplicationWorkspace';
 import { ApplicationDonutChart, ApplicationPendingState } from '../application/ApplicationPatterns';
@@ -268,6 +268,83 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     return { days, maxScale, calloutText };
   }, [allBatches]);
 
+  const [alertFilter, setAlertFilter] = useState<'All' | 'High' | 'Medium' | 'Low'>('All');
+  const [alertSearch, setAlertSearch] = useState('');
+
+  const alertItems = useMemo(() => {
+    if (!allBatches || allBatches.length === 0) return [];
+    const list: Array<{
+      id: string;
+      ingredient: string;
+      details: string;
+      tag: string;
+      tone: 'critical' | 'attention';
+      priority: 'High' | 'Medium' | 'Low';
+      group: 'ACT NOW' | 'PLAN THIS WEEK';
+      rawDays: number;
+    }> = [];
+
+    const formatQty = (q: number) => {
+      const rounded = Number(q.toFixed(1));
+      return Number.isFinite(rounded) ? rounded.toLocaleString() : String(q);
+    };
+
+    // 1. Expired and near expiry batches
+    const nearExpiry = allBatches.filter(b => b.displayStatus === 'Near Expiry' || b.displayStatus === 'Expired');
+    for (const b of nearExpiry) {
+      const isActNow = b.daysLeft <= 3;
+      const d = new Date(b.expirationDate.slice(0, 10) + 'T00:00:00Z');
+      const dayName = new Intl.DateTimeFormat('en-PH', { weekday: 'short', timeZone: 'UTC' }).format(d);
+      const tagText = b.daysLeft <= 0 ? 'Expired' : `${dayName} · ${b.daysLeft} ${b.daysLeft === 1 ? 'day' : 'days'}`;
+      list.push({
+        id: `alert-exp-${b.id}`,
+        ingredient: formatHumanReadableText(b.ingredient.name),
+        details: `${formatQty(b.quantity)} ${b.unit} expiring`,
+        tag: tagText,
+        tone: isActNow ? 'critical' : 'attention',
+        priority: b.daysLeft <= 3 ? 'High' : 'Medium',
+        group: isActNow ? 'ACT NOW' : 'PLAN THIS WEEK',
+        rawDays: b.daysLeft,
+      });
+    }
+
+    // 2. Low stock batches
+    const lowStock = allBatches.filter(b => b.displayStatus === 'Low Stock');
+    const seenLowStock = new Set<string>();
+    for (const b of lowStock) {
+      if (seenLowStock.has(b.ingredient.id)) continue;
+      seenLowStock.add(b.ingredient.id);
+      const isOutOfStock = b.quantity <= 0;
+      list.push({
+        id: `alert-low-${b.id}`,
+        ingredient: formatHumanReadableText(b.ingredient.name),
+        details: isOutOfStock
+          ? `0 ${b.unit} left · min ${formatQty(b.ingredient.minimumStock ?? 0)} ${b.unit}`
+          : `${formatQty(b.quantity)} ${b.unit} left · min ${formatQty(b.ingredient.minimumStock ?? 0)} ${b.unit}`,
+        tag: isOutOfStock ? 'Out of stock' : 'Low stock',
+        tone: 'attention',
+        priority: isOutOfStock ? 'High' : 'Medium',
+        group: isOutOfStock ? 'ACT NOW' : 'PLAN THIS WEEK',
+        rawDays: 999,
+      });
+    }
+
+    // Sort: ACT NOW first, then PLAN THIS WEEK, then by days
+    return list.sort((a, b) => {
+      if (a.group !== b.group) return a.group === 'ACT NOW' ? -1 : 1;
+      return a.rawDays - b.rawDays;
+    });
+  }, [allBatches]);
+
+  const filteredAlerts = useMemo(() => {
+    return alertItems.filter(item => {
+      if (alertFilter !== 'All' && item.priority !== alertFilter) return false;
+      if (alertSearch.trim() && !item.ingredient.toLowerCase().includes(alertSearch.toLowerCase())) return false;
+      return true;
+    });
+  }, [alertItems, alertFilter, alertSearch]);
+
+
   const pendingState = (description: string) => <div className="sl-manager-reference-state"><ApplicationPendingState description={description} /></div>;
   const openRequest = async (request: ChangeRequest, trigger: HTMLTableRowElement) => {
     requestTrigger.current = trigger;
@@ -282,15 +359,6 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><TriangleAlert /></span><div><span>Items Near Expiry (≤ 7 days)</span><strong>{summary?.nearExpiry ?? '—'}</strong><small>{inventoryError ? 'Expiration summary unavailable' : summary ? 'Batches requiring attention' : 'Loading expiration summary'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Box /></span><div><span>Low Stock Items</span><strong>{summary?.lowStockItems ?? '—'}</strong><small>{inventoryError ? 'Stock summary unavailable' : summary ? 'Items at or below minimum stock' : 'Loading stock summary'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp /></span><div><span>Forecast Accuracy</span>{accuracy?.status === 'AVAILABLE' ? <><strong>{accuracy.metrics.accuracyScore}%</strong><small>Based on {accuracy.metrics.evaluatedDays} evaluated days</small></> : accuracy?.status === 'UNAVAILABLE' ? <><strong>—</strong><small>{accuracy.evaluatedDays}/{accuracy.minimumRequiredDays} evaluated days</small></> : <><strong>{accuracyError ? '—' : '…'}</strong><small>{accuracyError ? 'Forecast data unavailable' : 'Loading forecast accuracy'}</small></>}</div></article>
-      </section>
-
-      <section className="sl-manager-attention-grid" aria-label="Manager attention queue">
-        <Card id="manager-upcoming-expirations" title={<DashboardCardTitle Icon={CalendarClock}>Upcoming Expirations (≤ 7 days)</DashboardCardTitle>} action={<Link href="/Inventory" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
-          <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table sl-manager-dashboard-table sl-manager-expirations-table"><colgroup><col /><col /><col /><col /></colgroup><thead><tr>{['Ingredient','Batch ID','Expiration Date','Days Left'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{expirations?.length ? expirations.map(batch => <tr key={batch.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event => { batchTrigger.current = event.currentTarget; setBatchDetail(batch); }} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); batchTrigger.current = event.currentTarget; setBatchDetail(batch); } }}><td data-label="Ingredient" className="sl-emphasized-value">{formatHumanReadableText(batch.ingredient.name)}</td><td data-label="Batch ID"><span className="sl-canonical-identifier">{batch.batchID}</span></td><td data-label="Expiration Date">{formatDate(batch.expirationDate)}</td><td data-label="Days Left">{batch.daysLeft < 0 ? 'Expired' : batch.daysLeft}</td></tr>) : expirations === null || inventoryError ? recordState(4, expirations === null && !inventoryError, inventoryError, 'Upcoming expirations will appear when qualifying batches exist.') : <tr><td colSpan={4} className="sl-empty-cell"><DataState kind="empty" title="No upcoming expirations" description="No batches expire within the next 7 days." /></td></tr>}</tbody></table></div>
-        </Card>
-        <Card id="manager-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>Pending Requests</DashboardCardTitle>} action={<Link href="/ChangeRequests" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
-          <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table sl-manager-dashboard-table sl-manager-requests-table"><colgroup><col /><col /><col /><col /></colgroup><thead><tr>{['Request ID', 'Request Type', 'Submitted By', 'Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{requests?.length ? requests.map(request => <tr key={request.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event => void openRequest(request, event.currentTarget)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void openRequest(request, event.currentTarget); } }}><td data-label="Request ID"><span className="sl-canonical-identifier sl-emphasized-value">{request.requestID}</span></td><td data-label="Request Type">{formatHumanReadableText(request.requestType.replaceAll('_', ' '))}</td><td data-label="Submitted By">{formatHumanReadableText(request.requestedBy.name)}</td><td data-label="Status"><Status tone="attention">{changeRequestStatusLabel(request.status)}</Status></td></tr>) : recordState(4, requests === null && !requestError, requestError, 'Requests awaiting review will appear here.')}</tbody></table></div>
-        </Card>
       </section>
 
       <section className="sl-manager-reference-grid" aria-label="Manager inventory analytics">
@@ -431,6 +499,109 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
           ) : (
             <DataState kind="loading" title="Loading expiring items trend" description="Retrieving batch expiration timeline." />
           )}
+        </Card>
+      </section>
+
+      <section className="sl-manager-attention-grid" aria-label="Manager attention queue">
+        <Card id="manager-alert-records" title="Alert Records">
+          <div className="sl-mgr-alert-card-body">
+            <div className="sl-mgr-alert-header-row">
+              <h2 className="sl-mgr-alert-title">Alert Records</h2>
+              <div className="sl-mgr-alert-search-wrap">
+                <Search size={14} aria-hidden="true" />
+                <input
+                  type="text"
+                  className="sl-mgr-alert-search-input"
+                  placeholder="Search alerts..."
+                  value={alertSearch}
+                  onChange={e => setAlertSearch(e.target.value)}
+                  maxLength={50}
+                  aria-label="Search alerts"
+                />
+              </div>
+            </div>
+
+            <div className="sl-mgr-alert-filters" role="tablist" aria-label="Filter alerts by priority">
+              {(['All', 'High', 'Medium', 'Low'] as const).map(p => (
+                <button
+                  key={p}
+                  type="button"
+                  className={`sl-mgr-alert-pill ${alertFilter === p ? 'is-active' : ''}`}
+                  onClick={() => setAlertFilter(p)}
+                  role="tab"
+                  aria-selected={alertFilter === p}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            <div className="sl-mgr-alert-list">
+              {filteredAlerts.length > 0 ? (
+                <>
+                  {filteredAlerts.some(a => a.group === 'ACT NOW') && (
+                    <div className="sl-mgr-alert-section">
+                      <span className="sl-mgr-alert-section-title">ACT NOW</span>
+                      {filteredAlerts
+                        .filter(a => a.group === 'ACT NOW')
+                        .slice(0, 4)
+                        .map(alert => (
+                          <div className="sl-mgr-alert-item" key={alert.id} data-tone={alert.tone}>
+                            <div className="sl-mgr-alert-item-left">
+                              <span className="sl-mgr-alert-dot" />
+                              <div className="sl-mgr-alert-info">
+                                <span className="sl-mgr-alert-ingredient">{alert.ingredient}</span>
+                                <span className="sl-mgr-alert-detail">{alert.details}</span>
+                              </div>
+                            </div>
+                            <span className="sl-mgr-alert-badge">{alert.tag}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {filteredAlerts.some(a => a.group === 'PLAN THIS WEEK') && (
+                    <div className="sl-mgr-alert-section">
+                      <span className="sl-mgr-alert-section-title">PLAN THIS WEEK</span>
+                      {filteredAlerts
+                        .filter(a => a.group === 'PLAN THIS WEEK')
+                        .slice(0, 4)
+                        .map(alert => (
+                          <div className="sl-mgr-alert-item" key={alert.id} data-tone={alert.tone}>
+                            <div className="sl-mgr-alert-item-left">
+                              <span className="sl-mgr-alert-dot" />
+                              <div className="sl-mgr-alert-info">
+                                <span className="sl-mgr-alert-ingredient">{alert.ingredient}</span>
+                                <span className="sl-mgr-alert-detail">{alert.details}</span>
+                              </div>
+                            </div>
+                            <span className="sl-mgr-alert-badge">{alert.tag}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </>
+              ) : inventoryError ? (
+                <DataState kind="error" title="Data unavailable" description="Alerts could not be loaded." />
+              ) : allBatches === null ? (
+                <DataState kind="loading" title="Loading alerts" description="Retrieving current inventory alerts." />
+              ) : (
+                <DataState kind="empty" title="No matching alerts" description="No alerts match the selected priority or search filter." />
+              )}
+            </div>
+
+            <div className="sl-mgr-alert-footer">
+              <span className="sl-mgr-alert-count">
+                Showing {Math.min(filteredAlerts.length, 6)} of {alertItems.length} alerts
+              </span>
+              <Link href="/Alerts" className="sl-mgr-alert-view-all">
+                View all <ArrowRight size={13} aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        </Card>
+        <Card id="manager-pending-requests" title={<DashboardCardTitle Icon={ClipboardList}>Pending Requests</DashboardCardTitle>} action={<Link href="/ChangeRequests" className="sl-text-link">View All <ArrowRight size={14}/></Link>}>
+          <div className="sl-dashboard-reference-table"><table className="sl-data-table sl-reference-records-table sl-manager-dashboard-table sl-manager-requests-table"><colgroup><col /><col /><col /><col /></colgroup><thead><tr>{['Request ID', 'Request Type', 'Submitted By', 'Status'].map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{requests?.length ? requests.map(request => <tr key={request.id} className="sl-detail-enabled-row" role="button" tabIndex={0} onClick={event => void openRequest(request, event.currentTarget)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void openRequest(request, event.currentTarget); } }}><td data-label="Request ID"><span className="sl-canonical-identifier sl-emphasized-value">{request.requestID}</span></td><td data-label="Request Type">{formatHumanReadableText(request.requestType.replaceAll('_', ' '))}</td><td data-label="Submitted By">{formatHumanReadableText(request.requestedBy.name)}</td><td data-label="Status"><Status tone="attention">{changeRequestStatusLabel(request.status)}</Status></td></tr>) : recordState(4, requests === null && !requestError, requestError, 'Requests awaiting review will appear here.')}</tbody></table></div>
         </Card>
       </section>
     </div>

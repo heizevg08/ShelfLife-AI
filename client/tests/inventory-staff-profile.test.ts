@@ -21,7 +21,7 @@ test('the approved reference sections are present for the shared four-role profi
   assert.doesNotMatch(accountProfile, /function IdentityAvatar|function PhotoBlock/);
   assert.doesNotMatch(accountProfile, /sl-profile-manager-identity|sl-profile-manager-avatar/);
   assert.doesNotMatch(accountProfile, /Upload photo|Profile photo/);
-  assert.match(accountProfile, /<dt>2-Step Verification<\/dt>/);
+  assert.doesNotMatch(accountProfile, /<dt>2-Step Verification<\/dt>/);
   // The notification-preference block was removed for every role: no model, endpoint or delivery
   // exists to back a saved preference or an alert.
   assert.doesNotMatch(accountProfile, /notificationRows|NotificationRow|sl-profile-manager-notification|sl-profile-manager-toggle/);
@@ -35,8 +35,7 @@ test('unsupported backend features are shown disabled rather than faked', () => 
   // Nothing may claim an enforced second factor, and the enrolment action is disabled because no
   // second factor is enforced by the server.
   assert.doesNotMatch(accountProfile, /Required by policy|MFA Enforced|MFA Required/);
-  assert.match(accountProfile, /2-Step Verification is not enforced yet/);
-  assert.match(accountProfile, /disabled aria-describedby="sl-profile-manager-twostep-note">Set up<\/button>/);
+  assert.doesNotMatch(accountProfile, /2-Step Verification/);
   // No switch exists, so no preference can falsely read as stored.
   assert.doesNotMatch(accountProfile, /role="switch"|aria-checked/);
 });
