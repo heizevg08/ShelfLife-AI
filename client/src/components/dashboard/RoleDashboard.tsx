@@ -273,6 +273,46 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
 
   const alertItems = useMemo(() => {
     if (!allBatches || allBatches.length === 0) return [];
+    
+    const formatQty = (q: number) => {
+      const rounded = Number(q.toFixed(1));
+      return Number.isFinite(rounded) ? rounded.toLocaleString() : String(q);
+    };
+
+    // Deduplicate and aggregate expiring / expired batches by ingredient
+    const expiringByIngredient = new Map<string, {
+      ingredientName: string;
+      totalQty: number;
+      unit: string;
+      minDaysLeft: number;
+      earliestDate: string;
+      hasExpired: boolean;
+    }>();
+
+    for (const b of allBatches) {
+      if (b.displayStatus === 'Expired' || b.displayStatus === 'Near Expiry') {
+        const key = b.ingredient.id || b.ingredient.name;
+        const existing = expiringByIngredient.get(key);
+        if (!existing) {
+          expiringByIngredient.set(key, {
+            ingredientName: b.ingredient.name,
+            totalQty: b.quantity,
+            unit: b.unit,
+            minDaysLeft: b.daysLeft,
+            earliestDate: b.expirationDate,
+            hasExpired: b.displayStatus === 'Expired',
+          });
+        } else {
+          existing.totalQty += b.quantity;
+          if (b.displayStatus === 'Expired') existing.hasExpired = true;
+          if (b.daysLeft < existing.minDaysLeft) {
+            existing.minDaysLeft = b.daysLeft;
+            existing.earliestDate = b.expirationDate;
+          }
+        }
+      }
+    }
+
     const list: Array<{
       id: string;
       ingredient: string;
@@ -281,58 +321,62 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
       tone: 'critical' | 'attention';
       priority: 'High' | 'Medium' | 'Low';
       group: 'ACT NOW' | 'PLAN THIS WEEK';
-      rawDays: number;
+      sortScore: number;
     }> = [];
 
-    const formatQty = (q: number) => {
-      const rounded = Number(q.toFixed(1));
-      return Number.isFinite(rounded) ? rounded.toLocaleString() : String(q);
-    };
-
-    // 1. Expired and near expiry batches
-    const nearExpiry = allBatches.filter(b => b.displayStatus === 'Near Expiry' || b.displayStatus === 'Expired');
-    for (const b of nearExpiry) {
-      const isActNow = b.daysLeft <= 3;
-      const d = new Date(b.expirationDate.slice(0, 10) + 'T00:00:00Z');
+    // Add expiring items
+    for (const [key, data] of expiringByIngredient.entries()) {
+      const isActNow = data.hasExpired || data.minDaysLeft <= 3;
+      const d = new Date(data.earliestDate.slice(0, 10) + 'T00:00:00Z');
       const dayName = new Intl.DateTimeFormat('en-PH', { weekday: 'short', timeZone: 'UTC' }).format(d);
-      const tagText = b.daysLeft <= 0 ? 'Expired' : `${dayName} · ${b.daysLeft} ${b.daysLeft === 1 ? 'day' : 'days'}`;
+      
+      let tagText: string;
+      if (data.hasExpired) {
+        tagText = 'Expired';
+      } else {
+        tagText = `${dayName} · ${data.minDaysLeft} ${data.minDaysLeft === 1 ? 'day' : 'days'}`;
+      }
+
       list.push({
-        id: `alert-exp-${b.id}`,
-        ingredient: formatHumanReadableText(b.ingredient.name),
-        details: `${formatQty(b.quantity)} ${b.unit} expiring`,
+        id: `alert-exp-${key}`,
+        ingredient: formatHumanReadableText(data.ingredientName),
+        details: `${formatQty(data.totalQty)} ${data.unit} expiring`,
         tag: tagText,
         tone: isActNow ? 'critical' : 'attention',
-        priority: b.daysLeft <= 3 ? 'High' : 'Medium',
+        priority: isActNow ? 'High' : 'Medium',
         group: isActNow ? 'ACT NOW' : 'PLAN THIS WEEK',
-        rawDays: b.daysLeft,
+        sortScore: data.hasExpired ? -100 : data.minDaysLeft,
       });
     }
 
-    // 2. Low stock batches
+    // Add low stock / out of stock items
     const lowStock = allBatches.filter(b => b.displayStatus === 'Low Stock');
     const seenLowStock = new Set<string>();
     for (const b of lowStock) {
       if (seenLowStock.has(b.ingredient.id)) continue;
       seenLowStock.add(b.ingredient.id);
-      const isOutOfStock = b.quantity <= 0;
+      
+      const allMatching = allBatches.filter(item => item.ingredient.id === b.ingredient.id);
+      const totalCurrent = allMatching.reduce((acc, curr) => acc + curr.quantity, 0);
+      const isOutOfStock = totalCurrent <= 0;
+
       list.push({
-        id: `alert-low-${b.id}`,
+        id: `alert-low-${b.ingredient.id}`,
         ingredient: formatHumanReadableText(b.ingredient.name),
         details: isOutOfStock
           ? `0 ${b.unit} left · min ${formatQty(b.ingredient.minimumStock ?? 0)} ${b.unit}`
-          : `${formatQty(b.quantity)} ${b.unit} left · min ${formatQty(b.ingredient.minimumStock ?? 0)} ${b.unit}`,
+          : `${formatQty(totalCurrent)} ${b.unit} left · min ${formatQty(b.ingredient.minimumStock ?? 0)} ${b.unit}`,
         tag: isOutOfStock ? 'Out of stock' : 'Low stock',
         tone: 'attention',
         priority: isOutOfStock ? 'High' : 'Medium',
         group: isOutOfStock ? 'ACT NOW' : 'PLAN THIS WEEK',
-        rawDays: 999,
+        sortScore: isOutOfStock ? -50 : 50,
       });
     }
 
-    // Sort: ACT NOW first, then PLAN THIS WEEK, then by days
     return list.sort((a, b) => {
       if (a.group !== b.group) return a.group === 'ACT NOW' ? -1 : 1;
-      return a.rawDays - b.rawDays;
+      return a.sortScore - b.sortScore;
     });
   }, [allBatches]);
 
@@ -546,7 +590,7 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
                       <span className="sl-mgr-alert-section-title">ACT NOW</span>
                       {filteredAlerts
                         .filter(a => a.group === 'ACT NOW')
-                        .slice(0, 4)
+                        .slice(0, 3)
                         .map(alert => (
                           <div className="sl-mgr-alert-item" key={alert.id} data-tone={alert.tone}>
                             <div className="sl-mgr-alert-item-left">
@@ -567,7 +611,7 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
                       <span className="sl-mgr-alert-section-title">PLAN THIS WEEK</span>
                       {filteredAlerts
                         .filter(a => a.group === 'PLAN THIS WEEK')
-                        .slice(0, 4)
+                        .slice(0, 3)
                         .map(alert => (
                           <div className="sl-mgr-alert-item" key={alert.id} data-tone={alert.tone}>
                             <div className="sl-mgr-alert-item-left">
