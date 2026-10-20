@@ -186,26 +186,86 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     return () => controller.abort();
   }, []);
 
-  const inventoryValuePoints = useMemo<DailyPoint[] | null>(() => {
-    if (!summary || summary.inventoryValue === null || !Number.isFinite(summary.inventoryValue)) return null;
-    const currentVal = summary.inventoryValue;
-    const today = businessDateInputValue();
-    const dates = Array.from({ length: 14 }, (_, i) => shiftBusinessDate(today, i - 13));
-    return dates.map((date, idx) => {
-      const factor = 0.94 + (idx / 13) * 0.06 + Math.sin(idx * 1.8) * 0.012;
-      const value = idx === 13 ? currentVal : Math.round(currentVal * factor);
-      return { date, valuation: value, usage: value, waste: null };
-    });
+  const stockStatusData = useMemo(() => {
+    if (!summary) return null;
+    const inStock = summary.statusCounts['In Stock'] ?? 0;
+    const lowStock = summary.statusCounts['Low Stock'] ?? 0;
+    const nearExpiry = summary.statusCounts['Near Expiry'] ?? 0;
+    const expired = summary.statusCounts['Expired'] ?? 0;
+    const total = summary.totalBatches || 1;
+    const percentage = Math.round((inStock / total) * 100);
+
+    const statuses = [
+      { label: 'In Stock', count: inStock, color: '#166534', barColor: '#16a34a' },
+      { label: 'Low Stock', count: lowStock, color: '#b45309', barColor: '#d97706' },
+      { label: 'Near Expiry', count: nearExpiry, color: '#c2410c', barColor: '#ea580c' },
+      { label: 'Expired', count: expired, color: '#b91c1c', barColor: '#dc2626' },
+    ];
+
+    return { inStock, lowStock, nearExpiry, expired, total: summary.totalBatches, percentage, statuses };
   }, [summary]);
 
-  const expiringPoints = useMemo<DailyPoint[] | null>(() => {
+  const next7DaysData = useMemo(() => {
     if (!allBatches) return null;
     const today = businessDateInputValue();
-    const dates = Array.from({ length: 14 }, (_, i) => shiftBusinessDate(today, i));
-    return dates.map(date => {
-      const count = allBatches.filter(b => b.expirationDate.slice(0, 10) === date).length;
-      return { date, expiring: count, usage: null, waste: count };
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const dateStr = shiftBusinessDate(today, i);
+      const d = new Date(`${dateStr}T00:00:00Z`);
+      const label = new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(d);
+      const matchingBatches = allBatches.filter(b => b.expirationDate.slice(0, 10) === dateStr && b.quantity > 0);
+      const severity: 'High' | 'Medium' = i <= 3 ? 'High' : 'Medium';
+      return {
+        date: dateStr,
+        label,
+        count: matchingBatches.length,
+        batches: matchingBatches,
+        severity,
+      };
     });
+
+    const maxScale = Math.max(2, ...days.map(d => d.count));
+
+    const expiringBatches = allBatches
+      .filter(b => {
+        const d = b.expirationDate.slice(0, 10);
+        return d >= today && d <= shiftBusinessDate(today, 6) && b.quantity > 0;
+      })
+      .sort((a, b) => a.expirationDate.localeCompare(b.expirationDate));
+
+    let calloutText: ReactNode = 'No batches expiring within the next 7 days.';
+    if (expiringBatches.length > 0) {
+      const uniqueIngredients: { name: string; date: string }[] = [];
+      for (const b of expiringBatches) {
+        const d = new Date(`${b.expirationDate.slice(0, 10)}T00:00:00Z`);
+        const dayLabel = String(d.getUTCDate());
+        const ingName = formatHumanReadableText(b.ingredient.name);
+        if (!uniqueIngredients.some(u => u.name === ingName)) {
+          uniqueIngredients.push({ name: ingName, date: dayLabel });
+        }
+      }
+      if (uniqueIngredients.length >= 2) {
+        const d1 = uniqueIngredients[0].date;
+        const d2 = uniqueIngredients[1].date;
+        const month = new Intl.DateTimeFormat('en-PH', { month: 'short', timeZone: 'UTC' }).format(
+          new Date(`${expiringBatches[0].expirationDate.slice(0, 10)}T00:00:00Z`)
+        );
+        calloutText = (
+          <>
+            Use <strong>{uniqueIngredients[0].name}</strong> and <strong>{uniqueIngredients[1].name}</strong> first. They expire on {d1} and {d2} {month}.
+          </>
+        );
+      } else if (uniqueIngredients.length === 1) {
+        const d = new Date(`${expiringBatches[0].expirationDate.slice(0, 10)}T00:00:00Z`);
+        const formattedDate = new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(d);
+        calloutText = (
+          <>
+            Use <strong>{uniqueIngredients[0].name}</strong> first. It expires on {formattedDate}.
+          </>
+        );
+      }
+    }
+
+    return { days, maxScale, calloutText };
   }, [allBatches]);
 
   const pendingState = (description: string) => <div className="sl-manager-reference-state"><ApplicationPendingState description={description} /></div>;
@@ -233,38 +293,139 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
         </Card>
       </section>
 
-      <section className="sl-manager-reference-grid sl-manager-reference-grid-three" aria-label="Manager inventory analytics">
-        <Card id="manager-inventory-value" title="Inventory Value Trend">
-          {inventoryValuePoints ? (
-            <ManagerDailyRecordChart
-              ariaLabel="Daily inventory valuation trend over the last 14 days"
-              points={inventoryValuePoints}
-              visible={{ usage: true }}
-              labels={{ usage: 'Valuation' }}
-              formatValue={v => `₱${v.toLocaleString()}`}
-              valueSuffix=""
-              dateAxis="rolling"
-            />
+      <section className="sl-manager-reference-grid" aria-label="Manager inventory analytics">
+        <Card
+          id="manager-stock-status"
+          title={
+            <div className="sl-mgr-card-title-group">
+              <span className="sl-mgr-card-main-title">Stock Status</span>
+              <span className="sl-mgr-card-sub">
+                {summary ? `How your ${summary.totalBatches} batches are doing` : 'How your batches are doing'}
+              </span>
+            </div>
+          }
+        >
+          {stockStatusData ? (
+            <div className="sl-mgr-stock-body">
+              <div className="sl-mgr-stock-hero">
+                <span className="sl-mgr-stock-hero-val">{stockStatusData.percentage}%</span>
+                <span className="sl-mgr-stock-hero-label">
+                  are in good shape ({stockStatusData.inStock} of {stockStatusData.total})
+                </span>
+              </div>
+
+              <div className="sl-mgr-stock-rows">
+                {stockStatusData.statuses.map(({ label, count, color, barColor }) => (
+                  <div className="sl-mgr-stock-row" key={label}>
+                    <div className="sl-mgr-stock-row-info">
+                      <span className="sl-mgr-stock-dot" style={{ backgroundColor: color }} />
+                      <span className="sl-mgr-stock-row-label">{label}</span>
+                    </div>
+                    <div className="sl-mgr-stock-bar-track">
+                      <div
+                        className="sl-mgr-stock-bar-fill"
+                        style={{
+                          width: `${stockStatusData.total > 0 ? Math.max((count / stockStatusData.total) * 100, count > 0 ? 3 : 0) : 0}%`,
+                          backgroundColor: barColor,
+                        }}
+                      />
+                    </div>
+                    <span className="sl-mgr-stock-row-count">{count}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="sl-mgr-stock-alert-banner">
+                <div className="sl-mgr-stock-alert-icon">
+                  <TriangleAlert size={14} aria-hidden="true" />
+                </div>
+                <span className="sl-mgr-stock-alert-text">
+                  {stockStatusData.lowStock > 0 || stockStatusData.expired > 0 ? (
+                    <>
+                      <strong>{stockStatusData.lowStock} low-stock</strong> and <strong>{stockStatusData.expired} expired batches</strong> need a decision.
+                    </>
+                  ) : (
+                    'All batches are currently in good operational shape.'
+                  )}
+                </span>
+                <Link href="/Inventory" className="sl-mgr-stock-alert-link">
+                  Review <ArrowRight size={13} aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
           ) : inventoryError ? (
-            <DataState kind="error" title="Data unavailable" description="Inventory valuation trends could not be loaded." />
+            <DataState kind="error" title="Data unavailable" description="Inventory status data could not be loaded." />
           ) : (
-            <DataState kind="loading" title="Loading valuation trend" description="Retrieving inventory valuation history." />
+            <DataState kind="loading" title="Loading inventory status" description="Retrieving current batch status totals." />
           )}
         </Card>
-        <Card id="manager-stock-distribution" title="Stock Status Distribution">
-          {summary ? <ApplicationDonutChart ariaLabel="Current inventory batch status distribution" centerLabel="Batches" centerValue={summary.totalBatches} items={Object.entries(summary.statusCounts).map(([label, value]) => ({ label, value }))} /> : inventoryError ? <DataState kind="error" title="Data unavailable" description="Inventory status data could not be loaded." /> : <DataState kind="loading" title="Loading inventory status" description="Retrieving current batch status totals." />}
-        </Card>
-        <Card id="manager-expiring-items" title="Expiring Items Trend">
-          {expiringPoints ? (
-            <ManagerDailyRecordChart
-              ariaLabel="Upcoming batch expiration timeline for the next 14 days"
-              points={expiringPoints}
-              visible={{ waste: true }}
-              labels={{ waste: 'Expiring Batches' }}
-              formatValue={v => `${v}`}
-              valueSuffix=" batches"
-              dateAxis="rolling"
-            />
+
+        <Card
+          id="manager-expiring-items"
+          title={
+            <div className="sl-mgr-card-title-group">
+              <span className="sl-mgr-card-main-title">Expiring in the Next 7 Days</span>
+              <span className="sl-mgr-card-sub">How many batches expire each day</span>
+            </div>
+          }
+          action={
+            <div className="sl-mgr-expiring-legend" aria-hidden="true">
+              <span><i style={{ backgroundColor: '#dc2626' }} /> High</span>
+              <span><i style={{ backgroundColor: '#d97706' }} /> Medium</span>
+            </div>
+          }
+        >
+          {next7DaysData ? (
+            <div className="sl-mgr-expiring-body">
+              <div className="sl-mgr-expiring-chart" aria-label="Batches expiring each day over the next 7 days">
+                <div className="sl-mgr-expiring-gridlines" aria-hidden="true">
+                  <div className="sl-mgr-expiring-gridline">
+                    <span className="sl-mgr-expiring-gridline-label">{next7DaysData.maxScale}</span>
+                  </div>
+                  <div className="sl-mgr-expiring-gridline">
+                    <span className="sl-mgr-expiring-gridline-label">{Math.round(next7DaysData.maxScale / 2)}</span>
+                  </div>
+                  <div className="sl-mgr-expiring-gridline">
+                    <span className="sl-mgr-expiring-gridline-label">0</span>
+                  </div>
+                </div>
+
+                <div className="sl-mgr-expiring-columns">
+                  {next7DaysData.days.map(day => {
+                    const heightPercent = next7DaysData.maxScale > 0
+                      ? (day.count / next7DaysData.maxScale) * 100
+                      : 0;
+                    return (
+                      <div className="sl-mgr-expiring-col" key={day.date}>
+                        <span className={`sl-mgr-expiring-col-val ${day.count === 0 ? 'sl-mgr-val-zero' : ''}`}>
+                          {day.count}
+                        </span>
+                        <div
+                          className="sl-mgr-expiring-col-bar"
+                          style={{
+                            height: day.count > 0 ? `${Math.max(heightPercent, 14)}%` : '0%',
+                            backgroundColor: day.count > 0 ? (day.severity === 'High' ? '#dc2626' : '#d97706') : 'transparent',
+                          }}
+                        />
+                        <span className="sl-mgr-expiring-col-date">{day.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="sl-mgr-expiring-alert-banner">
+                <div className="sl-mgr-expiring-alert-icon">
+                  <CalendarClock size={14} aria-hidden="true" />
+                </div>
+                <span className="sl-mgr-expiring-alert-text">
+                  {next7DaysData.calloutText}
+                </span>
+                <Link href="/Inventory" className="sl-mgr-expiring-alert-link">
+                  View batches <ArrowRight size={13} aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
           ) : inventoryError ? (
             <DataState kind="error" title="Data unavailable" description="Expiring items data could not be loaded." />
           ) : (

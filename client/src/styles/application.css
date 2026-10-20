@@ -35515,3 +35515,52 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
   cursor:not-allowed;
 }
 
+
+
+/* Manager Dashboard: Stock Status & Expiring in Next 7 Days Cards */
+.sl-mgr-card-title-group { display: flex; flex-direction: column; gap: 0.15rem; }
+.sl-mgr-card-main-title { font-size: 1.125rem; font-weight: 700; color: var(--sl-text); letter-spacing: -0.01em; }
+.sl-mgr-card-sub { font-size: 0.8125rem; font-weight: 400; color: var(--sl-muted); }
+
+.sl-mgr-stock-body, .sl-mgr-expiring-body { display: flex; flex-direction: column; height: 100%; min-height: 270px; gap: 0.85rem; }
+
+.sl-mgr-stock-hero { display: flex; align-items: baseline; gap: 0.45rem; margin-bottom: 0.2rem; }
+.sl-mgr-stock-hero-val { font-size: 2.25rem; font-weight: 800; color: var(--sl-text); line-height: 1; letter-spacing: -0.02em; }
+.sl-mgr-stock-hero-label { font-size: 0.875rem; font-weight: 500; color: var(--sl-muted); }
+
+.sl-mgr-stock-rows { display: flex; flex-direction: column; gap: 0.65rem; flex: 1; }
+.sl-mgr-stock-row { display: grid; grid-template-columns: 7.25rem 1fr 2rem; align-items: center; gap: 0.75rem; }
+.sl-mgr-stock-row-info { display: flex; align-items: center; gap: 0.45rem; font-size: 0.875rem; font-weight: 500; color: var(--sl-text); }
+.sl-mgr-stock-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sl-mgr-stock-bar-track { background: var(--sl-surface-subtle, #f3f4f6); border-radius: 9999px; height: 11px; width: 100%; overflow: hidden; }
+.sl-mgr-stock-bar-fill { height: 100%; border-radius: 9999px; transition: width 0.3s ease; }
+.sl-mgr-stock-row-count { font-size: 0.92rem; font-weight: 700; color: var(--sl-text); text-align: right; }
+
+.sl-mgr-stock-alert-banner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; padding: 0.65rem 0.85rem; margin-top: auto; }
+.sl-mgr-stock-alert-icon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: #fef3c7; color: #d97706; flex-shrink: 0; }
+.sl-mgr-stock-alert-text { font-size: 0.82rem; color: #92400e; flex: 1; }
+.sl-mgr-stock-alert-text strong { color: #78350f; font-weight: 700; }
+.sl-mgr-stock-alert-link { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.82rem; font-weight: 600; color: #92400e; text-decoration: none; white-space: nowrap; }
+.sl-mgr-stock-alert-link:hover { text-decoration: underline; }
+
+.sl-mgr-expiring-legend { display: flex; align-items: center; gap: 0.85rem; font-size: 0.78rem; font-weight: 500; color: var(--sl-muted); }
+.sl-mgr-expiring-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.sl-mgr-expiring-legend i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+.sl-mgr-expiring-chart { display: flex; flex-direction: column; justify-content: flex-end; height: 145px; position: relative; margin: 0.5rem 0 0.5rem; padding-bottom: 1.5rem; }
+.sl-mgr-expiring-gridlines { position: absolute; inset: 0 0 1.5rem 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+.sl-mgr-expiring-gridline { border-bottom: 1px solid var(--sl-border-subtle, #f3f4f6); width: 100%; position: relative; }
+.sl-mgr-expiring-gridline-label { position: absolute; left: 0; top: -8px; font-size: 0.7rem; color: #9ca3af; }
+.sl-mgr-expiring-columns { display: grid; grid-template-columns: repeat(7, 1fr); height: 100%; align-items: flex-end; position: relative; z-index: 1; padding-left: 1.25rem; gap: 0.5rem; }
+.sl-mgr-expiring-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; }
+.sl-mgr-expiring-col-val { font-size: 0.78rem; font-weight: 600; color: var(--sl-text); margin-bottom: 4px; }
+.sl-mgr-expiring-col-val.sl-mgr-val-zero { color: #9ca3af; font-weight: 500; }
+.sl-mgr-expiring-col-bar { width: 30px; max-width: 80%; border-radius: 6px 6px 0 0; }
+.sl-mgr-expiring-col-date { position: absolute; bottom: -1.35rem; font-size: 0.72rem; color: var(--sl-muted); white-space: nowrap; font-weight: 500; }
+
+.sl-mgr-expiring-alert-banner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fef2f2; border: 1px solid #fee2e2; border-radius: 10px; padding: 0.65rem 0.85rem; margin-top: auto; }
+.sl-mgr-expiring-alert-icon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: #fee2e2; color: #dc2626; flex-shrink: 0; }
+.sl-mgr-expiring-alert-text { font-size: 0.82rem; color: #991b1b; flex: 1; }
+.sl-mgr-expiring-alert-text strong { color: #7f1d1d; font-weight: 700; }
+.sl-mgr-expiring-alert-link { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.82rem; font-weight: 600; color: #dc2626; text-decoration: none; white-space: nowrap; }
+.sl-mgr-expiring-alert-link:hover { text-decoration: underline; }
