@@ -37,12 +37,15 @@ function validate(mode: Mode, row: Draft, today: string, batch?: InventoryBatch)
   else if (!/^-?\d+(?:\.\d{1,3})?$/.test(quantityText)) errors.quantity = 'Use numbers only, with up to 3 decimal places.';
   else if (!Number.isFinite(quantity) || quantity > MAX_RECORD_QUANTITY) errors.quantity = 'Quantity cannot exceed 1,000,000.';
   else if (quantity <= 0) errors.quantity = 'Enter a quantity greater than 0.';
+    const maxPastDays = mode === 'stock' ? shiftBusinessDate(today, -7) : undefined;
   if (!row.date) errors.date = `Select the ${labels[mode].date.toLowerCase()}.`;
   else if (!isValidDateOnlyInput(row.date)) errors.date = 'Enter a valid date.';
   else if (row.date > today) errors.date = `${labels[mode].date} cannot be in the future.`;
+  else if (mode === 'stock' && maxPastDays && row.date < maxPastDays) errors.date = 'Date received cannot be older than 7 days.';
   else if (mode === 'waste' && batch?.dateReceived && row.date < batch.dateReceived.slice(0, 10)) errors.date = 'Date wasted cannot be before the batch was received.';
   if (mode === 'stock' && !row.expirationDate) errors.expirationDate = 'Select the expiration date.';
   else if (mode === 'stock' && row.expirationDate && !isValidDateOnlyInput(row.expirationDate)) errors.expirationDate = 'Enter a valid expiration date.';
+  else if (mode === 'stock' && row.expirationDate && row.expirationDate <= today) errors.expirationDate = 'Expiration date must be in the future.';
   else if (mode === 'stock' && row.date && row.expirationDate <= row.date) errors.expirationDate = 'Expiration date must be after the date received.';
   if (mode === 'stock' && row.unitCost && !/^-?\d+(?:\.\d{1,2})?$/.test(row.unitCost.trim())) errors.unitCost = 'Use numbers only, with up to 2 decimal places.';
   else if (mode === 'stock' && row.unitCost && (!Number.isFinite(Number(row.unitCost)) || Number(row.unitCost) > MAX_UNIT_COST)) errors.unitCost = 'Unit cost cannot exceed 1,000,000,000.';
@@ -54,21 +57,23 @@ function validate(mode: Mode, row: Draft, today: string, batch?: InventoryBatch)
 export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, ingredients, onDismiss, onSaved, returnFocus, initialSelection }: { mode: Mode; open: boolean; busy?: boolean; ingredients: StockInIngredient[]; onDismiss: () => void; onSaved: () => Promise<void> | void; returnFocus: RefObject<HTMLElement | null>; initialSelection?: { ingredientId: string; batchId: string } }) {
   const config = labels[mode], Icon = config.Icon, form = useRef<HTMLFormElement>(null);
   const interacted = useRef<Record<string, Partial<Record<Field, boolean>>>>({});
+  const today = businessDateInputValue();
   const [rows, setRows] = useState<Draft[]>([blank()]);
   const [batches, setBatches] = useState<Record<string, InventoryBatch[]>>({});
   const [touched, setTouched] = useState<Record<string, Partial<Record<Field, boolean>>>>({});
   const [errors, setErrors] = useState<Record<string, RowErrors>>({});
   const [busy, setBusy] = useState(false), [message, setMessage] = useState('');
-  const today = businessDateInputValue();
   const initialIngredientId = initialSelection?.ingredientId ?? '', initialBatchId = initialSelection?.batchId ?? '';
   const reset = () => { interacted.current = {}; setRows([blank(initialIngredientId && initialBatchId ? { ingredientId: initialIngredientId, batchId: initialBatchId } : undefined)]); setBatches({}); setTouched({}); setErrors({}); setMessage(''); };
   useEffect(() => {
     if (!open) return;
     reset();
+    if (mode === 'stock') setRows(current => current.map(item => item.date ? item : { ...item, date: today }));
     if (mode !== 'stock' && initialIngredientId) void listInventoryBatches({ page: 1, pageSize: 150, ingredientId: initialIngredientId, sort: 'fefo' }).then(result => setBatches({ [initialIngredientId]: result.items })).catch(() => setBatches({ [initialIngredientId]: [] }));
   }, [open, mode, initialIngredientId, initialBatchId]);
   const update = (key: string, field: Field, value: string) => {
     interacted.current[key] = { ...interacted.current[key], [field]: true };
+    let updatedRow: Draft | undefined;
     setRows(current => current.map(row => {
       if (row.key !== key) return row;
       const next = { ...row, [field]: value, ...(field === 'ingredientId' ? { batchId: '' } : {}) } as Draft;
@@ -77,11 +82,20 @@ export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, i
       if (mode === 'stock' && (field === 'ingredientId' || field === 'date') && next.date && ingredient?.defaultShelfLifeDays) {
         next.expirationDate = shiftBusinessDate(next.date, ingredient.defaultShelfLifeDays);
       }
+      updatedRow = next;
       return next;
     }));
-    setErrors(current => ({ ...current, [key]: { ...current[key], [field]: undefined, ...(field === 'ingredientId' ? { batchId: undefined } : {}) } }));
     if (field === 'ingredientId' && mode !== 'stock' && value && !batches[value]) {
       void listInventoryBatches({ page: 1, pageSize: 150, ingredientId: value, sort: 'fefo' }).then(result => setBatches(current => ({ ...current, [value]: result.items }))).catch(() => setBatches(current => ({ ...current, [value]: [] })));
+    }
+    if (updatedRow) {
+      const activeRow = updatedRow;
+      const batch = batches[activeRow.ingredientId]?.find(item => item.id === activeRow.batchId);
+      const rowValidation = validate(mode, activeRow, today, batch);
+      setErrors(current => ({ ...current, [key]: { ...current[key], [field]: rowValidation[field], ...(field === 'ingredientId' ? { batchId: undefined } : {}) } }));
+      if (rowValidation[field]) {
+        setTouched(current => ({ ...current, [key]: { ...current[key], [field]: true } }));
+      }
     }
   };
   const blur = (row: Draft, field: Field) => {
@@ -137,19 +151,11 @@ export function InventoryStaffBulkModal({ mode, open, busy: outerBusy = false, i
         const batchField = mode !== 'stock' ? field('batchId', 'Batch ID', <select value={row.batchId} disabled={!row.ingredientId} onChange={event => update(row.key, 'batchId', event.target.value)} onBlur={() => blur(row, 'batchId')} {...interaction(row, 'batchId')} {...validation(row, 'batchId')}><option value="">Select batch ID...</option>{rowBatches.filter(item => item.quantity > 0).map(item => <option key={item.id} value={item.id}>{item.batchID}</option>)}</select>) : null;
         const selectedUnit = mode === 'stock' ? ingredient?.unitOfMeasure : batch?.unit;
         const unitSource = mode === 'stock' ? 'ingredient' : 'selected batch';
-        const quantityField = field('quantity', config.quantity, <span className="sl-bulk-quantity-input"><input inputMode="decimal" maxLength={11} value={row.quantity} onChange={event => {
-      const v = event.target.value;
-      if (!/^\d*(?:\.\d{0,3})?$/.test(v) || Number(v) > MAX_RECORD_QUANTITY) return;
-      update(row.key, 'quantity', v);
-    }} onBlur={() => blur(row, 'quantity')} {...interaction(row, 'quantity')} placeholder="Enter quantity" {...validation(row, 'quantity')}/><output className="sl-staff-derived-unit" aria-label={selectedUnit ? `Unit ${selectedUnit}, auto-filled from ${unitSource}` : `Unit auto-filled from the ${unitSource}`}>{selectedUnit ?? '—'}</output></span>, 'sl-bulk-quantity-control');
-        const dateMin = mode === 'waste' ? batch?.dateReceived.slice(0, 10) : undefined;
-        const dateField = field('date', config.date, <input type="date" min={dateMin || '2020-01-01'} max={today} value={row.date} onChange={event => update(row.key, 'date', event.target.value)} onBlur={() => blur(row, 'date')} {...interaction(row, 'date')} {...validation(row, 'date')}/>);
+                const quantityField = field('quantity', config.quantity, <span className="sl-bulk-quantity-input"><input inputMode="decimal" maxLength={15} value={row.quantity} onChange={event => update(row.key, 'quantity', event.target.value)} onBlur={() => blur(row, 'quantity')} {...interaction(row, 'quantity')} placeholder="Enter quantity" {...validation(row, 'quantity')}/><output className="sl-staff-derived-unit" aria-label={selectedUnit ? `Unit ${selectedUnit}, auto-filled from ${unitSource}` : `Unit auto-filled from the ${unitSource}`}>{selectedUnit ?? '—'}</output></span>, 'sl-bulk-quantity-control');
+        const dateMin = mode === 'waste' ? batch?.dateReceived.slice(0, 10) : (mode === 'stock' ? shiftBusinessDate(today, -7) : '2020-01-01');
+        const dateField = field('date', config.date, <input type="date" min={dateMin} max={today} value={row.date} onChange={event => update(row.key, 'date', event.target.value)} onBlur={() => blur(row, 'date')} {...interaction(row, 'date')} {...validation(row, 'date')}/>);
         return <fieldset key={row.key} aria-labelledby={`${row.key}-title`} className={`sl-bulk-recording-row sl-bulk-recording-row--${mode}`}><div className="sl-bulk-recording-header"><h3 id={`${row.key}-title`}>Item {index + 1}</h3>{index > 0 && <button type="button" className="sl-bulk-recording-remove" aria-label={`Remove item ${index + 1}`} onClick={() => removeRow(row.key)}><X size={16} aria-hidden="true"/> Remove</button>}</div>
-          {mode === 'stock' ? <div className="sl-creation-form-grid"><div className="sl-creation-form-row sl-bulk-recording-row--full">{ingredientField}</div><div className="sl-creation-form-row">{quantityField}{dateField}</div><div className="sl-creation-form-row">{field('expirationDate', 'Expiration Date', <input type="date" min={row.date || today} max="2099-12-31" value={row.expirationDate} onChange={event => update(row.key, 'expirationDate', event.target.value)} onBlur={() => blur(row, 'expirationDate')} {...interaction(row, 'expirationDate')} {...validation(row, 'expirationDate')}/>)}{field('unitCost', 'Unit Cost (Optional)', <span className="sl-currency-input sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" maxLength={13} value={row.unitCost} onChange={event => {
-      const v = event.target.value;
-      if (!/^\d*(?:\.\d{0,2})?$/.test(v) || Number(v) > MAX_UNIT_COST) return;
-      update(row.key, 'unitCost', v);
-    }} onBlur={() => blur(row, 'unitCost')} {...interaction(row, 'unitCost')} placeholder="0.00" {...validation(row, 'unitCost')}/></span>)}</div></div> : mode === 'usage' ? <div className="sl-creation-form-grid"><div className="sl-creation-form-row">{ingredientField}{batchField}</div><div className="sl-creation-form-row">{quantityField}{dateField}</div></div> : <div className="sl-creation-form-grid"><div className="sl-creation-form-row">{ingredientField}{batchField}</div><div className="sl-creation-form-row">{quantityField}{dateField}</div><div className="sl-creation-form-row sl-bulk-recording-row--full">{field('reason', 'Reason', <select value={row.reason} onChange={event => update(row.key, 'reason', event.target.value)} onBlur={() => blur(row, 'reason')} {...interaction(row, 'reason')} {...validation(row, 'reason')}><option value="">Select reason...</option>{reasons.map(reason => <option key={reason}>{reason}</option>)}</select>)}</div></div>}
+          {mode === 'stock' ? <div className="sl-creation-form-grid"><div className="sl-creation-form-row sl-bulk-recording-row--full">{ingredientField}</div><div className="sl-creation-form-row">{quantityField}{dateField}</div><div className="sl-creation-form-row">{field('expirationDate', 'Expiration Date', <input type="date" min={shiftBusinessDate(today, 1)} max="2099-12-31" value={row.expirationDate} onChange={event => update(row.key, 'expirationDate', event.target.value)} onBlur={() => blur(row, 'expirationDate')} {...interaction(row, 'expirationDate')} {...validation(row, 'expirationDate')}/>)}{field('unitCost', 'Unit Cost (Optional)', <span className="sl-currency-input sl-stockin-currency-input"><span aria-hidden="true">₱</span><input inputMode="decimal" maxLength={15} value={row.unitCost} onChange={event => update(row.key, 'unitCost', event.target.value)} onBlur={() => blur(row, 'unitCost')} {...interaction(row, 'unitCost')} placeholder="0.00" {...validation(row, 'unitCost')}/></span>)}</div></div> : mode === 'usage' ? <div className="sl-creation-form-grid"><div className="sl-creation-form-row">{ingredientField}{batchField}</div><div className="sl-creation-form-row">{quantityField}{dateField}</div></div> : <div className="sl-creation-form-grid"><div className="sl-creation-form-row">{ingredientField}{batchField}</div><div className="sl-creation-form-row">{quantityField}{dateField}</div><div className="sl-creation-form-row sl-bulk-recording-row--full">{field('reason', 'Reason', <select value={row.reason} onChange={event => update(row.key, 'reason', event.target.value)} onBlur={() => blur(row, 'reason')} {...interaction(row, 'reason')} {...validation(row, 'reason')}><option value="">Select reason...</option>{reasons.map(reason => <option key={reason}>{reason}</option>)}</select>)}</div></div>}
         </fieldset>;
       })}</div>;
   const addButton = <button type="button" className="sl-button sl-bulk-recording-add" disabled={rows.length >= MAX_ITEMS} onClick={() => setRows(current => [...current, blank()])}><Plus size={16} aria-hidden="true"/>Add another item</button>;
