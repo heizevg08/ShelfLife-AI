@@ -14,6 +14,7 @@ import type { OperationalRecommendationService } from '../services/operational-r
 import type { ForecastEvaluationService } from '../services/forecast-evaluation-service';
 import { forecastEvaluationControllers } from '../controllers/forecast-evaluation.controller';
 import { mongoInputGuard, secureJson } from '../middleware/request-security.middleware';
+import { mlUnavailable } from '../middleware/ml-unavailable.middleware';
 
 /**
  * Register the ingredient routes on a new router.
@@ -25,6 +26,11 @@ import { mongoInputGuard, secureJson } from '../middleware/request-security.midd
  * @param recommendations - optional recommendation service.
  * @param evaluation - optional evaluation service for accuracy views.
  * @returns the configured router.
+ *
+ * WHY THE ML ROUTES ARE ALWAYS REGISTERED: a missing service must answer
+ * UNAVAILABLE, not disappear. An unregistered route falls through to the
+ * catch-all 404, which a caller cannot tell apart from a wrong path, so the
+ * forecast panels waited on their loading placeholder for ever.
  */
 export function ingredientRoutes(
   auth: AuthService,
@@ -49,15 +55,15 @@ export function ingredientRoutes(
   router.post('/', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), actions.create);
   router.put('/:id', authorizeAdministration(['Admin']), secureJson({ limit: '100kb' }), actions.update);
   router.delete('/:id', authorizeAdministration(['Admin']), actions.remove);
-  if (forecastActions) router.post('/:id/forecast', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), forecastActions.forecast);
+  router.post('/:id/forecast', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), forecastActions ? forecastActions.forecast : mlUnavailable());
   if (evaluationActions) {
     router.get('/forecast-accuracy', authorizeAdministration(['Admin', 'Manager']), evaluationActions.overallAccuracy);
     router.get('/forecast-table', authorizeAdministration(['Admin', 'Manager']), evaluationActions.table);
     router.get('/:id/forecast-accuracy', authorizeAdministration(['Admin', 'Manager']), evaluationActions.accuracy);
     router.get('/:id/forecast-vs-actual', authorizeAdministration(['Admin', 'Manager']), evaluationActions.trend);
   }
-  if (riskActions) router.post('/:id/risk', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), riskActions.risk);
-  if (recommendationActions) router.post('/:id/recommendations', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), recommendationActions.recommend);
+  router.post('/:id/risk', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), riskActions ? riskActions.risk : mlUnavailable());
+  router.post('/:id/recommendations', authorizeAdministration(['Admin', 'Manager']), secureJson({ limit: '100kb' }), recommendationActions ? recommendationActions.recommend : mlUnavailable());
   router.use((_req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found', details: [] } }); });
   const error: ErrorRequestHandler = (value, _req, res, next) => {
     if (res.headersSent) { next(value); return; }

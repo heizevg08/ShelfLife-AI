@@ -1,4 +1,5 @@
 import { ApplicationBarBreakdown, ApplicationPendingState } from './ApplicationPatterns';
+import { DataState } from './primitives';
 import { ManagerDailyRecordChart, ManagerDailyRecordLegend, type DailyPoint, type DailySeries } from './ManagerDailyRecordChart';
 import { formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
 import {
@@ -292,5 +293,38 @@ export function ForecastInsightsEmpty() {
     <ol className="sl-mgr-fc-insight-list" aria-hidden="true">
       {[0, 1, 2].map(index => <li className="sl-mgr-fc-insight sl-mgr-fc-insight-placeholder" key={index}><i /><i /><i /></li>)}
     </ol>
+  </div>;
+}
+
+// Plain-language cause for each reason the advisory service can return, so the panel
+// explains itself instead of showing placeholder bars for ever. Wording stays factual:
+// every line says what is missing, never that something failed to compute a number.
+const INSIGHT_UNAVAILABLE_COPY: Record<string, string> = {
+  ML_UNAVAILABLE: 'The prediction service is not running on this deployment, so no advisories can be generated yet. Stored ingredients, batches and records are unaffected.',
+  NO_HISTORY: 'This ingredient has no recorded usage yet, so there is nothing to base an advisory on.',
+  INSUFFICIENT_HISTORY: 'This ingredient does not have enough recorded usage days yet to support an advisory.',
+  INCOMPLETE_DAILY_HISTORY: 'The recorded usage for this ingredient has missing days, so an advisory would be unreliable.',
+  MIXED_INGREDIENTS: 'The usage records for this ingredient mix different ingredients, so they cannot be forecast together.',
+  INCONSISTENT_UNIT: 'The usage records for this ingredient use different units, so they cannot be added together.',
+  INVALID_DATE: 'Some recorded usage for this ingredient carries an unreadable date.',
+  INVALID_QUANTITY: 'Some recorded usage for this ingredient carries an unreadable quantity.',
+  NO_INGREDIENT: 'Choose an ingredient above to see advisories for it.',
+  NOT_FOUND: 'That ingredient is no longer in the catalogue, so no advisories are available for it.',
+  NO_ACTION: 'Nothing needs attention for this ingredient in the forecast window — no shortage, expiry exposure or surplus was found.',
+};
+
+/**
+ * Explain why no advisories are shown, rather than leaving the panel loading.
+ *
+ * @param reason - the machine-readable cause reported by the server.
+ * @param failed - true when the request itself did not complete.
+ * @returns the panel's honest unavailable state.
+ */
+export function ForecastInsightsUnavailable({ reason, failed = false }: { reason?: string; failed?: boolean }) {
+  const description = failed
+    ? 'The forecasting service did not answer this request, so no advisories are shown. Check the connection and try again.'
+    : INSIGHT_UNAVAILABLE_COPY[reason ?? ''] ?? INSIGHT_UNAVAILABLE_COPY.ML_UNAVAILABLE;
+  return <div className="sl-mgr-fc-insights sl-mgr-fc-insights-unavailable">
+    <DataState kind={failed ? 'error' : 'unavailable'} title="Forecast insights unavailable" description={description} />
   </div>;
 }

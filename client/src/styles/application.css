@@ -34150,6 +34150,11 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
    reference's own row height. */
 .sl-mgr-fc-insights-empty { min-height: 0; padding: var(--sl-space-4); }
 .sl-mgr-fc-insights-empty .sl-mgr-fc-pending { min-height: 4.5rem; }
+/* The unavailable state replaces the pulsing placeholder bars with a plain sentence. It is
+   sized to its content for the same reason as the empty state above: a tall block here
+   stretches the whole analytics row. */
+.sl-mgr-fc-insights-unavailable { min-height: 0; padding: var(--sl-space-4); }
+.sl-mgr-fc-insights-unavailable .sl-state { min-height: 4.5rem; }
 .sl-mgr-fc-insight-placeholder { min-height: 3.8rem; border: 1px solid #e5e7eb; border-radius: 14px; background: #fafaf9; gap: .6rem; }
 .sl-mgr-fc-insight-placeholder i { display: block; width: 55%; height: .55rem; border-radius: var(--sl-radius-full); background: #e5e7eb; animation: sl-pulse 1.5s ease-in-out infinite; }
 .sl-mgr-fc-insight-placeholder i:first-child { width: 35%; }

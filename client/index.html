@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0E2A1F" />
     <meta name="description" content="ShelfLife AI inventory, expiry and demand forecasting" />
-    <link rel="icon" type="image/svg+xml" href="/icons/shelflife-logo.svg" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Paths are relative so the page resolves its icons wherever the HTML is opened: a
+         root-absolute /icons/... only works when a web server hosts the app at /. Vite still
+         rebases these correctly for the built bundle. -->
+    <link rel="icon" type="image/svg+xml" href="public/icons/shelflife-logo.svg" />
+    <link rel="apple-touch-icon" href="public/icons/icon-192.png" />
+    <link rel="manifest" href="public/manifest.webmanifest" />
     <title>ShelfLife AI</title>
   </head>
   <body>

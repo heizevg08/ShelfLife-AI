@@ -3,7 +3,7 @@ import { AlertTriangle, ArrowRight, BarChart3, Boxes, Building2, CalendarDays, C
 import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { AccountsTable } from './AccountsTable';
 import { APPLICATION_RECORD_PAGE_SIZES, ApplicationPendingState } from './ApplicationPatterns';
-import { ForecastInsightCards, ForecastInsightsEmpty, ForecastVsActualChart, ForecastVsActualLegend } from './ManagerForecastCharts';
+import { ForecastInsightCards, ForecastInsightsEmpty, ForecastInsightsUnavailable, ForecastVsActualChart, ForecastVsActualLegend } from './ManagerForecastCharts';
 import type { DailyPoint } from './ManagerDailyRecordChart';
 import { emptyForecastWindow, type ForecastInsight } from './forecast-chart-data';
 import { useApplicationWorkspace } from './ApplicationWorkspace';
@@ -1457,6 +1457,7 @@ function ManagerForecastingPage() {
   const [generalAccuracy, setGeneralAccuracy] = useState<ForecastAccuracyResponse | null>(null);
   const [trendData, setTrendData] = useState<ForecastVsActualResponse | null>(null);
   const [recommendationsData, setRecommendationsData] = useState<RecommendationResponse | null>(null);
+  const [recommendationsFailed, setRecommendationsFailed] = useState(false);
 
   const [forecastTableData, setForecastTableData] = useState<ForecastTableResponse | null>(null);
   const [catalogSummary, setCatalogSummary] = useState<{ total: number; highDemand: number; atRisk: number } | null>(null);
@@ -1497,9 +1498,10 @@ function ManagerForecastingPage() {
     }
     const controller = new AbortController();
     const forecastDates = Array.from({ length: 14 }, (_, i) => shiftBusinessDate(today, i + 1));
+    setRecommendationsFailed(false);
     getIngredientRecommendations(targetIngredientId, forecastDates, controller.signal)
       .then(result => { if (!controller.signal.aborted) setRecommendationsData(result); })
-      .catch(() => { if (!controller.signal.aborted) setRecommendationsData(null); });
+      .catch(() => { if (!controller.signal.aborted) { setRecommendationsData(null); setRecommendationsFailed(true); } });
     return () => controller.abort();
   }, [effectiveChartIngredient, today]);
 
@@ -1522,6 +1524,19 @@ function ManagerForecastingPage() {
       unitCost,
     );
   }, [recommendationsData, effectiveChartIngredient, ingredients]);
+
+  // Why the panel has no advisories, resolved once so the render stays a one-line ternary.
+  // `null` means "still pending", which keeps the approved placeholder bars; a resolved
+  // cause replaces them with an honest explanation instead of loading for ever.
+  const insightsFallback = useMemo<{ reason?: string; failed: boolean } | null>(() => {
+    if (!effectiveChartIngredient) return { reason: 'NO_INGREDIENT', failed: false };
+    if (recommendationsFailed) return { failed: true };
+    if (!recommendationsData) return null;
+    if (recommendationsData.status === 'NOT_FOUND') return { reason: 'NOT_FOUND', failed: false };
+    if (recommendationsData.status === 'UNAVAILABLE') return { reason: recommendationsData.reason, failed: false };
+    // ADVISED with nothing actionable left after mapping: say so rather than load for ever.
+    return { reason: 'NO_ACTION', failed: false };
+  }, [effectiveChartIngredient, recommendationsFailed, recommendationsData]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1578,7 +1593,7 @@ function ManagerForecastingPage() {
 
       <section className="sl-mgr-forecast-analytics" aria-label="Forecast analytics">
         <Card id="mgr-forecast-v-actual" title="Forecast vs. Actual" action={<div className="sl-mgr-fc-header-tools"><ForecastVsActualLegend visible={forecastSeriesVisible} onToggle={series => setForecastSeriesVisible(current => ({ ...current, [series]: !current[series] }))} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend ingredient" value={effectiveChartIngredient} options={chartIngredientOptions} onChange={setChartIngredient} /><FilterSelect className="sl-dashboard-filter" ariaLabel="Forecast trend period" value={trendPeriod} options={forecastPeriodOptions} onChange={setTrendPeriod} /></div>}><ForecastVsActualChart ariaLabel="Forecast versus actual ingredient consumption by date" points={trendData?.status === 'FOUND' && trendData.points.length > 0 ? trendData.points : trendWindow} meta={trendData?.status === 'FOUND' && trendData.meta ? trendData.meta : { ingredient: activeChartIngredientName || 'Ingredient', unit: 'unit', asOf: today, horizonDays: trendDays }} visible={forecastSeriesVisible} calendarWeek={trendPeriod === 'This Week'} emptyLabel="No live records yet" emptyDescription="Forecast and actual consumption will appear when validated forecast and usage records are available." /></Card>
-        <Card id="mgr-forecast-insights" title="Forecast Insights">{insights.length > 0 ? <ForecastInsightCards ariaLabel="Operational forecast insights and risk recommendations" insights={insights} ingredientName={activeChartIngredientName} /> : <ForecastInsightsEmpty />}</Card>
+        <Card id="mgr-forecast-insights" title="Forecast Insights">{insights.length > 0 ? <ForecastInsightCards ariaLabel="Operational forecast insights and risk recommendations" insights={insights} ingredientName={activeChartIngredientName} /> : insightsFallback ? <ForecastInsightsUnavailable reason={insightsFallback.reason} failed={insightsFallback.failed} /> : <ForecastInsightsEmpty />}</Card>
       </section>
 
       <section className="sl-application-records sl-sa-ingredients-table-card sl-sa-account-pattern-records sl-mgr-forecast-records" aria-labelledby="mgr-ingredient-forecasts">
