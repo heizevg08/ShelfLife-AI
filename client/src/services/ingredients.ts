@@ -126,6 +126,22 @@ export const getIngredientRecommendations = (id: string, forecastDates: string[]
     errorFeedback: false,
   });
 
+export interface FutureForecastResponse {
+  status: 'FORECAST' | 'UNAVAILABLE' | 'NOT_FOUND';
+  ingredientId?: string;
+  unit?: string;
+  predictions?: Array<{ date: string; predictedConsumption: number }>;
+}
+
+export const getIngredientFutureForecast = (id: string, forecastDates: string[], signal?: AbortSignal) =>
+  apiClient<FutureForecastResponse>(`/ingredients/${id}/forecast`, {
+    method: 'POST',
+    body: JSON.stringify({ forecastDates }),
+    signal,
+    successMessage: false,
+    errorFeedback: false,
+  });
+
 export interface ForecastTableRow {
   id: string;
   name: string;

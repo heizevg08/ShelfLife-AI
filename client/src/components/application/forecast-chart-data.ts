@@ -174,8 +174,12 @@ export function demandByUnit(items: readonly CategoryDemandItem[], kind: DemandK
 export const demandUnits = (items: readonly CategoryDemandItem[]): string[] =>
   [...new Set(items.map(item => item.unit))].sort((a, b) => a.localeCompare(b));
 
-// Worst first, so the Manager reads the items needing attention before the quiet ones.
-// Ordering uses only the declared tone, never an invented severity number.
+// Show dated batches in FEFO order. Undated ingredient-level advice follows them.
 const TONE_ORDER: Record<ForecastInsightTone, number> = { critical: 0, attention: 1, neutral: 2, positive: 3 };
 export const rankInsights = (insights: readonly ForecastInsight[]): ForecastInsight[] =>
-  [...insights].sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone] || a.ingredient.localeCompare(b.ingredient) || a.batchId.localeCompare(b.batchId));
+  [...insights].sort((a, b) =>
+    (a.expiresOn ? 0 : 1) - (b.expiresOn ? 0 : 1)
+    || (a.expiresOn ?? '').localeCompare(b.expiresOn ?? '')
+    || TONE_ORDER[a.tone] - TONE_ORDER[b.tone]
+    || a.ingredient.localeCompare(b.ingredient)
+    || a.batchId.localeCompare(b.batchId));

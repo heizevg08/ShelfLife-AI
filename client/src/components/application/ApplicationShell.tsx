@@ -92,6 +92,9 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   useEffect(() => {
     const receive = (event: Event) => {
       const { detail } = event as CustomEvent<ActionFeedback>;
+      // Forecasting has no user write action; a late response from the previous
+      // module must not announce a save on this read-only page.
+      if (window.location.pathname === '/Forecasting' && detail.kind === 'success') return;
       setActionToast(detail);
       if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
       toastTimer.current = window.setTimeout(() => setActionToast(null), 4500);

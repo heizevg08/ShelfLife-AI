@@ -62,7 +62,8 @@ test('the category and ingredient filters draw on real master data, never foreca
   // (/ingredients/categories and /ingredients/stock-in-options), the same services the
   // approved Manager /Inventory and /UsageWaste pages already use. No forecast dataset
   // is consulted, so an option can never imply a prediction.
-  assert.match(page, /Promise\.all\(\[listIngredientCategories\(controller\.signal\), listStockInIngredients\(controller\.signal\)\]\)/);
+  assert.match(page, /listIngredientCategories\(controller\.signal\)/);
+  assert.match(page, /listStockInIngredients\(controller\.signal\)/);
   assert.match(page, /const categoryOptions = useMemo\(\(\) => \[\{ value: '', label: 'All Categories' \}, \.\.\.\(categories \?\? \[\]\)\.map/);
   assert.match(page, /const ingredientOptions = useMemo\(\(\) => \[\{ value: '', label: 'All Ingredients' \}, \.\.\.\(ingredients \?\? \[\]\)\.filter\(item => !category \|\| item\.category === category\)/);
   // The Ingredient control follows the chosen category and clears a now-stale choice.

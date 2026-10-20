@@ -33891,34 +33891,13 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(6) { width: 18%; }
 .sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table :is(th,td):nth-child(7) { width: 9%; }
 .sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status {
-  font-weight: 600;
-  font-size: .75rem;
-  padding: .22rem .65rem;
-  border-radius: var(--sl-radius-full);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  vertical-align: middle;
 }
-.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status[data-tone="success"] {
-  color: #0d6832;
-  background: #e6f6ec;
-  border: 1px solid #b7e4c7;
-}
-.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status[data-tone="attention"] {
-  color: #92400e;
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
-}
-.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status[data-tone="critical"] {
-  color: #991b1b;
-  background: #fee2e2;
-  border: 1px solid #fca5a5;
-}
-.sl-mgr-forecast-page .sl-mgr-forecast-tablewrap .sl-application-records-table td:nth-child(7) .sl-status[data-tone="brand"] {
-  color: #075985;
-  background: #e0f2fe;
-  border: 1px solid #bae6fd;
+/* The application shell owns the Forecasting page's vertical scroll. */
+html:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page),
+body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
+  height: 100%;
+  overflow: hidden;
 }
 /* Manager Forecasting empty body: the message lives outside the horizontal scroller on
    purpose. The scroller's canvas is 76rem wide, so a label centred inside it lands in the
@@ -33951,6 +33930,89 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 }
 .sl-mgr-fc-chart { box-sizing: border-box; display: flex; flex-direction: column; gap: .5rem; width: 100%; min-width: 0; padding: .75rem 1.25rem 0; }
 .sl-mgr-fc-header-tools { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: .4rem 1rem; }
+
+.sl-fc-mode-toggle {
+  order: -1;
+  display: inline-flex;
+  align-items: center;
+  background: var(--sl-surface-subtle, #f3f4f6);
+  border: 1px solid var(--sl-border, #e5e7eb);
+  border-radius: var(--sl-radius-md, 6px);
+  padding: 2px;
+  gap: 2px;
+}
+.sl-fc-mode-btn {
+  border: 0;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sl-muted, #4b5563);
+  border-radius: calc(var(--sl-radius-md, 6px) - 2px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+.sl-fc-mode-btn:hover {
+  color: var(--sl-text, #111827);
+}
+.sl-fc-mode-btn.is-active {
+  background: var(--sl-surface, #ffffff);
+  color: var(--sl-text, #111827);
+  font-weight: 650;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.sl-fc-depletion-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--sl-radius-md, 8px);
+  margin: 0.25rem 1.25rem 0.5rem;
+  font-size: 0.82rem;
+}
+.sl-fc-depletion-banner.status-CRITICAL {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  color: #991b1b;
+}
+.sl-fc-depletion-banner.status-WARNING {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #92400e;
+}
+.sl-fc-depletion-banner.status-HEALTHY {
+  background: #f0fdf4;
+  border: 1px solid #dcfce7;
+  color: #166534;
+}
+.sl-fc-depletion-badge {
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--sl-radius-sm, 4px);
+  background: rgba(0, 0, 0, 0.04);
+  white-space: nowrap;
+}
+.sl-fc-depletion-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.sl-fc-depletion-headline {
+  margin: 0;
+  font-weight: 650;
+  font-size: 0.84rem;
+  line-height: 1.25;
+}
+.sl-fc-depletion-sub {
+  margin: 0;
+  font-size: 0.76rem;
+  opacity: 0.9;
+  line-height: 1.2;
+}
+
 .sl-mgr-fc-subject { margin: 0; padding-inline: var(--sl-space-4); color: var(--sl-muted); font: var(--sl-font-supporting); }
 .sl-mgr-fc-subject strong { color: var(--sl-text); }
 /* The frame is measured, so the SVG viewBox can be told the exact box it is drawn into:

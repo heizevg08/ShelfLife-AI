@@ -35,6 +35,7 @@ import {
 // carries the Actual series. The class names, plot, gridlines and tooltip are unchanged,
 // so the two pages keep one chart grammar.
 const FORECAST_LABELS: Record<DailySeries, string> = { usage: 'Forecast', waste: 'Actual' };
+const DEPLETION_LABELS: Record<DailySeries, string> = { usage: 'Projected Stock', waste: 'Min Safety Level' };
 const SERIES_ORDER: readonly ForecastSeriesKey[] = ['forecast', 'actual'];
 const SERIES_SLOT: Record<ForecastSeriesKey, DailySeries> = { forecast: 'usage', actual: 'waste' };
 const slotVisible = (visible: Record<ForecastSeriesKey, boolean>): Record<DailySeries, boolean> =>
@@ -63,6 +64,17 @@ export function ForecastPanelPending({ description }: { description: string }) {
 // dropping it silently would hide that the record is missing. Neither is acceptable on a
 // decision-support surface, and the note is what tells the Manager which of the two
 // happened.
+export interface StockDepletionMeta {
+  stockoutDate: string | null;
+  reorderDate: string | null;
+  daysRemaining: number;
+  status: 'CRITICAL' | 'WARNING' | 'HEALTHY';
+  currentStock: number;
+  minimumStock: number;
+  avgDailyUsage: number;
+  unit: string;
+}
+
 export function ForecastVsActualChart({
   ariaLabel,
   points,
@@ -71,6 +83,9 @@ export function ForecastVsActualChart({
   calendarWeek = false,
   emptyLabel = 'No forecast plotted yet',
   emptyDescription,
+  chartMode = 'depletion',
+  depletionPoints,
+  depletionMeta,
 }: {
   ariaLabel: string;
   points: readonly ForecastPoint[];
@@ -79,20 +94,47 @@ export function ForecastVsActualChart({
   calendarWeek?: boolean;
   emptyLabel?: string;
   emptyDescription?: string;
+  chartMode?: 'depletion' | 'comparison';
+  depletionPoints?: DailyPoint[];
+  depletionMeta?: StockDepletionMeta;
 }) {
-  const daily: DailyPoint[] = toDailyPoints(points);
+  const isDepletion = chartMode === 'depletion' && Boolean(depletionPoints && depletionPoints.length > 0);
+  const daily: DailyPoint[] = isDepletion && depletionPoints ? depletionPoints : toDailyPoints(points);
+  const activeLabels = isDepletion ? DEPLETION_LABELS : FORECAST_LABELS;
+
   // A day the model did not predict and a day nothing was recorded on are both "no
   // measurement": each is absent from the series rather than drawn as zero.
   const forecastDays = points.filter(point => point.forecast !== null).length;
   const actualDays = points.filter(point => point.actual !== null).length;
-  const drawable = forecastDays > 0 || actualDays > 0;
+  const drawable = isDepletion ? true : (forecastDays > 0 || actualDays > 0);
 
   // Both missing facts are named in words, so a Manager reads why a line stops instead of
   // assuming the panel failed to load.
-  const gaps = SERIES_ORDER.filter(series => visible[series]).flatMap(series =>
+  const gaps = isDepletion ? [] : SERIES_ORDER.filter(series => visible[series]).flatMap(series =>
     points.filter(point => point[series] === null).map(point => `${FORECAST_LABELS[SERIES_SLOT[series]].toLowerCase()} for ${dateLabel(point.date)}`));
 
   return <div className="sl-mgr-fc-trend">
+    {/* Depletion actionable operational banner */}
+    {isDepletion && depletionMeta && (
+      <div className={`sl-fc-depletion-banner status-${depletionMeta.status}`}>
+        <div className="sl-fc-depletion-badge" aria-hidden="true">
+          {depletionMeta.status === 'CRITICAL' ? '⚠️ Critical' : depletionMeta.status === 'WARNING' ? '⚡ Warning' : '✅ Healthy'}
+        </div>
+        <div className="sl-fc-depletion-info">
+          <p className="sl-fc-depletion-headline">
+            {depletionMeta.status === 'CRITICAL'
+              ? (depletionMeta.stockoutDate ? `Projected stockout on ${dateLabel(depletionMeta.stockoutDate)} (${depletionMeta.daysRemaining} days remaining)` : `Immediate stockout risk — ${depletionMeta.daysRemaining} days remaining`)
+              : depletionMeta.status === 'WARNING'
+              ? (depletionMeta.reorderDate ? `Reorder threshold reached on ${dateLabel(depletionMeta.reorderDate)} (${depletionMeta.daysRemaining} days remaining)` : `Stock below safe threshold — reorder recommended`)
+              : `Safe stock horizon — ${depletionMeta.daysRemaining}+ days of supply available`}
+          </p>
+          <p className="sl-fc-depletion-sub">
+            Current: <strong>{depletionMeta.currentStock.toFixed(1)} {depletionMeta.unit}</strong> · Min Safety: <strong>{depletionMeta.minimumStock.toFixed(1)} {depletionMeta.unit}</strong> · Projected Consumption: <strong>~{depletionMeta.avgDailyUsage.toFixed(2)} {depletionMeta.unit}/day</strong>
+          </p>
+        </div>
+      </div>
+    )}
+
     {/* The subject line names the ingredient, the unit and the forecast's own horizon, so
         it is drawn only when a forecast is actually plotted. With no data it would state a
         forecast date and horizon for a prediction that does not exist. */}
@@ -106,10 +148,10 @@ export function ForecastVsActualChart({
       points={daily}
       visible={slotVisible(visible)}
       dateAxis={calendarWeek ? 'calendar-week' : 'rolling'}
-      labels={FORECAST_LABELS}
+      labels={isDepletion ? activeLabels : FORECAST_LABELS}
       valueSuffix={` ${meta.unit}`}
       svgLabel={drawable
-        ? `Forecast and actual ${meta.unit} of ${meta.ingredient} by date. Focus or select a point for its exact value.`
+        ? (isDepletion ? `Stock depletion burn-down for ${meta.ingredient}. Projected remaining quantity and safety threshold by date.` : `Forecast and actual ${meta.unit} of ${meta.ingredient} by date. Focus or select a point for its exact value.`)
         : `Forecast versus actual chart, no data plotted yet. ${emptyDescription ?? ''}`.trim()}
       emptyLabel={emptyLabel}
       emptyDescription={emptyDescription ?? 'Forecasted and actual consumption will be plotted here once a validated forecasting service supplies them.'}
@@ -120,12 +162,20 @@ export function ForecastVsActualChart({
   </div>;
 }
 
-export function ForecastVsActualLegend({ visible, onToggle }: { visible: Record<ForecastSeriesKey, boolean>; onToggle: (series: ForecastSeriesKey) => void }) {
+export function ForecastVsActualLegend({ visible, onToggle, chartMode = 'depletion' }: { visible: Record<ForecastSeriesKey, boolean>; onToggle: (series: ForecastSeriesKey) => void; chartMode?: 'depletion' | 'comparison' }) {
   // The reference legend itself, driven by the Forecast/Actual slots. Its class names,
   // pressed state and "last series cannot switch off" behaviour are the established ones.
+  const activeLabels = chartMode === 'depletion' ? DEPLETION_LABELS : FORECAST_LABELS;
+  if (chartMode === 'comparison') {
+    return <ManagerDailyRecordLegend
+      visible={slotVisible(visible)}
+      labels={FORECAST_LABELS}
+      onToggle={slot => onToggle(slot === 'usage' ? 'forecast' : 'actual')}
+    />;
+  }
   return <ManagerDailyRecordLegend
     visible={slotVisible(visible)}
-    labels={FORECAST_LABELS}
+    labels={activeLabels}
     onToggle={slot => onToggle(slot === 'usage' ? 'forecast' : 'actual')}
   />;
 }
@@ -250,6 +300,7 @@ export function ForecastInsightCards({ ariaLabel, insights }: { ariaLabel: strin
             <div className="sl-mgr-fc-insight-head-info">
               <strong className="sl-mgr-fc-insight-reason">{insight.reason}</strong>
               {hasSpecificBatch && <span className="sl-mgr-fc-insight-batch">Batch <b>{insight.batchId.replace(/^Batch #/, '#')}</b></span>}
+              {insight.expiresOn && <time className="sl-mgr-fc-insight-batch" dateTime={insight.expiresOn}>Expires {dateLabel(insight.expiresOn)}</time>}
             </div>
           </header>
           {insight.evidence && insight.evidence !== insight.reason && (
@@ -257,7 +308,6 @@ export function ForecastInsightCards({ ariaLabel, insights }: { ariaLabel: strin
           )}
           {(insight.potentialWasteQuantity !== undefined && insight.potentialWasteCost !== undefined) && <p className="sl-mgr-fc-insight-waste">
             Potential waste {formatQuantity(insight.potentialWasteQuantity)} {insight.unit} · est. <span title={Number.isFinite(insight.potentialWasteCost) ? formatExactPeso(insight.potentialWasteCost) : undefined}>{Number.isFinite(insight.potentialWasteCost) ? formatCompactPeso(insight.potentialWasteCost) : '—'}</span>
-            {insight.expiresOn && <span> · expires {dateLabel(insight.expiresOn)}</span>}
           </p>}
           <p className="sl-mgr-fc-insight-action"><strong>Action:</strong> {insight.action.replace(/^Suggested next step:\s*/i, '')}</p>
         </li>;
