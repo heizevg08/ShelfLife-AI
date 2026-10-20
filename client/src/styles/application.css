@@ -35062,7 +35062,7 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
   font-size:clamp(1.7rem,24cqw,2.75rem);
 }
 .sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut span {
-  font-size:clamp(.875rem,10.5cqw,1.25rem);
+  font-size:clamp(1rem,11cqw,1.375rem);
   line-height:1.15;
 }
 .sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut-legend {
@@ -35070,6 +35070,10 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
   width:100%;
   min-width:0;
   padding-inline:0;
+}
+.sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut-legend-row > :is(span,strong) {
+  font-size:1.125rem;
+  line-height:1.4;
 }
 @container (width<=30rem) {
   .sl-superadmin-dashboard .sl-sa-overview-pair .sl-application-donut-visual {
