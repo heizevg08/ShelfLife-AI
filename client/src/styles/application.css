@@ -35604,7 +35604,19 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 :is(.sl-sa-kpi,.sl-mgr-cr-kpi,.sl-manager-alerts-kpi,.sl-manager-reports-kpi,.sl-staff-usage-kpi) > div { min-width: 0!important; max-width: 100%!important; }
 :is(.sl-sa-kpi,.sl-mgr-cr-kpi,.sl-manager-alerts-kpi,.sl-manager-reports-kpi,.sl-staff-usage-kpi) > div > :is(span,strong,small) { min-width: 0!important; max-width: 100%!important; overflow-wrap: anywhere!important; }
 :is(.sl-sa-kpi,.sl-mgr-cr-kpi,.sl-manager-alerts-kpi,.sl-manager-reports-kpi,.sl-staff-usage-kpi) > div > strong { font-size: clamp(1.5rem,1.1rem + .9vw,2.15rem)!important; }
-:is(.sl-sa-kpi,.sl-mgr-cr-kpi,.sl-manager-alerts-kpi,.sl-manager-reports-kpi,.sl-staff-usage-kpi) > div > small { min-height: 2.8em!important; }
+:is(.sl-sa-kpi,.sl-mgr-cr-kpi,.sl-manager-alerts-kpi,.sl-manager-reports-kpi,.sl-staff-usage-kpi) > div > small {
+  display: block!important;
+  min-height: 0!important;
+  white-space: nowrap!important;
+  overflow: hidden!important;
+  text-overflow: ellipsis;
+}
+@media (width<=560px) {
+  :is(.sl-sa-kpi,.sl-mgr-cr-kpi,.sl-manager-alerts-kpi,.sl-manager-reports-kpi,.sl-staff-usage-kpi) > div > small {
+    white-space: normal!important;
+    overflow: visible!important;
+  }
+}
 :is(.sl-sa-kpi,.sl-mgr-cr-kpi,.sl-manager-alerts-kpi,.sl-manager-reports-kpi,.sl-staff-usage-kpi) .sl-kpi-text-value {
   font-size: clamp(1.15rem,1rem + .45vw,1.55rem)!important;
   line-height: 1.15;
