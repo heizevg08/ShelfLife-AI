@@ -176,7 +176,7 @@ test('the seven forecast columns and their local overflow are preserved', () => 
 
 test('search, Reset and pagination still work on the forecast table', () => {
   const page = forecasting();
-  assert.match(page, /<input value=\{search\} onChange=\{event => \{ setSearch\(event\.target\.value\); setPage\(1\); \}\} placeholder="Search ingredients\.\.\." \/>/);
+  assert.match(page, /<input value=\{search\} onChange=\{event => \{ setSearch\(event\.target\.value\.slice\(0, 100\)\); setPage\(1\); \}\} placeholder="Search ingredients\.\.\." maxLength=\{100\} \/>/);
   assert.match(page, /setRange\('This Week'\); setDateFrom\(''\); setDateTo\(''\); setCategory\(''\); setIngredient\(''\); setSearch\(''\); setPage\(1\);/);
   assert.match(page, /<Pagination compact page=\{page\} pageSize=\{rows\} total=\{forecastTableData\?\.total \?\? 0\} itemLabel="forecasts" onPageChange=\{setPage\} \/>/);
   // Date Range stays an independent, working local filter with its Custom branch.
