@@ -18,12 +18,16 @@ export function onAuditRecorded(listener: () => void): () => void {
 // The ping is deferred briefly so transactional writes given a `{ session }`
 // have committed before any listener re-queries the collection; a ping for a
 // transaction that rolls back is harmless — the listener simply finds nothing.
-export function withAuditRecordedNotifications(model: ReturnType<typeof auditRecordModel>): ReturnType<typeof auditRecordModel> {
+export function withAuditRecordedNotifications(
+  model: ReturnType<typeof auditRecordModel>
+): ReturnType<typeof auditRecordModel> {
   const create = model.create.bind(model) as (...args: unknown[]) => Promise<unknown>;
+
   (model as unknown as { create: (...args: unknown[]) => Promise<unknown> }).create = async (...args: unknown[]) => {
     const record = await create(...args);
     setTimeout(() => bus.emit('recorded'), 100);
     return record;
   };
+
   return model;
 }
