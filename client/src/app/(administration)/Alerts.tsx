@@ -11,6 +11,7 @@ import { formatDate, formatDateTime } from '../../utils/date-time';
 import { formatHumanReadableText } from '../../utils/display-text';
 import { businessDateSeries } from '../../components/application/forecast-chart-data';
 import { businessWeekRange, businessDayRange } from '../../utils/business-day';
+import { inventoryAlertRecords } from '../../utils/inventory-alert-records';
 
 // No Alerts endpoint exists yet, so every panel states the absence of the service
 // rather than a successful-but-empty result. "No live records yet" alone would read as
@@ -28,16 +29,6 @@ function ManagerAlertPending({ label, compact = false }: { label: string; compac
 // it stays here as the Category filter rather than being dropped, so no established alert
 // category disappears.
 const ALERT_CATEGORIES = ['All Alerts', 'Expiring Soon', 'Low Stock', 'Forecast Risk'] as const;
-
-type AlertItem = {
-  id: string;
-  date: string;
-  ingredient: string;
-  category: string;
-  details: string;
-  priority: 'High' | 'Medium' | 'Low';
-  status: 'Active' | 'Resolved';
-};
 
 function ManagerAlerts() {
   const [category, setCategory] = useState<string>('All Alerts');
@@ -77,87 +68,7 @@ function ManagerAlerts() {
     return () => controller.abort();
   }, []);
 
-  const allAlerts = useMemo<AlertItem[]>(() => {
-    if (!batches || batches.length === 0) return [];
-    const list: AlertItem[] = [];
-
-    const formatQty = (q: number) => {
-      const rounded = Number(q.toFixed(2));
-      return Number.isFinite(rounded) ? rounded.toLocaleString() : String(q);
-    };
-
-    const expiredBatches = batches.filter(b => b.displayStatus === 'Expired');
-    for (const b of expiredBatches) {
-      list.push({
-        id: `alert-exp-${b.id}`,
-        date: b.expirationDate,
-        ingredient: b.ingredient.name,
-        category: 'Expiring Soon',
-        details: `Expired · ${formatQty(b.quantity)} ${b.unit} remaining (${b.batchID})`,
-        priority: 'High',
-        status: 'Active',
-      });
-    }
-
-    const nearExpiryBatches = batches.filter(b => b.displayStatus === 'Near Expiry');
-    for (const b of nearExpiryBatches) {
-      list.push({
-        id: `alert-near-${b.id}`,
-        date: b.expirationDate,
-        ingredient: b.ingredient.name,
-        category: 'Expiring Soon',
-        details: `${b.daysLeft}d left · ${formatQty(b.quantity)} ${b.unit} (${b.batchID})`,
-        priority: b.daysLeft <= 3 ? 'High' : 'Medium',
-        status: 'Active',
-      });
-    }
-
-    const lowStockBatches = batches.filter(b => b.displayStatus === 'Low Stock');
-    for (const b of lowStockBatches) {
-      list.push({
-        id: `alert-low-${b.id}`,
-        date: b.updatedAt || b.createdAt,
-        ingredient: b.ingredient.name,
-        category: 'Low Stock',
-        details: `${formatQty(b.quantity)} ${b.unit} remaining (Min: ${formatQty(b.ingredient.minimumStock ?? 0)} ${b.unit})`,
-        priority: 'Medium',
-        status: 'Active',
-      });
-    }
-
-    list.push({
-      id: 'alert-fc-1',
-      date: new Date('2026-10-19T09:15:00.000Z').toISOString(),
-      ingredient: 'Jasmine Rice (Sinandomeng)',
-      category: 'Forecast Risk',
-      details: 'Demand +18% vs 30-day baseline',
-      priority: 'Low',
-      status: 'Active',
-    });
-
-    list.push(
-      {
-        id: 'alert-res-1',
-        date: new Date('2026-10-15T14:30:00.000Z').toISOString(),
-        ingredient: 'Pork Belly (Liempo)',
-        category: 'Low Stock',
-        details: 'Replenished: 30 kg · Batch SL-20260916-002',
-        priority: 'Medium',
-        status: 'Resolved',
-      },
-      {
-        id: 'alert-res-2',
-        date: new Date('2026-10-12T10:45:00.000Z').toISOString(),
-        ingredient: 'Fresh Eggs',
-        category: 'Expiring Soon',
-        details: 'Fully consumed in production prior to expiration',
-        priority: 'High',
-        status: 'Resolved',
-      },
-    );
-
-    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [batches]);
+  const allAlerts = useMemo(() => inventoryAlertRecords(batches ?? []), [batches]);
 
   const trendPoints = useMemo(() => {
     const days = Number(trendPeriod.match(/\d+/)?.[0] ?? 7);
@@ -170,7 +81,7 @@ function ManagerAlerts() {
         waste: null,
         high: dayAlerts.filter(a => a.priority === 'High').length,
         medium: dayAlerts.filter(a => a.priority === 'Medium').length,
-        low: dayAlerts.filter(a => a.priority === 'Low').length,
+        low: 0,
       };
     });
   }, [trendPeriod, allAlerts]);
@@ -210,7 +121,7 @@ function ManagerAlerts() {
         </article>
         <article className="sl-sa-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
-          <div><span>Forecast Risk</span><strong>{summaryError ? '—' : summaryLoading ? '…' : allAlerts.filter(a => a.category === 'Forecast Risk').length}</strong><small>{summaryError ? 'Forecast alerts unavailable' : 'Demand deviation alerts'}</small></div>
+          <div><span>Forecast Risk</span><strong>—</strong><small>Forecast alerts unavailable</small></div>
         </article>
         <article className="sl-sa-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Info aria-hidden="true" /></span>
@@ -237,7 +148,7 @@ function ManagerAlerts() {
             <div className="sl-manager-alerts-table-wrap sl-application-records-table-shell sl-sa-ingredients-table-scroll">
               <table className="sl-application-records-table sl-records-table sl-sa-ingredients-table sl-data-table">
                 <thead><tr>
-                  <th>Date &amp; Time</th>
+                  <th>Alert Date</th>
                   <th>Ingredient</th>
                   <th>Alert Type</th>
                   <th>Details</th>
@@ -248,7 +159,7 @@ function ManagerAlerts() {
                   {pagedAlerts.length > 0 ? (
                     pagedAlerts.map(alert => (
                       <tr key={alert.id}>
-                        <td><time dateTime={alert.date}>{formatDateTime(alert.date)}</time></td>
+                        <td><time dateTime={alert.date}>{alert.batchStatus === 'Low Stock' ? formatDateTime(alert.date) : formatDate(alert.date)}</time></td>
                         <td className="sl-emphasized-value">{formatHumanReadableText(alert.ingredient)}</td>
                         <td>{alert.category}</td>
                         <td className="sl-alert-details-cell">{alert.details}</td>
@@ -266,7 +177,7 @@ function ManagerAlerts() {
                       </tr>
                     ))
                   ) : (
-                    <tr><td colSpan={6} className="sl-empty-cell"><ManagerAlertPending label="Alert records" /></td></tr>
+                    <tr><td colSpan={6} className="sl-empty-cell">{batchesLoading ? <DataState kind="loading" title="Loading alerts" description="Checking current inventory conditions." /> : batches === null ? <DataState kind="error" title="Alerts unavailable" description="Inventory alerts could not be loaded." /> : <DataState kind="empty" title="No matching alerts" description="No current inventory alerts match these filters." />}</td></tr>
                   )}
                 </tbody>
               </table>

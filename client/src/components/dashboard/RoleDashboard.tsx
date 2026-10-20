@@ -19,6 +19,7 @@ import { formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
 import { ChangeRequestDetailsDialog } from '../application/ChangeRequestDetailsDialog';
 import { ManagerDailyRecordChart, type DailyPoint } from '../application/ManagerDailyRecordChart';
 import { businessDateInputValue, shiftBusinessDate } from '../../utils/business-day';
+import { inventoryAlertRecords } from '../../utils/inventory-alert-records';
 
 function DashboardHeading({ userName, description, source = false, descriptionInHeader = false, className = '' }: { userName: string; description?: string; source?: boolean; descriptionInHeader?: boolean; className?: string }) {
   const [greeting, setGreeting] = useState('Welcome');
@@ -264,114 +265,13 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     return { days, maxScale, calloutText };
   }, [allBatches]);
 
-  const alertItems = useMemo(() => {
-    if (!allBatches || allBatches.length === 0) return [];
-    
-    const formatQty = (q: number) => {
-      const rounded = Number(q.toFixed(1));
-      return Number.isFinite(rounded) ? rounded.toLocaleString() : String(q);
-    };
-
-    // Deduplicate and aggregate expiring / expired batches by ingredient
-    const expiringByIngredient = new Map<string, {
-      ingredientName: string;
-      totalQty: number;
-      unit: string;
-      minDaysLeft: number;
-      earliestDate: string;
-      hasExpired: boolean;
-    }>();
-
-    for (const b of allBatches) {
-      if (b.displayStatus === 'Expired' || b.displayStatus === 'Near Expiry') {
-        const key = b.ingredient.id || b.ingredient.name;
-        const existing = expiringByIngredient.get(key);
-        if (!existing) {
-          expiringByIngredient.set(key, {
-            ingredientName: b.ingredient.name,
-            totalQty: b.quantity,
-            unit: b.unit,
-            minDaysLeft: b.daysLeft,
-            earliestDate: b.expirationDate,
-            hasExpired: b.displayStatus === 'Expired',
-          });
-        } else {
-          existing.totalQty += b.quantity;
-          if (b.displayStatus === 'Expired') existing.hasExpired = true;
-          if (b.daysLeft < existing.minDaysLeft) {
-            existing.minDaysLeft = b.daysLeft;
-            existing.earliestDate = b.expirationDate;
-          }
-        }
-      }
-    }
-
-    const list: Array<{
-      id: string;
-      ingredient: string;
-      details: string;
-      tag: string;
-      tone: 'critical' | 'attention';
-      priority: 'High' | 'Medium' | 'Low';
-      group: 'ACT NOW' | 'PLAN THIS WEEK';
-      sortScore: number;
-    }> = [];
-
-    // Add expiring items
-    for (const [key, data] of expiringByIngredient.entries()) {
-      const isActNow = data.hasExpired || data.minDaysLeft <= 3;
-      const d = new Date(data.earliestDate.slice(0, 10) + 'T00:00:00Z');
-      const dayName = new Intl.DateTimeFormat('en-PH', { weekday: 'short', timeZone: 'UTC' }).format(d);
-      
-      let tagText: string;
-      if (data.hasExpired) {
-        tagText = 'Expired';
-      } else {
-        tagText = `${dayName} · ${data.minDaysLeft} ${data.minDaysLeft === 1 ? 'day' : 'days'}`;
-      }
-
-      list.push({
-        id: `alert-exp-${key}`,
-        ingredient: formatHumanReadableText(data.ingredientName),
-        details: `${formatQty(data.totalQty)} ${data.unit} expiring`,
-        tag: tagText,
-        tone: isActNow ? 'critical' : 'attention',
-        priority: isActNow ? 'High' : 'Medium',
-        group: isActNow ? 'ACT NOW' : 'PLAN THIS WEEK',
-        sortScore: data.hasExpired ? -100 : data.minDaysLeft,
-      });
-    }
-
-    // Add low stock / out of stock items
-    const lowStock = allBatches.filter(b => b.displayStatus === 'Low Stock');
-    const seenLowStock = new Set<string>();
-    for (const b of lowStock) {
-      if (seenLowStock.has(b.ingredient.id)) continue;
-      seenLowStock.add(b.ingredient.id);
-      
-      const allMatching = allBatches.filter(item => item.ingredient.id === b.ingredient.id);
-      const totalCurrent = allMatching.reduce((acc, curr) => acc + curr.quantity, 0);
-      const isOutOfStock = totalCurrent <= 0;
-
-      list.push({
-        id: `alert-low-${b.ingredient.id}`,
-        ingredient: formatHumanReadableText(b.ingredient.name),
-        details: isOutOfStock
-          ? `0 ${b.unit} left · min ${formatQty(b.ingredient.minimumStock ?? 0)} ${b.unit}`
-          : `${formatQty(totalCurrent)} ${b.unit} left · min ${formatQty(b.ingredient.minimumStock ?? 0)} ${b.unit}`,
-        tag: isOutOfStock ? 'Out of stock' : 'Low stock',
-        tone: 'attention',
-        priority: isOutOfStock ? 'High' : 'Medium',
-        group: isOutOfStock ? 'ACT NOW' : 'PLAN THIS WEEK',
-        sortScore: isOutOfStock ? -50 : 50,
-      });
-    }
-
-    return list.sort((a, b) => {
-      if (a.group !== b.group) return a.group === 'ACT NOW' ? -1 : 1;
-      return a.sortScore - b.sortScore;
-    });
-  }, [allBatches]);
+  const alertItems = useMemo(() => inventoryAlertRecords(allBatches ?? []).map(alert => ({
+    ...alert,
+    ingredient: formatHumanReadableText(alert.ingredient),
+    group: alert.priority === 'High' ? 'ACT NOW' : 'PLAN THIS WEEK',
+    tone: alert.priority === 'High' ? 'critical' : 'attention',
+    tag: alert.batchStatus === 'Expired' ? 'Expired' : alert.batchStatus === 'Low Stock' ? 'Low stock' : `${alert.daysLeft}d left`,
+  })), [allBatches]);
 
   const pendingState = (description: string) => <div className="sl-manager-reference-state"><ApplicationPendingState description={description} /></div>;
   const openRequest = async (request: ChangeRequest, trigger: HTMLTableRowElement) => {
