@@ -31529,6 +31529,10 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 .sl-application-records-toolbar[data-layout="inventory-admin"] { grid-template-columns: minmax(14rem,1.5fr) repeat(2,minmax(9rem,.8fr)) auto; }
 .sl-application-records-table[data-layout="users"] :is(th,td) { width: auto; }
 .sl-application-records-table[data-layout="users"] :is(th,td):first-child { width: 3rem; }
+.sl-admin-user-records .sl-user-accounts-table :is(th,td):last-child:not([colspan]) {
+  width: 11rem;
+  padding-inline: 1.5rem!important;
+}
 .sl-application-records-table:is([data-layout="users"],[data-layout="ingredients"]) { min-width: 58rem; }
 .sl-application-records-table[data-layout="inventory-admin"] { min-width: 76rem; }
 .sl-application-records-overflow { overflow: visible; }
@@ -32616,7 +32620,7 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
   .sl-admin-user-records th:first-child { width: 3rem; }
   .sl-admin-user-records th:nth-child(2) { width: 17%; }
   .sl-admin-user-records th:nth-child(3) { width: 24%; }
-  .sl-admin-user-records th:last-child { width: 7rem; }
+  .sl-admin-user-records th:last-child { width: 11rem; }
   .sl-admin-inventory-records th:first-child { width: 3rem; }
   .sl-admin-inventory-records th:nth-child(2) { width: 19%; }
   .sl-admin-inventory-records th:nth-child(3) { width: 12%; }
