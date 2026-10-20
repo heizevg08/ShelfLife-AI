@@ -1302,50 +1302,61 @@ function mapAdvisoriesToInsights(
   allItems.forEach((item, index) => {
     let tone: ForecastInsight['tone'] = 'neutral';
     let reason = item.message;
-    const cleanFloatMessage = (msg: string) => msg.replace(/\b(\d+\.\d{3,})\b/g, (match) => Number(match).toFixed(2));
-    let evidence = cleanFloatMessage(item.message);
-    let action = 'Review inventory and plan accordingly.';
+    let evidence = '';
+    let action = 'Review inventory records.';
+
+    const isWasteRisk = item.code === 'EXPIRY_EXPOSURE' || item.code === 'EXPIRED_STOCK';
+    const potentialWasteQuantity = isWasteRisk ? item.quantity : undefined;
+    const potentialWasteCost = (isWasteRisk && item.quantity !== undefined && typeof unitCost === 'number' && unitCost > 0)
+      ? Number((item.quantity * unitCost).toFixed(2))
+      : undefined;
+
+    const formattedQty = item.quantity !== undefined ? `${Number(item.quantity).toFixed(item.quantity % 1 === 0 ? 0 : 2)} ${item.unit ?? ''}`.trim() : '';
 
     switch (item.code) {
       case 'EXPIRED_STOCK':
         tone = 'critical';
-        reason = 'Expired stock detected in current inventory.';
-        evidence = item.message;
-        action = 'Remove or isolate expired stock in accordance with kitchen safety procedures.';
+        reason = `Expired Stock${formattedQty ? `: ${formattedQty}` : ''}`;
+        evidence = 'Expired stock detected in current inventory.';
+        action = 'Isolate or remove per kitchen safety procedures.';
         break;
       case 'EXPIRY_EXPOSURE':
         tone = 'critical';
-        reason = 'Batch is projected to have leftover stock past its expiration date.';
-        evidence = item.message;
-        action = 'Prioritize this batch first (FEFO) in daily preparations or menu specials.';
+        reason = `Expiry Exposure${formattedQty ? `: ${formattedQty}` : ''}`;
+        evidence = item.expirationDate
+          ? `Projected unconsumed stock past expiry on ${formatDate(item.expirationDate)}.`
+          : 'Projected unconsumed stock past expiration date.';
+        action = 'Prioritize batch via FEFO rotation or specials.';
         break;
       case 'SHORTAGE':
         tone = 'attention';
-        reason = 'Projected inventory shortage based on forecasted consumption.';
-        evidence = item.message;
-        action = 'Review procurement schedule and initiate replenishment to avoid stockout.';
+        reason = `Projected Shortage${formattedQty ? `: ${formattedQty}` : ''}`;
+        evidence = 'Forecasted consumption exceeds available stock in this window.';
+        action = 'Review restocking schedule to avoid stockout.';
         break;
       case 'SURPLUS':
         tone = 'neutral';
-        reason = item.level === 'note'
-          ? 'Minimum stock threshold is not configured.'
-          : 'Projected inventory surplus above minimum stock requirements.';
-        evidence = item.message;
-        action = item.level === 'note'
-          ? 'Configure a minimum stock level to enable automated surplus monitoring.'
-          : 'Delay or adjust upcoming purchase orders to prevent overstocking.';
+        if (item.level === 'note') {
+          reason = 'Minimum Stock Not Configured';
+          evidence = 'Set a minimum stock threshold to enable surplus tracking.';
+          action = 'Configure minimum stock threshold.';
+        } else {
+          reason = `Projected Surplus${formattedQty ? `: ${formattedQty}` : ''}`;
+          evidence = 'Projected inventory exceeds minimum stock requirements.';
+          action = 'Delay or adjust upcoming purchase orders.';
+        }
         break;
       case 'INCOMPLETE_HORIZON':
         tone = 'neutral';
-        reason = 'Forecast horizon does not fully cover the batch expiration date.';
-        evidence = item.message;
-        action = 'Continue monitoring as daily forecasting generates subsequent horizon predictions.';
+        reason = 'Forecast Horizon Limit';
+        evidence = 'Batch expiration extends beyond current 7-day forecast window.';
+        action = 'Continue monitoring as daily forecast advances.';
         break;
       case 'NO_ACTION':
         tone = 'positive';
-        reason = 'Inventory levels are healthy across the evaluated forecast window.';
-        evidence = item.message;
-        action = 'Maintain standard operational consumption and first-expiry, first-out rotation.';
+        reason = 'Inventory Levels Healthy';
+        evidence = 'Stock levels adequately cover projected demand.';
+        action = 'Maintain standard operational FEFO rotation.';
         break;
       default:
         tone = 'neutral';
@@ -1353,9 +1364,6 @@ function mapAdvisoriesToInsights(
     }
 
     const batchLabel = item.batchIndex !== undefined ? `Batch #${item.batchIndex}` : 'All Batches';
-    const potentialWasteCost = (item.quantity !== undefined && typeof unitCost === 'number' && unitCost > 0)
-      ? Number((item.quantity * unitCost).toFixed(2))
-      : undefined;
 
     items.push({
       id: `rec-${item.code}-${index}`,
@@ -1365,7 +1373,7 @@ function mapAdvisoriesToInsights(
       evidence,
       action,
       tone,
-      potentialWasteQuantity: item.quantity,
+      potentialWasteQuantity,
       unit: item.unit,
       potentialWasteCost,
       expiresOn: item.expirationDate,

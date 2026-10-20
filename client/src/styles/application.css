@@ -34039,24 +34039,24 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
    card carries a risk score or a confidence figure: none is approved, and a number of
    that shape would read as a measurement. */
 .sl-mgr-fc-insights { display: flex; flex-direction: column; gap: .6rem; min-width: 0; }
-.sl-mgr-fc-insight-list { display: flex; flex-direction: column; gap: .6rem; margin: 0; padding: 0; list-style: none; }
-.sl-mgr-fc-insight { display: flex; flex-direction: column; gap: .35rem; border-left: 3px solid var(--sl-border); border-radius: var(--sl-radius-lg); padding: .65rem .8rem; background: var(--sl-surface-subtle); }
+.sl-mgr-fc-insight-list { display: flex; flex-direction: column; gap: .55rem; margin: 0; padding: 0; list-style: none; }
+.sl-mgr-fc-insight { display: flex; flex-direction: column; gap: .3rem; border-left: 3px solid var(--sl-border); border-radius: var(--sl-radius-lg); padding: .6rem .8rem; background: var(--sl-surface-subtle); }
 .sl-mgr-fc-insight[data-tone="critical"] { border-left-color: var(--sl-critical); }
 .sl-mgr-fc-insight[data-tone="attention"] { border-left-color: #d8a02c; }
 .sl-mgr-fc-insight[data-tone="neutral"] { border-left-color: var(--sl-mgr-fc-forecast); }
 .sl-mgr-fc-insight[data-tone="positive"] { border-left-color: var(--sl-mgr-fc-actual); }
-.sl-mgr-fc-insight-head { display: flex; align-items: center; gap: .5rem; }
-.sl-mgr-fc-insight-rank { display: inline-grid; place-items: center; width: 1.35rem; height: 1.35rem; flex: 0 0 auto; border-radius: 50%; background: var(--sl-surface); color: var(--sl-mgr-fc-label); font: var(--sl-font-label); }
-.sl-mgr-fc-insight-head>div { display: flex; flex-wrap: wrap; gap: .15rem .5rem; min-width: 0; }
-.sl-mgr-fc-insight-ingredient { color: var(--sl-text); }
-.sl-mgr-fc-insight-batch { color: var(--sl-muted); font: var(--sl-font-label); }
-.sl-mgr-fc-insight-batch b { color: var(--sl-mgr-fc-label); }
-.sl-mgr-fc-insight-reason { margin: 0; color: var(--sl-text); }
-.sl-mgr-fc-insight-evidence { margin: 0; color: var(--sl-muted); font: var(--sl-font-supporting); }
-.sl-mgr-fc-insight-waste { margin: 0; color: var(--sl-mgr-fc-label); font: var(--sl-font-label); }
-.sl-mgr-fc-insight-action { margin: 0; color: var(--sl-muted); font: var(--sl-font-supporting); }
-.sl-mgr-fc-insight-action strong { color: var(--sl-text); }
-.sl-mgr-fc-insight-note { margin: 0; color: var(--sl-muted); font: var(--sl-font-supporting); }
+.sl-mgr-fc-insight-head { display: flex; align-items: baseline; gap: .5rem; }
+.sl-mgr-fc-insight-rank { display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; flex: 0 0 auto; border-radius: 50%; background: var(--sl-surface); color: var(--sl-mgr-fc-label); font-size: .75rem; font-weight: 700; }
+.sl-mgr-fc-insight-head-info { display: flex; align-items: baseline; justify-content: space-between; flex: 1; flex-wrap: wrap; gap: .2rem .5rem; min-width: 0; }
+.sl-mgr-fc-insight-ingredient { color: var(--sl-text); font-weight: 600; }
+.sl-mgr-fc-insight-batch { display: inline-flex; align-items: center; gap: .2rem; font-size: .75rem; color: var(--sl-muted); background: var(--sl-surface); padding: .08rem .4rem; border-radius: var(--sl-radius-sm); border: 1px solid var(--sl-border); }
+.sl-mgr-fc-insight-batch b { color: var(--sl-text); }
+.sl-mgr-fc-insight-reason { margin: 0; color: var(--sl-text); font-weight: 600; font-size: .88rem; }
+.sl-mgr-fc-insight-evidence { margin: 0; color: var(--sl-muted); font-size: .82rem; line-height: 1.35; }
+.sl-mgr-fc-insight-waste { margin: 0; color: #b45309; background: #fffbeb; font-size: .78rem; font-weight: 600; padding: .15rem .45rem; border-radius: var(--sl-radius-sm); width: fit-content; }
+.sl-mgr-fc-insight-action { margin: 0; color: var(--sl-text); font-size: .82rem; line-height: 1.35; }
+.sl-mgr-fc-insight-action strong { color: var(--sl-text); font-weight: 600; }
+.sl-mgr-fc-insight-note { margin: .25rem 0 0; color: var(--sl-muted); font-size: .75rem; text-align: center; }
 /* The insights card's empty state stays close to the approved reference's compact empty
    idiom instead of forcing a fixed tall block. A generous min-height here stretched the
    WHOLE analytics row: every card in the row is as tall as the tallest one, so an

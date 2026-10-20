@@ -114,7 +114,7 @@ export function ForecastVsActualChart({
       emptyLabel={emptyLabel}
       emptyDescription={emptyDescription ?? 'Forecasted and actual consumption will be plotted here once a validated forecasting service supplies them.'}
     />
-    {drawable && <p className="sl-mgr-fc-gap-note">{gaps.length
+    {drawable && <p className="sl-mgr-fc-gap-note sl-sr-only">{gaps.length
       ? `Not plotted: ${gaps.join(', ')}. A missing day is left blank rather than drawn as zero.`
       : 'Every day in this window has both a forecast and a recorded actual.'}</p>}
   </div>;
@@ -242,24 +242,28 @@ export function ForecastInsightCards({ ariaLabel, insights }: { ariaLabel: strin
   const ranked = rankInsights(insights);
   return <div className="sl-mgr-fc-insights" role="group" aria-label={ariaLabel}>
     <ol className="sl-mgr-fc-insight-list">
-      {ranked.map((insight, index) => <li className="sl-mgr-fc-insight" data-tone={insight.tone} key={insight.id}>
-        <header className="sl-mgr-fc-insight-head">
-          <span className="sl-mgr-fc-insight-rank" aria-hidden="true">{index + 1}</span>
-          <div>
-            <strong className="sl-mgr-fc-insight-ingredient">{insight.ingredient}</strong>
-            <span className="sl-mgr-fc-insight-batch">Batch ID <b>{insight.batchId}</b></span>
-          </div>
-        </header>
-        <p className="sl-mgr-fc-insight-reason">{insight.reason}</p>
-        <p className="sl-mgr-fc-insight-evidence">{insight.evidence}</p>
-        {(insight.potentialWasteQuantity !== undefined && insight.potentialWasteCost !== undefined) && <p className="sl-mgr-fc-insight-waste">
-          Potential waste {formatQuantity(insight.potentialWasteQuantity)} {insight.unit} · est. <span title={Number.isFinite(insight.potentialWasteCost) ? formatExactPeso(insight.potentialWasteCost) : undefined}>{Number.isFinite(insight.potentialWasteCost) ? formatCompactPeso(insight.potentialWasteCost) : '—'}</span>
-          {insight.expiresOn && <span> · expires {dateLabel(insight.expiresOn)}</span>}
-        </p>}
-        <p className="sl-mgr-fc-insight-action"><strong>Suggested next step:</strong> {insight.action}</p>
-      </li>)}
+      {ranked.map((insight, index) => {
+        const hasSpecificBatch = insight.batchId && insight.batchId !== 'All Batches' && insight.batchId !== '—';
+        return <li className="sl-mgr-fc-insight" data-tone={insight.tone} key={insight.id}>
+          <header className="sl-mgr-fc-insight-head">
+            <span className="sl-mgr-fc-insight-rank" aria-hidden="true">{index + 1}</span>
+            <div className="sl-mgr-fc-insight-head-info">
+              <strong className="sl-mgr-fc-insight-reason">{insight.reason}</strong>
+              {hasSpecificBatch && <span className="sl-mgr-fc-insight-batch">Batch <b>{insight.batchId.replace(/^Batch #/, '#')}</b></span>}
+            </div>
+          </header>
+          {insight.evidence && insight.evidence !== insight.reason && (
+            <p className="sl-mgr-fc-insight-evidence">{insight.evidence}</p>
+          )}
+          {(insight.potentialWasteQuantity !== undefined && insight.potentialWasteCost !== undefined) && <p className="sl-mgr-fc-insight-waste">
+            Potential waste {formatQuantity(insight.potentialWasteQuantity)} {insight.unit} · est. <span title={Number.isFinite(insight.potentialWasteCost) ? formatExactPeso(insight.potentialWasteCost) : undefined}>{Number.isFinite(insight.potentialWasteCost) ? formatCompactPeso(insight.potentialWasteCost) : '—'}</span>
+            {insight.expiresOn && <span> · expires {dateLabel(insight.expiresOn)}</span>}
+          </p>}
+          <p className="sl-mgr-fc-insight-action"><strong>Action:</strong> {insight.action.replace(/^Suggested next step:\s*/i, '')}</p>
+        </li>;
+      })}
     </ol>
-    <p className="sl-mgr-fc-insight-note">Suggestions only. Nothing here changes stock, and no action is taken automatically — the decision stays with the Manager.</p>
+    <p className="sl-mgr-fc-insight-note">Suggestions only. Nothing here changes stock — operational decisions stay with the Manager.</p>
   </div>;
 }
 
