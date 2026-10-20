@@ -283,7 +283,7 @@ export function ForecastInsightCards({
         </li>;
       })}
     </ol>
-    <p className="sl-mgr-fc-insight-note">AI-assisted operational advisories — Suggestions only. Nothing here changes stock; final decisions stay with the Manager.</p>
+    <p className="sl-mgr-fc-insight-note">AI-assisted advisories — Suggestions only. Nothing here changes stock; operational decisions stay with the Manager.</p>
   </div>;
 }
 
