@@ -2,10 +2,12 @@ import { Router, type ErrorRequestHandler } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { AdministrationError, authorizeAdministration } from '../middleware/administration.middleware';
 import { HttpError } from '../middleware/error.middleware';
+import type { AuthService } from '../services/auth';
+import type { ChangeRequestService } from '../services/change-requests';
 import { changeRequestControllers } from '../controllers/change-request.controller';
 import { mongoInputGuard, secureJson } from '../middleware/request-security.middleware';
 
-export function changeRequestRoutes(auth: any, service: any) {
+export function changeRequestRoutes(auth: AuthService, service: ChangeRequestService) {
   const router = Router(), actions = changeRequestControllers(service);
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   router.use(authenticate(auth));

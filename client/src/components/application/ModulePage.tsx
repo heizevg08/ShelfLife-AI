@@ -1630,66 +1630,6 @@ function ManagerForecastingPage() {
 }
 
 
-function ManagerChangeRequestsPage() {
-  type SelectedRequest = { id: string; type?: string; target?: string; requestedChange?: string; submittedBy?: string; submittedAt?: string; status?: string; reason?: string };
-  const [search, setSearch] = useState('');
-  const [requestType, setRequestType] = useState('All Types');
-  const [submittedBy, setSubmittedBy] = useState('All Staff');
-  const [status, setStatus] = useState('All Statuses');
-  const [dateRange, setDateRange] = useState('Last 30 Days');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [rows, setRows] = useState(10);
-  const [page, setPage] = useState(1);
-  const [selectedRequest, setSelectedRequest] = useState<SelectedRequest | null>(null);
-  const reset = () => { setSearch(''); setRequestType('All Types'); setSubmittedBy('All Staff'); setStatus('All Statuses'); setDateRange('Last 30 Days'); setDateFrom(''); setDateTo(''); setPage(1); };
-  return <>
-    <PageHeader eyebrow="Operations" title="Change Requests" description="Review and decide on inventory-related requests submitted by your team." />
-    <div className="sl-admin-view sl-mgr-cr-page">
-      <section className="sl-sa-kpis sl-dashboard-source-kpis" aria-label="Change request summary">
-        <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><FileInput/></span><div><span>Total Requests</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><Clock3/></span><div><span>Pending</span><strong>—</strong><small>Requires your action</small></div></article>
-        <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><CheckCircle2/></span><div><span>Approved (This Month)</span><strong>—</strong><small>Data unavailable</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><AlertTriangle/></span><div><span>Rejected (This Month)</span><strong>—</strong><small>Data unavailable</small></div></article>
-      </section>
-      <div className={`sl-mgr-cr-layout${selectedRequest ? ' has-selected-request' : ' no-selected-request'}`}>
-        <section className="sl-mgr-cr-listcard sl-sa-account-pattern-records sl-manager-request-records">
-          <header className="sl-staff-usage-card-head sl-staff-usage-records-head"><span className="sl-staff-usage-head-icon"><FileText aria-hidden="true" /></span><h2>Change Request Records</h2></header>
-          <div className="sl-sa-ingredients-table-filters">
-          <div className="sl-sa-ingredients-filter-card sl-mgr-cr-filters">
-            <label className="search sl-sa-ingredients-search"><span className="sl-sr-only">Search requests</span><div><Search size={17}/><input placeholder="Search requests..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} maxLength={100} /></div></label>
-            <label><span>Request Type</span><select value={requestType} onChange={event => { setRequestType(event.target.value); setPage(1); }}><option>All Types</option><option>Stock Adjustment</option><option>Usage Correction</option><option>Waste Correction</option></select></label>
-            <label><span>Submitted By</span><select value={submittedBy} onChange={event => { setSubmittedBy(event.target.value); setPage(1); }}><option>All Staff</option></select></label>
-            <label><span>Status</span><select value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}>{['All Statuses','Approved','Pending','Rejected'].map(option => <option key={option}>{option}</option>)}</select></label>
-            <label><span>Date Range</span><div className="date"><CalendarDays size={16}/><select value={dateRange} onChange={event => { setDateRange(event.target.value); setPage(1); }}><option>Last 7 Days</option><option>Last 30 Days</option><option>Last 90 Days</option><option>Custom</option></select></div></label>
-            {dateRange === 'Custom' && <div className="sl-v219-custom-date-range" aria-label="Custom change request date range"><label><span>From</span><input type="date" value={dateFrom} min="2020-01-01" max={dateTo || "2099-12-31"} onChange={event => { setDateFrom(event.target.value); setPage(1); }} /></label><label><span>To</span><input type="date" value={dateTo} min={dateFrom || "2020-01-01"} max="2099-12-31" onChange={event => { setDateTo(event.target.value); setPage(1); }} /></label></div>}
-            <button className="sl-button" type="button" onClick={reset}>Reset</button>
-          </div>
-          </div>
-          <div className="sl-sa-ingredients-table-scroll sl-staff-usage-table-shell sl-mgr-cr-tablewrap">
-            <table className="sl-records-table sl-sa-ingredients-table sl-data-table sl-staff-usage-table sl-mgr-cr-table"><thead><tr><th>#</th><th>Request ID</th><th>Type</th><th>Ingredient / Batch</th><th>Requested Change</th><th>Submitted By</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr className="sl-sa-records-dash-row" aria-label="Change request values unavailable">{Array.from({length:9}).map((_, index) => <td key={index}>—</td>)}</tr></tbody></table>
-          </div>
-          <footer className="sl-records-footer sl-staff-usage-footer sl-mgr-cr-footer"><label>Rows per page <select value={rows} onChange={event => { setRows(Number(event.target.value)); setPage(1); }}>{[10,15,50,100,150].map(value => <option key={value}>{value}</option>)}</select></label><Pagination compact page={page} pageSize={rows} total={0} itemLabel="request records" onPageChange={setPage} /></footer>
-        </section>
-        {selectedRequest && <aside className="sl-mgr-cr-details">
-          <header><strong>Request Details</strong><button type="button" aria-label="Close request details" onClick={() => setSelectedRequest(null)}>×</button></header>
-          <dl className="sl-mgr-cr-detail-fields" aria-label="Selected change request details">
-            <div><dt>Request ID</dt><dd>{selectedRequest.id}</dd></div>
-            <div><dt>Request Type</dt><dd>{selectedRequest.type ?? '—'}</dd></div>
-            <div><dt>Ingredient / Batch</dt><dd>{selectedRequest.target ?? '—'}</dd></div>
-            <div><dt>Requested Change</dt><dd>{selectedRequest.requestedChange ?? '—'}</dd></div>
-            <div><dt>Submitted By</dt><dd>{selectedRequest.submittedBy ?? '—'}</dd></div>
-            <div><dt>Date Submitted</dt><dd>{selectedRequest.submittedAt ?? '—'}</dd></div>
-            <div><dt>Status</dt><dd>{selectedRequest.status ?? '—'}</dd></div>
-            <div className="sl-mgr-cr-detail-reason"><dt>Reason</dt><dd>{selectedRequest.reason ?? '—'}</dd></div>
-          </dl>
-          <footer><button className="reject" disabled>Reject</button><button className="approve" disabled>Approve</button></footer>
-        </aside>}
-      </div>
-    </div>
-  </>;
-}
-
 export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
   const { user } = useApplicationWorkspace();
   const [preview, setPreview] = useState<PreviewId | null>(null);

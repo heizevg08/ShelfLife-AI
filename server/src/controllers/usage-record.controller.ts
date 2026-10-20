@@ -4,11 +4,12 @@ import { objectId } from '../validators/administration';
 import { usageBulkInput, usageInput, usagePagination } from '../validators/usage-record';
 import { calendarDate } from '../validators/date';
 import { analyticsQuery } from '../validators/analytics';
+import { sendError } from '../middleware/error-response';
 
 export function usageRecordControllers(service: UsageRecordService): Record<'list' | 'detail' | 'summary' | 'analytics' | 'create' | 'createMany', RequestHandler> {
   return {
     list: async (req, res) => { res.json(await service.list(usagePagination(req.query))); },
-    detail: async (req, res) => { const record = await service.detail(objectId(req.params.id)); if (!record) { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Usage record not found', details: [] } }); return; } res.json({ record }); },
+    detail: async (req, res) => { const record = await service.detail(objectId(req.params.id)); if (!record) { sendError(res, 404, 'NOT_FOUND', 'Usage record not found'); return; } res.json({ record }); },
     summary: async (req, res) => { res.json(await service.summary(req.query.date === undefined ? undefined : calendarDate('date', req.query.date))); },
     analytics: async (req, res) => { res.json(await service.analytics(analyticsQuery(req.query))); },
     create: async (req, res) => { res.status(201).json({ record: await service.create(res.locals.user, usageInput(req.body)) }); },

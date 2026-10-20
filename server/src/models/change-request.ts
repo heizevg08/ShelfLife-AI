@@ -4,6 +4,17 @@ export const CHANGE_REQUEST_TYPES = ['MINIMUM_STOCK_CHANGE', 'STANDARD_UNIT_COST
 export const LEGACY_CHANGE_REQUEST_TYPES = ['BATCH_CORRECTION', 'QUANTITY_ADJUSTMENT', 'UNIT_CORRECTION', 'ADD_MISSING_BATCH', 'OTHER'] as const;
 export const CHANGE_REQUEST_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
 export const CHANGE_REQUEST_TARGET_FIELDS = ['minimumStock', 'standardUnitCost', 'category', 'brand', 'description', 'unitOfMeasure', 'defaultShelfLifeDays'] as const;
+export type ChangeRequestType = typeof CHANGE_REQUEST_TYPES[number] | typeof LEGACY_CHANGE_REQUEST_TYPES[number];
+export type ChangeRequestCurrentType = typeof CHANGE_REQUEST_TYPES[number];
+export type ChangeRequestStatus = typeof CHANGE_REQUEST_STATUSES[number];
+export type ChangeRequestTargetFieldName = typeof CHANGE_REQUEST_TARGET_FIELDS[number];
+
+/**
+ * Legacy request types stay in the collection but cannot be applied through the current
+ * approval workflow, so every write path narrows through this guard first.
+ */
+export const isCurrentRequestType = (type: ChangeRequestType): type is ChangeRequestCurrentType =>
+  (CHANGE_REQUEST_TYPES as readonly ChangeRequestType[]).includes(type);
 
 const schema = new Schema({
   requestID: { type: String, required: true, immutable: true, unique: true, index: true, maxlength: 32 },

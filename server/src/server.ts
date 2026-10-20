@@ -37,7 +37,7 @@ import { createWasteRecords, type WasteRecordService } from './services/waste-re
 import { createWasteRecordStore } from './services/waste-record-store';
 import { changeRequestModel } from './models/change-request';
 import { changeRequestCounterModel } from './models/change-request-counter';
-import { createChangeRequests } from './services/change-requests';
+import { createChangeRequests, type ChangeRequestService } from './services/change-requests';
 import { loginAttemptModel } from './models/login-attempt';
 import { createLoginLimiter, mongoLoginAttemptStore } from './services/login-limiter';
 import { provisionSecurityIndexes } from './services/security-indexes';
@@ -84,7 +84,7 @@ async function bounded<T>(operation: Promise<T>, milliseconds: number): Promise<
   } finally { clearTimeout(timer); }
 }
 
-export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService, operationalEvaluation?: ForecastEvaluationService) {
+export async function startServer(config: Config, database: Database, shutdownTimeout = 5000, auth?: AuthService, onStage: (stage: StartupStage) => void = () => {}, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: ChangeRequestService, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService, operationalEvaluation?: ForecastEvaluationService) {
   let stage: StartupStage = 'application-composition';
   onStage(stage);
   let stopping = false;

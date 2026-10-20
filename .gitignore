@@ -68,6 +68,7 @@ __pycache__/
 /test-results/
 /output/playwright/
 /output/browser-qa/
+/output/demo-data/
 /client/e2e/
 /client/playwright.config.*
 /client/.playwright-cli/

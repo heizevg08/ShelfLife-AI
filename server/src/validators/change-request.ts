@@ -43,6 +43,7 @@ export function changeRequestInput(body: unknown): ChangeRequestInput {
   const requestType = value.requestType as ChangeRequestType;
   return { requestType, ingredientId: objectId(value.ingredientId), targetField: CHANGE_REQUEST_TARGET_BY_TYPE[requestType], requestedValue: normalizeRequestedValue(requestType, value.requestedValue), reason: cleanText('reason', value.reason, 1, 500) };
 }
+export type ChangeRequestQuery = ReturnType<typeof changeRequestQuery>;
 export function changeRequestQuery(query: Record<string, unknown>) {
   for (const key of Object.keys(query)) if (!['page', 'pageSize', 'search', 'type', 'status', 'from', 'to', 'currentOnly'].includes(key)) invalid(key);
   const page = Number(query.page ?? 1), pageSize = Number(query.pageSize ?? 10); if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || ![10,15,50,100,150].includes(pageSize)) invalid('pageSize');

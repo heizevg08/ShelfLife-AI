@@ -11,8 +11,8 @@
     "test:integration": "npm run build && node --test tests/*.integration.test.cjs",
     "test:verify": "npm run test && npm run test:integration",
     "seed:dev-admin": "node --env-file-if-exists=.env --import tsx src/scripts/seed-dev-admin.ts",
-    "enrich:data": "node --env-file-if-exists=.env --import tsx src/scripts/enrich-operational-data.ts",
-    "seed:change-requests": "node --env-file-if-exists=.env --import tsx src/scripts/seed-synthetic-change-requests.ts"
+    "seed:change-requests": "node --env-file-if-exists=.env --import tsx src/scripts/seed-synthetic-change-requests.ts",
+    "export:demo-data": "node --env-file-if-exists=.env --import tsx src/scripts/export-demo-data.ts"
   },
   "dependencies": {
     "@excel.js/exceljs": "^0.15.0",

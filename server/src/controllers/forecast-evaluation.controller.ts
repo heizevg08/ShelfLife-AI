@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import type { ForecastEvaluationService } from '../services/forecast-evaluation-service';
 import { objectId } from '../validators/administration';
 import { forecastTrendDays } from '../validators/forecast';
+import { sendError } from '../middleware/error-response';
 
 export function forecastEvaluationControllers(
   service: ForecastEvaluationService,
@@ -25,7 +26,7 @@ export function forecastEvaluationControllers(
       const id = objectId(req.params.id);
       const result = await service.evaluateAccuracy(id);
       if (result.status === 'NOT_FOUND') {
-        res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Ingredient not found', details: [] } });
+        sendError(res, 404, 'NOT_FOUND', 'Ingredient not found');
         return;
       }
       res.json(result);
@@ -36,7 +37,7 @@ export function forecastEvaluationControllers(
       const days = forecastTrendDays(req.query);
       const result = await service.trendSeries(id, days);
       if (result.status === 'NOT_FOUND') {
-        res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Ingredient not found', details: [] } });
+        sendError(res, 404, 'NOT_FOUND', 'Ingredient not found');
         return;
       }
       res.json(result);

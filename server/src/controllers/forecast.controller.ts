@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import type { OperationalForecastService } from '../services/operational-forecast';
 import { objectId } from '../validators/administration';
 import { forecastInput } from '../validators/forecast';
+import { sendError } from '../middleware/error-response';
 
 // Ingredient-scoped forecast action. The service result is returned
 // truthfully: FORECAST and UNAVAILABLE pass through with HTTP 200, while a
@@ -15,7 +16,7 @@ export function forecastControllers(service: OperationalForecastService): Record
       const actorId = res.locals.user?.id;
       const result = await service.forecast(id, input.forecastDates, actorId);
       if (result.status === 'NOT_FOUND') {
-        res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Ingredient not found', details: [] } });
+        sendError(res, 404, 'NOT_FOUND', 'Ingredient not found');
         return;
       }
       res.json(result);

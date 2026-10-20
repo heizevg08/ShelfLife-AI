@@ -93,7 +93,7 @@ test('form fields and page-size selects stay native outside the filter toolbars'
   assert.match(BULK_MODAL, /field\('ingredientId', 'Ingredient', <select value=\{row\.ingredientId\}/);
   assert.match(BULK_MODAL, /field\('batchId', 'Batch ID', <select value=\{row\.batchId\}/);
   assert.match(BULK_MODAL, /field\('reason', 'Reason', <select value=\{row\.reason\}/);
-  assert.match(MODULE, /<span>Request Type<\/span><select/);
+  assert.match(MODULE, /<span>Request Type<\/span><FilterSelect/);
   assert.match(MODULE, /<span>Ingredient<\/span><select/);
   // The Manager page renders no recording form of its own: a second copy would drift.
   assert.equal(/<span>Batch ID<\/span><select/.test(USAGE_WASTE), false);

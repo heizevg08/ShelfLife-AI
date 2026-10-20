@@ -1,8 +1,101 @@
-import type { Mongoose } from 'mongoose';
-import { CHANGE_REQUEST_TARGET_FIELDS, CHANGE_REQUEST_TYPES } from '../models/change-request';
+import type { ClientSession, Mongoose, Types } from 'mongoose';
+import { CHANGE_REQUEST_TARGET_FIELDS, CHANGE_REQUEST_TYPES, isCurrentRequestType } from '../models/change-request';
+import type { ChangeRequestStatus, ChangeRequestType } from '../models/change-request';
 import { AdministrationError, forbidden } from '../middleware/administration.middleware';
 import type { Actor } from './administration';
-import type { ChangeRequestInput, ChangeRequestTargetField } from '../validators/change-request';
+import type { ChangeRequestInput, ChangeRequestQuery, ChangeRequestTargetField } from '../validators/change-request';
+
+/** The subset of an ingredient document this slice reads and writes. */
+interface IngredientTargetSource {
+  name?: string;
+  isArchived?: boolean;
+  unitOfMeasure?: string;
+  [field: string]: unknown;
+}
+
+/** A change-request document as stored, before it is shaped into a view. */
+interface ChangeRequestDocument {
+  _id: Types.ObjectId;
+  requestID: string;
+  requestType: ChangeRequestType;
+  targetField: ChangeRequestTargetField;
+  ingredientId: Types.ObjectId;
+  reason: string;
+  currentValue: string;
+  requestedValue: string;
+  status: ChangeRequestStatus;
+  requestedBy: Types.ObjectId;
+  reviewedBy?: Types.ObjectId | null;
+  reviewedAt?: Date | null;
+  reviewNote?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** Fields selected from the user collection when naming a requester or reviewer. */
+interface UserNameSource {
+  _id: Types.ObjectId;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+/** One change request as the client receives it. */
+export interface ChangeRequestView {
+  id: string;
+  requestID: string;
+  requestType: ChangeRequestType;
+  targetField: ChangeRequestTargetField;
+  ingredient?: { id: string; name: string; unitOfMeasure: string };
+  reason: string;
+  currentValue: string;
+  requestedValue: string;
+  status: ChangeRequestStatus;
+  requestedBy: { id: string; name: string };
+  reviewedBy?: { id: string; name: string };
+  reviewedAt?: string;
+  reviewNote?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChangeRequestPage {
+  items: ChangeRequestView[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+/** Ingredient row offered to the client when composing a request. */
+export interface ChangeRequestIngredientOption {
+  id: string;
+  name: string;
+  [field: string]: unknown;
+}
+
+export interface StaffChangeRequestSummary {
+  totalRequests: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+}
+
+export interface ManagerChangeRequestSummary {
+  totalRequests: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
+export interface ChangeRequestService {
+  ingredientOptions(actor: Actor): Promise<{ ingredients: ChangeRequestIngredientOption[] }>;
+  list(actor: Actor, query: ChangeRequestQuery): Promise<ChangeRequestPage>;
+  detail(actor: Actor, id: string): Promise<ChangeRequestView>;
+  summary(actor: Actor): Promise<StaffChangeRequestSummary>;
+  managerSummary(actor: Actor, query: { from?: Date; to?: Date }): Promise<ManagerChangeRequestSummary>;
+  create(actor: Actor, input: ChangeRequestInput): Promise<ChangeRequestView>;
+  review(actor: Actor, id: string, status: 'APPROVED' | 'REJECTED', reviewNote?: string): Promise<ChangeRequestView>;
+}
 
 const typeLabel = (type: string) =>
   type
@@ -10,7 +103,7 @@ const typeLabel = (type: string) =>
     .map(word => word[0] + word.slice(1).toLowerCase())
     .join(' ');
 
-const fieldValue = (ingredient: any, field: ChangeRequestTargetField) =>
+const fieldValue = (ingredient: IngredientTargetSource, field: ChangeRequestTargetField) =>
   String(ingredient[field] ?? '');
 
 const parsedValue = (field: ChangeRequestTargetField, value: string) =>
@@ -18,6 +111,13 @@ const parsedValue = (field: ChangeRequestTargetField, value: string) =>
     ? Number(value)
     : value;
 
+/**
+ * Change requests for ingredient master-data changes.
+ *
+ * A request is submitted by Inventory Staff, reviewed by a Manager, and applied to the
+ * ingredient inside the review transaction so a stale request can never overwrite a
+ * value that moved on after submission.
+ */
 export function createChangeRequests(
   driver: Mongoose,
   requests: any,
@@ -26,22 +126,27 @@ export function createChangeRequests(
   _batches: any,
   users: any,
   audits: any
-) {
-  const name = (user: any) =>
+): ChangeRequestService {
+  const name = (user: UserNameSource | null | undefined) =>
     `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() ||
     user?.name?.trim() ||
     'Unknown account';
 
-  const formatRow = (row: any, ingredient: any, requester: any, reviewer: any) => ({
+  const formatRow = (
+    row: ChangeRequestDocument,
+    ingredient: IngredientTargetSource | undefined,
+    requester: UserNameSource | undefined,
+    reviewer: UserNameSource | null | undefined
+  ): ChangeRequestView => ({
     id: row._id.toString(),
     requestID: row.requestID,
     requestType: row.requestType,
     targetField: row.targetField,
     ingredient: ingredient
       ? {
-          id: ingredient._id.toString(),
-          name: ingredient.name,
-          unitOfMeasure: ingredient.unitOfMeasure,
+          id: (ingredient._id as Types.ObjectId).toString(),
+          name: ingredient.name as string,
+          unitOfMeasure: ingredient.unitOfMeasure as string,
         }
       : undefined,
     reason: row.reason,
@@ -64,15 +169,16 @@ export function createChangeRequests(
     updatedAt: row.updatedAt.toISOString(),
   });
 
-  const viewMany = async (rows: any[]) => {
+  const viewMany = async (rows: ChangeRequestDocument[]): Promise<ChangeRequestView[]> => {
     if (!rows.length) return [];
-    const rawIngredientId = (row: any) =>
-      (row.ingredientId?._id ?? row.ingredientId)?.toString();
+    const rawIngredientId = (row: ChangeRequestDocument) =>
+      (row.ingredientId as { _id?: Types.ObjectId } | null)?._id?.toString() ??
+      row.ingredientId?.toString();
     const ingredientIds = [...new Set(rows.map(rawIngredientId).filter(Boolean))];
     const userIds = [
       ...new Set(
         rows
-          .flatMap((row: any) => [row.requestedBy?.toString(), row.reviewedBy?.toString()])
+          .flatMap(row => [row.requestedBy?.toString(), row.reviewedBy?.toString()])
           .filter(Boolean)
       ),
     ];
@@ -90,10 +196,17 @@ export function createChangeRequests(
         .exec(),
     ]);
 
-    const ingredientMap = new Map(ingredientRows.map((item: any) => [item._id.toString(), item]));
-    const userMap = new Map(userRows.map((item: any) => [item._id.toString(), item]));
+    const ingredientMap = new Map<string, IngredientTargetSource>(
+      (ingredientRows as IngredientTargetSource[]).map(item => [
+        (item._id as Types.ObjectId).toString(),
+        item,
+      ])
+    );
+    const userMap = new Map<string, UserNameSource>(
+      (userRows as UserNameSource[]).map(item => [item._id.toString(), item])
+    );
 
-    return rows.map((row: any) =>
+    return rows.map(row =>
       formatRow(
         row,
         ingredientMap.get(rawIngredientId(row)),
@@ -103,7 +216,7 @@ export function createChangeRequests(
     );
   };
 
-  const view = async (row: any) => (await viewMany([row]))[0]!;
+  const view = async (row: ChangeRequestDocument) => (await viewMany([row]))[0]!;
 
   const ensureRole = (actor: Actor) => {
     if (!['Inventory Staff', 'Manager', 'Super Admin'].includes(actor.role)) {
@@ -122,9 +235,9 @@ export function createChangeRequests(
         .exec();
 
       return {
-        ingredients: rows.map((row: any) => ({
-          id: row._id.toString(),
-          name: row.name,
+        ingredients: (rows as IngredientTargetSource[]).map(row => ({
+          id: (row._id as Types.ObjectId).toString(),
+          name: row.name as string,
           ...Object.fromEntries(
             CHANGE_REQUEST_TARGET_FIELDS.map(field => [field, row[field]])
           ),
@@ -132,9 +245,10 @@ export function createChangeRequests(
       };
     },
 
-    async list(actor: Actor, query: any) {
+    async list(actor: Actor, query: ChangeRequestQuery) {
       ensureRole(actor);
-      const filter: any = actor.role === 'Inventory Staff' ? { requestedBy: actor.id } : {};
+      const filter: Record<string, unknown> =
+        actor.role === 'Inventory Staff' ? { requestedBy: actor.id } : {};
 
       if (query.currentOnly) {
         filter.requestType = { $in: CHANGE_REQUEST_TYPES };
@@ -158,10 +272,11 @@ export function createChangeRequests(
           .exec();
 
         const term = query.search.toLowerCase();
-        const items = rows.filter((row: any) =>
-          [row.requestID, row.ingredientId?.name].some(value =>
-            value?.toLowerCase().includes(term)
-          )
+        const items = (rows as ChangeRequestDocument[]).filter(row =>
+          [
+            row.requestID,
+            (row.ingredientId as { name?: string } | null)?.name,
+          ].some(value => value?.toLowerCase().includes(term))
         );
 
         return {
@@ -184,7 +299,7 @@ export function createChangeRequests(
         .exec();
 
       return {
-        items: await viewMany(rows),
+        items: await viewMany(rows as ChangeRequestDocument[]),
         page: query.page,
         pageSize: query.pageSize,
         total,
@@ -193,7 +308,7 @@ export function createChangeRequests(
 
     async detail(actor: Actor, id: string) {
       ensureRole(actor);
-      const row = await requests.findById(id).lean().exec();
+      const row: ChangeRequestDocument | null = await requests.findById(id).lean().exec();
       if (!row || (actor.role === 'Inventory Staff' && row.requestedBy.toString() !== actor.id)) {
         throw new AdministrationError(404, 'NOT_FOUND', 'Change request not found');
       }
@@ -203,7 +318,7 @@ export function createChangeRequests(
     async summary(actor: Actor) {
       if (actor.role !== 'Inventory Staff') throw forbidden();
 
-      const counts = await requests.aggregate([
+      const counts: Array<{ _id: string; count: number }> = await requests.aggregate([
         {
           $match: {
             requestedBy: new driver.Types.ObjectId(actor.id),
@@ -214,7 +329,7 @@ export function createChangeRequests(
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]);
 
-      const map = new Map<string, number>(counts.map((row: any) => [row._id, row.count]));
+      const map = new Map<string, number>(counts.map(row => [row._id, row.count]));
       return {
         totalRequests: [...map.values()].reduce((a, b) => a + b, 0),
         approved: map.get('APPROVED') ?? 0,
@@ -264,7 +379,7 @@ export function createChangeRequests(
     async create(actor: Actor, input: ChangeRequestInput) {
       if (actor.role !== 'Inventory Staff') throw forbidden();
 
-      const ingredient = await ingredients
+      const ingredient: IngredientTargetSource | null = await ingredients
         .findById(input.ingredientId)
         .select(`${CHANGE_REQUEST_TARGET_FIELDS.join(' ')} isArchived`)
         .lean()
@@ -274,7 +389,7 @@ export function createChangeRequests(
         throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found');
       }
 
-      return driver.connection.transaction(async (session: any) => {
+      return driver.connection.transaction(async (session: ClientSession) => {
         const now = new Date();
         const dateKey = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}`;
 
@@ -301,7 +416,7 @@ export function createChangeRequests(
           { session }
         );
 
-        const row = created[0];
+        const row = created[0] as ChangeRequestDocument;
         await audits.create(
           [
             {
@@ -327,8 +442,8 @@ export function createChangeRequests(
     async review(actor: Actor, id: string, status: 'APPROVED' | 'REJECTED', reviewNote?: string) {
       if (actor.role !== 'Manager') throw forbidden();
 
-      return driver.connection.transaction(async (session: any) => {
-        const pending = await requests
+      return driver.connection.transaction(async (session: ClientSession) => {
+        const pending: ChangeRequestDocument | null = await requests
           .findOne({ _id: id, status: 'PENDING' })
           .session(session)
           .lean()
@@ -340,7 +455,7 @@ export function createChangeRequests(
 
         if (status === 'APPROVED') {
           if (
-            !CHANGE_REQUEST_TYPES.includes(pending.requestType) ||
+            !isCurrentRequestType(pending.requestType) ||
             !CHANGE_REQUEST_TARGET_FIELDS.includes(pending.targetField)
           ) {
             throw new AdministrationError(
@@ -350,7 +465,7 @@ export function createChangeRequests(
             );
           }
 
-          const ingredient = await ingredients
+          const ingredient: IngredientTargetSource | null = await ingredients
             .findById(pending.ingredientId)
             .session(session)
             .lean()
@@ -397,7 +512,7 @@ export function createChangeRequests(
           );
         }
 
-        const row = await requests
+        const row: ChangeRequestDocument | null = await requests
           .findOneAndUpdate(
             { _id: id, status: 'PENDING' },
             {

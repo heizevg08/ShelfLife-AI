@@ -1,4 +1,4 @@
-import { Eye, EyeOff, FileText, Pencil, Search, Trash2, User, UserCheck, UserPlus, Users, UserX } from 'lucide-react';
+import { Eye, FileText, Pencil, Search, Trash2, User, UserCheck, UserPlus, Users, UserX } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { accountSummary, dashboardSummary, createAccount, getAccount, listAccounts, setAccountActive, updateAccount, type Account, type DashboardSummary, type Page } from '../../services/administration';
 import { ApiError } from '../../services/apiClient';
@@ -10,11 +10,11 @@ import { FilterSelect } from './FilterSelect';
 import { sessionInitials } from '../../services/auth';
 import { formatDateTime } from '../../utils/date-time';
 
-const blank = { firstName: '', lastName: '', email: '', password: '' };
+const blank = { firstName: '', lastName: '', email: '', personalEmail: '' };
 type ManagedRole = 'Admin' | 'Manager' | 'Inventory Staff';
 const NAME_LIMIT = 25;
 const EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/;
-const PASSWORD_MAX_UTF8_BYTES = 1024;
+const PERSONAL_EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const SUMMARY_AUTO_REFRESH_MS = 15000;
 const REQUIRED_ERROR = 'This field is required.';
 
@@ -23,8 +23,11 @@ function validShelfLifeEmail(value: string) {
   return email.length <= 254 && EMAIL_PATTERN.test(email) && !email.startsWith('.') && !email.includes('..') && !email.includes('.@');
 }
 
-function utf8Length(value: string) {
-  return new TextEncoder().encode(value).length;
+function validPersonalEmail(value: string) {
+  const email = value.trim().toLowerCase();
+  const local = email.slice(0, email.lastIndexOf('@'));
+  return email.length <= 254 && PERSONAL_EMAIL_PATTERN.test(email)
+    && !local.startsWith('.') && !local.endsWith('.') && !local.includes('..');
 }
 
 export function AccountsTable() {
@@ -56,7 +59,6 @@ export function AccountsTable() {
   const [busy, setBusy] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const requestSeqRef = useRef(0);
 
@@ -103,7 +105,7 @@ export function AccountsTable() {
       const result = await getAccount(account.id);
       setSelected(result.user);
       setAssignedRole(result.user.role as ManagedRole);
-      setFields({ firstName: result.user.firstName, lastName: result.user.lastName, email: result.user.email, password: '' });
+      setFields({ firstName: result.user.firstName, lastName: result.user.lastName, email: result.user.email, personalEmail: '' });
       setTouched({});
       setSubmitted(false);
       setMode(next);
@@ -115,7 +117,7 @@ export function AccountsTable() {
   }
 
 
-  function validateField(key: 'firstName' | 'lastName' | 'email' | 'password', value: string) {
+  function validateField(key: keyof typeof blank, value: string) {
     if (key === 'firstName' || key === 'lastName') {
       const trimmed = value.trim();
       if (!trimmed) return REQUIRED_ERROR;
@@ -123,8 +125,7 @@ export function AccountsTable() {
     }
     if (!value.trim()) return REQUIRED_ERROR;
     if (key === 'email') return !validShelfLifeEmail(value) ? 'Enter a valid shelflife.com email.' : '';
-    if (value.length < 12) return 'Use at least 12 characters.';
-    return utf8Length(value) > PASSWORD_MAX_UTF8_BYTES ? 'Use a shorter password (at most 1,024 UTF-8 bytes).' : '';
+    return !validPersonalEmail(value) ? 'Enter a valid personal email address.' : '';
   }
 
   function close() {
@@ -135,7 +136,6 @@ export function AccountsTable() {
       setErrors({});
       setTouched({});
       setSubmitted(false);
-      setShowPassword(false);
     }
   }
 
@@ -144,7 +144,7 @@ export function AccountsTable() {
     if (busy) return;
     setSubmitted(true);
     const next: Record<string, string> = {};
-    const requiredFields = ['firstName', 'lastName', 'email', ...(mode === 'create' ? ['password'] as const : [])] as const;
+    const requiredFields = ['firstName', 'lastName', 'email', ...(mode === 'create' ? ['personalEmail'] as const : [])] as const;
     for (const key of requiredFields) {
       const error = validateField(key, fields[key]);
       if (error) next[key] = error;
@@ -161,13 +161,13 @@ export function AccountsTable() {
     setBusy(true);
     try {
       const input = { firstName: fields.firstName.trim(), lastName: fields.lastName.trim(), email: fields.email.trim().toLowerCase(), role: assignedRole };
-      if (mode === 'create') await createAccount({ ...input, password: fields.password });
+      if (mode === 'create') await createAccount({ ...input, personalEmail: fields.personalEmail.trim().toLowerCase() });
       else await updateAccount(selected!.id, input);
-      setMessage(mode === 'create' ? 'Account created.' : 'Account updated.');
-      setMode(null); setFields(blank); setSelected(null); setShowPassword(false); setRefresh(value => value + 1);
+      setMessage(mode === 'create' ? 'Account created. Sign-in details sent to the personal email.' : 'Account updated.');
+      setMode(null); setFields(blank); setSelected(null); setRefresh(value => value + 1);
     } catch (error) {
       const details = error instanceof ApiError
-        ? Object.fromEntries(error.details.map(item => [item.field, item.field === 'password' ? (item.message || 'Use at least 12 characters.') : item.message]))
+        ? Object.fromEntries(error.details.map(item => [item.field, item.message]))
         : {};
       setTouched(previous => ({ ...previous, ...Object.fromEntries(Object.keys(details).map(key => [key, true])) }));
       setErrors({ ...details, form: error instanceof ApiError ? error.message : 'The result could not be confirmed. The directory will refresh automatically.' });
@@ -229,14 +229,14 @@ export function AccountsTable() {
               setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
             }}>Reset</button>
             <button className="sl-button sl-button-primary" disabled={busy} onClick={() => {
-              setMode('create'); setAssignedRole('Admin'); setFields(blank); setErrors({}); setTouched({}); setSubmitted(false); setShowPassword(false); setMessage('');
+              setMode('create'); setAssignedRole('Admin'); setFields(blank); setErrors({}); setTouched({}); setSubmitted(false); setMessage('');
             }}><UserPlus size={16} aria-hidden="true" /> Add User</button>
           </div> : <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions">
             <button className="sl-button" onClick={() => {
               setDirectorySearch(''); setRoleFilter('All Roles'); setStatusFilter('All Statuses'); setPage(1);
             }}>Reset</button>
             <button className="sl-button sl-button-primary" disabled={busy} onClick={() => {
-              setMode('create'); setAssignedRole('Manager'); setFields(blank); setErrors({}); setTouched({}); setSubmitted(false); setShowPassword(false); setMessage('');
+              setMode('create'); setAssignedRole('Manager'); setFields(blank); setErrors({}); setTouched({}); setSubmitted(false); setMessage('');
             }}><UserPlus size={16} aria-hidden="true" /> Add User</button>
           </div>}
         </div>
@@ -300,20 +300,20 @@ export function AccountsTable() {
     >
       <form id="sl-account-form" className="sl-admin-form sl-account-form" onSubmit={save} noValidate>
         <div className="sl-form-grid">
-          {(['firstName', 'lastName', 'email', ...(mode === 'create' ? ['password'] as const : [])] as const).map(key => <div key={key} className={`sl-account-field${key === 'email' || key === 'password' ? ' sl-form-span-2' : ''}`}>
-            <label htmlFor={`admin-${key}`}>{({ firstName: 'First name', lastName: 'Last name', email: 'Email', password: 'Temporary Password' })[key]}</label>
-            <div className={key === 'password' ? 'sl-password-field' : undefined}>
+          {(['firstName', 'lastName', 'email', ...(mode === 'create' ? ['personalEmail'] as const : [])] as const).map(key => <div key={key} className={`sl-account-field${key === 'email' || key === 'personalEmail' ? ' sl-form-span-2' : ''}`}>
+            <label htmlFor={`admin-${key}`}>{({ firstName: 'First name', lastName: 'Last name', email: 'Sign-in Email', personalEmail: 'Personal Email' })[key]}</label>
+            <div>
               <input
                 className="sl-admin-input"
                 id={`admin-${key}`}
                 data-initial-focus={key === 'firstName' ? true : undefined}
-                type={key === 'password' ? (showPassword ? 'text' : 'password') : key === 'email' ? 'email' : 'text'}
-                autoComplete={key === 'password' ? 'new-password' : 'off'}
+                type={key === 'email' || key === 'personalEmail' ? 'email' : 'text'}
+                autoComplete="off"
                 disabled={busy}
                 value={fields[key]}
                 maxLength={key === 'firstName' || key === 'lastName' ? NAME_LIMIT : undefined}
                 aria-invalid={(submitted || touched[key]) && !!errors[key] ? true : undefined}
-                aria-describedby={[(submitted || touched[key]) && errors[key] ? `admin-${key}-error` : '', key === 'password' ? 'admin-password-help' : ''].filter(Boolean).join(' ') || undefined}
+                aria-describedby={[(submitted || touched[key]) && errors[key] ? `admin-${key}-error` : '', key === 'personalEmail' ? 'admin-personal-email-help' : ''].filter(Boolean).join(' ') || undefined}
                 onBlur={() => {
                   setTouched(previous => ({ ...previous, [key]: true }));
                   const error = validateField(key, fields[key]);
@@ -321,7 +321,7 @@ export function AccountsTable() {
                 }}
                 onChange={event => {
                   let value = event.target.value;
-                  const maxLen = key === 'email' ? 254 : key === 'password' ? 128 : NAME_LIMIT;
+                  const maxLen = key === 'email' || key === 'personalEmail' ? 254 : NAME_LIMIT;
                   if (value.length > maxLen) value = value.slice(0, maxLen);
                   setFields({ ...fields, [key]: value });
                   if (submitted || touched[key]) {
@@ -329,10 +329,9 @@ export function AccountsTable() {
                   }
                 }}
               />
-              {key === 'password' && <button className="sl-password-toggle" type="button" disabled={busy} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-controls="admin-password" onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}</button>}
             </div>
             {(submitted || touched[key]) && errors[key] && <p id={`admin-${key}-error`} className="sl-admin-error">{errors[key]}</p>}
-            {key === 'password' && <p id="admin-password-help" className="sl-password-help">Share this with the user — they can change it after signing in.</p>}
+            {key === 'personalEmail' && <p id="admin-personal-email-help" className="sl-password-help">Sign-in details and a temporary password will be sent here. The user must change the password after signing in.</p>}
           </div>)}
           <fieldset className="sl-form-span-2 sl-role-picker" aria-invalid={(submitted || touched.role) && !!errors.role ? true : undefined} aria-describedby={(submitted || touched.role) && errors.role ? 'admin-role-error' : undefined}><legend>Role</legend>{assignableRoles.map(role => <label key={role} className="sl-role-option" data-selected={assignedRole === role}>
             <input type="radio" name="admin-role" value={role} checked={assignedRole === role} disabled={busy} onChange={() => { setAssignedRole(role); setTouched(previous => ({ ...previous, role: true })); setErrors(previous => ({ ...previous, role: '', form: '' })); }} />

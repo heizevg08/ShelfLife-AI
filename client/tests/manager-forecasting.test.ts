@@ -15,7 +15,7 @@ const STYLES = readFileSync(new URL('../src/styles/application.css', import.meta
 const forecasting = () => {
   const start = PAGE.indexOf('function ManagerForecastingPage()');
   assert.ok(start > -1, 'ManagerForecastingPage exists');
-  const end = PAGE.indexOf('function ManagerChangeRequestsPage()', start);
+  const end = PAGE.indexOf('export function ModulePage(', start);
   return PAGE.slice(start, end > -1 ? end : undefined);
 };
 

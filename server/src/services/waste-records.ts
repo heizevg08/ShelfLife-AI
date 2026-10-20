@@ -37,6 +37,13 @@ export interface WasteRecordStore {
   create(actor: Actor, input: WasteCreateInput): Promise<WasteRecordView>;
   createMany(actor: Actor, inputs: WasteCreateInput[]): Promise<WasteRecordView[]>;
 }
+/**
+ * Waste records for stock thrown away, with reporting counts kept separate from the
+ * private ML quantity target.
+ *
+ * The clock is injected so both the single and bulk write paths decide what "today" means
+ * from one instant, and a test can pin that instant.
+ */
 export function createWasteRecords(store: WasteRecordStore, now: () => Date = () => new Date()) {
   return {
     ready: () => store.ready(),

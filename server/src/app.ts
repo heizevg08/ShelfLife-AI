@@ -23,10 +23,11 @@ import type { UsageRecordService } from './services/usage-records';
 import { wasteRecordRoutes } from './routes/waste-record.routes';
 import type { WasteRecordService } from './services/waste-records';
 import { changeRequestRoutes } from './routes/change-request.routes';
+import type { ChangeRequestService } from './services/change-requests';
 import { reportRoutes } from './routes/report.routes';
 import type { ReportExportService } from './services/report-export';
 
-export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: any, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService, trustProxy = false, operationalEvaluation?: ForecastEvaluationService) {
+export function createApp(origins: readonly string[], isReady: () => boolean, auth?: AuthService, extensions?: AuthExtensions, administration?: AdministrationService, ingredients?: IngredientService, inventoryBatches?: InventoryBatchService, usageRecords?: UsageRecordService, wasteRecords?: WasteRecordService, changeRequests?: ChangeRequestService, reports?: ReportExportService, operationalForecast?: OperationalForecastService, operationalRisk?: OperationalRiskService, operationalRecommendations?: OperationalRecommendationService, trustProxy = false, operationalEvaluation?: ForecastEvaluationService) {
   const app = express();
   app.disable('x-powered-by');
   // Render terminates TLS before forwarding one request hop to this process.

@@ -236,7 +236,7 @@ test('the preview is development-only, unreachable in production and not linked 
 test('no sample value can leak into the production Manager Forecasting page', () => {
   // The production page must not import the fixtures at all, in either direction.
   const start = PAGE.indexOf('function ManagerForecastingPage()');
-  const end = PAGE.indexOf('function ManagerChangeRequestsPage()', start);
+  const end = PAGE.indexOf('export function ModulePage(', start);
   const managerForecast = PAGE.slice(start, end > -1 ? end : undefined);
   assert.ok(start > -1 && managerForecast.length > 500, 'the Manager Forecasting page is found');
   assert.doesNotMatch(managerForecast, /forecast-sample-data|FORECAST_SAMPLE|CategoryDemandBreakdown/);

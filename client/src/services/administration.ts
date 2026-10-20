@@ -75,7 +75,7 @@ export const listAccounts = (
 export const getAccount = (id: string) =>
   apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}`);
 
-export const createAccount = (fields: AccountFields & { password: string }) =>
+export const createAccount = (fields: AccountFields & { personalEmail: string }) =>
   apiClient<{ user: Account }>('/users', { method: 'POST', body: JSON.stringify(fields) });
 
 export const updateAccount = (id: string, fields: AccountFields) =>

@@ -38,6 +38,12 @@ export interface UsageRecordStore {
   create(actor: Actor, input: UsageCreateInput): Promise<UsageRecordView>;
   createMany(actor: Actor, inputs: UsageCreateInput[]): Promise<UsageRecordView[]>;
 }
+/**
+ * Usage records for stock consumed against a batch.
+ *
+ * The clock is injected so a test can pin "today" and so every future-date guard in this
+ * module reads the same instant instead of calling `new Date()` at slightly different times.
+ */
 export function createUsageRecords(store: UsageRecordStore, now: () => Date = () => new Date()) {
   return {
     ready: () => store.ready(),
