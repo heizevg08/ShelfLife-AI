@@ -19876,7 +19876,7 @@ section.sl-card:has(.sl-filter-popover) {
 }
 .sl-mgr-forecast-analytics {
   grid-template-columns: minmax(0,1.9fr) minmax(17rem,1fr);
-  align-items: stretch;
+  align-items: start;
   gap: clamp(10px,1vw,14px);
   min-width: 0;
   display: grid;
