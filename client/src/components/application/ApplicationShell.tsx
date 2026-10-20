@@ -40,11 +40,12 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   const [topbarClock, setTopbarClock] = useState(() => new Date());
   const appRef = useRef<HTMLDivElement>(null);
   const managerDashboardUsesDocumentScroll = user?.role === 'Manager' && pathname === '/ManagerDashboard';
-  const backToTopAlwaysAvailable = user?.role === 'Admin' && ['/UserManagement', '/Ingredients', '/InventoryBatches', '/AdministrativeAudit'].includes(pathname);
+  // Core routes where back-to-top was standardized: ['/UserManagement', '/Ingredients', '/InventoryBatches', '/AdministrativeAudit']
+  const backToTopAlwaysAvailable = false;
   const dashboardPath = dashboardPaths[user?.role ?? 'Super Admin'];
   const destinations = [{ label: 'Dashboard', Icon: LayoutDashboard, path: dashboardPath }, ...(user?.role === 'Super Admin' ? administrationAreas.filter(area => !('hidden' in area && area.hidden)) : user ? workspaceNavigation(user.role) : [])];
   const superAdminSearchEntries = user?.role === 'Super Admin' ? [
-    { label: 'Ingredients', path: '/Ingredients', Icon: Search, keywords: 'ingredients stock catalog categories unit shelf life supply inventory' },
+    { label: 'Security & Activity', path: '/SecurityActivity', Icon: Search, keywords: 'security activity sessions password mfa protection audit' },
     { label: 'User Accounts', path: '/UserManagement', Icon: Search, keywords: 'users accounts admin manager inventory staff create add user roles active deactivated' },
     { label: 'Recent Audit Logs', path: '/AdministrativeAudit', Icon: Search, keywords: 'audit logs actor action account created updated deactivated reactivated security activity' },
   ] : [];
@@ -113,12 +114,21 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
   }, []);
 
   useEffect(() => {
-    if (!managerDashboardUsesDocumentScroll) return;
-    const update = () => setShowBackToTop(window.scrollY > 520);
-    update();
-    window.addEventListener('scroll', update, { passive: true });
-    return () => window.removeEventListener('scroll', update);
-  }, [managerDashboardUsesDocumentScroll]);
+    const handleScroll = () => {
+      const windowOffset = window.scrollY || document.documentElement.scrollTop || 0;
+      const containerOffset = appRef.current?.scrollTop || 0;
+      const currentScroll = Math.max(windowOffset, containerOffset);
+      setShowBackToTop(currentScroll > 180);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    const container = appRef.current;
+    if (container) container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (container) container.removeEventListener('scroll', handleScroll);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     // A newly opened module always begins at the top, in every role. Two containers can
@@ -387,7 +397,7 @@ export default function ApplicationShell({ children }: { children: (user: Sessio
       className="sl-app sl-shell"
       data-role={user.role}
       data-collapsed={railCollapsed}
-      onScroll={event => setShowBackToTop(event.currentTarget.scrollTop > 520)}
+      onScroll={event => setShowBackToTop(event.currentTarget.scrollTop > 180)}
     >
       <a className="sl-skip" href="#sl-main">
         Skip to main content

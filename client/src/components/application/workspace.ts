@@ -11,7 +11,7 @@ export const profilePaths: Record<WorkspaceRole, string> = {
 const operational: WorkspaceRole[] = ['Admin', 'Manager', 'Inventory Staff'];
 export const modules = {
   UserManagement: { label: 'User Management', Icon: Users, roles: ['Super Admin', 'Admin'] },
-  Ingredients: { label: 'Ingredients', Icon: Leaf, roles: ['Super Admin', ...operational] },
+  Ingredients: { label: 'Ingredients', Icon: Leaf, roles: operational },
   InventoryBatches: { label: 'Inventory Batches', Icon: Boxes, roles: operational },
   StockIn: { label: 'Stock-In', Icon: PackagePlus, roles: ['Inventory Staff'] },
   UsageWaste: { label: 'Usage & Waste', Icon: Utensils, roles: ['Manager'] },
@@ -37,7 +37,7 @@ export const canonicalWorkspaceAccess = {
   '/InventoryStaffProfile': ['Inventory Staff'],
   '/SecurityActivity': ['Super Admin'],
   '/UserManagement': ['Super Admin', 'Admin'],
-  '/Ingredients': ['Super Admin', 'Admin'],
+  '/Ingredients': ['Admin'],
   '/InventoryBatches': ['Admin', 'Inventory Staff'],
   '/Inventory': ['Manager'],
   '/StockIn': ['Inventory Staff'],
@@ -60,7 +60,7 @@ export type CanonicalWorkspacePath = keyof typeof canonicalWorkspaceAccess;
 // Exported for tests: the sidebar is the authoritative list of what each role is offered,
 // so the guard test derives its expected entry count from here rather than a hardcoded number.
 export const navigation: Record<WorkspaceRole, ModuleId[]> = {
-  'Super Admin': ['Ingredients', 'UserManagement', 'AdministrativeAudit'],
+  'Super Admin': ['UserManagement', 'AdministrativeAudit'],
   Admin: ['UserManagement', 'Ingredients', 'InventoryBatches', 'Reports', 'AdministrativeAudit'],
   Manager: ['InventoryBatches', 'UsageWaste', 'ChangeRequests', 'Forecasting', 'Alerts', 'Reports'],
   'Inventory Staff': ['InventoryBatches', 'StockIn', 'Usage', 'Waste', 'ChangeRequests'],
