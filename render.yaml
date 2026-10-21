@@ -30,3 +30,5 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         sync: false
+      - key: PASSWORD_RESET_URL
+        value: https://shelflife-ai-one.vercel.app/ShelfLifeAILogin

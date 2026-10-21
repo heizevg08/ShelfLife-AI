@@ -18,7 +18,7 @@ function sourceFiles(directory) {
   });
 }
 
-const smtp = { SMTP_HOST: 'smtp.example.com', SMTP_PORT: '465', SMTP_USER: 'mailer@shelflife.com', SMTP_PASS: 'private-test-value', PASSWORD_RESET_URL: 'http://localhost:8081/ShelfLifeAILogin' };
+const smtp = { SMTP_HOST: 'smtp.example.com', SMTP_PORT: '465', SMTP_USER: 'mailer@shelflife.com', SMTP_PASS: 'private-test-value', PASSWORD_RESET_URL: 'https://shelflife-ai-one.vercel.app/ShelfLifeAILogin' };
 
 test('no package manifest, lockfile, or server source references the retired email provider', () => {
   const files = [join(root, 'package.json'), join(root, 'client', 'package.json'), join(root, 'server', 'package.json'), ...sourceFiles(join(root, 'server', 'src'))];
@@ -51,6 +51,8 @@ test('a failing SMTP delivery propagates to the caller and the SMTP password nev
   await assert.rejects(createResetEmail(smtp, transport).send('account@shelflife.com', 'a'.repeat(64)), /535/);
   const sent = [];
   const working = createSmtpMailTransport(smtp, () => ({ sendMail: async message => { sent.push(message); } }));
+  await createResetEmail(smtp, working).send('account@shelflife.com', 'a'.repeat(64));
   await createEmailChangeEmail(smtp, working).send('new@shelflife.com', '123456');
+  assert.ok(sent.some(message => message.text.includes(`${smtp.PASSWORD_RESET_URL}#reset=`)));
   assert.equal(JSON.stringify(sent).includes(smtp.SMTP_PASS), false);
 });
