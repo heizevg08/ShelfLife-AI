@@ -162,7 +162,7 @@ function ManagerAlerts() {
                         <td><time dateTime={alert.date}>{alert.batchStatus === 'Low Stock' ? formatDateTime(alert.date) : formatDate(alert.date)}</time></td>
                         <td className="sl-emphasized-value">{formatHumanReadableText(alert.ingredient)}</td>
                         <td>{alert.category}</td>
-                        <td className="sl-alert-details-cell">{alert.details}</td>
+                        <td className="sl-alert-details-cell"><span className="sl-alert-detail-summary">{alert.detailSummary}</span><span className="sl-alert-detail-batch">{alert.batchID}</span></td>
                         <td>
                           <Status tone={alert.priority === 'High' ? 'critical' : alert.priority === 'Medium' ? 'attention' : 'brand'}>
                             {alert.priority}

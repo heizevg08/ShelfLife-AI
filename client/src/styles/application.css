@@ -35723,10 +35723,22 @@ body:has(.sl-shell[data-role="Manager"] .sl-mgr-forecast-page) {
 
 
 /* Streamlined Alert Records Details and Status Indicators */
+.sl-manager-alerts-v134 .sl-manager-alerts-records-card .sl-application-records-table :is(th,td):nth-child(4) {
+  padding-inline-end: 2rem!important;
+}
 .sl-alert-details-cell {
   color: var(--sl-text);
   font-size: 0.84rem;
   line-height: 1.4;
+  white-space: normal;
+  text-align: left!important;
+}
+.sl-alert-detail-summary,.sl-alert-detail-batch {
+  display: block;
+}
+.sl-manager-alerts-v134 .sl-application-records-table .sl-alert-detail-batch {
+  color: var(--sl-muted);
+  font-size: .75rem;
   white-space: nowrap;
 }
 .sl-alert-status-text {

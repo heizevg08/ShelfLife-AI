@@ -7,6 +7,8 @@ export type InventoryAlertRecord = {
   ingredient: string;
   category: 'Expiring Soon' | 'Low Stock';
   details: string;
+  detailSummary: string;
+  batchID: string;
   priority: 'High' | 'Medium';
   status: 'Active';
   batchStatus: 'Expired' | 'Near Expiry' | 'Low Stock';
@@ -36,6 +38,12 @@ export function inventoryAlertRecords(batches: InventoryBatch[]): InventoryAlert
         : batchStatus === 'Near Expiry'
           ? `${batch.daysLeft}d left · ${quantity} (${batch.batchID})`
           : `${quantity} remaining (Min: ${formatQty(batch.ingredient.minimumStock ?? 0)} ${batch.unit}; ${batch.batchID})`,
+      detailSummary: batchStatus === 'Expired'
+        ? `Expired · ${quantity} remaining`
+        : batchStatus === 'Near Expiry'
+          ? `${batch.daysLeft}d left · ${quantity}`
+          : `${quantity} remaining · Min: ${formatQty(batch.ingredient.minimumStock ?? 0)} ${batch.unit}`,
+      batchID: batch.batchID,
       priority: batchStatus === 'Expired' || (batchStatus === 'Near Expiry' && batch.daysLeft <= 3) ? 'High' : 'Medium',
       status: 'Active',
       batchStatus,
