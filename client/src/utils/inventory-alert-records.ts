@@ -22,7 +22,8 @@ export function inventoryAlertRecords(batches: InventoryBatch[]): InventoryAlert
   const formatQty = (quantity: number) => Number(quantity.toFixed(2)).toLocaleString('en-PH');
   return batches.flatMap((batch): InventoryAlertRecord[] => {
     const batchStatus = batch.displayStatus;
-    if (batchStatus === 'In Stock') return [];
+    // A depleted batch holds nothing to use, so it is not an alert.
+    if (batchStatus === 'In Stock' || batchStatus === 'No Stock') return [];
     const quantity = `${formatQty(batch.quantity)} ${batch.unit}`;
     const expiry = batchStatus === 'Expired' || batchStatus === 'Near Expiry';
     return [{

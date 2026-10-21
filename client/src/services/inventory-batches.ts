@@ -2,7 +2,7 @@ import { apiClient } from './apiClient';
 import { publishActionFeedback } from './actionFeedback';
 import { downloadFile, type ReportRange } from './report-exports';
 
-export type InventoryBatchDisplayStatus = 'In Stock' | 'Low Stock' | 'Near Expiry' | 'Expired';
+export type InventoryBatchDisplayStatus = 'In Stock' | 'Low Stock' | 'Near Expiry' | 'Expired' | 'No Stock';
 
 export interface InventoryBatch {
   id: string;

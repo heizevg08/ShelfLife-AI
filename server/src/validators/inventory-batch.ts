@@ -2,7 +2,7 @@ import { invalid, objectId } from './administration';
 import { calendarDate } from './date';
 import { bulkItems } from './bulk';
 
-export const INVENTORY_BATCH_DISPLAY_STATUSES = ['In Stock', 'Low Stock', 'Near Expiry', 'Expired'] as const;
+export const INVENTORY_BATCH_DISPLAY_STATUSES = ['In Stock', 'Low Stock', 'Near Expiry', 'Expired', 'No Stock'] as const;
 export const MAX_STOCK_IN_QUANTITY = 1_000_000;
 export const MAX_STOCK_IN_UNIT_COST = 1_000_000_000;
 export type InventoryBatchDisplayStatus = typeof INVENTORY_BATCH_DISPLAY_STATUSES[number];

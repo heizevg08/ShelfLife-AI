@@ -61,8 +61,12 @@ export function deriveInventoryBatchDisplayStatus(
   expirationDate: Date,
   totalStock: number,
   minimumStock: number | undefined,
-  now: Date
+  now: Date,
+  quantity?: number
 ): InventoryBatchDisplayStatus {
+  // A batch holding nothing cannot expire or run low: there is no stock left to
+  // use, so "No Stock" wins over every date-based label.
+  if (quantity === 0) return 'No Stock';
   const daysLeft = businessDaysUntilExpiry(expirationDate, now);
   if (daysLeft <= 0) return 'Expired';
   if (daysLeft <= 7) return 'Near Expiry';
@@ -138,7 +142,7 @@ export function createInventoryBatchStore(
           row,
           ingredient,
           totalStock,
-          displayStatus: deriveInventoryBatchDisplayStatus(row.expirationDate, totalStock, ingredient.minimumStock, now),
+          displayStatus: deriveInventoryBatchDisplayStatus(row.expirationDate, totalStock, ingredient.minimumStock, now, row.quantity),
           daysLeft: businessDaysUntilExpiry(row.expirationDate, now),
           creator: creators.get(row.createdBy.toString()),
         },
@@ -272,14 +276,14 @@ export function createInventoryBatchStore(
       );
 
       if (query.sort === 'fefo') {
-        const isExpired = (item: Resolved) => item.displayStatus === 'Expired';
+        // Depleted batches hold nothing to use, so they rank below expired stock
+        // that still needs a waste decision. Usable stock always comes first.
+        const rank = (item: Resolved) =>
+          item.displayStatus === 'No Stock' ? 2 : item.displayStatus === 'Expired' ? 1 : 0;
         rows.sort((a, b) => {
-          // Batches that are still usable keep strict FEFO order (earliest expiry first);
-          // already-expired batches sink to the bottom so they cannot hide the stock
-          // that still has shelf life left.
-          const group = Number(isExpired(a)) - Number(isExpired(b));
+          const group = rank(a) - rank(b);
           if (group !== 0) return group;
-          const expiry = isExpired(a)
+          const expiry = rank(a) > 0
             ? b.row.expirationDate.getTime() - a.row.expirationDate.getTime()
             : a.row.expirationDate.getTime() - b.row.expirationDate.getTime();
           return (
@@ -331,7 +335,7 @@ export function createInventoryBatchStore(
           standardUnitCost: item.ingredient.standardUnitCost,
         }))
       );
-      const statusCounts = { 'In Stock': 0, 'Low Stock': 0, 'Near Expiry': 0, Expired: 0 } satisfies Record<
+      const statusCounts = { 'In Stock': 0, 'Low Stock': 0, 'Near Expiry': 0, Expired: 0, 'No Stock': 0 } satisfies Record<
         InventoryBatchDisplayStatus,
         number
       >;

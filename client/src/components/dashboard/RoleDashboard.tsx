@@ -189,6 +189,7 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     const lowStock = summary.statusCounts['Low Stock'] ?? 0;
     const nearExpiry = summary.statusCounts['Near Expiry'] ?? 0;
     const expired = summary.statusCounts['Expired'] ?? 0;
+    const noStock = summary.statusCounts['No Stock'] ?? 0;
     const total = summary.totalBatches || 1;
     const percentage = Math.round((inStock / total) * 100);
 
@@ -197,9 +198,10 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
       { label: 'Low Stock', count: lowStock, color: '#b45309', barColor: '#d97706' },
       { label: 'Near Expiry', count: nearExpiry, color: '#c2410c', barColor: '#ea580c' },
       { label: 'Expired', count: expired, color: '#b91c1c', barColor: '#dc2626' },
+      { label: 'No Stock', count: noStock, color: '#475569', barColor: '#64748b' },
     ];
 
-    return { inStock, lowStock, nearExpiry, expired, total: summary.totalBatches, percentage, statuses };
+    return { inStock, lowStock, nearExpiry, expired, noStock, total: summary.totalBatches, percentage, statuses };
   }, [summary]);
 
   const next7DaysData = useMemo(() => {

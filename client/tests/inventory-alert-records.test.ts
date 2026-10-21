@@ -13,14 +13,16 @@ test('keeps separate batches of the same ingredient and uses each batch status a
   });
   const alerts = inventoryAlertRecords([
     batch('expired', 'Expired', 103, -1),
-    batch('near', 'Near Expiry', 0, 5),
+    batch('near', 'Near Expiry', 2, 5),
+    batch('depleted', 'No Stock', 0, 5),
     batch('healthy', 'In Stock', 20, 30),
   ]);
 
+  // The depleted batch holds nothing to use, so it raises no alert.
   assert.equal(alerts.length, 2);
   assert.deepEqual(alerts.map(alert => alert.id), ['Expired:expired', 'Near Expiry:near']);
   assert.match(alerts[0].details, /103 kg remaining \(SL-expired\)/);
-  assert.match(alerts[1].details, /0 kg \(SL-near\)/);
+  assert.match(alerts[1].details, /2 kg \(SL-near\)/);
   assert.equal(alerts[0].priority, 'High');
   assert.equal(alerts[1].priority, 'Medium');
 });

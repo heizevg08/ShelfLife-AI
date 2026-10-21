@@ -287,7 +287,7 @@ function InventoryStaffUsagePage() {
 }
 
 
-const inventoryBatchStatusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired' ? 'critical' as const : status === 'Near Expiry' || status === 'Low Stock' ? 'attention' as const : 'success' as const;
+const inventoryBatchStatusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired' ? 'critical' as const : status === 'Near Expiry' || status === 'Low Stock' ? 'attention' as const : status === 'No Stock' ? 'neutral' as const : 'success' as const;
 
 function InventoryStaffStockInPage() {
   const [addModalOpen, setAddModalOpen] = useState(false), [stockSearch, setStockSearch] = useState(''), [stockIngredient, setStockIngredient] = useState('All Ingredients'), [stockIngredients, setStockIngredients] = useState<StockInIngredient[]>([]), [stockDateRange, setStockDateRange] = useState('All dates'), [stockDateFrom, setStockDateFrom] = useState(''), [stockDateTo, setStockDateTo] = useState(''), [stockRows, setStockRows] = useState(10), [stockPage, setStockPage] = useState(1);
@@ -396,7 +396,7 @@ function InventoryStaffInventoryBatchesPage() {
               <div className="sl-application-records-toolbar sl-sa-ingredients-filter-card sl-staff-inventory-record-filters" data-layout="inventory-staff">
                 <label className="sl-application-records-search sl-sa-ingredients-search"><span>Search batches</span><div><Search size={16} aria-hidden="true"/><input type="search" value={search} onChange={e=>{ setSearch(e.target.value); setPage(1); }} placeholder="Search ingredient or batch ID..." aria-label="Search inventory batches" maxLength={100} /></div></label>
                 <label><span>Category</span><FilterSelect ariaLabel="Filter inventory batches by category" value={category} options={[{value:'',label:'All Categories'},...INGREDIENT_CATEGORIES.map(value=>({value,label:value}))]} onChange={value=>{ setCategory(value); setPage(1); }}/></label>
-                <label><span>Status</span><FilterSelect ariaLabel="Filter inventory batches by status" value={batchStatus} options={['All Statuses','In Stock','Low Stock','Near Expiry','Expired'].map(label=>({value:label==='All Statuses'?'':label,label}))} onChange={value=>{ setBatchStatus(value); setPage(1); }}/></label>
+                <label><span>Status</span><FilterSelect ariaLabel="Filter inventory batches by status" value={batchStatus} options={['All Statuses','In Stock','Low Stock','Near Expiry','Expired','No Stock'].map(label=>({value:label==='All Statuses'?'':label,label}))} onChange={value=>{ setBatchStatus(value); setPage(1); }}/></label>
                 <label><span>Sort by</span><FilterSelect ariaLabel="Sort inventory batches" value={sortBy} options={['FEFO (Earliest Expiry)','Latest Received','Ingredient Name'].map(value=>({value,label:value}))} onChange={value=>{ setSortBy(value); setPage(1); }}/></label>
                 <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={()=>{ reset(); setPage(1); }}>Reset</button></div>
               </div>
@@ -450,12 +450,12 @@ function ManagerInventoryPage() {
         <div className="sl-manager-inventory-filters">
           <label className="sl-manager-inventory-search"><span>Search</span><span className="sl-directory-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ingredient, batch ID, or supplier..." maxLength={100} /></span></label>
           <label><span>Category</span><select className="sl-admin-input" value={category} onChange={e=>setCategory(e.target.value)}><option>All Categories</option>{INGREDIENT_CATEGORIES.map(value=><option key={value}>{value}</option>)}</select></label>
-          <label><span>Stock Status</span><select className="sl-admin-input" value={status} onChange={e=>setStatus(e.target.value)}><option>All Statuses</option><option>In Stock</option><option>Low Stock</option><option>Near Expiry</option><option>Expired</option></select></label>
+          <label><span>Stock Status</span><select className="sl-admin-input" value={status} onChange={e=>setStatus(e.target.value)}><option>All Statuses</option><option>In Stock</option><option>Low Stock</option><option>Near Expiry</option><option>Expired</option><option>No Stock</option></select></label>
           <label><span>Expiration</span><select className="sl-admin-input" value={expiration} onChange={e=>setExpiration(e.target.value)}><option>All</option><option>≤ 7 days</option><option>8–30 days</option><option>&gt; 30 days</option></select></label>
           <div className="sl-manager-inventory-filter-actions"><button className="sl-button" type="button" onClick={reset}>Reset</button><button className="sl-button sl-button-primary" type="button">Apply Filters</button></div>
         </div>
         <div className="sl-manager-inventory-tabs-row">
-          <nav className="sl-manager-inventory-tabs" aria-label="Inventory status views">{['All Items','In Stock','Low Stock','Near Expiry','Expired'].map(x=><button type="button" key={x} className={tab===x?'is-active':''} onClick={()=>setTab(x)}>{x} <span>—</span></button>)}</nav>
+          <nav className="sl-manager-inventory-tabs" aria-label="Inventory status views">{['All Items','In Stock','Low Stock','Near Expiry','Expired','No Stock'].map(x=><button type="button" key={x} className={tab===x?'is-active':''} onClick={()=>setTab(x)}>{x} <span>—</span></button>)}</nav>
           <ExportControl unavailableMessage="XLSX inventory export is not available for this view yet." />
         </div>
         <div className="sl-manager-inventory-table-shell">
@@ -1724,7 +1724,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
 
   if (moduleId === 'InventoryBatches' && user.role === 'Admin') {
     const kpi = (value: number | undefined) => adminInventoryLoading && !adminInventorySummary ? 'Loading…' : adminInventoryError && !adminInventorySummary ? 'Unavailable' : (value ?? 0).toLocaleString();
-    const statusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired' ? 'critical' : status === 'Near Expiry' || status === 'Low Stock' ? 'attention' : 'success';
+    const statusTone = (status: InventoryBatchDisplayStatus) => status === 'Expired' ? 'critical' : status === 'Near Expiry' || status === 'Low Stock' ? 'attention' : status === 'No Stock' ? 'neutral' : 'success';
     const date = (value: string) => formatDate(value);
     const openBatch = async (id: string) => {
       setAdminInventoryDetailError('');
@@ -1745,7 +1745,7 @@ export function ModulePage({ moduleId }: { moduleId: ModuleId }) {
         <div className="sl-application-records-filters"><div className="sl-application-records-toolbar" data-layout="inventory-admin">
           <label className="sl-application-records-search"><span>Search ingredients</span><div><Search size={17} aria-hidden="true" /><input type="search" placeholder="Search by ingredient or Batch ID..." aria-label="Search ingredients or Batch ID" value={adminInventorySearch} onChange={event => { setAdminInventorySearch(event.target.value); setAdminInventoryPage(1); }} maxLength={100} /></div></label>
           <label><span>Category</span><FilterSelect ariaLabel="Filter inventory batches by category" disabled={adminInventoryLoading || adminInventoryError} value={adminInventoryCategory} options={[{value:'All Categories',label:'All Categories'},...INGREDIENT_CATEGORIES.map(category => ({value: category, label: category}))]} onChange={value => { setAdminInventoryCategory(value); setAdminInventoryPage(1); }}/></label>
-          <label><span>Status</span><FilterSelect ariaLabel="Filter inventory batches by status" value={adminInventoryStatus} options={['All Statuses','In Stock','Low Stock','Near Expiry','Expired'].map(value => ({value, label: value}))} onChange={value => { setAdminInventoryStatus(value); setAdminInventoryPage(1); }}/></label>
+          <label><span>Status</span><FilterSelect ariaLabel="Filter inventory batches by status" value={adminInventoryStatus} options={['All Statuses','In Stock','Low Stock','Near Expiry','Expired','No Stock'].map(value => ({value, label: value}))} onChange={value => { setAdminInventoryStatus(value); setAdminInventoryPage(1); }}/></label>
           <div className="sl-application-records-filter-actions"><button type="button" className="sl-button" onClick={() => { setAdminInventorySearch(''); setAdminInventoryCategory('All Categories'); setAdminInventoryStatus('All Statuses'); setAdminInventoryPage(1); }}>Reset</button></div>
         </div></div>
         <div className="sl-application-records-table-shell">

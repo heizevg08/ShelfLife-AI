@@ -38,6 +38,16 @@ test('inventory display status preserves expiration precedence over aggregate lo
   assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-02-01T12:00:00.000Z'), 11, 10, now), 'In Stock');
 });
 
+test('a batch with no stock left is flagged No Stock instead of an expiry label', () => {
+  const now = new Date('2030-01-10T12:00:00.000Z');
+  // Nothing left to use: neither the expiry date nor the minimum stock matters.
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-01-09T12:00:00.000Z'), 0, 10, now, 0), 'No Stock');
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-01-17T12:00:00.000Z'), 0, 10, now, 0), 'No Stock');
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-02-01T12:00:00.000Z'), 0, 10, now, 0), 'No Stock');
+  // A batch that still holds stock keeps its date-based label.
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-01-17T12:00:00.000Z'), 0, 10, now, 2), 'Near Expiry');
+});
+
 test('near-expiry window includes the seventh day and never excludes depleted batches', () => {
   const now = new Date('2030-01-10T12:00:00.000Z');
   assert.equal(deriveInventoryBatchDisplayStatus(new Date(now.getTime()), 5, 10, now), 'Expired');
@@ -124,7 +134,7 @@ test('inventory batch API permits authorized Manager and Inventory Staff Stock-I
   const store = {
     async list(query) { return { items: query.search === 'none' ? [] : [batch], page: query.page, pageSize: query.pageSize, total: query.search === 'none' ? 0 : 1 }; },
     async detail(id) { return id === batch.id ? batch : null; },
-    async summary() { return { totalIngredients: 1, totalBatches: 1, lowStockItems: 1, nearExpiry: 0, expiredItems: 0, inventoryValue: 32, statusCounts: { 'In Stock': 0, 'Low Stock': 1, 'Near Expiry': 0, Expired: 0 }, categories: ['Dairy'], categoryCounts: [{ label: 'Dairy', value: 1 }] }; },
+    async summary() { return { totalIngredients: 1, totalBatches: 1, lowStockItems: 1, nearExpiry: 0, expiredItems: 0, inventoryValue: 32, statusCounts: { 'In Stock': 0, 'Low Stock': 1, 'Near Expiry': 0, Expired: 0, 'No Stock': 0 }, categories: ['Dairy'], categoryCounts: [{ label: 'Dairy', value: 1 }] }; },
     async stockInSummary() { return { totalBatches: 1, stockInToday: 1, ingredientsReceivedToday: 1, batchesReceivedThisMonth: 1, expiringSoonBatches: 0 }; },
     async create(actor, input) { return { ...batch, quantity: input.quantity, createdBy: { id: actor.id, name: actor.name } }; },
     async createMany(actor, inputs) { return inputs.map(input => ({ ...batch, quantity: input.quantity, createdBy: { id: actor.id, name: actor.name } })); },

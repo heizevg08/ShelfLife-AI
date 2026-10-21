@@ -7,9 +7,9 @@ import { useRouter } from '../../routing/navigation';
 import { DataState, PageHeader } from './primitives';
 
 type AlertFilter = 'all' | 'unread';
-type InventoryAlert = { id: string; batch: InventoryBatch; status: Exclude<InventoryBatchDisplayStatus, 'In Stock'>; severity: 'critical' | 'attention'; read: boolean };
+type InventoryAlert = { id: string; batch: InventoryBatch; status: Exclude<InventoryBatchDisplayStatus, 'In Stock' | 'No Stock'>; severity: 'critical' | 'attention'; read: boolean };
 const READ_KEY = 'shelflifeai.inventory-alerts';
-const alertStatuses: Array<Exclude<InventoryBatchDisplayStatus, 'In Stock'>> = ['Expired', 'Near Expiry', 'Low Stock'];
+const alertStatuses: Array<Exclude<InventoryBatchDisplayStatus, 'In Stock' | 'No Stock'>> = ['Expired', 'Near Expiry', 'Low Stock'];
 
 function loadReadIds(key: string) {
   try {
@@ -41,7 +41,7 @@ export function ConnectedManagerAlertsPage() {
       if (signal?.aborted) return;
       const readIds = loadReadIds(key);
       const nextAlerts = pages.flatMap(page => page.items).map(batch => {
-        const status = batch.displayStatus as Exclude<InventoryBatchDisplayStatus, 'In Stock'>;
+        const status = batch.displayStatus as Exclude<InventoryBatchDisplayStatus, 'In Stock' | 'No Stock'>;
         const id = `${status}:${batch.id}`;
         return { id, batch, status, severity: status === 'Expired' ? 'critical' as const : 'attention' as const, read: readIds.has(id) };
       }).sort((a, b) => {

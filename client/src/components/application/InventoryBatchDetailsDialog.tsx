@@ -12,7 +12,9 @@ const statusTone = (status: InventoryBatchDisplayStatus) =>
     ? ('critical' as const)
     : status === 'Near Expiry' || status === 'Low Stock'
       ? ('attention' as const)
-      : ('success' as const);
+      : status === 'No Stock'
+        ? ('neutral' as const)
+        : ('success' as const);
 
 export const inventoryBatchExpirationContext = (daysLeft: number) =>
   daysLeft < 0
