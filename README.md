@@ -69,15 +69,11 @@ Audit records capture operational events and may contain user-facing data. Befor
 
 ### Synthetic data is explicit and not real-world validation
 
-Demonstration records are synthetic. They are generated rather than observed from genuine restaurant operations, and they **must not** be represented as real stakeholder operational history, real restaurant behavior, production-readiness evidence, stakeholder validation, or a production accuracy percentage. Synthetic records are used only for demonstration and integration testing of the completed pipeline.
+Demonstration records are synthetic (`SYNTHETIC_DEMO:PH_CARINDERIA_V1`). They are generated rather than observed from genuine restaurant operations, and they **must not** be represented as real stakeholder operational history, real restaurant behavior, production-readiness evidence, stakeholder validation, or a production accuracy percentage. Synthetic records are used only for demonstration and integration testing of the completed pipeline.
 
 ### Model limitations
 
 The persisted Random Forest is a **development model** trained on FreshRetailNet-50K (`sale_amount`), a public proxy for observed perishable-product demand — not actual restaurant ingredient consumption. Production forecasting horizon, production history threshold beyond 14 days, calibrated uncertainty, stockout-censoring treatment, and genuine restaurant operational validation remain open. The model must not be retrained or its inference contract altered as part of this delivery.
-
-## Infrastructure notes
-
-None required beyond the runtime environments below.
 
 ## ML backend invocation & Evaluation Pipeline
 
@@ -95,41 +91,55 @@ The Express API invokes the ML runtime through an integrated TypeScript service 
 
 ML is opt-in: set `ML_PYTHON_EXECUTABLE` and `ML_WORKER_SCRIPT` in `server/.env`. Without them, the backend starts normally and ML endpoints remain unavailable.
 
+## Authentication, Account Lifecycle & Email Delivery
+
+### Dual-Identity Email Architecture & Free-Tier Mail Delivery
+- **Organizational Identity (`email`):** Corporate sign-in identifiers use the domain `@shelflife.com` (e.g. `jy@shelflife.com`, `admin@shelflife.com`).
+- **Personal Delivery Address (`personalEmail`):** Because custom corporate domain routing is absent on free tiers, user accounts support an external `personalEmail` (e.g. `@gmail.com`).
+- **Transactional Welcome Emails:** Account creation via `POST /api/users` mints a cryptographically secure 24-byte temporary password and immediately dispatches an onboarding email to the user's `personalEmail` before the transaction commits.
+- **Dual Password Recovery:** The password recovery modal accepts **either** the user's `@shelflife.com` handle or their registered personal email address. If an eligible account is matched, the single-use recovery link is securely delivered to the recipient's real personal email address (`personalEmail`).
+- **OWASP User Enumeration Protection:** The password recovery API deliberately returns a uniform response (`"If an eligible account exists, check its registered email for recovery instructions."`) for both registered and non-existent email inputs. This prevents malicious actors from executing account harvesting / user enumeration attacks against the organization.
+- **Render Free-Tier Mail Compatibility:** Render free-tier instances block raw outbound SMTP ports (`25`, `465`, and `587`). ShelfLifeAI supports:
+  1. **HTTPS Port 443 Relay:** Set `SMTP_HOST` to a Google Apps Script web app endpoint (`https://script.google.com/macros/s/.../exec`) to deliver emails directly over HTTPS port 443 with zero third-party fees.
+  2. **Alternative Port 2525:** Use providers such as Brevo on unblocked port `2525`.
+
 ## Local development
 
 1. Select Node.js 24.20.0 and install dependencies from the repository root with `npm install`.
-2. Put local backend settings in ignored `server/.env`; never commit credentials. Use `server/.env.example` as the field reference (`MONGO_URI`, `JWT_SECRET` ≥ 32 bytes, `CORS_ORIGINS`, etc.).
+2. Configure `server/.env` using `server/.env.example` as a template (`MONGO_URI`, `JWT_SECRET`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `ACCOUNT_LOGIN_URL`, `ML_PYTHON_EXECUTABLE`, etc.).
 3. Install pinned ML dependencies: `pip install -r ml/requirements-runtime.txt` (Python 3.14).
-4. Start the API with `npm --prefix server run dev`.
-5. Start the Vite client with `npm run client`; open `http://localhost:8081`.
+4. Run the backend and frontend in separate terminals:
+   - **Backend (API + ML + Mail):** `npm run server` (listens on `http://localhost:5000`)
+   - **Frontend (Vite Client):** `npm run client` (opens on `http://localhost:8081`)
 
 ## Verification
 
-Run `npm run typecheck` (server and client workspaces), `npm test --workspace client`, `npm test --workspace server`, and `npm run build --workspace client` before delivery. The client build uses TypeScript checking and Vite.
-
-For the ML inference path, run `python -m unittest` from `ml/tests/` (or the equivalent pytest command) against the persistent worker and single-series equivalence tests.
+Run all test suites before delivery:
+- `npm test --workspace client` — verifies React client components and routing.
+- `npm test --workspace server` — verifies Express API routes, transactions, RBAC, audit streams, and SMTP/recovery adapters.
+- `npm run typecheck` — validates TypeScript compilation across all workspaces.
+- `python -m unittest discover -s ml/tests` — executes ML worker protocol and single-series equivalence tests.
+- `npm run build:web` — generates production Vite PWA distribution.
 
 ## Deployment: Vercel client and Render API
 
-The repository includes [`vercel.json`](vercel.json) for the React/Vite client and
-[`render.yaml`](render.yaml) for the Express API. Deploy both from the repository root.
+The repository includes [`vercel.json`](vercel.json) for the React/Vite client and [`render.yaml`](render.yaml) for the Express API. Deploy both from the repository root.
 
-1. Create the Render web service from this repository. Its health check is `/api/health/live`.
-   Set `MONGO_URI` and `CORS_ORIGINS` in Render; `CORS_ORIGINS` must contain the exact Vercel
-   production origin, with no trailing slash. Render supplies `PORT`; the blueprint sets the
-   production host, one trusted proxy hop, and secure cross-site refresh cookies.
-2. Deploy the Vercel project with `VITE_API_URL=https://<your-render-service>.onrender.com` as a
-   production environment variable. It is a public browser URL, never a secret.
-3. If password recovery or email changes are required, configure the optional SMTP and
-   `PASSWORD_RESET_URL` variables in Render. Use the Vercel HTTPS login URL for the reset URL.
-
-Do not upload either `.env` file. Copy the public templates first: `client/.env.example` and
-`server/.env.example`.
+1. Create the Render web service from this repository. Its health check is `/api/health/live`. Set `MONGO_URI` and `CORS_ORIGINS` in Render (`CORS_ORIGINS` must match the exact Vercel production origin with no trailing slash).
+2. Configure email delivery in the Render Dashboard under **Environment**:
+   - `SMTP_HOST`: Web app relay URL (`https://script.google.com/macros/s/.../exec`) or alternative SMTP host (`smtp-relay.brevo.com`).
+   - `SMTP_PORT`: `443` (for HTTPS relay) or `2525` (for alternative SMTP).
+   - `SMTP_USER`: Sender email (e.g. `shelflifemanagement@gmail.com`).
+   - `SMTP_PASS`: Configured relay secret or app password.
+   - `MAIL_FROM`: Sender email address.
+   - `ACCOUNT_LOGIN_URL`: `https://shelflife-ai-one.vercel.app/ShelfLifeAILogin`
+   - `PASSWORD_RESET_URL`: `https://shelflife-ai-one.vercel.app/ShelfLifeAILogin`
+3. Deploy the Vercel project with `VITE_API_URL=https://<your-render-service>.onrender.com` as a production environment variable.
 
 ## Roles and data
 
-The browser supports Super Admin, Admin, Manager, and Inventory Staff. The API remains the source for authenticated operational records and role permissions. Local credentials remain outside version control; `JWT_SECRET` and `MONGO_URI` must be supplied via environment at runtime.
+The application strictly implements Role-Based Access Control (RBAC) across four operational tiers: **Super Admin**, **Admin**, **Manager**, and **Inventory Staff**. Authenticated sessions use HTTP-only, SameSite cookies with versioned JWT access tokens. Local credentials remain outside version control.
 
 ## Security
 
-No credentials, `.env` files with real values, or secret-bearing commits are included in this delivery. `server/.env.example` and `client/.env.example` contain only empty placeholders; all secrets are read from the environment at runtime. Previously exposed historical credentials are outside this delivery's reachable history.
+No credentials, `.env` files with real values, or secret-bearing commits are included in this delivery. `server/.env.example` and `client/.env.example` contain only empty placeholders; all secrets are read from the environment at runtime.
