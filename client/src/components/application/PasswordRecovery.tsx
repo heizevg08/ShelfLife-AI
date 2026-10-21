@@ -34,9 +34,9 @@ export function PasswordRecovery({ token }: { token?: string }) {
       else if (password.length < 12) validationError = 'Use at least 12 characters for your new password.';
       else if (new TextEncoder().encode(password).length > 1024) validationError = 'Use a shorter password (at most 1,024 UTF-8 bytes).';
     } else if (!address) validationError = 'Enter your email address.';
-    else if (address.length > 254 || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/.test(address)
+    else if (address.length > 254 || !/^[a-z0-9.!#$%&'*+/=?^_{|}~-]+@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(address)
       || address.startsWith('.') || address.includes('..') || address.includes('.@')) {
-      validationError = 'Enter a valid @shelflife.com email address.';
+      validationError = 'Enter a valid account or registered personal email address.';
     }
     setFieldError(validationError); setError(''); setMessage('');
     if (validationError) {

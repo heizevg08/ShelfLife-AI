@@ -1,12 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { HttpError } from '../middleware/error.middleware';
-import { normalizeEmail, validPassword } from '../validators/auth';
+import { normalizeEmail, normalizePersonalEmail, validPassword } from '../validators/auth';
 import { hashPassword } from './password';
 import { tokenHash, validOpaqueToken } from './persistent-session';
 import { eligible, type UserStore } from './auth';
 import type { ResetEmail } from './reset-email';
 
 export interface RecoveryStore extends UserStore {
+  byPersonalEmail?(personalEmail: string): Promise<import('../models/user').UserRecord | null>;
   setReset(id: string, hash: string, expires: Date): Promise<unknown>;
   consumeReset(hash: string, now: Date, passwordHash: string): Promise<boolean>;
   clearReset(hash: string): Promise<unknown>;
@@ -17,12 +18,20 @@ export function createPasswordRecovery(store: RecoveryStore, email?: ResetEmail,
     available: !!email,
     async request(body: unknown) {
       if (!email) throw new HttpError(503, 'Password recovery is awaiting email delivery setup');
-      const address = normalizeEmail((body as { email?: unknown } | null)?.email);
-      const user = address ? await store.byEmail(address) : null;
+      const rawInput = (body as { email?: unknown } | null)?.email;
+      const orgAddress = normalizeEmail(rawInput);
+      const personalAddress = normalizePersonalEmail(rawInput);
+      
+      let user = orgAddress ? await store.byEmail(orgAddress) : null;
+      if (!user && personalAddress && store.byPersonalEmail) {
+        user = await store.byPersonalEmail(personalAddress);
+      }
       if (!eligible(user)) return generic;
       const token = randomBytes(32).toString('hex'), hash = tokenHash(token);
       await store.setReset(user._id.toString(), hash, new Date(now().getTime() + 900000));
-      try { await email.send(user.email, token); }
+      // Deliver to personalEmail if registered, otherwise fall back to user.email
+      const deliveryTarget = user.personalEmail || user.email;
+      try { await email.send(deliveryTarget, token); }
       catch { await store.clearReset(hash); }
       // Same public response for unknown accounts and provider failures; never claim delivery.
       return generic;

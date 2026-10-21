@@ -150,6 +150,7 @@ if (require.main === module) {
     const users = userModel(driver);
     const userStore = {
       byEmail: (email: string) => users.findOne({ email }).select('+passwordHash').lean().exec(),
+      byPersonalEmail: (personalEmail: string) => users.findOne({ personalEmail }).select('+passwordHash').lean().exec(),
       byId: (id: string) => users.findById(id).lean().exec(),
       recordLogin: async (id: string, at: Date) => { await users.updateOne({ _id: id, isActive: true }, { $set: { lastLoginAt: at } }).exec(); },
     };
