@@ -1,4 +1,5 @@
 import { DataState, Status } from './primitives';
+import { Eye, EyeOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { completePasswordReset, recoveryAvailability, requestPasswordReset } from '../../services/auth';
 
@@ -6,6 +7,7 @@ export function PasswordRecovery({ token }: { token?: string }) {
   const [available, setAvailable] = useState<boolean | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [fieldError, setFieldError] = useState('');
@@ -52,11 +54,19 @@ export function PasswordRecovery({ token }: { token?: string }) {
     finally { submitting.current = false; setPending(false); }
   }}>
     {token ? <div className="sl-field"><label htmlFor="sl-new-password">New password</label>
-      <input ref={field} id="sl-new-password" type="password" autoComplete="new-password" required minLength={12} maxLength={128} value={password} onChange={event => { setPassword(event.target.value); setFieldError(''); setError(''); setMessage(''); }} disabled={pending} aria-invalid={!!fieldError} aria-describedby={`sl-reset-help sl-reset-feedback${fieldError ? ' sl-recovery-field-error' : ''}`} />
-      <p id="sl-reset-help" className="sl-supporting">Use at least 12 characters.</p></div>
-      : <div className="sl-field"><label htmlFor="sl-recovery-email">Email</label><input ref={field} id="sl-recovery-email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={event => { setEmail(event.target.value); setFieldError(''); setError(''); setMessage(''); }} disabled={pending} aria-invalid={!!fieldError} aria-describedby={`sl-reset-feedback${fieldError ? ' sl-recovery-field-error' : ''}`} /></div>}
-    {fieldError && <p id="sl-recovery-field-error" role="alert" className="sl-field-error">{fieldError}</p>}
-    <div id="sl-reset-feedback">{error && <p role="alert" className="sl-field-error">{error}</p>}{message && <p role="status">{message}</p>}</div>
+      <div className="sl-password-field">
+        <input ref={field} id="sl-new-password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={12} maxLength={128} value={password} onChange={event => { setPassword(event.target.value); setFieldError(''); setError(''); setMessage(''); }} disabled={pending} aria-invalid={!!fieldError} aria-describedby={fieldError ? 'sl-recovery-field-error' : 'sl-reset-help'} />
+        <button className="sl-password-toggle" type="button" disabled={pending} aria-label={showPassword ? 'Hide new password' : 'Show new password'} aria-controls="sl-new-password" onClick={() => setShowPassword(value => !value)}>
+          {showPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
+        </button>
+      </div>
+      {fieldError ? <p id="sl-recovery-field-error" role="alert" className="sl-field-error">{fieldError}</p> : <p id="sl-reset-help" className="sl-supporting">Use at least 12 characters.</p>}
+    </div>
+      : <div className="sl-field"><label htmlFor="sl-recovery-email">Email</label><input ref={field} id="sl-recovery-email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={event => { setEmail(event.target.value); setFieldError(''); setError(''); setMessage(''); }} disabled={pending} aria-invalid={!!fieldError} aria-describedby={fieldError ? 'sl-recovery-field-error' : undefined} />
+        {fieldError && <p id="sl-recovery-field-error" role="alert" className="sl-field-error">{fieldError}</p>}
+      </div>}
+    {error && <p role="alert" className="sl-field-error">{error}</p>}
+    {message && <p role="status">{message}</p>}
       <button className="sl-button sl-button-primary" disabled={pending}>{pending ? 'Please wait...' : token ? 'Reset password' : 'Request recovery'}</button>
   </form>;
 }
