@@ -28712,11 +28712,11 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 /* Keep normal identities on one compact line; the full text stays in the DOM/title
    and Account Details remains the complete-value path for long names and emails. */
 .sl-superadmin-users-page-v64 .sl-user-accounts-table td:nth-child(2),.sl-superadmin-users-page-v64 .sl-user-accounts-table td:nth-child(3) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow-wrap: normal;
-  word-break: normal;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-all;
 }
 @media (width<=1100px){
   .sl-superadmin-users-page-v64 .sl-user-accounts-table {
@@ -33275,11 +33275,11 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
 }
 .sl-superadmin-users-page-v64 .sl-user-accounts-table td:nth-child(2),
 .sl-superadmin-users-page-v64 .sl-user-accounts-table td:nth-child(3) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow-wrap: normal;
-  word-break: normal;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-all;
 }
 .sl-manager-dashboard-v117 .sl-card:has(#manager-stock-distribution) .sl-application-donut-legend { padding-inline:0; }
 /* Stretch the card body to the grid-row height and let the donut chart own the

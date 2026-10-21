@@ -29,8 +29,9 @@ async function seed(name, minimumStock) {
   const { Users, Ingredients, Batches, Requests, Counters, Audits } = models();
   await Promise.all([Users.init(), Ingredients.init(), Batches.init(), Requests.init(), Counters.init()]);
   const passwordHash = 'scrypt$131072$8$1$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa$' + 'a'.repeat(128);
-  const staff = await Users.create({ email: `staff.${Date.now()}.${Math.random()}@shelflife.com`, firstName: 'Integrity', lastName: 'Staff', passwordHash, role: 'Inventory Staff' });
-  const manager = await Users.create({ email: `manager.${Date.now()}.${Math.random()}@shelflife.com`, firstName: 'Integrity', lastName: 'Manager', passwordHash, role: 'Manager' });
+  const id = Math.floor(Math.random() * 100000);
+  const staff = await Users.create({ email: `staff.${Date.now()}.${id}@shelflife.com`, firstName: 'Integrity', lastName: 'Staff', passwordHash, role: 'Inventory Staff' });
+  const manager = await Users.create({ email: `manager.${Date.now()}.${id}@shelflife.com`, firstName: 'Integrity', lastName: 'Manager', passwordHash, role: 'Manager' });
   const ingredient = await Ingredients.create({ name, category: 'Meat', unitOfMeasure: 'kg', minimumStock, createdBy: staff._id });
   await Batches.create({ ingredientId: ingredient._id, batchID: `INT-${Date.now()}-${Math.floor(Math.random() * 1000)}`, quantity: 10, unit: 'kg', dateReceived: new Date(), expirationDate: new Date('2030-01-01'), createdBy: staff._id });
   return { staff, manager, ingredient, Requests, Counters, Ingredients, Audits, Batches, Users };

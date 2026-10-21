@@ -1,6 +1,10 @@
 export function normalizeEmail(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const email = value.trim().toLowerCase();
+  const atIndex = email.lastIndexOf('@');
+  if (atIndex < 1) return null;
+  const local = email.slice(0, atIndex);
+  if (local.length > 32) return null;
   return email.length <= 254 && /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/.test(email)
     && !email.startsWith('.') && !email.includes('..') && !email.includes('.@') ? email : null;
 }

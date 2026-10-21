@@ -65,7 +65,13 @@ function IngredientFields({ form, errors, busy, formError, set, setError, canoni
     </div>
     <div className="sl-ingredient-form-row">
       {field('unit', 'Unit of Measure', <select disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} value={form.unit} onChange={e => set('unit', e.target.value)} {...validation('unit')}><option value="">Select unit</option>{INGREDIENT_UNITS.map(value => <option key={value} value={value}>{value}</option>)}</select>, true, pairedError('unit', 'minStock'))}
-      {field('minStock', 'Minimum Stock', <input id="ingredient-minStock-input" disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} type="text" inputMode="decimal" placeholder="e.g. 10" maxLength={10} value={form.minStock} onChange={e => numericChange('minStock', 'Minimum stock')(e.target.value.slice(0, 10))} {...validation('minStock')} />, true, pairedError('unit', 'minStock'))}
+      {field('minStock', 'Minimum Stock', <input id="ingredient-minStock-input" disabled={busy} className={canonicalModal ? undefined : 'sl-admin-input'} type="text" inputMode="decimal" placeholder="e.g. 10" maxLength={10} value={form.minStock} onChange={e => {
+        let val = e.target.value;
+        if (!/^\d*(?:\.\d*)?$/.test(val)) return;
+        const [intPart, decPart] = val.split('.');
+        if (intPart && intPart.length > 7) return;
+        numericChange('minStock', 'Minimum stock')(val);
+      }} {...validation('minStock')} />, true, pairedError('unit', 'minStock'))}
     </div>
     <div className="sl-ingredient-form-row">
       {field('unitCost', 'Standard Unit Cost', <span className="sl-currency-input"><span aria-hidden="true">₱</span><input id="ingredient-unitCost-input" disabled={busy} className={`${canonicalModal ? '' : 'sl-admin-input '}sl-currency-value`} type="text" inputMode="decimal" maxLength={13} value={form.unitCost} onChange={e => { const nextValue=normalizeIngredientUnitCostEditingValue(e.target.value.slice(0, 13)); set('unitCost', nextValue); setError('unitCost', ingredientUnitCostError(nextValue)); }} {...validation('unitCost')} /></span>, true, pairedError('unitCost', 'shelfLife'))}

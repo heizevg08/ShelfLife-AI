@@ -13,6 +13,7 @@ import { formatDateTime } from '../../utils/date-time';
 const blank = { firstName: '', lastName: '', email: '', personalEmail: '' };
 type ManagedRole = 'Admin' | 'Manager' | 'Inventory Staff';
 const NAME_LIMIT = 25;
+const EMAIL_LOCAL_LIMIT = 32;
 const EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@shelflife\.com$/;
 const PERSONAL_EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const SUMMARY_AUTO_REFRESH_MS = 15000;
@@ -20,6 +21,10 @@ const REQUIRED_ERROR = 'This field is required.';
 
 function validShelfLifeEmail(value: string) {
   const email = value.trim().toLowerCase();
+  const atIndex = email.lastIndexOf('@');
+  if (atIndex < 1) return false;
+  const local = email.slice(0, atIndex);
+  if (local.length > EMAIL_LOCAL_LIMIT) return false;
   return email.length <= 254 && EMAIL_PATTERN.test(email) && !email.startsWith('.') && !email.includes('..') && !email.includes('.@');
 }
 
@@ -124,7 +129,13 @@ export function AccountsTable() {
       return trimmed.length > NAME_LIMIT ? `Enter 1–${NAME_LIMIT} characters.` : '';
     }
     if (!value.trim()) return REQUIRED_ERROR;
-    if (key === 'email') return !validShelfLifeEmail(value) ? 'Enter a valid shelflife.com email.' : '';
+    if (key === 'email') {
+      const trimmed = value.trim();
+      const atIndex = trimmed.lastIndexOf('@');
+      const local = atIndex > -1 ? trimmed.slice(0, atIndex) : trimmed;
+      if (local.length > EMAIL_LOCAL_LIMIT) return `Email prefix must be ${EMAIL_LOCAL_LIMIT} characters or fewer.`;
+      return !validShelfLifeEmail(value) ? 'Enter a valid shelflife.com email.' : '';
+    }
     return !validPersonalEmail(value) ? 'Enter a valid personal email address.' : '';
   }
 
