@@ -165,12 +165,12 @@ if (require.main === module) {
     }, userStore, auth);
     const recovery = createPasswordRecovery({
       ...userStore,
-      setReset: (id, hash, expires) => users.updateOne({ _id: id, isActive: true }, { $set: { resetTokenHash: hash, resetExpiresAt: expires } }).exec(),
-      clearReset: hash => users.updateOne({ resetTokenHash: hash }, { $unset: { resetTokenHash: 1, resetExpiresAt: 1 } }).exec(),
+      setReset: (id, hash, expires, sentAt) => users.updateOne({ _id: id, isActive: true }, { $set: { resetTokenHash: hash, resetExpiresAt: expires, resetSentAt: sentAt } }).exec(),
+      clearReset: hash => users.updateOne({ resetTokenHash: hash }, { $unset: { resetTokenHash: 1, resetExpiresAt: 1, resetSentAt: 1 } }).exec(),
       consumeReset: async (hash, now, passwordHash) => {
         // One atomic update consumes the token and revokes existing access/refresh credentials by version.
         const result = await users.updateOne({ resetTokenHash: hash, resetExpiresAt: { $gt: now }, isActive: true }, {
-          $set: { passwordHash, mustChangePassword: false }, $unset: { resetTokenHash: 1, resetExpiresAt: 1 }, $inc: { authVersion: 1 },
+          $set: { passwordHash, mustChangePassword: false }, $unset: { resetTokenHash: 1, resetExpiresAt: 1, resetSentAt: 1 }, $inc: { authVersion: 1 },
         }).exec();
         return result.modifiedCount === 1;
       },
@@ -182,7 +182,7 @@ if (require.main === module) {
         // reset request is cleared, and the version bump invalidates every access token and
         // refresh session already issued to this account.
         const result = await users.updateOne({ _id: id, isActive: true }, {
-          $set: { passwordHash, mustChangePassword: false }, $unset: { resetTokenHash: 1, resetExpiresAt: 1 }, $inc: { authVersion: 1 },
+          $set: { passwordHash, mustChangePassword: false }, $unset: { resetTokenHash: 1, resetExpiresAt: 1, resetSentAt: 1 }, $inc: { authVersion: 1 },
         }).exec();
         return result.modifiedCount === 1;
       },

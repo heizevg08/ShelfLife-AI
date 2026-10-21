@@ -54,6 +54,7 @@ const schema = new Schema({
   authVersion: { type: Number, default: 0 },
   resetTokenHash: { type: String, select: false },
   resetExpiresAt: { type: Date, select: false },
+  resetSentAt: { type: Date, select: false },
   pendingEmail: { type: String, select: false, set: (value: string) => value.trim().toLowerCase(), validate: (value: string) => normalizeEmail(value) === value },
   emailChangeCodeHash: { type: String, select: false },
   emailChangeExpiresAt: { type: Date, select: false },

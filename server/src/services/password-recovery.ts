@@ -8,11 +8,13 @@ import type { ResetEmail } from './reset-email';
 
 export interface RecoveryStore extends UserStore {
   byPersonalEmail?(personalEmail: string): Promise<import('../models/user').UserRecord | null>;
-  setReset(id: string, hash: string, expires: Date): Promise<unknown>;
+  setReset(id: string, hash: string, expires: Date, sentAt?: Date): Promise<unknown>;
   consumeReset(hash: string, now: Date, passwordHash: string): Promise<boolean>;
   clearReset(hash: string): Promise<unknown>;
 }
 const generic = { message: 'If an eligible account exists, check its registered email for recovery instructions.' };
+const RESET_COOLDOWN_MS = 60_000; // 60 seconds anti-flooding cooldown per account
+
 export function createPasswordRecovery(store: RecoveryStore, email?: ResetEmail, now = () => new Date()) {
   return {
     available: !!email,
@@ -27,8 +29,18 @@ export function createPasswordRecovery(store: RecoveryStore, email?: ResetEmail,
         user = await store.byPersonalEmail(personalAddress);
       }
       if (!eligible(user)) return generic;
+
+      const currentInstant = now();
+      // If a recovery email was already dispatched for this account within 60 seconds,
+      // silently return the generic response to prevent mail quota exhaustion and spamming.
+      if (user.resetSentAt && currentInstant.getTime() - user.resetSentAt.getTime() < RESET_COOLDOWN_MS) {
+        return generic;
+      }
+
       const token = randomBytes(32).toString('hex'), hash = tokenHash(token);
-      await store.setReset(user._id.toString(), hash, new Date(now().getTime() + 900000));
+      await store.setReset(user._id.toString(), hash, new Date(currentInstant.getTime() + 900000), currentInstant);
+      user.resetSentAt = currentInstant;
+      
       // Deliver to personalEmail if registered, otherwise fall back to user.email
       const deliveryTarget = user.personalEmail || user.email;
       try { await email.send(deliveryTarget, token); }
