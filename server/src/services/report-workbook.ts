@@ -1,51 +1,51 @@
 import type { ReportExportService, ReportTable } from './report-export';
 import type { ReportId, ReportQuery } from '../validators/report';
 
-type WorkbookField = { label: string; index?: number; publicId?: true };
+type WorkbookField = { label: string; index?: number; mongoId?: true };
 type WorkbookSheet = { name: string; id: ReportId; ingredientIdIndex: number; fields: WorkbookField[] };
 
 const sheets: WorkbookSheet[] = [
   { name: 'Inventory Summary', id: 'inventory-summary', ingredientIdIndex: 2, fields: [
-    { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 3 }, { label: 'Batch ID', index: 5 }, { label: 'Category', index: 4 },
+    { label: 'Ingredient ID', mongoId: true }, { label: 'Ingredient', index: 3 }, { label: 'Batch ID', index: 5 }, { label: 'Category', index: 4 },
     { label: 'On Hand', index: 6 }, { label: 'Unit', index: 7 }, { label: 'Expiry Date', index: 8 }, { label: 'Unit Cost (PHP)', index: 9 },
     { label: 'Unit Cost Source', index: 10 }, { label: 'Inventory Value (PHP)', index: 11 }, { label: 'Record Notes', index: 12 },
   ] },
   { name: 'Usage & Consumption', id: 'usage-consumption', ingredientIdIndex: 1, fields: [
-    { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 2 }, { label: 'Usage Date', index: 0 },
+    { label: 'Ingredient ID', mongoId: true }, { label: 'Ingredient', index: 2 }, { label: 'Usage Date', index: 0 },
     { label: 'Quantity Used', index: 4 }, { label: 'Unit', index: 3 }, { label: 'Record Notes', index: 6 },
   ] },
   { name: 'Expiration & Waste', id: 'expiration-waste', ingredientIdIndex: 4, fields: [
-    { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 5 }, { label: 'Batch ID', index: 6 }, { label: 'Expiry Date', index: 7 },
+    { label: 'Ingredient ID', mongoId: true }, { label: 'Ingredient', index: 5 }, { label: 'Batch ID', index: 6 }, { label: 'Expiry Date', index: 7 },
     { label: 'On Hand', index: 8 }, { label: 'Quantity Wasted', index: 11 }, { label: 'Unit', index: 9 },
     { label: 'Waste Cost (PHP)', index: 12 }, { label: 'Record Notes', index: 13 },
   ] },
   { name: 'Demand Forecast', id: 'demand-forecast', ingredientIdIndex: 2, fields: [
-    { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 3 }, { label: 'Category', index: 4 },
+    { label: 'Ingredient ID', mongoId: true }, { label: 'Ingredient', index: 3 }, { label: 'Category', index: 4 },
     { label: 'Current Stock', index: 6 }, { label: 'Unit', index: 5 }, { label: 'Avg Daily Usage', index: 7 },
     { label: 'Forecasted Demand', index: 8 }, { label: 'Stock Coverage (Days)', index: 9 }, { label: 'Risk Level', index: 10 },
     { label: 'Recommended Action', index: 11 },
   ] },
   { name: 'Forecast vs. Actual', id: 'forecast-vs-actual', ingredientIdIndex: 1, fields: [
-    { label: 'Date', index: 0 }, { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 2 },
+    { label: 'Date', index: 0 }, { label: 'Ingredient ID', mongoId: true }, { label: 'Ingredient', index: 2 },
     { label: 'Category', index: 3 }, { label: 'Unit', index: 4 }, { label: 'Forecasted Demand', index: 5 },
     { label: 'Actual Usage', index: 6 }, { label: 'Variance', index: 7 }, { label: 'Variance (%)', index: 8 },
     { label: 'Status', index: 9 },
   ] },
   { name: 'Forecast Accuracy', id: 'forecast-accuracy', ingredientIdIndex: 1, fields: [
-    { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 2 }, { label: 'Category', index: 3 },
+    { label: 'Ingredient ID', mongoId: true }, { label: 'Ingredient', index: 2 }, { label: 'Category', index: 3 },
     { label: 'Unit', index: 4 }, { label: 'Accuracy Score (%)', index: 5 }, { label: 'Evaluation Status', index: 6 },
     { label: 'Evaluated Days', index: 7 }, { label: 'MAE', index: 8 }, { label: 'RMSE', index: 9 },
     { label: 'WAPE (%)', index: 10 }, { label: 'Notes', index: 11 },
   ] },
   { name: 'Expiration Risk', id: 'expiration-risk', ingredientIdIndex: 1, fields: [
-    { label: 'Batch ID', index: 4 }, { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 2 },
+    { label: 'Batch ID', index: 4 }, { label: 'Ingredient ID', mongoId: true }, { label: 'Ingredient', index: 2 },
     { label: 'Category', index: 3 }, { label: 'Expiry Date', index: 5 }, { label: 'Days to Expiry', index: 6 },
     { label: 'On Hand', index: 7 }, { label: 'Unit', index: 8 }, { label: 'Avg Daily Usage', index: 9 },
     { label: 'Projected Excess', index: 10 }, { label: 'At-Risk Cost (PHP)', index: 11 }, { label: 'Risk Level', index: 12 },
     { label: 'FEFO Action', index: 13 },
   ] },
   { name: 'AI Insights & Recommendations', id: 'ai-insights-recommendations', ingredientIdIndex: 1, fields: [
-    { label: 'Ingredient ID', publicId: true }, { label: 'Ingredient', index: 2 }, { label: 'Category', index: 3 },
+    { label: 'Ingredient ID', mongoId: true }, { label: 'Ingredient', index: 2 }, { label: 'Category', index: 3 },
     { label: 'Current Stock', index: 4 }, { label: 'Unit', index: 5 }, { label: 'Days of Supply', index: 6 },
     { label: 'Risk Level', index: 7 }, { label: 'Action Priority', index: 8 }, { label: 'Recommended Action', index: 9 },
     { label: 'Evidence & Operational Insight', index: 10 },
@@ -53,7 +53,7 @@ const sheets: WorkbookSheet[] = [
 ];
 
 const columnWidths: Record<string, number> = {
-  'Ingredient ID': 18, Ingredient: 28, 'Batch ID': 22, Category: 18, 'On Hand': 15, Unit: 12,
+  'Ingredient ID': 27, Ingredient: 28, 'Batch ID': 22, Category: 18, 'On Hand': 15, Unit: 12,
   'Expiry Date': 16, 'Usage Date': 16, Date: 16, 'Quantity Used': 17, 'Quantity Wasted': 18,
   'Unit Cost (PHP)': 18, 'Unit Cost Source': 22, 'Inventory Value (PHP)': 22, 'Waste Cost (PHP)': 19, 'Record Notes': 40,
   'Current Stock': 16, 'Avg Daily Usage': 18, 'Forecasted Demand': 20, 'Stock Coverage (Days)': 22,
@@ -113,8 +113,6 @@ export async function reportWorkbook(service: ReportExportService, period: Repor
     const query: ReportQuery = sheet.id === 'inventory-summary' ? { reportId: sheet.id } : { ...period, reportId: sheet.id };
     const table = await service.table(query, now);
     tables.push(table);
-    const internalIds = table.rows.flatMap(row => typeof row[sheet.ingredientIdIndex] === 'string' ? [row[sheet.ingredientIdIndex] as string] : []);
-    const publicCodes = await service.ingredientCodesForIds(internalIds);
     const worksheet = workbook.addWorksheet(sheet.name);
     worksheet.addRow([sheet.name]).font = { name: 'Inter', size: 14, bold: true, color: { argb: 'FF173D2B' } };
     worksheet.addRow(['Report Prepared At (Philippine Time)', reportTimestamp(now)]).font = { name: 'Inter', size: 9, color: { argb: 'FF667C6C' } };
@@ -131,11 +129,7 @@ export async function reportWorkbook(service: ReportExportService, period: Repor
     });
     for (const row of table.rows) {
       const values = sheet.fields.map(field => {
-        if (field.publicId) {
-          const internalId = row[sheet.ingredientIdIndex];
-          const code = typeof internalId === 'string' ? publicCodes.get(internalId) ?? null : null;
-          return safeCell(code, false);
-        }
+        if (field.mongoId) return safeCell(row[sheet.ingredientIdIndex], false);
         const value = row[field.index!];
         if (sheet.id === 'inventory-summary' && row[0] === 'SUMMARY' && field.label === 'Ingredient') return 'Recorded Inventory Total';
         if (sheet.id === 'inventory-summary' && field.label === 'Record Notes' && row[0] === 'BATCH' && row[9] === null && row[12] === 'Missing ingredient reference') return 'Ingredient record unavailable; unit cost unavailable';

@@ -15,7 +15,6 @@ const tables = {
 const query = reportQuery('usage-consumption', { from: '2026-10-14', to: '2026-10-14' });
 const reports = {
   table: async input => tables[input.reportId],
-  ingredientCodesForIds: async ids => new Map(ids.filter(id => id === internalId).map(id => [id, 'ING-000042'])),
   auditWorkbook: async () => {},
 };
 
@@ -34,31 +33,30 @@ test('combined workbook has valid ZIP, three worksheets, typed dates/numbers and
   assert.equal(inventory.getRow(2).getCell(2).value, '2026-10-14 10:00:00');
   assert.ok(inventory.getRow(4).values.includes('Ingredient ID'));
   assert.ok(!inventory.getRow(4).values.includes('Record Type'));
-  assert.equal(inventory.getRow(5).getCell(1).value, 'ING-000042');
+  assert.equal(inventory.getRow(5).getCell(1).value, internalId);
   assert.equal(inventory.getRow(5).getCell(2).value, "'=Rice");
   assert.equal(inventory.getRow(5).getCell(8).value, 0);
   assert.equal(inventory.getRow(5).getCell(10).value, 0);
   assert.equal(inventory.getRow(6).getCell(2).value, 'Recorded Inventory Total');
   assert.equal(inventory.getRow(6).getCell(10).value, 0);
   assert.ok(opened.getWorksheet('Usage & Consumption').getRow(5).getCell(3).value instanceof Date);
-  assert.equal(opened.getWorksheet('Usage & Consumption').getRow(5).getCell(1).value, 'ING-000042');
+  assert.equal(opened.getWorksheet('Usage & Consumption').getRow(5).getCell(1).value, internalId);
   assert.equal(opened.getWorksheet('Usage & Consumption').getRow(5).getCell(4).value, 3);
   assert.ok(opened.getWorksheet('Usage & Consumption').getRow(4).values.includes('Usage Date'));
   assert.ok(!opened.getWorksheet('Usage & Consumption').getRow(4).values.some(value => typeof value === 'string' && value.includes('(PHT)')));
-  assert.equal(opened.getWorksheet('Expiration & Waste').getRow(5).getCell(1).value, null);
+  assert.equal(opened.getWorksheet('Expiration & Waste').getRow(5).getCell(1).value, missingInternalId);
   assert.equal(opened.getWorksheet('Expiration & Waste').getRow(5).getCell(9).value, 'Ingredient record unavailable');
   for (const sheet of opened.worksheets) {
-    sheet.eachRow(row => row.eachCell(cell => assert.ok(!String(cell.value).includes(internalId))));
-    assert.ok(!sheet.getRow(4).values.includes('Ingredient ObjectId'));
+    assert.ok(sheet.getRow(4).values.includes('Ingredient ID'));
   }
 });
 
 test('individual workbooks reopen with exactly the selected report and its mapped data', async () => {
   const { Workbook } = (await import('@excel.js/exceljs')).default;
   const expected = [
-    ['inventory-summary', 'Inventory Summary', 5, 2, 'ING-000042'],
-    ['usage-consumption', 'Usage & Consumption', 4, 3, 'ING-000042'],
-    ['expiration-waste', 'Expiration & Waste', 8, 0, null],
+    ['inventory-summary', 'Inventory Summary', 5, 2, internalId],
+    ['usage-consumption', 'Usage & Consumption', 4, 3, internalId],
+    ['expiration-waste', 'Expiration & Waste', 8, 0, missingInternalId],
   ];
   for (const [reportId, name, dataColumn, expectedValue, expectedCode] of expected) {
     const result = await reportWorkbook(reports, query, new Date('2026-10-14T02:00:00Z'), reportId);
@@ -70,7 +68,6 @@ test('individual workbooks reopen with exactly the selected report and its mappe
     assert.equal(opened.worksheets[0].getRow(5).getCell(1).value, expectedCode);
     if (reportId === 'inventory-summary') assert.equal(opened.worksheets[0].getRow(5).getCell(2).value, "'=Rice");
     assert.ok(opened.worksheets[0].getRow(4).values.includes('Ingredient ID'));
-    opened.worksheets[0].eachRow(row => row.eachCell(cell => assert.ok(!String(cell.value).includes(internalId))));
   }
 });
 
@@ -139,7 +136,7 @@ test('individual XLSX route audits its own report and rejects an invalid report/
 
 test('any oversized worksheet rejects the entire workbook without truncation', async () => {
   for (const oversized of ['inventory-summary', 'usage-consumption', 'expiration-waste']) {
-    const service = { table: async input => { if (input.reportId === oversized) { const error = new Error('Narrow the report'); error.status = 413; throw error; } return tables[input.reportId]; }, ingredientCodesForIds: async () => new Map() };
+    const service = { table: async input => { if (input.reportId === oversized) { const error = new Error('Narrow the report'); error.status = 413; throw error; } return tables[input.reportId]; } };
     await assert.rejects(reportWorkbook(service, query), error => error.status === 413);
     await assert.rejects(reportWorkbook(service, query, new Date(), oversized), error => error.status === 413);
   }
@@ -156,7 +153,6 @@ test('forecasting report workbooks export individual sheets and enforce PoLP on 
   };
   const mockService = {
     table: async input => mockTables[input.reportId],
-    ingredientCodesForIds: async ids => new Map(ids.filter(id => id === internalId).map(id => [id, 'ING-000042'])),
     auditWorkbook: async () => {},
   };
 
@@ -173,7 +169,7 @@ test('forecasting report workbooks export individual sheets and enforce PoLP on 
     const opened = new Workbook();
     await opened.xlsx.load(res.buffer);
     assert.deepEqual(opened.worksheets.map(s => s.name), [sheetName]);
-    assert.ok(opened.worksheets[0].getRow(5).values.includes('ING-000042'));
+    assert.ok(opened.worksheets[0].getRow(5).values.includes(internalId));
     assert.ok(opened.worksheets[0].getRow(5).values.includes('Rice'));
   }
 

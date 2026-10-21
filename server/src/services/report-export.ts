@@ -399,12 +399,6 @@ export function createReportExports(models: {
     bounded({ columns, rows, dataRows: rows.length, empty: waste.length === 0 });
     return { columns, rows, dataRows: rows.length, empty: waste.length === 0 };
   }
-  async function ingredientCodesForIds(ids: string[]) {
-    const uniqueIds = [...new Set(ids.filter(Boolean))];
-    if (!uniqueIds.length) return new Map<string, string>();
-    const rows = await models.ingredients.find({ _id: { $in: uniqueIds } }).select('_id ingredientCode').lean().exec() as Array<{ _id: Id; ingredientCode?: string }>;
-    return new Map(rows.flatMap(row => typeof row.ingredientCode === 'string' ? [[id(row._id), row.ingredientCode] as const] : []));
-  }
   async function audit(actor: { id: string; name?: string; role: ReportActorRole }, query: ReportQuery, dataRows: number, status: 'Success' | 'Failed') {
     await models.audits.create({ userId: actor.id, actorName: actor.name?.trim() || 'Unknown account', actorRole: actor.role, action: 'EXPORT', targetType: 'Report', targetName: query.reportId, exportFormat: 'csv', module: 'Reports & Analytics', status, details: `${query.from ?? 'snapshot'}..${query.to ?? 'snapshot'}; ${dataRows} data rows` });
   }
@@ -425,6 +419,6 @@ export function createReportExports(models: {
       return [{ reportId: row.targetName as ReportId | 'management-workbook', format: 'xlsx' as const, exportedAt: timestamp.toISOString(), periodFrom, periodTo }];
     });
   }
-  return { table, ingredientCodesForIds, audit, auditWorkbook, recentExports };
+  return { table, audit, auditWorkbook, recentExports };
 }
 export type ReportExportService = ReturnType<typeof createReportExports>;
