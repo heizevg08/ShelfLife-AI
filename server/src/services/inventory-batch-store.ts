@@ -272,12 +272,22 @@ export function createInventoryBatchStore(
       );
 
       if (query.sort === 'fefo') {
-        rows.sort(
-          (a, b) =>
-            a.row.expirationDate.getTime() - b.row.expirationDate.getTime() ||
+        const isExpired = (item: Resolved) => item.displayStatus === 'Expired';
+        rows.sort((a, b) => {
+          // Batches that are still usable keep strict FEFO order (earliest expiry first);
+          // already-expired batches sink to the bottom so they cannot hide the stock
+          // that still has shelf life left.
+          const group = Number(isExpired(a)) - Number(isExpired(b));
+          if (group !== 0) return group;
+          const expiry = isExpired(a)
+            ? b.row.expirationDate.getTime() - a.row.expirationDate.getTime()
+            : a.row.expirationDate.getTime() - b.row.expirationDate.getTime();
+          return (
+            expiry ||
             b.row.createdAt.getTime() - a.row.createdAt.getTime() ||
             b.row._id.toString().localeCompare(a.row._id.toString())
-        );
+          );
+        });
       }
       if (query.sort === 'latest') {
         rows.sort(

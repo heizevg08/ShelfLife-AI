@@ -25,7 +25,10 @@ test('Manager FEFO filters before global sorting and pagination without changing
   assert.equal(eligible.total, 13);
   const ordinary = await inventory.list({ page: 1, pageSize: 20, sort: 'fefo' }, now);
   assert.equal(ordinary.total, 16);
-  assert.deepEqual(ordinary.items.slice(0, 3).map(item => item.batchID), ['B-15', 'B-14', 'B-16']);
+  // Still-usable batches come first in earliest-expiry order; the expired ones
+  // (B-15, B-14) sink to the end, most recently expired first.
+  assert.deepEqual(ordinary.items.slice(0, 3).map(item => item.batchID), ['B-16', 'B-13', 'B-1']);
+  assert.deepEqual(ordinary.items.slice(-2).map(item => item.batchID), ['B-14', 'B-15']);
   const midnight = await inventory.list({ page: 1, pageSize: 5, sort: 'fefo', eligibleFefo: true }, new Date('2026-10-10T16:00:00.000Z'));
   assert.equal(midnight.items.some(item => item.batchID === 'B-14'), false);
 });
