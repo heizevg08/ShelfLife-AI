@@ -602,9 +602,11 @@ body:has(.sl-shell:has(.sl-manager-inventory-v119)) {
   padding: var(--sl-space-3) var(--sl-space-5);
   border-top: 1px solid var(--sl-border-subtle);
 }
-.sl-login {
+.sl-login,.sl-first-login-terms-page {
   --sl-login-brand-size: 4rem;
   --sl-font-login-brand: 650 2rem/1.2 "Inter", sans-serif;
+}
+.sl-login {
   background: var(--sl-surface);
   grid-template-columns: minmax(0,1fr) minmax(0,1fr);
   padding: 0;
@@ -616,11 +618,11 @@ body:has(.sl-shell:has(.sl-manager-inventory-v119)) {
   margin-bottom: clamp(3rem,8vh,6rem);
   padding: 0;
 }
-.sl-login-brand .sl-brand-icon-box {
+.sl-login-brand .sl-brand-icon-box,.sl-first-login-terms-header .sl-brand-icon-box {
   width: var(--sl-login-brand-size);
   height: var(--sl-login-brand-size);
 }
-.sl-login-brand .sl-brand-name {
+.sl-login-brand .sl-brand-name,.sl-first-login-terms-header .sl-brand-name {
   font: var(--sl-font-login-brand);
 }
 .sl-login-brand .sl-brand-ai {
@@ -1250,7 +1252,7 @@ body:has(.sl-shell:has(.sl-manager-inventory-v119)) {
   padding-inline: 0;
   padding-bottom: 0;
 }
-.sl-login {
+.sl-login,.sl-first-login-terms-page {
   --sl-login-brand-size: clamp(4rem, 5vw, 4.5rem);
   --sl-font-login-brand: 650 clamp(2rem, 2.4vw, 2.25rem)/1.2 "Inter", sans-serif;
 }

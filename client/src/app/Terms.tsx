@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowUp, FileText, ShieldCheck } from 'lucide-react';
+import { Brand } from '../components/application/Brand';
 import { ACCOUNT_TERMS } from '../content/account-terms';
 import '../styles/terms.css';
 
@@ -13,17 +14,17 @@ const termsHeadings = [
 ];
 const privacyHeadings = [
   'Introduction', 'Who Is Responsible for Your Data', 'Information We Collect', 'How We Collect Information',
-  'Why We Use Your Information', 'Legal Basis for Processing', 'How AI Features Use Data',
-  'Who We Share Information With', 'Where Your Data Is Stored', 'How Long We Keep Your Data',
-  'How We Protect Your Data', 'Your Rights Under the Data Privacy Act', 'Cookies and Local Storage',
-  'Children’s Data', 'Third-Party Links and Services', 'Changes to This Privacy Policy', 'Contact and Complaints',
+  'Why We Use Your Information', 'Basis for Processing', 'How Forecasting Uses Data',
+  'Who Can Access or Receive Information', 'Where Information Is Stored', 'How Long Information Is Kept',
+  'How We Protect Information', 'Your Privacy Rights', 'Cookies and Local Storage',
+  'Children’s Data', 'External Services', 'Changes to This Privacy Policy', 'Contact and Complaints',
 ];
 
 type PolicySection = { id: string; title: string; text: string };
 
 function readSections(part: string, titles: string[], from: number, to = ACCOUNT_TERMS.length): PolicySection[] {
   const matches = titles.map((title, index) => {
-    const marker = part === 'privacy' && index === 13 ? `${index + 1}. Children` : `${index + 1}. ${title}`;
+    const marker = `${index + 1}. ${title}`;
     const start = ACCOUNT_TERMS.indexOf(marker, from);
     return { id: `${part}-${index + 1}`, title, start, end: start + marker.length };
   });
@@ -34,17 +35,21 @@ function readSections(part: string, titles: string[], from: number, to = ACCOUNT
 }
 
 function PolicyText({ text }: { text: string }) {
+  const withEmailLink = (value: string) => value.split(/(shelflifemanagement@gmail\.com)/gi).map((part, index) =>
+    part.toLowerCase() === 'shelflifemanagement@gmail.com'
+      ? <a key={index} href="mailto:shelflifemanagement@gmail.com" aria-label="Email ShelfLife AI at shelflifemanagement@gmail.com">{part}</a>
+      : part);
   const bulletAt = text.indexOf('•');
   if (bulletAt >= 0) {
     const intro = text.slice(0, bulletAt).trim();
     const items = text.slice(bulletAt).split('•').map(item => item.trim()).filter(Boolean);
-    return <>{intro && <p>{intro}</p>}<ul className="sl-terms-list">{items.map((item, index) => <li key={index}>{item}</li>)}</ul></>;
+    return <>{intro && <p>{withEmailLink(intro)}</p>}<ul className="sl-terms-list">{items.map((item, index) => <li key={index}>{withEmailLink(item)}</li>)}</ul></>;
   }
-  const clauses = text.split(/\s(?=(?:[2-9]|1\d)\. [A-Z])/);
-  if (clauses.length > 1 && /^1\. [A-Z]/.test(clauses[0])) {
-    return <ol className="sl-terms-list">{clauses.map((clause, index) => <li key={index}>{clause.replace(/^\d+\.\s*/, '')}</li>)}</ol>;
+  const clauses = text.split(/\s(?=(?:[2-9]|1\d)\.\s(?:[A-Z“‘]))/);
+  if (clauses.length > 1 && /^1\.\s\S/.test(clauses[0])) {
+    return <ol className="sl-terms-list">{clauses.map((clause, index) => <li key={index}>{withEmailLink(clause.replace(/^\d+\.\s*/, ''))}</li>)}</ol>;
   }
-  return <p>{text}</p>;
+  return <p>{withEmailLink(text)}</p>;
 }
 
 function SectionCard({ section }: { section: PolicySection }) {
@@ -69,7 +74,7 @@ export default function Terms() {
   ];
 
   return <main className="sl-terms-page" id="top">
-    <header className="sl-terms-topbar"><Link to="/ShelfLifeAILogin" className="sl-terms-back">ShelfLife AI <span> / </span> Sign in</Link><span className="sl-terms-topbar-label">POLICIES &amp; ACCOUNT INFORMATION</span></header>
+    <header className="sl-terms-topbar"><Link to="/ShelfLifeAILogin" className="sl-terms-back" aria-label="ShelfLife AI — go to sign in"><Brand /></Link><span className="sl-terms-topbar-label">POLICIES &amp; ACCOUNT INFORMATION</span></header>
     <div className="sl-terms-layout">
       <aside className="sl-terms-sidebar">
         <div className="sl-terms-sidebar-title"><FileText size={17} /> On this page</div>

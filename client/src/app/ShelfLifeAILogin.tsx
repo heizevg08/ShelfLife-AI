@@ -1,5 +1,5 @@
 import { useRouter } from '../routing/navigation';
-import { Eye, EyeOff, FileText, Info, LoaderCircle, LogIn, TriangleAlert } from 'lucide-react';
+import { ArrowDown, ArrowLeft, Eye, EyeOff, FileText, Info, LoaderCircle, LockKeyhole, LogIn, TriangleAlert } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Brand } from '../components/application/Brand';
 import { Dialog } from '../components/application/Dialog';
@@ -17,24 +17,55 @@ function FirstLoginTermsPage({
   reachedBottom: boolean; accepted: boolean; onReachBottom: () => void; onAcceptedChange: (value: boolean) => void;
   onBack: () => void; onContinue: () => void;
 }) {
+  const policyPanel = useRef<HTMLDivElement>(null);
+  const [readProgress, setReadProgress] = useState(reachedBottom ? 100 : 0);
+  const [activePart, setActivePart] = useState<'terms' | 'privacy'>('terms');
+  const updateProgress = () => {
+    const panel = policyPanel.current;
+    if (!panel) return;
+    const scrollable = panel.scrollHeight - panel.clientHeight;
+    const progress = scrollable <= 0 ? 100 : Math.round((panel.scrollTop / scrollable) * 100);
+    setReadProgress(progress);
+    if (scrollable <= 0 || panel.scrollTop >= scrollable - 4) onReachBottom();
+    const privacy = panel.querySelector<HTMLElement>('#privacy');
+    if (privacy) setActivePart(privacy.getBoundingClientRect().top <= panel.getBoundingClientRect().top + panel.clientHeight / 3 ? 'privacy' : 'terms');
+  };
+  const scrollToPart = (part: 'terms' | 'privacy') => {
+    const panel = policyPanel.current;
+    const heading = panel?.querySelector<HTMLElement>(`#${part}`);
+    if (!panel || !heading) return;
+    panel.scrollTo({ top: heading.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop, behavior: 'smooth' });
+    setActivePart(part);
+  };
   return <div className="sl-app sl-first-login-terms-page">
-    <header className="sl-first-login-terms-header"><Brand login /><button type="button" onClick={onBack}>Back to password setup</button></header>
+    <header className="sl-first-login-terms-header"><Brand login /></header>
     <main className="sl-first-login-terms-main">
-      <div className="sl-terms-eyebrow">ACCOUNT SETUP · STEP 1 OF 2</div>
+      <div className="sl-first-login-step"><span aria-hidden="true" /><span aria-hidden="true" />ACCOUNT SETUP · STEP 1 OF 2</div>
       <h1>Terms and Privacy Policy</h1>
-      <p className="sl-first-login-terms-intro">Read the full policy below. You can accept it after you reach the end, then return to set your new password.</p>
-      <div className="sl-first-login-policy-scroll sl-first-login-policy-full" role="region" aria-label="Terms of Service and Privacy Policy. Scroll to the bottom to enable acceptance." tabIndex={0}
-        onScroll={event => { const panel = event.currentTarget; if (panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 4) onReachBottom(); }}>
-        <TermsPolicyContent />
+      <p className="sl-first-login-terms-intro">Please read this before you set your password. You can agree once you reach the end.</p>
+      <div className="sl-first-login-policy-toolbar">
+        <div className="sl-first-login-policy-tabs" role="group" aria-label="Policy sections">
+          <button type="button" className={activePart === 'terms' ? 'is-active' : ''} onClick={() => scrollToPart('terms')}>Part 1 · Terms</button>
+          <button type="button" className={activePart === 'privacy' ? 'is-active' : ''} onClick={() => scrollToPart('privacy')}>Part 2 · Privacy</button>
+        </div>
+        <div className="sl-first-login-read-progress" role="progressbar" aria-label="Policy reading progress" aria-valuenow={readProgress} aria-valuemin={0} aria-valuemax={100}>
+          <span>You've read {readProgress}%</span><span className="sl-first-login-progress-track"><span style={{ width: `${readProgress}%` }} /></span>
+        </div>
+      </div>
+      <div className={`sl-first-login-policy-frame${reachedBottom ? ' is-complete' : ''}`}>
+        <div ref={policyPanel} className="sl-first-login-policy-scroll sl-first-login-policy-full" role="region" aria-label="Terms of Service and Privacy Policy. Scroll to the bottom to enable acceptance." tabIndex={0} onScroll={updateProgress}>
+          <TermsPolicyContent />
+        </div>
+        {!reachedBottom && <div className="sl-first-login-scroll-cue" aria-hidden="true"><ArrowDown size={16} />Keep scrolling to read the rest</div>}
       </div>
       <label className={`sl-first-login-policy-accept${reachedBottom ? ' is-enabled' : ''}`}>
         <input type="checkbox" checked={accepted} disabled={!reachedBottom} onChange={event => onAcceptedChange(event.target.checked)} />
         <span>I have read and agree to the Terms of Service and Privacy Policy.</span>
       </label>
-      {!reachedBottom && <p className="sl-first-login-policy-hint">Scroll to the bottom of the policy to enable the agreement.</p>}
+      {!reachedBottom && <p className="sl-first-login-policy-hint"><LockKeyhole size={14} aria-hidden="true" />Scroll to the bottom of the policy to unlock this.</p>}
       <div className="sl-first-login-terms-actions">
-        <button type="button" className="sl-first-login-terms-secondary" onClick={onBack}>Back</button>
-        <button type="button" className="sl-button sl-button-primary" disabled={!accepted} onClick={onContinue}>Agree and return to password setup</button>
+        <button type="button" className="sl-first-login-terms-secondary" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" />Back</button>
+        <button type="button" className="sl-button sl-button-primary" disabled={!accepted} onClick={onContinue}>Agree and continue</button>
       </div>
     </main>
   </div>;
