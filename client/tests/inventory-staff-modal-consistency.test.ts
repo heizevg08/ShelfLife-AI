@@ -16,7 +16,7 @@ test('locked Inventory Staff batch details keeps its approved content hierarchy 
   assert.match(batchDetails, /<span className="sl-canonical-identifier">\{batch\.batchID\}<\/span>/);
   assert.match(batchDetails, /\(!inventoryStaff \|\| batch\.displayStatus !== 'Expired'\) && <Status/);
   assert.match(batchDetails, /batch\.displayStatus === 'Expired' && batch\.quantity > 0/);
-  assert.match(batchDetails, /<strong>\{batch\.quantity\.toLocaleString\(\)\} \{batch\.unit\}<\/strong>/);
+  assert.match(batchDetails, /<strong>\{formatCurrentStock\(batch\.quantity\)\} \{batch\.unit\}<\/strong>/);
   assert.match(batchDetails, /inventoryBatchExpirationContext\(batch\.daysLeft\)/);
   assert.match(batchDetails, /inventoryBatchRecorderLabel\(batch\.createdBy\)/);
   assert.match(batchDetails, /inventoryStaff && requiresWaste/);
