@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
-/** Plain-text account email sent by the configured delivery transport. */
-export interface MailMessage { to: string; subject: string; text: string }
+/** Account email sent by the configured delivery transport. */
+export interface MailMessage { to: string; subject: string; text: string; html?: string }
 /** Delivery boundary that rejects when the provider does not accept a message. */
 export interface MailTransport { send(message: MailMessage): Promise<void> }
 
@@ -52,6 +52,7 @@ export function createSmtpMailTransport(env: NodeJS.ProcessEnv, createTransport:
               to: message.to,
               subject: message.subject,
               text: message.text,
+              html: message.html,
             }),
             signal: AbortSignal.timeout(15000),
           });
