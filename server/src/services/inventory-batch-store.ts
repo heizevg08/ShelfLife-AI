@@ -9,7 +9,7 @@ import type { InventoryBatchDisplayStatus, InventoryBatchPageQuery, StockInInput
 import type { Actor } from './administration';
 import { normalizeUserRole } from '../models/user';
 import { AdministrationError } from '../middleware/administration.middleware';
-import { businessDateString, businessDayBounds, businessMonthBounds, dateOnlyCalendarString } from '../utils/business-day';
+import { businessDateString, businessDayBounds, businessMonthBounds, dateOnlyCalendarString, businessDaysUntilExpiry } from '../utils/business-day';
 
 type BatchRow = {
   _id: { toString(): string };
@@ -63,8 +63,9 @@ export function deriveInventoryBatchDisplayStatus(
   minimumStock: number | undefined,
   now: Date
 ): InventoryBatchDisplayStatus {
-  if (expirationDate < now) return 'Expired';
-  if (expirationDate <= new Date(now.getTime() + 7 * 86_400_000)) return 'Near Expiry';
+  const daysLeft = businessDaysUntilExpiry(expirationDate, now);
+  if (daysLeft <= 0) return 'Expired';
+  if (daysLeft <= 7) return 'Near Expiry';
   return minimumStock !== undefined && totalStock <= minimumStock ? 'Low Stock' : 'In Stock';
 }
 
@@ -138,7 +139,7 @@ export function createInventoryBatchStore(
           ingredient,
           totalStock,
           displayStatus: deriveInventoryBatchDisplayStatus(row.expirationDate, totalStock, ingredient.minimumStock, now),
-          daysLeft: Math.ceil((row.expirationDate.getTime() - now.getTime()) / 86_400_000),
+          daysLeft: businessDaysUntilExpiry(row.expirationDate, now),
           creator: creators.get(row.createdBy.toString()),
         },
       ];
@@ -267,7 +268,7 @@ export function createInventoryBatchStore(
       const rows = filtered(await resolve(now, dbFilter), query).filter(
         item =>
           !query.eligibleFefo ||
-          (item.row.quantity > 0 && dateOnlyCalendarString(item.row.expirationDate) >= businessDateString(now))
+          (item.row.quantity > 0 && dateOnlyCalendarString(item.row.expirationDate) > businessDateString(now))
       );
 
       if (query.sort === 'fefo') {
@@ -364,8 +365,7 @@ export function createInventoryBatchStore(
         ingredientsReceivedToday: new Set(todayRows.map(item => item.ingredient._id.toString())).size,
         batchesReceivedThisMonth: receivedWithin(month.start, month.end).length,
         expiringSoonBatches: rows.filter(
-          item =>
-            item.row.expirationDate >= now && item.row.expirationDate <= new Date(now.getTime() + 7 * 86_400_000)
+          item => item.displayStatus === 'Near Expiry'
         ).length,
       };
     },

@@ -177,3 +177,20 @@ export function calendarDateSequence(from: string, to: string, limit = 400): str
   for (let cursor = to; cursor >= from && dates.length < limit; cursor = shiftCalendarDate(cursor, -1)) dates.push(cursor);
   return dates.reverse();
 }
+
+/**
+ * Calculate the difference in whole Philippine calendar days between a stored
+ * expiration date and the Philippine business day containing reference.
+ * Returns 0 if it expires today, positive for future days, negative if already expired.
+ *
+ * @param expirationDate - Stored expiration date (serialized at UTC midnight).
+ * @param reference - Instant defining the current Philippine business day; defaults to now.
+ * @returns Whole calendar days until expiry.
+ */
+export function businessDaysUntilExpiry(expirationDate: Date, reference: Date = new Date()): number {
+  const expiryDate = dateOnlyCalendarString(expirationDate);
+  const todayDate = businessDateString(reference);
+  const [ey, em, ed] = expiryDate.split('-').map(Number);
+  const [ty, tm, td] = todayDate.split('-').map(Number);
+  return Math.round((Date.UTC(ey, em - 1, ed) - Date.UTC(ty, tm - 1, td)) / 86_400_000);
+}

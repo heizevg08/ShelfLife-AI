@@ -8,6 +8,7 @@ import type { ForecastSnapshotStore } from './forecast-snapshot-store';
 import type { ForecastEvaluationService } from './forecast-evaluation-service';
 import type { ReportQuery, ReportId } from '../validators/report';
 import { AdministrationError } from '../middleware/administration.middleware';
+import { businessDaysUntilExpiry } from '../utils/business-day';
 
 type Id = { toString(): string };
 type Batch = { _id: Id; ingredientId: Id; batchID: string; quantity: number; unit: string; expirationDate: Date; unitCost?: number };
@@ -243,14 +244,14 @@ export function createReportExports(models: {
       for (const batch of batches) {
         const ingId = id(batch.ingredientId);
         const ingredient = ingredients.get(ingId);
-        const daysToExpiry = Math.ceil((batch.expirationDate.getTime() - now.getTime()) / 86_400_000);
+        const daysToExpiry = businessDaysUntilExpiry(batch.expirationDate, now);
         const avgUsage = roundNumber((usageByIng.get(ingId) ?? 0) / 30, 2);
         const projectedDemand = Math.max(0, avgUsage * Math.max(0, daysToExpiry));
         const projectedExcess = roundNumber(Math.max(0, batch.quantity - projectedDemand), 2);
         const unitCost = batch.unitCost ?? ingredient?.standardUnitCost ?? 0;
         const atRiskCost = roundNumber(projectedExcess * unitCost, 2);
-        const riskLevel = daysToExpiry < 0 ? 'Expired' : daysToExpiry <= 3 ? 'Critical' : (projectedExcess > 0 || daysToExpiry <= 7) ? 'High' : daysToExpiry <= 14 ? 'Medium' : 'Low';
-        const fefoAction = daysToExpiry < 0
+        const riskLevel = daysToExpiry <= 0 ? 'Expired' : daysToExpiry <= 3 ? 'Critical' : (projectedExcess > 0 || daysToExpiry <= 7) ? 'High' : daysToExpiry <= 14 ? 'Medium' : 'Low';
+        const fefoAction = daysToExpiry <= 0
           ? 'Dispose / Waste Record'
           : daysToExpiry <= 3
             ? 'Immediate Kitchen Use (Urgent FEFO)'
@@ -304,8 +305,8 @@ export function createReportExports(models: {
         const avgUsage = roundNumber((usageByIng.get(ingId) ?? 0) / 30, 2);
         const daysOfSupply = avgUsage > 0 ? roundNumber(currentStock / avgUsage, 1) : null;
         const hasNearExpiry = ingBatches.some(b => {
-          const diff = Math.round((b.expirationDate.getTime() - now.getTime()) / 86_400_000);
-          return diff >= 0 && diff <= 7;
+          const diff = businessDaysUntilExpiry(b.expirationDate, now);
+          return diff > 0 && diff <= 7;
         });
         const minStock = ing.minimumStock ?? 10;
         const fDemand = roundNumber(avgUsage * 30, 1);

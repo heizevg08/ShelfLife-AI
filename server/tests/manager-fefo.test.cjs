@@ -21,8 +21,8 @@ test('Manager FEFO filters before global sorting and pagination without changing
   const inventory = store(rows);
   const now = new Date('2026-10-10T15:59:59.000Z');
   const eligible = await inventory.list({ page: 1, pageSize: 5, sort: 'fefo', eligibleFefo: true }, now);
-  assert.deepEqual(eligible.items.map(item => item.batchID), ['B-14', 'B-13', 'B-1', 'B-2', 'B-3']);
-  assert.equal(eligible.total, 14);
+  assert.deepEqual(eligible.items.map(item => item.batchID), ['B-13', 'B-1', 'B-2', 'B-3', 'B-4']);
+  assert.equal(eligible.total, 13);
   const ordinary = await inventory.list({ page: 1, pageSize: 20, sort: 'fefo' }, now);
   assert.equal(ordinary.total, 16);
   assert.deepEqual(ordinary.items.slice(0, 3).map(item => item.batchID), ['B-15', 'B-14', 'B-16']);
@@ -37,7 +37,7 @@ test('Manager FEFO retains expiration, newer-created, then ID tie-breakers', asy
 });
 
 test('Manager FEFO eligibility is independent of host timezone', () => {
-  const script = `const {createInventoryBatchStore}=require(${JSON.stringify(require.resolve('../dist/services/inventory-batch-store'))}); const d=v=>new Date(v+'T00:00:00.000Z'); const id={toString:()=> '1'.repeat(24)}; const row={_id:id,ingredientId:id,batchID:'TODAY',quantity:1,unit:'kg',dateReceived:d('2026-10-01'),expirationDate:d('2026-10-10'),createdBy:id,createdAt:d('2026-10-01'),updatedAt:d('2026-10-01')}; const chain=x=>({lean:()=>({exec:async()=>x})}); const store=createInventoryBatchStore({}, {find:()=>({sort:()=>chain([row])})},{},{find:()=>({select:()=>chain([{_id:id,name:'A',category:'Pantry',unitOfMeasure:'kg'}])})},{find:()=>({select:()=>chain([])})},{}); store.list({page:1,pageSize:5,sort:'fefo',eligibleFefo:true},new Date('2026-10-10T15:59:59.000Z')).then(x=>process.stdout.write(String(x.total)));`;
+  const script = `const {createInventoryBatchStore}=require(${JSON.stringify(require.resolve('../dist/services/inventory-batch-store'))}); const d=v=>new Date(v+'T00:00:00.000Z'); const id={toString:()=> '1'.repeat(24)}; const row={_id:id,ingredientId:id,batchID:'TOMORROW',quantity:1,unit:'kg',dateReceived:d('2026-10-01'),expirationDate:d('2026-10-11'),createdBy:id,createdAt:d('2026-10-01'),updatedAt:d('2026-10-01')}; const chain=x=>({lean:()=>({exec:async()=>x})}); const store=createInventoryBatchStore({}, {find:()=>({sort:()=>chain([row])})},{},{find:()=>({select:()=>chain([{_id:id,name:'A',category:'Pantry',unitOfMeasure:'kg'}])})},{find:()=>({select:()=>chain([])})},{}); store.list({page:1,pageSize:5,sort:'fefo',eligibleFefo:true},new Date('2026-10-10T15:59:59.000Z')).then(x=>process.stdout.write(String(x.total)));`;
   for (const tz of ['UTC', 'Asia/Manila', 'America/Los_Angeles']) {
     assert.equal(execFileSync(process.execPath, ['-e', script], { env: { ...process.env, TZ: tz }, encoding: 'utf8' }), '1');
   }

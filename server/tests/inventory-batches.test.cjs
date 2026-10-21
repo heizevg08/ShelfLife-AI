@@ -40,10 +40,28 @@ test('inventory display status preserves expiration precedence over aggregate lo
 
 test('near-expiry window includes the seventh day and never excludes depleted batches', () => {
   const now = new Date('2030-01-10T12:00:00.000Z');
-  assert.equal(deriveInventoryBatchDisplayStatus(new Date(now.getTime()), 5, 10, now), 'Near Expiry');
-  assert.equal(deriveInventoryBatchDisplayStatus(new Date(now.getTime() + 7 * 86400000 + 1), 5, 10, now), 'Low Stock');
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date(now.getTime()), 5, 10, now), 'Expired');
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date(now.getTime() + 86400000), 5, 10, now), 'Near Expiry');
+  assert.equal(deriveInventoryBatchDisplayStatus(new Date(now.getTime() + 8 * 86400000), 5, 10, now), 'Low Stock');
   assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-01-17T12:00:00.000Z'), 0, 10, now), 'Near Expiry');
   assert.equal(deriveInventoryBatchDisplayStatus(new Date('2030-01-09T12:00:00.000Z'), 0, 10, now), 'Expired');
+});
+
+test('days left and expiration status follow the Philippine business calendar, not UTC wall-clock time', () => {
+  const { businessDaysUntilExpiry } = require('../dist/utils/business-day');
+  // 5:25 AM on Oct 22 in Manila (UTC+8) is Oct 21 21:25 UTC
+  const manilaMorning = new Date('2026-10-21T21:25:07.000Z');
+  const manilaEvening = new Date('2026-10-22T12:00:00.000Z');
+  const nextDay = new Date('2026-10-22T16:05:00.000Z'); // 00:05 AM Oct 23 in Manila
+  const storedBatchExpiry = new Date('2026-10-22T00:00:00.000Z'); // Stored at UTC midnight for Oct 22
+
+  assert.equal(businessDaysUntilExpiry(storedBatchExpiry, manilaMorning), 0);
+  assert.equal(businessDaysUntilExpiry(storedBatchExpiry, manilaEvening), 0);
+  assert.equal(businessDaysUntilExpiry(storedBatchExpiry, nextDay), -1);
+
+  assert.equal(deriveInventoryBatchDisplayStatus(storedBatchExpiry, 10, 5, manilaMorning), 'Expired');
+  assert.equal(deriveInventoryBatchDisplayStatus(storedBatchExpiry, 10, 5, manilaEvening), 'Expired');
+  assert.equal(deriveInventoryBatchDisplayStatus(storedBatchExpiry, 10, 5, nextDay), 'Expired');
 });
 
 test('inventory query validation accepts supported filters and rejects unsupported values', () => {
