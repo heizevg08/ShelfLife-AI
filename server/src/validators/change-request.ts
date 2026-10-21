@@ -26,7 +26,7 @@ function normalizeRequestedValue(type: ChangeRequestType, value: unknown): strin
   }
   if (type === 'STANDARD_UNIT_COST_CHANGE') {
     if (typeof value !== 'number' || !Number.isFinite(value)) invalid('requestedValue', 'Unit cost must be numeric.');
-    if (value < 0 || value > 1_000_000_000) invalid('requestedValue', 'Enter a unit cost from 0 to 1,000,000,000.');
+    if (value <= 0 || value > 1_000_000_000) invalid('requestedValue', 'Enter a unit cost greater than 0 up to 1,000,000,000.');
     if (Number(value.toFixed(2)) !== value) invalid('requestedValue', 'Use no more than 2 decimal places.');
     return String(value);
   }

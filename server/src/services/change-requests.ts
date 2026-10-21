@@ -389,6 +389,18 @@ export function createChangeRequests(
         throw new AdministrationError(404, 'NOT_FOUND', 'Ingredient not found');
       }
 
+      const currentVal = fieldValue(ingredient, input.targetField);
+      const isNumeric = ['minimumStock', 'standardUnitCost', 'defaultShelfLifeDays'].includes(input.targetField);
+      const isSame = isNumeric
+        ? Number(input.requestedValue) === Number(currentVal)
+        : input.requestedValue.trim().toLowerCase() === currentVal.trim().toLowerCase();
+
+      if (isSame) {
+        throw new AdministrationError(400, 'VALIDATION_ERROR', 'Check the supplied fields', [
+          { field: 'requestedValue', message: 'Requested value must be different from current value.' },
+        ]);
+      }
+
       return driver.connection.transaction(async (session: ClientSession) => {
         const now = new Date();
         const dateKey = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}`;

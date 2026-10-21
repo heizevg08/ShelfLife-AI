@@ -38,6 +38,19 @@ function InventoryStaffChangeRequests(){
    const value=draft.requestedValue.trim();
    const requestedValueError=draft.requestType==='MINIMUM_STOCK_CHANGE'?changeRequestMinimumStockError(value):draft.requestType==='STANDARD_UNIT_COST_CHANGE'?ingredientUnitCostError(value):draft.requestType==='DEFAULT_SHELF_LIFE_CHANGE'?ingredientShelfLifeError(value):undefined;
    if(requestedValueError)next.requestedValue=requestedValueError;
+   else if(draft.requestType==='STANDARD_UNIT_COST_CHANGE' && Number(value) <= 0) {
+    next.requestedValue='Standard unit cost must be greater than 0.';
+   }
+   else if(selected && field) {
+    const rawCurrent = selected[field];
+    const isNumeric = ['MINIMUM_STOCK_CHANGE','STANDARD_UNIT_COST_CHANGE','DEFAULT_SHELF_LIFE_CHANGE'].includes(draft.requestType);
+    const isSame = isNumeric
+      ? Number(value) === Number(rawCurrent)
+      : value.toLowerCase() === String(rawCurrent ?? '').trim().toLowerCase();
+    if(isSame) {
+      next.requestedValue = 'Requested value must be different from current value.';
+    }
+   }
   }
   if(!draft.reason.trim())next.reason='Enter a reason.';
   return next;
