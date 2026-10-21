@@ -94,14 +94,14 @@ ML is opt-in: set `ML_PYTHON_EXECUTABLE` and `ML_WORKER_SCRIPT` in `server/.env`
 ## Authentication, Account Lifecycle & Email Delivery
 
 ### Dual-Identity Email Architecture & Free-Tier Mail Delivery
-- **Organizational Identity (`email`):** Corporate sign-in identifiers use the domain `@shelflife.com` (e.g. `jy@shelflife.com`, `admin@shelflife.com`).
-- **Personal Delivery Address (`personalEmail`):** Because custom corporate domain routing is absent on free tiers, user accounts support an external `personalEmail` (e.g. `@gmail.com`).
-- **Transactional Welcome Emails:** Account creation via `POST /api/users` mints a cryptographically secure 24-byte temporary password and immediately dispatches an onboarding email to the user's `personalEmail` before the transaction commits.
-- **Dual Password Recovery:** The password recovery modal accepts **either** the user's `@shelflife.com` handle or their registered personal email address. If an eligible account is matched, the single-use recovery link is securely delivered to the recipient's real personal email address (`personalEmail`).
+- **Organizational Identity (`email`):** Corporate sign-in identifiers use the domain `@shelflife.com`.
+- **Personal Delivery Address (`personalEmail`):** Because custom corporate domain routing is absent on free tiers, user accounts support an external personal email address.
+- **Transactional Welcome Emails:** Account creation via `POST /api/users` mints a cryptographically secure 24-byte temporary password and immediately dispatches an onboarding email to the user's personal email address before the transaction commits.
+- **Dual Password Recovery:** The password recovery modal accepts **either** the user's organization handle or their registered personal email address. If an eligible account is matched, the single-use recovery link is securely delivered to the recipient's real personal email address (`personalEmail`).
 - **OWASP User Enumeration Protection:** The password recovery API deliberately returns a uniform response (`"If an eligible account exists, check its registered email for recovery instructions."`) for both registered and non-existent email inputs. This prevents malicious actors from executing account harvesting / user enumeration attacks against the organization.
 - **Render Free-Tier Mail Compatibility:** Render free-tier instances block raw outbound SMTP ports (`25`, `465`, and `587`). ShelfLifeAI supports:
-  1. **HTTPS Port 443 Relay:** Set `SMTP_HOST` to a Google Apps Script web app endpoint (`https://script.google.com/macros/s/.../exec`) to deliver emails directly over HTTPS port 443 with zero third-party fees.
-  2. **Alternative Port 2525:** Use providers such as Brevo on unblocked port `2525`.
+  1. **HTTPS Port 443 Relay:** Set `SMTP_HOST` to an HTTPS web app endpoint to deliver emails directly over HTTPS port 443 with zero third-party fees.
+  2. **Alternative Port 2525:** Use providers on unblocked port `2525`.
 
 ## Local development
 
@@ -127,13 +127,13 @@ The repository includes [`vercel.json`](vercel.json) for the React/Vite client a
 
 1. Create the Render web service from this repository. Its health check is `/api/health/live`. Set `MONGO_URI` and `CORS_ORIGINS` in Render (`CORS_ORIGINS` must match the exact Vercel production origin with no trailing slash).
 2. Configure email delivery in the Render Dashboard under **Environment**:
-   - `SMTP_HOST`: Web app relay URL (`https://script.google.com/macros/s/.../exec`) or alternative SMTP host (`smtp-relay.brevo.com`).
-   - `SMTP_PORT`: `443` (for HTTPS relay) or `2525` (for alternative SMTP).
-   - `SMTP_USER`: Sender email (e.g. `shelflifemanagement@gmail.com`).
+   - `SMTP_HOST`: Web app relay URL or alternative SMTP host.
+   - `SMTP_PORT`: Port `443` (for HTTPS relay) or port `2525` (for alternative SMTP).
+   - `SMTP_USER`: Sender account address.
    - `SMTP_PASS`: Configured relay secret or app password.
    - `MAIL_FROM`: Sender email address.
-   - `ACCOUNT_LOGIN_URL`: `https://shelflife-ai-one.vercel.app/ShelfLifeAILogin`
-   - `PASSWORD_RESET_URL`: `https://shelflife-ai-one.vercel.app/ShelfLifeAILogin`
+   - `ACCOUNT_LOGIN_URL`: Public login URL.
+   - `PASSWORD_RESET_URL`: Public login URL.
 3. Deploy the Vercel project with `VITE_API_URL=https://<your-render-service>.onrender.com` as a production environment variable.
 
 ## Roles and data
