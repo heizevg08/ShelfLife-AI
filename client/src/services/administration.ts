@@ -110,11 +110,15 @@ export const listAuditRecords = (
   return apiClient<Page<AuditRecord>>(`/audit-records?${query}`, { signal });
 };
 
-// Consumes the audit wake-up feed (GET /audit-records/stream) with fetch
-// streaming, because EventSource cannot send the Authorization header this API
-// requires. The server only signals that the trail changed — the caller is
-// expected to re-query through listAuditRecords with its current page/filters.
-// Comment frames (heartbeats) are skipped; only data frames reach onRecorded.
+/**
+ * Use fetch streaming because EventSource cannot send this API's bearer token.
+ * The feed only wakes readers; callers re-query their current page and filters.
+ * @param onRecorded - Called for data frames; heartbeat comments are ignored.
+ * @param signal - Aborts the stream when its screen closes.
+ * @param onOpen - Optional callback after the authorized stream opens.
+ * @returns When the stream ends.
+ * @throws Error when the feed cannot be opened.
+ */
 export async function streamAuditRecorded(
   onRecorded: () => void,
   signal: AbortSignal,

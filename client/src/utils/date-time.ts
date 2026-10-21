@@ -14,10 +14,20 @@ function dateOnlyValue(value: DateValue) {
   return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : new Date(value);
 }
 
+/**
+ * Format the viewer's local calendar date for a native date input.
+ * @param value - Date to display; defaults to now.
+ * @returns Local date in `YYYY-MM-DD` form.
+ */
 export function localDateInputValue(value: Date = new Date()) {
   return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
 }
 
+/**
+ * Reject impossible dates that match the date-input shape but roll into another month.
+ * @param value - Candidate `YYYY-MM-DD` date.
+ * @returns Whether the date exists on the calendar.
+ */
 export function isValidDateOnlyInput(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return false;
@@ -26,14 +36,29 @@ export function isValidDateOnlyInput(value: string) {
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }
 
+/**
+ * Display a date-only value without shifting it across browser timezones.
+ * @param value - Calendar date or timestamp.
+ * @returns Short display date.
+ */
 export function formatDate(value: DateValue) {
   return dateFormatter.format(dateOnlyValue(value));
 }
 
+/**
+ * Pair the shared display date with the viewer's formatted time.
+ * @param value - Calendar date or timestamp.
+ * @returns Date and time for display.
+ */
 export function formatDateTime(value: DateValue) {
   return `${formatDate(value)}, ${formatTime(value)}`;
 }
 
+/**
+ * Show the establishment's date and time in the Philippine timezone.
+ * @param value - Calendar date or timestamp.
+ * @returns Weekday, date, and time for the top bar.
+ */
 export function formatTopbarDateTime(value: DateValue) {
   // A date-only value denotes a Philippine calendar date; timestamps remain instants.
   const base = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
@@ -42,6 +67,11 @@ export function formatTopbarDateTime(value: DateValue) {
   return `${topbarWeekdayFormatter.format(base)}, ${topbarDateFormatter.format(base)}, ${topbarTimeFormatter.format(base)}`;
 }
 
+/**
+ * Format the viewer's local time for a timestamp.
+ * @param value - Calendar date or timestamp.
+ * @returns Short 12-hour time.
+ */
 export function formatTime(value: DateValue) {
   return timeFormatter.format(new Date(value));
 }

@@ -1,10 +1,14 @@
 import { businessDateInputValue } from './business-day';
 
+/** Calendar-day urgency and matching display tone for FEFO decisions. */
 export type FefoUrgency = { label: 'High' | 'Medium' | 'Low'; tone: 'critical' | 'attention' | 'success'; daysRemaining: number };
 
-// Inventory expiration is a date-only field serialized by the API at UTC midnight.
-// Compare calendar dates, not instants, so today's batch remains High through
-// the end of the Philippine business day in every browser timezone.
+/**
+ * Compare expiry calendar dates so today's batch stays urgent all business day.
+ * @param expirationDate - API date-only value, optionally serialized at UTC midnight.
+ * @param reference - Instant defining the current Philippine business day.
+ * @returns Urgency for unexpired stock, or `null` for expired/invalid dates.
+ */
 export function fefoUrgency(expirationDate: string, reference: Date = new Date()): FefoUrgency | null {
   const expiry = /^(\d{4})-(\d{2})-(\d{2})(?:T00:00:00(?:\.000)?Z)?$/.exec(expirationDate);
   if (!expiry) return null;

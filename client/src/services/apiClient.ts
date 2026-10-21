@@ -3,6 +3,7 @@ import { currentUser } from './auth';
 import { getAccessToken } from './session';
 import { publishActionFeedback } from './actionFeedback';
 
+/** API failure with status, machine code, and safe field-level details. */
 export class ApiError extends Error {
   constructor(
     public status: number,

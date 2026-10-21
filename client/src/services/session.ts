@@ -35,10 +35,7 @@ export function setAccessToken(value: string) {
   }
 }
 
-/**
- * Forget the stored access token.
- *
- */
+/** Forget the current token and any inherited legacy session key. */
 export function clearSession() {
   token = null;
   try {

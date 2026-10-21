@@ -1,9 +1,4 @@
-// ShelfLifeAI reports on Philippine operations, so a business "day" means a
-// Philippine calendar day even when the viewer's browser runs in another
-// timezone. This mirrors the server helper in `server/src/utils/business-day.ts`
-// so the UI and the API agree on which dates a filter covers. Asia/Manila is a
-// fixed +08:00 zone without daylight saving, so a calendar date always maps to
-// one instant range and no extra dependency is needed beyond Intl.
+/** The reporting timezone shared with the server's business-day helper. */
 export const BUSINESS_TIME_ZONE = 'Asia/Manila';
 
 const businessDateFormatter = new Intl.DateTimeFormat('en-CA', {
@@ -17,17 +12,24 @@ function pad(value: number) {
   return String(value).padStart(2, '0');
 }
 
-// The business calendar date of an instant, as the `YYYY-MM-DD` value a date
-// input or a `from`/`to` API parameter expects.
+/**
+ * Express an instant as a Philippine calendar date for date inputs and API filters.
+ * @param reference - Instant to convert; defaults to now.
+ * @returns Date in `YYYY-MM-DD` form.
+ */
 export function businessDateInputValue(reference: Date = new Date()) {
   const parts = businessDateFormatter.formatToParts(reference);
   const read = (type: string) => parts.find(part => part.type === type)?.value ?? '';
   return `${read('year')}-${read('month')}-${read('day')}`;
 }
 
-// Calendar arithmetic on a `YYYY-MM-DD` value. Days are counted on the calendar
-// itself, so the result never depends on the host timezone and an expiry or a
-// range edge cannot slip by a day near a daylight-saving transition.
+/**
+ * Shift a calendar date in UTC so the browser timezone cannot move a range edge.
+ * @param value - Date in `YYYY-MM-DD` form.
+ * @param deltaDays - Whole calendar days to add or subtract.
+ * @returns Shifted date in `YYYY-MM-DD` form.
+ * @throws RangeError when the date does not match the expected form.
+ */
 export function shiftBusinessDate(value: string, deltaDays: number) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) throw new RangeError(`Not a calendar date: ${value}`);
@@ -35,20 +37,25 @@ export function shiftBusinessDate(value: string, deltaDays: number) {
   return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}`;
 }
 
-// The `from`/`to` pair for `days` whole Philippine calendar dates that end with
-// the reference day. Both ends are inclusive, so 7 days means today plus the
-// previous six Philippine dates rather than a rolling 168-hour window. Manager
-// analytics no longer use this for their 7-day preset: that preset is the current
-// Monday-to-Sunday business week, via `businessWeekRange`.
+/**
+ * Build an inclusive range of Philippine calendar days ending on the reference day.
+ * @param days - Number of whole days, including the reference day.
+ * @param reference - Instant whose Philippine date ends the range.
+ * @returns Inclusive `from` and `to` dates for API filters.
+ * @throws RangeError when `days` is not a positive integer.
+ */
 export function businessDayRange(days: number, reference: Date = new Date()): { from: string; to: string } {
   if (!Number.isInteger(days) || days < 1) throw new RangeError('A business day range needs at least one whole day.');
   const to = businessDateInputValue(reference);
   return { from: shiftBusinessDate(to, -(days - 1)), to };
 }
 
-// The weekday of a calendar date, with Monday as 0 and Sunday as 6. The date is
-// read in UTC because it is already a business calendar day, so the answer never
-// depends on the host timezone.
+/**
+ * Index a calendar date from Monday (0) through Sunday (6), independent of locale.
+ * @param value - Date in `YYYY-MM-DD` form.
+ * @returns Monday-based weekday index.
+ * @throws RangeError when the date does not match the expected form.
+ */
 export function businessWeekdayIndex(value: string): number {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) throw new RangeError(`Not a calendar date: ${value}`);
@@ -56,22 +63,22 @@ export function businessWeekdayIndex(value: string): number {
   return (weekday + 6) % 7;
 }
 
-// The Philippine business week that contains the reference day: Monday 00:00
-// through Sunday. Manager analytics use a fixed week so a weekday keeps the same
-// position on the chart every visit, unlike a trailing seven-day window that
-// rotates the sequence each day. Both ends are inclusive calendar dates.
+/**
+ * Keep Manager charts on a fixed Monday-to-Sunday Philippine business week.
+ * @param reference - Instant within the target week.
+ * @returns Inclusive `from` and `to` calendar dates.
+ */
 export function businessWeekRange(reference: Date = new Date()): { from: string; to: string } {
   const today = businessDateInputValue(reference);
   const from = shiftBusinessDate(today, -businessWeekdayIndex(today));
   return { from, to: shiftBusinessDate(from, 6) };
 }
 
-// The Philippine business month that contains the reference day: the first
-// through the last calendar date of that month, both inclusive. The last date is
-// found on the calendar itself (`day 0` of the following month) so February and
-// every other month length are handled without a lookup table. A monthly report
-// therefore counts Philippine calendar dates rather than a trailing thirty-day
-// window that would straddle two months.
+/**
+ * Bound a monthly report to its Philippine calendar month, not a rolling 30 days.
+ * @param reference - Instant within the target month.
+ * @returns Inclusive first and last calendar dates of that month.
+ */
 export function businessMonthRange(reference: Date = new Date()): { from: string; to: string } {
   const from = `${businessDateInputValue(reference).slice(0, 7)}-01`;
   const year = Number(from.slice(0, 4));

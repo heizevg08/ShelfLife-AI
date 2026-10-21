@@ -1,6 +1,11 @@
 import { useEffect, useRef, type PointerEvent } from 'react';
 
-// Hover augments click/keyboard behavior only on devices with a precise hover pointer.
+/**
+ * Delay pointer-only hover actions while keeping click and keyboard behavior intact.
+ * @param onEnter - Called after a precise pointer rests on the target.
+ * @param onLeave - Called after the pointer leaves unless focus remains inside.
+ * @returns Pointer handlers and a timer cancellation function.
+ */
 export function useHoverIntent(onEnter: () => void, onLeave: () => void) {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const callbacks = useRef({ onEnter, onLeave });

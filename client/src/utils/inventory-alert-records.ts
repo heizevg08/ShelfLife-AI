@@ -1,5 +1,6 @@
 import type { InventoryBatch } from '../services/inventory-batches';
 
+/** Active batch alert fields used by the inventory alert table. */
 export type InventoryAlertRecord = {
   id: string;
   date: string;
@@ -12,6 +13,11 @@ export type InventoryAlertRecord = {
   daysLeft: number;
 };
 
+/**
+ * Put expired, near-expiry, then low-stock batches in a stable alert order.
+ * @param batches - Inventory batches with server-derived display status.
+ * @returns Active alert rows sorted by urgency and ingredient.
+ */
 export function inventoryAlertRecords(batches: InventoryBatch[]): InventoryAlertRecord[] {
   const formatQty = (quantity: number) => Number(quantity.toFixed(2)).toLocaleString('en-PH');
   return batches.flatMap((batch): InventoryAlertRecord[] => {

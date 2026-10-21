@@ -1,7 +1,7 @@
 import { apiBaseUrl } from './config';
 import { clearSession, getAccessToken, setAccessToken } from './session';
 
-// Preserve HTTP status so presentation can distinguish rejected credentials from outages.
+/** Preserve HTTP status so callers distinguish rejected credentials from outages. */
 export class AuthRequestError extends Error {
   constructor(public readonly status: number, message: string) {
     super(message);
@@ -9,6 +9,7 @@ export class AuthRequestError extends Error {
   }
 }
 
+/** Server-authoritative account identity and access state for the current session. */
 export interface SessionUser {
   id: string;
   name: string;
@@ -24,7 +25,11 @@ export interface SessionUser {
   updatedAt: string;
 }
 
-// Normalize only known legacy role-label identities. Real personal names remain untouched.
+/**
+ * Replace legacy role-label names without rewriting real personal names.
+ * @param user - Session name and role from the server.
+ * @returns Display name or role fallback.
+ */
 export function sessionDisplayName(user: Pick<SessionUser, 'name' | 'role'>): string {
   const name = user.name?.trim();
   if (user.role === 'Admin' && (!name || name === 'Super Admin')) return 'Admin';
@@ -38,13 +43,12 @@ export function sessionDisplayName(user: Pick<SessionUser, 'name' | 'role'>): st
  * Falls back from first and last name to the display name, and finally to the
  * first letter of the role, so the avatar is never empty.
  *
- * @returns one or two uppercase letters.
+ * @param user - Authoritative name parts, display name, and role fallback.
+ * @returns One or two uppercase letters.
  */
 export function sessionInitials(user: Pick<SessionUser, 'name' | 'role'> & Partial<Pick<SessionUser, 'firstName' | 'lastName'>>): string {
-  // Initials are taken from the account's own authoritative name parts whenever the backend
-  // supplies them, so a saved First/Last Name change updates the avatar at once. When a part is
-  // missing (an older record), the shared display name is used instead, and that already resolves
-  // the role label safely, so a nameless account still shows a sensible monogram.
+  // Prefer authoritative name parts so profile edits update initials immediately.
+  // Older records fall back to their display name or role.
   const parts = [user.firstName, user.lastName].map(part => part?.trim()).filter((part): part is string => !!part);
   const source = parts.length ? parts : sessionDisplayName(user).split(/\s+/).filter(Boolean);
   return source.slice(0, 2).map(part => part[0]).join('').toUpperCase();
@@ -99,7 +103,7 @@ async function refreshSession(): Promise<SessionUser> {
  * elsewhere cannot keep a session alive.
  *
  * @returns the session user.
- * @throws ApiError when the session is missing or has expired.
+ * @throws AuthRequestError when authentication fails or the server rejects the session.
  */
 export async function currentUser(): Promise<SessionUser> {
   // The token is attached inside request(), so an empty token still fails closed with a 401
@@ -145,7 +149,7 @@ export const completePasswordReset = (token: string, password: string) => reques
  * @param password - the account password.
  * @param rememberMe - keep the session across browser restarts.
  * @returns the signed-in user.
- * @throws ApiError when the credentials are rejected or the account is inactive.
+ * @throws AuthRequestError when credentials are rejected or the account is inactive.
  */
 export async function login(email: string, password: string, rememberMe = false): Promise<SessionUser> {
   clearSession();

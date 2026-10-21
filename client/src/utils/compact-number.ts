@@ -1,5 +1,10 @@
 const largeNumberSuffixes = ['', 'K', 'M', 'B', 'T'];
 const exactCurrencyFormatter = new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/**
+ * Fit finite values into KPI cards using the familiar K/M/B/T scale.
+ * @param value - Number to display.
+ * @returns Compact value, or an unavailable marker for non-finite input.
+ */
 export function formatCompactNumber(value: number) {
   if (!Number.isFinite(value)) return '—';
   const magnitude = Math.abs(value);
@@ -22,11 +27,21 @@ export function formatCompactNumber(value: number) {
   return value.toLocaleString('en-PH', { maximumFractionDigits: 1 });
 }
 
+/**
+ * Apply the peso symbol to a compact KPI value.
+ * @param value - Peso amount to display.
+ * @returns Compact currency or an unavailable marker.
+ */
 export function formatCompactPeso(value: number) {
   if (!Number.isFinite(value)) return '—';
   return `₱${formatCompactNumber(value)}`;
 }
 
+/**
+ * Keep monetary detail at two decimal places instead of compacting it.
+ * @param value - Peso amount to display.
+ * @returns Exact formatted currency.
+ */
 export function formatExactPeso(value: number) {
   return `₱${exactCurrencyFormatter.format(value)}`;
 }

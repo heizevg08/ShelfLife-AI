@@ -1,3 +1,4 @@
+/** Stored notification fields used to restore the local notification list. */
 export type NotificationItem = {
   id: string;
   title: string;
@@ -11,6 +12,11 @@ export type NotificationItem = {
   status?: string;
 };
 
+/**
+ * Reject malformed stored notifications before they reach the UI.
+ * @param value - Untrusted parsed storage value.
+ * @returns Whether the value has the required notification fields.
+ */
 export function isNotificationItem(value: unknown): value is NotificationItem {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const item = value as Record<string, unknown>;
@@ -21,6 +27,11 @@ export function isNotificationItem(value: unknown): value is NotificationItem {
     && typeof item.read === 'boolean';
 }
 
+/**
+ * Restore only a wholly valid notification list; discard corrupted storage.
+ * @param raw - JSON string from storage, or `null` when absent.
+ * @returns Valid notifications or an empty list.
+ */
 export function parseNotifications(raw: string | null): NotificationItem[] {
   if (!raw) return [];
   try {
