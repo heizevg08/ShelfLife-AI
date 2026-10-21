@@ -76,7 +76,11 @@ export const getAccount = (id: string) =>
   apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}`);
 
 export const createAccount = (fields: AccountFields & { personalEmail: string }) =>
-  apiClient<{ user: Account }>('/users', { method: 'POST', body: JSON.stringify(fields) });
+  apiClient<{ user: Account }>('/users', {
+    method: 'POST',
+    body: JSON.stringify(fields),
+    successMessage: 'Account created. Sign-in details sent to the personal email.',
+  });
 
 export const updateAccount = (id: string, fields: AccountFields) =>
   apiClient<{ user: Account }>(`/users/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(fields) });

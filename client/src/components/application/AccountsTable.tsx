@@ -163,7 +163,7 @@ export function AccountsTable() {
       const input = { firstName: fields.firstName.trim(), lastName: fields.lastName.trim(), email: fields.email.trim().toLowerCase(), role: assignedRole };
       if (mode === 'create') await createAccount({ ...input, personalEmail: fields.personalEmail.trim().toLowerCase() });
       else await updateAccount(selected!.id, input);
-      setMessage(mode === 'create' ? 'Account created. Sign-in details sent to the personal email.' : 'Account updated.');
+      setMessage(mode === 'create' ? '' : 'Account updated.');
       setMode(null); setFields(blank); setSelected(null); setRefresh(value => value + 1);
     } catch (error) {
       const details = error instanceof ApiError
