@@ -682,6 +682,12 @@ body:has(.sl-shell:has(.sl-manager-inventory-v119)) {
   margin-bottom: var(--sl-space-8);
   display: grid;
 }
+.sl-login-form-heading .sl-description {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.5;
+}
 .sl-login-form-panel form {
   gap: var(--sl-space-5);
   flex-direction: column;
