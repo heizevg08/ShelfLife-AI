@@ -68,7 +68,7 @@ test('isolated Mongo fixtures produce three truthful report contracts and an aud
   assert.equal(twoDays.rows.find(row => row[0] === '2026-10-13' && row[1] === ingredientId.toString())[4], 4);
   assert.equal(twoDays.rows.find(row => row[0] === '2026-10-14' && row[1] === ingredientId.toString() && row[3] === 'kg')[4], 13);
   const { Workbook } = (await import('@excel.js/exceljs')).default;
-  const generatedWorkbook = await reportWorkbook(service, reportQuery('usage-consumption', scope));
+  const generatedWorkbook = await reportWorkbook(service, reportQuery('usage-consumption', scope), new Date(), undefined, ['inventory-summary', 'usage-consumption', 'expiration-waste']);
   const openedWorkbook = new Workbook();
   await openedWorkbook.xlsx.load(generatedWorkbook.buffer);
   assert.deepEqual(openedWorkbook.worksheets.map(sheet => sheet.name), ['Inventory Summary', 'Usage & Consumption', 'Expiration & Waste']);

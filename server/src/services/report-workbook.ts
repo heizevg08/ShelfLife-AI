@@ -1,5 +1,5 @@
 import type { ReportExportService, ReportTable } from './report-export';
-import type { ReportId, ReportQuery } from '../validators/report';
+import { REPORT_IDS, type ReportId, type ReportQuery } from '../validators/report';
 
 type WorkbookField = { label: string; index?: number; mongoId?: true };
 type WorkbookSheet = { name: string; id: ReportId; ingredientIdIndex: number; fields: WorkbookField[] };
@@ -100,15 +100,13 @@ function reportTimestamp(value: Date) {
   }).format(value);
 }
 
-const CORE_REPORT_IDS = new Set<ReportId>(['inventory-summary', 'usage-consumption', 'expiration-waste']);
-
-export async function reportWorkbook(service: ReportExportService, period: ReportQuery, now = new Date(), selectedReport?: ReportId) {
+export async function reportWorkbook(service: ReportExportService, period: ReportQuery, now = new Date(), selectedReport?: ReportId, includedReportIds: readonly ReportId[] = REPORT_IDS) {
   const { Workbook } = (await import('@excel.js/exceljs')).default;
   const workbook = new Workbook();
   const tables: ReportTable[] = [];
   const selectedSheets = selectedReport
     ? sheets.filter(sheet => sheet.id === selectedReport)
-    : sheets.filter(sheet => CORE_REPORT_IDS.has(sheet.id));
+    : sheets.filter(sheet => includedReportIds.includes(sheet.id));
   for (const sheet of selectedSheets) {
     const query: ReportQuery = sheet.id === 'inventory-summary' ? { reportId: sheet.id } : { ...period, reportId: sheet.id };
     const table = await service.table(query, now);

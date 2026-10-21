@@ -6,6 +6,8 @@ const { createApp } = require('../dist/app');
 const { HttpError } = require('../dist/middleware/error.middleware');
 const internalId = 'a'.repeat(24);
 const missingInternalId = 'b'.repeat(24);
+const coreReportIds = ['inventory-summary', 'usage-consumption', 'expiration-waste'];
+const allReportIds = [...coreReportIds, 'demand-forecast', 'forecast-vs-actual', 'forecast-accuracy', 'expiration-risk', 'ai-insights-recommendations'];
 
 const tables = {
   'inventory-summary': { columns: ['Record Type', 'Generated At (PHT)', 'Ingredient ID', 'Ingredient', 'Category', 'Batch ID', 'Quantity On Hand', 'Unit', 'Expiration Date', 'Unit Cost (PHP)', 'Unit Cost Source', 'Inventory Value (PHP)', 'Valuation Status'], rows: [['BATCH', '2026-10-14 10:00:00', internalId, '=Rice', 'Dry', 'SL-1', 2, 'kg', '2026-10-20', 0, 'Batch', 0, 'Complete'], ['SUMMARY', '2026-10-14 10:00:00', null, null, null, null, null, null, null, null, null, 0, 'Complete']], dataRows: 1, empty: false },
@@ -14,13 +16,13 @@ const tables = {
 };
 const query = reportQuery('usage-consumption', { from: '2026-10-14', to: '2026-10-14' });
 const reports = {
-  table: async input => tables[input.reportId],
+  table: async input => tables[input.reportId] ?? { columns: [], rows: [], dataRows: 0, empty: true },
   auditWorkbook: async () => {},
 };
 
 test('combined workbook has valid ZIP, three worksheets, typed dates/numbers and safe text', async () => {
   const { Workbook } = (await import('@excel.js/exceljs')).default;
-  const result = await reportWorkbook(reports, query, new Date('2026-10-14T02:00:00Z'));
+  const result = await reportWorkbook(reports, query, new Date('2026-10-14T02:00:00Z'), undefined, coreReportIds);
   assert.equal(Buffer.from(result.buffer).subarray(0, 2).toString(), 'PK');
   assert.deepEqual(result.dataRows, [1, 1, 1]);
   assert.deepEqual(result.reports, [{ reportId: 'inventory-summary', dataRows: 1 }, { reportId: 'usage-consumption', dataRows: 1 }, { reportId: 'expiration-waste', dataRows: 1 }]);
@@ -89,12 +91,19 @@ test('workbook route denies non-report roles, audits before delivery and refuses
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type'), /spreadsheetml/);
   assert.match(response.headers.get('content-disposition'), /management-report-2026-10-14-2026-10-14.xlsx/);
-  assert.equal(Buffer.from(await response.arrayBuffer()).subarray(0, 2).toString(), 'PK');
-  assert.deepEqual(auditCalls[0], { reports: [{ reportId: 'inventory-summary', dataRows: 1 }, { reportId: 'usage-consumption', dataRows: 1 }, { reportId: 'expiration-waste', dataRows: 1 }], result: 'Success' });
+  const managerBuffer = Buffer.from(await response.arrayBuffer());
+  assert.equal(managerBuffer.subarray(0, 2).toString(), 'PK');
+  const { Workbook } = (await import('@excel.js/exceljs')).default;
+  const managerOpened = new Workbook();
+  await managerOpened.xlsx.load(managerBuffer);
+  assert.deepEqual(managerOpened.worksheets.map(sheet => sheet.name), [
+    'Inventory Summary', 'Usage & Consumption', 'Expiration & Waste', 'Demand Forecast',
+    'Forecast vs. Actual', 'Forecast Accuracy', 'Expiration Risk', 'AI Insights & Recommendations',
+  ]);
+  assert.deepEqual(auditCalls[0], { reports: allReportIds.map(reportId => ({ reportId, dataRows: coreReportIds.includes(reportId) ? 1 : 0 })), result: 'Success' });
   const individual = await fetch(individualUrl, { headers: { Authorization: 'Bearer manager' } });
   assert.equal(individual.status, 200);
   assert.match(individual.headers.get('content-disposition'), /expiration-waste-2026-10-14-2026-10-14\.xlsx/);
-  const { Workbook } = (await import('@excel.js/exceljs')).default;
   const openedIndividual = new Workbook();
   await openedIndividual.xlsx.load(Buffer.from(await individual.arrayBuffer()));
   assert.deepEqual(openedIndividual.worksheets.map(sheet => sheet.name), ['Expiration & Waste']);
@@ -104,7 +113,7 @@ test('workbook route denies non-report roles, audits before delivery and refuses
   assert.equal(failed.status, 500);
   assert.doesNotMatch(failed.headers.get('content-type'), /spreadsheetml/);
   assert.equal(auditCalls.at(-1).result, 'Failed');
-  assert.deepEqual(auditCalls.at(-1).reports, [{ reportId: 'inventory-summary', dataRows: 0 }, { reportId: 'usage-consumption', dataRows: 0 }, { reportId: 'expiration-waste', dataRows: 0 }]);
+  assert.deepEqual(auditCalls.at(-1).reports, allReportIds.map(reportId => ({ reportId, dataRows: 0 })));
   const failedIndividual = await fetch(individualUrl, { headers: { Authorization: 'Bearer manager' } });
   assert.equal(failedIndividual.status, 500);
   assert.equal(auditCalls.at(-1).result, 'Failed');
@@ -113,6 +122,9 @@ test('workbook route denies non-report roles, audits before delivery and refuses
   const adminWorkbook = await fetch(url, { headers: { Authorization: 'Bearer Admin' } });
   assert.equal(adminWorkbook.status, 200);
   assert.match(adminWorkbook.headers.get('content-disposition'), /management-report-2026-10-14-2026-10-14.xlsx/);
+  const adminOpened = new Workbook();
+  await adminOpened.xlsx.load(Buffer.from(await adminWorkbook.arrayBuffer()));
+  assert.deepEqual(adminOpened.worksheets.map(sheet => sheet.name), ['Inventory Summary', 'Usage & Consumption', 'Expiration & Waste']);
   assert.equal(lastActor.role, 'Admin');
   const adminIndividual = await fetch(individualUrl, { headers: { Authorization: 'Bearer Admin' } });
   assert.equal(adminIndividual.status, 200);
@@ -137,7 +149,7 @@ test('individual XLSX route audits its own report and rejects an invalid report/
 test('any oversized worksheet rejects the entire workbook without truncation', async () => {
   for (const oversized of ['inventory-summary', 'usage-consumption', 'expiration-waste']) {
     const service = { table: async input => { if (input.reportId === oversized) { const error = new Error('Narrow the report'); error.status = 413; throw error; } return tables[input.reportId]; } };
-    await assert.rejects(reportWorkbook(service, query), error => error.status === 413);
+    await assert.rejects(reportWorkbook(service, query, new Date(), undefined, coreReportIds), error => error.status === 413);
     await assert.rejects(reportWorkbook(service, query, new Date(), oversized), error => error.status === 413);
   }
 });

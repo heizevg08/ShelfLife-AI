@@ -4,7 +4,7 @@ import { authenticate } from '../middleware/auth.middleware';
 import { AdministrationError, authorizeAdministration } from '../middleware/administration.middleware';
 import { HttpError } from '../middleware/error.middleware';
 import { mongoInputGuard } from '../middleware/request-security.middleware';
-import { reportQuery, type ReportId, FORECAST_REPORT_IDS } from '../validators/report';
+import { reportQuery, type ReportId, CORE_REPORT_IDS, FORECAST_REPORT_IDS, REPORT_IDS } from '../validators/report';
 import type { ReportExportService } from '../services/report-export';
 import { reportWorkbook } from '../services/report-workbook';
 
@@ -51,11 +51,15 @@ export function reportRoutes(auth: AuthService, service: ReportExportService) {
       return;
     }
     const actor = { id: res.locals.user.id as string, name: `${res.locals.user.firstName ?? ''} ${res.locals.user.lastName ?? ''}`.trim(), role: (res.locals.user.role === 'Admin' ? 'Admin' : 'Manager') as 'Admin' | 'Manager' };
+    const includedReportIds = role === 'Admin' ? CORE_REPORT_IDS : REPORT_IDS;
+    const includedReportIdSet: ReadonlySet<ReportId> = new Set(includedReportIds);
     const requestedReports = selectedReport
       ? [{ reportId: query.reportId, dataRows: 0 }]
-      : ['inventory-summary', 'usage-consumption', 'expiration-waste'].map(reportId => ({ reportId: reportId as ReportId, dataRows: 0 }));
+      : (['inventory-summary', 'usage-consumption', 'expiration-waste', ...FORECAST_REPORT_IDS] as ReportId[])
+        .filter(reportId => includedReportIdSet.has(reportId))
+        .map(reportId => ({ reportId, dataRows: 0 }));
     try {
-      const result = await reportWorkbook(service, query, new Date(), selectedReport ? query.reportId : undefined);
+      const result = await reportWorkbook(service, query, new Date(), selectedReport ? query.reportId : undefined, includedReportIds);
       await service.auditWorkbook(actor, query, result.reports, 'Success');
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       const filename = selectedReport
