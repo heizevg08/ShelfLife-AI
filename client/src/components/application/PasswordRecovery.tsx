@@ -1,5 +1,5 @@
 import { DataState, Status } from './primitives';
-import { Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, CircleAlert, Eye, EyeOff, Info } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { completePasswordReset, recoveryAvailability, requestPasswordReset } from '../../services/auth';
 
@@ -8,6 +8,7 @@ export function PasswordRecovery({ token }: { token?: string }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [fieldError, setFieldError] = useState('');
@@ -62,11 +63,12 @@ export function PasswordRecovery({ token }: { token?: string }) {
       </div>
       {fieldError ? <p id="sl-recovery-field-error" role="alert" className="sl-field-error">{fieldError}</p> : <p id="sl-reset-help" className="sl-supporting">Use at least 12 characters.</p>}
     </div>
-      : <div className="sl-field"><label htmlFor="sl-recovery-email">Email</label><input ref={field} id="sl-recovery-email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={event => { setEmail(event.target.value); setFieldError(''); setError(''); setMessage(''); }} disabled={pending} aria-invalid={!!fieldError} aria-describedby={fieldError ? 'sl-recovery-field-error' : undefined} />
-        {fieldError && <p id="sl-recovery-field-error" role="alert" className="sl-field-error">{fieldError}</p>}
+      : <div className="sl-field"><label htmlFor="sl-recovery-email">Email</label><input ref={field} id="sl-recovery-email" type="email" autoComplete="email" required maxLength={254} value={email} onFocus={() => setEmailFocused(true)} onBlur={() => setEmailFocused(false)} onChange={event => { setEmail(event.target.value); setFieldError(''); setError(''); setMessage(''); }} disabled={pending} aria-invalid={!!fieldError} aria-describedby={fieldError ? 'sl-recovery-field-error' : emailFocused && !message ? 'sl-recovery-email-hint' : undefined} />
+        {fieldError ? <p id="sl-recovery-field-error" role="alert" className="sl-field-error">{fieldError}</p>
+          : emailFocused && !message && <p id="sl-recovery-email-hint" className="sl-first-login-password-hint"><Info size={16} aria-hidden="true" />Use your ShelfLife AI sign-in email or registered personal email.</p>}
       </div>}
-    {error && <p role="alert" className="sl-field-error">{error}</p>}
-    {message && <p role="status">{message}</p>}
+    {error && <p role="alert" className="sl-inline-notice sl-inline-notice-error"><CircleAlert size={18} aria-hidden="true" />{error}</p>}
+    {message && <p role="status" className="sl-inline-notice sl-inline-notice-success"><CheckCircle2 size={18} aria-hidden="true" />{message}</p>}
       <button className="sl-button sl-button-primary" disabled={pending}>{pending ? 'Please wait...' : token ? 'Reset password' : 'Request recovery'}</button>
   </form>;
 }

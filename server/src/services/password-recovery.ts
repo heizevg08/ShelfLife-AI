@@ -12,7 +12,7 @@ export interface RecoveryStore extends UserStore {
   consumeReset(hash: string, now: Date, passwordHash: string): Promise<boolean>;
   clearReset(hash: string): Promise<unknown>;
 }
-const generic = { message: 'If the account is eligible, recovery instructions will be requested. Check your inbox.' };
+const generic = { message: 'If an eligible account exists, check its registered email for recovery instructions.' };
 export function createPasswordRecovery(store: RecoveryStore, email?: ResetEmail, now = () => new Date()) {
   return {
     available: !!email,
