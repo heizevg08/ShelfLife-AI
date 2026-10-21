@@ -89,6 +89,21 @@ export function listInventoryBatches(
 }
 
 /**
+ * Load every batch page for inventory-wide dashboard calculations.
+ * @param signal - Cancels remaining requests when the dashboard unmounts.
+ * @returns All returned batches in server order.
+ * @throws ApiError when any batch page cannot be loaded.
+ */
+export async function listAllInventoryBatches(signal?: AbortSignal): Promise<InventoryBatch[]> {
+  const items: InventoryBatch[] = [];
+  for (let page = 1; ; page += 1) {
+    const result = await listInventoryBatches({ page, pageSize: 150 }, signal);
+    items.push(...result.items);
+    if (result.items.length === 0 || items.length >= result.total) return items;
+  }
+}
+
+/**
  * Headline counts, values and category totals for the inventory screens.
  *
  * @returns the inventory summary.

@@ -10,7 +10,7 @@ import { accountSummary, type DashboardSummary } from '../../services/administra
 import { getGeneralForecastAccuracy, listIngredientCategories, listIngredients, type ForecastAccuracyResponse } from '../../services/ingredients';
 import { AuditTable } from '../application/AuditTable';
 import { sessionDisplayName } from '../../services/auth';
-import { getInventoryBatchSummary, listInventoryBatches, type InventoryBatch } from '../../services/inventory-batches';
+import { getInventoryBatchSummary, listAllInventoryBatches, listInventoryBatches, type InventoryBatch } from '../../services/inventory-batches';
 import { changeRequestStatusLabel, changeRequestTypeLabel, getChangeRequest, listChangeRequests, type ChangeRequest } from '../../services/change-requests';
 import { getUsageSummary, type UsageSummary } from '../../services/usage-records';
 import { formatDate } from '../../utils/date-time';
@@ -164,13 +164,13 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     Promise.all([
       getInventoryBatchSummary(controller.signal),
       listInventoryBatches({ page: 1, pageSize: 5, status: 'Near Expiry', sort: 'fefo' }, controller.signal),
-      listInventoryBatches({ page: 1, pageSize: 150 }, controller.signal),
+      listAllInventoryBatches(controller.signal),
     ])
       .then(([nextSummary, records, allRecords]) => {
         if (!controller.signal.aborted) {
           setSummary(nextSummary);
           setExpirations(records.items);
-          setAllBatches(allRecords.items);
+          setAllBatches(allRecords);
         }
       })
       .catch(() => { if (!controller.signal.aborted) setInventoryError(true); });
@@ -208,11 +208,11 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     if (!allBatches) return null;
     const today = businessDateInputValue();
     const days = Array.from({ length: 7 }, (_, i) => {
-      const dateStr = shiftBusinessDate(today, i);
+      const dateStr = shiftBusinessDate(today, i + 1);
       const d = new Date(`${dateStr}T00:00:00Z`);
       const label = new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(d);
-      const matchingBatches = allBatches.filter(b => b.expirationDate.slice(0, 10) === dateStr && b.quantity > 0);
-      const severity: 'High' | 'Medium' = i <= 3 ? 'High' : 'Medium';
+      const matchingBatches = allBatches.filter(b => b.expirationDate.slice(0, 10) === dateStr && b.displayStatus === 'Near Expiry');
+      const severity: 'High' | 'Medium' = i < 3 ? 'High' : 'Medium';
       return {
         date: dateStr,
         label,
@@ -227,7 +227,7 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
     const expiringBatches = allBatches
       .filter(b => {
         const d = b.expirationDate.slice(0, 10);
-        return d >= today && d <= shiftBusinessDate(today, 6) && b.quantity > 0;
+        return d > today && d <= shiftBusinessDate(today, 7) && b.displayStatus === 'Near Expiry';
       })
       .sort((a, b) => a.expirationDate.localeCompare(b.expirationDate));
 
@@ -236,29 +236,24 @@ function ManagerDashboardContent({ userName }: { userName: string }) {
       const uniqueIngredients: { name: string; date: string }[] = [];
       for (const b of expiringBatches) {
         const d = new Date(`${b.expirationDate.slice(0, 10)}T00:00:00Z`);
-        const dayLabel = String(d.getUTCDate());
+        const dateLabel = new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(d);
         const ingName = formatHumanReadableText(b.ingredient.name);
         if (!uniqueIngredients.some(u => u.name === ingName)) {
-          uniqueIngredients.push({ name: ingName, date: dayLabel });
+          uniqueIngredients.push({ name: ingName, date: dateLabel });
         }
       }
       if (uniqueIngredients.length >= 2) {
         const d1 = uniqueIngredients[0].date;
         const d2 = uniqueIngredients[1].date;
-        const month = new Intl.DateTimeFormat('en-PH', { month: 'short', timeZone: 'UTC' }).format(
-          new Date(`${expiringBatches[0].expirationDate.slice(0, 10)}T00:00:00Z`)
-        );
         calloutText = (
           <>
-            Use <strong>{uniqueIngredients[0].name}</strong> and <strong>{uniqueIngredients[1].name}</strong> first. They expire on {d1} and {d2} {month}.
+            Review <strong>{uniqueIngredients[0].name}</strong> and <strong>{uniqueIngredients[1].name}</strong> first. Their batches expire on {d1} and {d2}.
           </>
         );
       } else if (uniqueIngredients.length === 1) {
-        const d = new Date(`${expiringBatches[0].expirationDate.slice(0, 10)}T00:00:00Z`);
-        const formattedDate = new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(d);
         calloutText = (
           <>
-            Use <strong>{uniqueIngredients[0].name}</strong> first. It expires on {formattedDate}.
+            Review <strong>{uniqueIngredients[0].name}</strong> first. Its earliest batch expires on {uniqueIngredients[0].date}.
           </>
         );
       }
