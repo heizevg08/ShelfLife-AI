@@ -20,10 +20,10 @@ export function createSmtpMailTransport(env: NodeJS.ProcessEnv, createTransport:
   const host = safeHeader(env.SMTP_HOST);
   const user = safeHeader(env.SMTP_USER);
   const configuredPass = env.SMTP_PASS;
-  // Google displays app passwords in four groups separated by spaces. Those spaces
-  // are for readability and must not be included in SMTP authentication.
+  // Google displays app passwords in four groups separated by spaces.
+  const strippedPass = configuredPass ? configuredPass.replace(/\s+/g, '') : undefined;
   const pass = (host?.toLowerCase() === 'smtp.gmail.com' || host?.toLowerCase().startsWith('https://script.google.com/'))
-    ? configuredPass?.replace(/\s+/g, '')
+    ? strippedPass
     : configuredPass;
   const fromAddress = safeHeader(env.MAIL_FROM) ?? user;
   const fromName = safeHeader(env.SMTP_FROM_NAME) ?? 'ShelfLife AI';
@@ -32,27 +32,40 @@ export function createSmtpMailTransport(env: NodeJS.ProcessEnv, createTransport:
   if (host.toLowerCase().startsWith('https://')) {
     return {
       async send(message) {
-        const response = await fetch(host, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          redirect: 'follow',
-          body: JSON.stringify({
-            secret: pass,
-            user,
-            fromName,
-            fromAddress,
-            to: message.to,
-            subject: message.subject,
-            text: message.text,
-          }),
-          signal: AbortSignal.timeout(15000),
-        });
-        const body = (await response.text().catch(() => '')).trim();
-        if (!response.ok || /^unauthorized$/i.test(body) || /^error:/i.test(body)) {
-          const err = new Error(body || `HTTPS mail relay failed with status ${response.status}`) as Error & { code?: string };
-          if (response.status === 401 || response.status === 403 || /^unauthorized$/i.test(body)) err.code = 'EAUTH';
-          throw err;
+        // Try pass (stripped for Google Apps Script / Gmail) and raw configuredPass if different
+        const candidates = [pass];
+        if (configuredPass && configuredPass !== pass) candidates.push(configuredPass);
+
+        let lastBody = '';
+        let lastStatus = 500;
+
+        for (const candidate of candidates) {
+          const response = await fetch(host, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            redirect: 'follow',
+            body: JSON.stringify({
+              secret: candidate,
+              user,
+              fromName,
+              fromAddress,
+              to: message.to,
+              subject: message.subject,
+              text: message.text,
+            }),
+            signal: AbortSignal.timeout(15000),
+          });
+          const body = (await response.text().catch(() => '')).trim();
+          if (response.ok && !/^unauthorized$/i.test(body) && !/^error:/i.test(body)) {
+            return;
+          }
+          lastBody = body;
+          lastStatus = response.status;
         }
+
+        const err = new Error(lastBody || `HTTPS mail relay failed with status ${lastStatus}`) as Error & { code?: string };
+        if (lastStatus === 401 || lastStatus === 403 || /^unauthorized$/i.test(lastBody)) err.code = 'EAUTH';
+        throw err;
       },
     };
   }
