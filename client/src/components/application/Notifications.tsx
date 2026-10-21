@@ -192,6 +192,12 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
   const stockItems = items.filter(item => item.kind === 'stock');
   const securityItems = items.filter(item => item.kind === 'security');
   const systemItems = items.filter(item => item.kind === 'system');
+  // Category tabs report how much of their group is still unread, so marking everything as read clears them too.
+  const unreadIn = (list: NotificationItem[]) => list.filter(item => !item.read).length;
+  const requestUnread = unreadIn(requests);
+  const stockUnread = unreadIn(stockItems);
+  const securityUnread = unreadIn(securityItems);
+  const systemUnread = unreadIn(systemItems);
   const visibleItems = filter === 'unread' ? items.filter(item => !item.read)
     : filter === 'requests' ? requests
     : filter === 'stock' ? stockItems
@@ -262,17 +268,17 @@ export function Notifications({ open, onChange }: { open: boolean; onChange: (op
         </button>
         {role === 'Super Admin' ? <>
           <button type="button" role="tab" aria-selected={filter === 'security'} className={filter === 'security' ? 'is-active' : ''} onClick={() => setFilter('security')}>
-            Security <small>{securityItems.length > 9 ? '9+' : securityItems.length}</small>
+            Security <small>{securityUnread > 9 ? '9+' : securityUnread}</small>
           </button>
           <button type="button" role="tab" aria-selected={filter === 'system'} className={filter === 'system' ? 'is-active' : ''} onClick={() => setFilter('system')}>
-            System <small>{systemItems.length > 9 ? '9+' : systemItems.length}</small>
+            System <small>{systemUnread > 9 ? '9+' : systemUnread}</small>
           </button>
         </> : <>
           <button type="button" role="tab" aria-selected={filter === 'requests'} className={filter === 'requests' ? 'is-active' : ''} onClick={() => setFilter('requests')}>
-            Requests <small>{requests.length > 9 ? '9+' : requests.length}</small>
+            Requests <small>{requestUnread > 9 ? '9+' : requestUnread}</small>
           </button>
           <button type="button" role="tab" aria-selected={filter === 'stock'} className={filter === 'stock' ? 'is-active' : ''} onClick={() => setFilter('stock')}>
-            Stock <small>{stockItems.length > 9 ? '9+' : stockItems.length}</small>
+            Stock <small>{stockUnread > 9 ? '9+' : stockUnread}</small>
           </button>
         </>}
       </div>
