@@ -744,6 +744,16 @@ body:has(.sl-shell:has(.sl-manager-inventory-v119)) {
   background: var(--sl-surface-subtle);
   color: var(--sl-text);
 }
+.sl-first-login-password-hint {
+  align-items: center;
+  gap: var(--sl-space-2);
+  color: var(--sl-muted);
+  display: flex;
+  font: var(--sl-font-supporting);
+}
+.sl-first-login-password-hint svg {
+  flex: none;
+}
 .sl-field-error {
   color: var(--sl-critical);
   font: var(--sl-font-supporting);

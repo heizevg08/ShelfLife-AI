@@ -1,5 +1,5 @@
 import { useRouter } from '../routing/navigation';
-import { Eye, EyeOff, LoaderCircle, LogIn, TriangleAlert } from 'lucide-react';
+import { Eye, EyeOff, FileText, Info, LoaderCircle, LogIn, TriangleAlert } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Brand } from '../components/application/Brand';
 import { Dialog } from '../components/application/Dialog';
@@ -59,11 +59,25 @@ export default function ShelfLifeLogin() {
   const [firstLogin, setFirstLogin] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [newPasswordFocused, setNewPasswordFocused] = useState(false);
+  const [newPasswordTouched, setNewPasswordTouched] = useState(false);
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+  const newPasswordInput = useRef<HTMLInputElement>(null);
+  const confirmPasswordInput = useRef<HTMLInputElement>(null);
   const [passwordChanged, setPasswordChanged] = useState(false);
   const [termsReached, setTermsReached] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsAttempted, setTermsAttempted] = useState(false);
   const [showFirstLoginTerms, setShowFirstLoginTerms] = useState(false);
   const errorSummary = useRef<HTMLDivElement>(null);
+  const newPasswordError = newPasswordTouched && newPassword.length < 12
+    ? newPassword ? 'Use at least 12 characters.' : 'Enter a new password.'
+    : undefined;
+  const confirmPasswordError = confirmPasswordTouched
+    ? !confirmPassword ? 'Confirm your new password.' : newPassword !== confirmPassword ? 'The new passwords do not match.' : undefined
+    : undefined;
   useEffect(() => { if (errors.auth) errorSummary.current?.focus(); }, [errors.auth]);
   useEffect(() => {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('reset');
@@ -130,9 +144,12 @@ export default function ShelfLifeLogin() {
   const handleFirstPasswordChange = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting.current) return;
-    if (!termsAccepted) { setErrors({ auth: 'Accept the Terms and Privacy Policy to activate your account.' }); return; }
-    if (newPassword.length < 12) { setErrors({ auth: 'Use at least 12 characters for your new password.' }); return; }
-    if (newPassword !== confirmPassword) { setErrors({ auth: 'The new passwords do not match.' }); return; }
+    setNewPasswordTouched(true);
+    setConfirmPasswordTouched(true);
+    setTermsAttempted(true);
+    if (newPassword.length < 12) { newPasswordInput.current?.focus(); return; }
+    if (newPassword !== confirmPassword) { confirmPasswordInput.current?.focus(); return; }
+    if (!termsAccepted) return;
     submitting.current = true;
     setIsLoading(true);
     setErrors({});
@@ -154,7 +171,7 @@ export default function ShelfLifeLogin() {
     onReachBottom={() => setTermsReached(true)}
     onAcceptedChange={setTermsAccepted}
     onBack={() => setShowFirstLoginTerms(false)}
-    onContinue={() => { setTermsAccepted(true); setShowFirstLoginTerms(false); setErrors({}); }}
+    onContinue={() => { setTermsAccepted(true); setTermsAttempted(false); setShowFirstLoginTerms(false); setErrors({}); }}
   />;
 
   return (
@@ -172,18 +189,55 @@ export default function ShelfLifeLogin() {
         <section className="sl-login-form-panel" aria-labelledby="sl-login-title">
           <div className="sl-login-form-heading">
             <h1 id="sl-login-title" className="sl-page-title">{firstLogin ? 'Set your new password' : 'Welcome Back!'}</h1>
-            <p className="sl-description">{firstLogin ? 'Choose a personal password to activate your account and continue.' : passwordChanged ? 'Your password has been changed. Sign in using your new password.' : 'Please enter your login details below.'}</p>
+            <p className="sl-description">{firstLogin ? 'Welcome to ShelfLife AI! Choose a personal password to activate your account.' : passwordChanged ? 'Your password has been changed. Sign in using your new password.' : 'Please enter your login details below.'}</p>
           </div>
           {firstLogin ? <form noValidate onSubmit={handleFirstPasswordChange} aria-labelledby="sl-login-title" aria-busy={isLoading}>
             {errors.auth && <div tabIndex={-1} className="sl-form-error" role="alert"><TriangleAlert size={18} aria-hidden="true" /><p>{errors.auth}</p></div>}
-            <div className="sl-field"><label htmlFor="sl-new-password">New password</label><input id="sl-new-password" type="password" autoComplete="new-password" maxLength={128} value={newPassword} disabled={isLoading} onChange={event => { setNewPassword(event.target.value); setErrors({}); }} /></div>
-            <div className="sl-field"><label htmlFor="sl-confirm-password">Confirm new password</label><input id="sl-confirm-password" type="password" autoComplete="new-password" maxLength={128} value={confirmPassword} disabled={isLoading} onChange={event => { setConfirmPassword(event.target.value); setErrors({}); }} /></div>
-            <p className="sl-password-feedback sl-field-attention">Use at least 12 characters. You must change this password before you can access ShelfLife AI.</p>
+            <div className="sl-field">
+              <label htmlFor="sl-new-password">New password</label>
+              <div className="sl-password-field">
+                <input id="sl-new-password" ref={newPasswordInput} type={showNewPassword ? 'text' : 'password'} autoComplete="new-password" maxLength={128}
+                  aria-invalid={!!newPasswordError} aria-describedby={newPasswordError ? 'sl-new-password-error' : newPasswordFocused ? 'sl-new-password-hint' : undefined}
+                  value={newPassword} disabled={isLoading} onFocus={() => setNewPasswordFocused(true)}
+                  onBlur={() => { setNewPasswordFocused(false); setNewPasswordTouched(true); }}
+                  onChange={event => { setNewPassword(event.target.value); setErrors({}); }} />
+                <button className="sl-password-toggle" type="button" disabled={isLoading}
+                  aria-label={showNewPassword ? 'Hide new password' : 'Show new password'} aria-controls="sl-new-password"
+                  onClick={() => setShowNewPassword(value => !value)}>
+                  {showNewPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
+                </button>
+              </div>
+              {newPasswordError
+                ? <p className="sl-field-error" id="sl-new-password-error" role="alert">{newPasswordError}</p>
+                : newPasswordFocused && <p className="sl-first-login-password-hint" id="sl-new-password-hint"><Info size={16} aria-hidden="true" />Use at least 12 characters.</p>}
+            </div>
+            <div className="sl-field">
+              <label htmlFor="sl-confirm-password">Confirm new password</label>
+              <div className="sl-password-field">
+                <input id="sl-confirm-password" ref={confirmPasswordInput} type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" maxLength={128}
+                  aria-invalid={!!confirmPasswordError} aria-describedby={confirmPasswordError ? 'sl-confirm-password-error' : undefined}
+                  value={confirmPassword} disabled={isLoading} onBlur={() => setConfirmPasswordTouched(true)}
+                  onChange={event => { setConfirmPassword(event.target.value); setErrors({}); }} />
+                <button className="sl-password-toggle" type="button" disabled={isLoading}
+                  aria-label={showConfirmPassword ? 'Hide confirmed password' : 'Show confirmed password'} aria-controls="sl-confirm-password"
+                  onClick={() => setShowConfirmPassword(value => !value)}>
+                  {showConfirmPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
+                </button>
+              </div>
+              {confirmPasswordError && <p className="sl-field-error" id="sl-confirm-password-error" role="alert">{confirmPasswordError}</p>}
+            </div>
             <section className="sl-first-login-policy-link" aria-labelledby="sl-first-login-policy-title">
-              <div><h2 id="sl-first-login-policy-title">Terms and Privacy Policy</h2><p>{termsAccepted ? 'You accepted the policy. You can return to review it.' : 'Review and accept the policy before setting your password.'}</p></div>
-              <button type="button" onClick={() => setShowFirstLoginTerms(true)} disabled={isLoading}>{termsAccepted ? 'Review policy' : 'Read and accept'}</button>
+              <span className="sl-first-login-policy-icon" aria-hidden="true"><FileText size={24} /></span>
+              <div className="sl-first-login-policy-copy"><h2 id="sl-first-login-policy-title">Terms and Privacy Policy</h2><p>{termsAccepted ? 'You accepted the policy. You can return to review it.' : 'Please read and accept before you continue.'}</p></div>
+              <button type="button" onClick={() => setShowFirstLoginTerms(true)} disabled={isLoading}
+                aria-describedby={termsAttempted && !termsAccepted ? 'sl-first-login-policy-error' : undefined}>
+                {termsAccepted ? 'Review policy' : 'Read and accept'}
+              </button>
             </section>
-            <button className="sl-button sl-button-primary sl-login-submit" type="submit" disabled={isLoading || !termsAccepted}><span>{isLoading ? 'Updating...' : 'Set new password'}</span></button>
+            {termsAttempted && !termsAccepted && <p className="sl-first-login-policy-error" id="sl-first-login-policy-error" role="alert">
+              <TriangleAlert size={16} aria-hidden="true" />Read and accept the Terms and Privacy Policy before setting your password.
+            </p>}
+            <button className="sl-button sl-button-primary sl-login-submit" type="submit" disabled={isLoading}><span>{isLoading ? 'Updating...' : 'Set new password'}</span></button>
           </form> : <form noValidate onSubmit={handleSubmit} aria-labelledby="sl-login-title" aria-describedby={errors.auth ? 'sl-auth-error' : undefined} aria-busy={isLoading}>
             {errors.auth && <div ref={errorSummary} tabIndex={-1} id="sl-auth-error" className="sl-form-error" role="alert"><TriangleAlert size={18} aria-hidden="true" /><p>{errors.auth}</p></div>}
             <div className="sl-field">

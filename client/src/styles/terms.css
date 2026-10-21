@@ -100,11 +100,14 @@
 .sl-first-login-policy-link button:hover, .sl-first-login-terms-header button:hover, .sl-first-login-terms-secondary:hover { background: #edf5ee; }
 .sl-first-login-policy-link button:disabled { opacity: .55; cursor: not-allowed; }
 .sl-login-first-setup .sl-login-form-heading .sl-description { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.5; }
-.sl-login-first-setup .sl-first-login-policy-link { gap: 16px; margin: 4px 0 0; padding: 16px; }
-.sl-login-first-setup .sl-first-login-policy-link > div { min-width: 0; }
+.sl-login-first-setup .sl-first-login-policy-link { gap: 16px; margin: 4px 0 0; padding: 16px; border-color: #e5e1d4; border-radius: 20px; background: #faf9f5; }
+.sl-login-first-setup .sl-first-login-policy-icon { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 14px; color: var(--sl-brand); background: #e2f4e9; }
+.sl-login-first-setup .sl-first-login-policy-copy { min-width: 0; flex: 1; }
 .sl-login-first-setup .sl-first-login-policy-link h2 { margin-bottom: 4px; font-size: 16px; line-height: 1.4; }
 .sl-login-first-setup .sl-first-login-policy-link p { font-size: 14px; line-height: 1.5; }
-.sl-login-first-setup .sl-first-login-policy-link button { flex: 0 0 auto; min-height: 44px; padding: 0 16px; font-size: 14px; }
+.sl-login-first-setup .sl-first-login-policy-link button { flex: 0 0 auto; min-height: 44px; padding: 0 16px; border-color: #328458; border-radius: 12px; font-size: 14px; }
+.sl-first-login-policy-error { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--sl-critical); font: var(--sl-font-supporting); }
+.sl-first-login-policy-error svg { flex: 0 0 auto; margin-top: 2px; }
 .sl-first-login-terms-page { padding: 0 clamp(18px, 5vw, 72px) 48px; background: #f5f7f3; }
 .sl-first-login-terms-header { display: flex; align-items: center; justify-content: space-between; max-width: 1100px; min-height: 76px; margin: 0 auto; border-bottom: 1px solid #e1e8e0; }
 .sl-first-login-terms-header > div { max-width: 190px; }
@@ -120,6 +123,8 @@
   .sl-first-login-terms-header { min-height: 64px; }
   .sl-first-login-terms-main { margin-top: 24px; }
   .sl-first-login-policy-link { align-items: flex-start; flex-direction: column; }
+  .sl-login-first-setup .sl-first-login-policy-link { flex-direction: row; flex-wrap: wrap; }
+  .sl-login-first-setup .sl-first-login-policy-link button { margin-left: 64px; }
   .sl-first-login-policy-full { height: 50vh; min-height: 220px; }
   .sl-first-login-terms-actions { flex-direction: column-reverse; }
   .sl-first-login-terms-actions > * { width: 100%; }
