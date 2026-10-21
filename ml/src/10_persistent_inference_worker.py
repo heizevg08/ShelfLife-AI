@@ -1,4 +1,4 @@
-﻿"""Persistent JSON-lines inference worker for ShelfLife AI.
+"""Persistent JSON-lines inference worker for ShelfLife AI.
 
 The worker loads and validates the selected forecasting artifact once at
 startup, then serves multiple inference requests through stdin/stdout.
@@ -17,22 +17,26 @@ from typing import Any
 
 import pandas as pd
 
-
 ML_ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_PATH = ML_ROOT / "src" / "09_selected_model_inference.py"
 
 
 def load_runtime_module():
-    """Load the validated selected-model runtime module."""
+    """Load the selected runtime without importing a numeric module name.
+
+    Returns:
+        Loaded inference runtime module.
+
+    Raises:
+        RuntimeError: The module cannot be resolved from its file path.
+    """
     spec = importlib.util.spec_from_file_location(
         "selected_model_inference",
         RUNTIME_PATH,
     )
 
     if spec is None or spec.loader is None:
-        raise RuntimeError(
-            f"Unable to load inference runtime: {RUNTIME_PATH}"
-        )
+        raise RuntimeError(f"Unable to load inference runtime: {RUNTIME_PATH}")
 
     runtime = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runtime)
@@ -40,40 +44,48 @@ def load_runtime_module():
 
 
 def initialize_worker(runtime):
-    """Load and validate metadata and model exactly once."""
+    """Reject an untrusted artifact before accepting worker requests.
+
+    Args:
+        runtime: Loaded selected-model runtime module.
+
+    Returns:
+        Validated fitted estimator.
+
+    Raises:
+        RuntimeError: Metadata or estimator checks fail.
+    """
     metadata = runtime.load_artifact_metadata()
     metadata_checks = runtime.validate_metadata_contract(metadata)
 
     if not all(metadata_checks.values()):
-        failed = [
-            name
-            for name, passed in metadata_checks.items()
-            if not passed
-        ]
+        failed = [name for name, passed in metadata_checks.items() if not passed]
         raise RuntimeError(
-            "Persisted model metadata failed the worker contract: "
-            f"{failed}"
+            "Persisted model metadata failed the worker contract: " f"{failed}"
         )
 
     model = runtime.load_selected_model()
     model_checks = runtime.validate_loaded_model_contract(model)
 
     if not all(model_checks.values()):
-        failed = [
-            name
-            for name, passed in model_checks.items()
-            if not passed
-        ]
-        raise RuntimeError(
-            "Persisted model failed the worker contract: "
-            f"{failed}"
-        )
+        failed = [name for name, passed in model_checks.items() if not passed]
+        raise RuntimeError("Persisted model failed the worker contract: " f"{failed}")
 
     return model
 
 
 def build_history_frame(history: Any) -> pd.DataFrame:
-    """Convert protocol history into the single-series operational representation."""
+    """Accept only array history before constructing one operational series.
+
+    Args:
+        history: Untrusted JSON history value.
+
+    Returns:
+        DataFrame passed to the validated runtime.
+
+    Raises:
+        ValueError: History is not a JSON array.
+    """
     if not isinstance(history, list):
         raise ValueError("history must be an array.")
 
@@ -81,7 +93,19 @@ def build_history_frame(history: Any) -> pd.DataFrame:
 
 
 def process_request(runtime, model, payload: Any) -> dict[str, Any]:
-    """Process one JSON request without reloading the model."""
+    """Use the resident model for one bounded JSON-lines request.
+
+    Args:
+        runtime: Validated inference runtime module.
+        model: Resident fitted estimator.
+        payload: Untrusted decoded JSON request.
+
+    Returns:
+        Request-correlated predictions for the protocol response.
+
+    Raises:
+        ValueError: Required request fields are missing or malformed.
+    """
     if not isinstance(payload, dict):
         raise ValueError("Request payload must be a JSON object.")
 
@@ -115,9 +139,7 @@ def process_request(runtime, model, payload: Any) -> dict[str, Any]:
         predictions.append(
             {
                 "date": pd.Timestamp(row["dt"]).date().isoformat(),
-                "predictedConsumption": float(
-                    row["predicted_consumption"]
-                ),
+                "predictedConsumption": float(row["predicted_consumption"]),
             }
         )
 
@@ -129,7 +151,14 @@ def process_request(runtime, model, payload: Any) -> dict[str, Any]:
 
 
 def write_message(message: dict[str, Any]) -> None:
-    """Write exactly one protocol message to stdout."""
+    """Reserve stdout for one compact, finite JSON protocol message.
+
+    Args:
+        message: Ready or request-result payload.
+
+    Raises:
+        ValueError: The payload contains a non-finite number.
+    """
     sys.stdout.write(
         json.dumps(
             message,
@@ -142,7 +171,11 @@ def write_message(message: dict[str, Any]) -> None:
 
 
 def main() -> int:
-    """Initialize once, then serve JSON-lines requests until stdin closes."""
+    """Initialize once and keep diagnostics off the stdout protocol channel.
+
+    Returns:
+        Process exit status after startup failure or stdin closure.
+    """
     try:
         runtime = load_runtime_module()
         model = initialize_worker(runtime)

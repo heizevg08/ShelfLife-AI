@@ -16,29 +16,24 @@ Important boundaries:
 - joblib artifacts must only be loaded from trusted sources.
 """
 
-from pathlib import Path
 import hashlib
-import platform
 import json
+import platform
+from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
 import sklearn
 
-
 ML_ROOT = Path(__file__).resolve().parents[1]
 MODEL_PATH = ML_ROOT / "models" / "selected_random_forest.joblib"
-METADATA_PATH = (
-    ML_ROOT / "models" / "selected_random_forest_metadata.json"
-)
+METADATA_PATH = ML_ROOT / "models" / "selected_random_forest_metadata.json"
 EXPECTED_MODEL_SHA256 = (
     "14b76d5b108ad1a55b6f9e7c84b012623e6a506774ac0211ee9877e085ee6fc7"
 )
 
-EXPECTED_MODEL_NAME = (
-    "ShelfLife AI Selected Global Random Forest Regression"
-)
+EXPECTED_MODEL_NAME = "ShelfLife AI Selected Global Random Forest Regression"
 EXPECTED_MODEL_STAGE = "selected-development-model"
 EXPECTED_ESTIMATOR = "RandomForestRegressor"
 EXPECTED_TARGET = "sale_amount"
@@ -65,7 +60,17 @@ EXPECTED_MODEL_PARAMETERS = {
 def compute_model_sha256(
     model_path: Path = MODEL_PATH,
 ) -> str:
-    """Compute the SHA-256 digest of a persisted model artifact."""
+    """Hash a trusted artifact before deserialization.
+
+    Args:
+        model_path: Local model artifact to read.
+
+    Returns:
+        Hex-encoded SHA-256 digest.
+
+    Raises:
+        OSError: The artifact cannot be read.
+    """
     digest = hashlib.sha256()
     with model_path.open("rb") as model_file:
         for chunk in iter(lambda: model_file.read(65536), b""):
@@ -74,11 +79,17 @@ def compute_model_sha256(
 
 
 def load_artifact_metadata() -> dict:
-    """Load the human-readable persisted-model contract."""
+    """Read the metadata contract paired with the selected model.
+
+    Returns:
+        Parsed metadata mapping.
+
+    Raises:
+        FileNotFoundError: The metadata artifact is absent.
+        json.JSONDecodeError: The metadata is malformed.
+    """
     if not METADATA_PATH.exists():
-        raise FileNotFoundError(
-            f"Model metadata not found: {METADATA_PATH}"
-        )
+        raise FileNotFoundError(f"Model metadata not found: {METADATA_PATH}")
 
     with METADATA_PATH.open(
         "r",
@@ -90,87 +101,79 @@ def load_artifact_metadata() -> dict:
 def validate_metadata_contract(
     metadata: dict,
 ) -> dict[str, bool]:
-    """Validate metadata required by the inference boundary."""
+    """Check artifact identity and environment before using the model.
+
+    Args:
+        metadata: Parsed persisted-model metadata.
+
+    Returns:
+        Named contract checks and their pass/fail results.
+    """
     environment = metadata.get("environment", {})
     persistence = metadata.get("persistence", {})
 
     return {
-        "model_name_matches": (
-            metadata.get("model_name")
-            == EXPECTED_MODEL_NAME
-        ),
-        "model_stage_matches": (
-            metadata.get("model_stage")
-            == EXPECTED_MODEL_STAGE
-        ),
-        "estimator_matches": (
-            metadata.get("estimator")
-            == EXPECTED_ESTIMATOR
-        ),
-        "target_matches": (
-            metadata.get("target")
-            == EXPECTED_TARGET
-        ),
+        "model_name_matches": (metadata.get("model_name") == EXPECTED_MODEL_NAME),
+        "model_stage_matches": (metadata.get("model_stage") == EXPECTED_MODEL_STAGE),
+        "estimator_matches": (metadata.get("estimator") == EXPECTED_ESTIMATOR),
+        "target_matches": (metadata.get("target") == EXPECTED_TARGET),
         "feature_columns_match": (
-            metadata.get("feature_columns")
-            == EXPECTED_FEATURE_COLUMNS
+            metadata.get("feature_columns") == EXPECTED_FEATURE_COLUMNS
         ),
         "model_parameters_match": (
-            metadata.get("model_parameters")
-            == EXPECTED_MODEL_PARAMETERS
+            metadata.get("model_parameters") == EXPECTED_MODEL_PARAMETERS
         ),
         "python_version_matches": (
-            environment.get("python")
-            == platform.python_version()
+            environment.get("python") == platform.python_version()
         ),
         "sklearn_version_matches": (
-            environment.get("scikit_learn")
-            == sklearn.__version__
+            environment.get("scikit_learn") == sklearn.__version__
         ),
-        "joblib_version_matches": (
-            environment.get("joblib")
-            == joblib.__version__
-        ),
-        "numpy_version_matches": (
-            environment.get("numpy")
-            == np.__version__
-        ),
+        "joblib_version_matches": (environment.get("joblib") == joblib.__version__),
+        "numpy_version_matches": (environment.get("numpy") == np.__version__),
         "trusted_source_only_recorded": (
-            persistence.get("trusted_source_only")
-            is True
+            persistence.get("trusted_source_only") is True
         ),
         "cross_version_safety_not_assumed": (
-            persistence.get(
-                "cross_version_loading_assumed_safe"
-            )
-            is False
+            persistence.get("cross_version_loading_assumed_safe") is False
         ),
         "artifact_sha256_recorded": (
-            persistence.get("sha256")
-            == EXPECTED_MODEL_SHA256
+            persistence.get("sha256") == EXPECTED_MODEL_SHA256
         ),
     }
 
 
 def load_selected_model():
-    """Load the selected model, after checking its SHA-256 hash."""
+    """Deserialize the trusted selected model only after a digest check.
+
+    Returns:
+        Persisted fitted estimator.
+
+    Raises:
+        FileNotFoundError: The model artifact is absent.
+        RuntimeError: The artifact digest differs from the trusted digest.
+    """
     if not MODEL_PATH.exists():
-        raise FileNotFoundError(
-            f"Model artifact not found: {MODEL_PATH}"
-        )
+        raise FileNotFoundError(f"Model artifact not found: {MODEL_PATH}")
 
     actual_sha256 = compute_model_sha256(MODEL_PATH)
     if actual_sha256 != EXPECTED_MODEL_SHA256:
-        raise RuntimeError(
-            "Model failed SHA-256 check before deserialization."
-        )
+        raise RuntimeError("Model failed SHA-256 check before deserialization.")
 
     return joblib.load(MODEL_PATH)
+
 
 def validate_loaded_model_contract(
     model,
 ) -> dict[str, bool]:
-    """Validate the fitted estimator required for inference."""
+    """Check that a loaded estimator has the persisted feature contract.
+
+    Args:
+        model: Deserialized fitted estimator.
+
+    Returns:
+        Named estimator checks and their pass/fail results.
+    """
     feature_names = getattr(
         model,
         "feature_names_in_",
@@ -178,60 +181,42 @@ def validate_loaded_model_contract(
     )
 
     return {
-        "estimator_type_matches": (
-            model.__class__.__name__
-            == EXPECTED_ESTIMATOR
-        ),
+        "estimator_type_matches": (model.__class__.__name__ == EXPECTED_ESTIMATOR),
         "feature_count_matches": (
-            getattr(model, "n_features_in_", None)
-            == len(EXPECTED_FEATURE_COLUMNS)
+            getattr(model, "n_features_in_", None) == len(EXPECTED_FEATURE_COLUMNS)
         ),
         "feature_names_match": (
             feature_names is not None
-            and feature_names.tolist()
-            == EXPECTED_FEATURE_COLUMNS
+            and feature_names.tolist() == EXPECTED_FEATURE_COLUMNS
         ),
         "n_estimators_matches": (
             getattr(model, "n_estimators", None)
-            == EXPECTED_MODEL_PARAMETERS[
-                "n_estimators"
-            ]
+            == EXPECTED_MODEL_PARAMETERS["n_estimators"]
         ),
         "max_depth_matches": (
-            getattr(model, "max_depth", None)
-            == EXPECTED_MODEL_PARAMETERS[
-                "max_depth"
-            ]
+            getattr(model, "max_depth", None) == EXPECTED_MODEL_PARAMETERS["max_depth"]
         ),
         "min_samples_leaf_matches": (
             getattr(model, "min_samples_leaf", None)
-            == EXPECTED_MODEL_PARAMETERS[
-                "min_samples_leaf"
-            ]
+            == EXPECTED_MODEL_PARAMETERS["min_samples_leaf"]
         ),
         "max_features_matches": (
             getattr(model, "max_features", None)
-            == EXPECTED_MODEL_PARAMETERS[
-                "max_features"
-            ]
+            == EXPECTED_MODEL_PARAMETERS["max_features"]
         ),
         "random_state_matches": (
             getattr(model, "random_state", None)
-            == EXPECTED_MODEL_PARAMETERS[
-                "random_state"
-            ]
+            == EXPECTED_MODEL_PARAMETERS["random_state"]
         ),
     }
+
 
 RUNTIME_KEYS = [
     "store_id",
     "product_id",
 ]
 
-RUNTIME_HISTORY_COLUMNS = (
-    RUNTIME_KEYS
-    + ["dt", "sale_amount"]
-)
+RUNTIME_HISTORY_COLUMNS = RUNTIME_KEYS + ["dt", "sale_amount"]
 
 MINIMUM_HISTORY_ROWS = 14
 
@@ -245,12 +230,18 @@ SINGLE_SERIES_HISTORY_COLUMNS = [
 def validate_single_series_historical_data(
     historical_data: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Validate one already-isolated ShelfLife forecasting series.
+    """Validate one series after the service has resolved its domain identity.
 
-    This is the operational inference representation. ShelfLife domain
-    identity is resolved by the application/service layer before the
-    history reaches this boundary, so FreshRetailNet-specific
-    ``store_id`` / ``product_id`` fields are intentionally unsupported.
+    Dataset-specific ``store_id`` and ``product_id`` are excluded here.
+
+    Args:
+        historical_data: Dated consumption observations for one series.
+
+    Returns:
+        Normalized history ready for recursive features.
+
+    Raises:
+        ValueError: Required history fields or values are invalid.
     """
     missing_columns = [
         column
@@ -276,9 +267,7 @@ def validate_single_series_historical_data(
             f"{unsupported_columns}"
         )
 
-    history = historical_data[
-        SINGLE_SERIES_HISTORY_COLUMNS
-    ].copy()
+    history = historical_data[SINGLE_SERIES_HISTORY_COLUMNS].copy()
 
     history["dt"] = pd.to_datetime(
         history["dt"],
@@ -296,18 +285,12 @@ def validate_single_series_historical_data(
         )
 
     if (history["sale_amount"] < 0).any():
-        raise ValueError(
-            "Historical demand values cannot be negative."
-        )
+        raise ValueError("Historical demand values cannot be negative.")
 
     if history.duplicated(subset=["dt"]).any():
-        raise ValueError(
-            "Single-series historical data contains duplicate dates."
-        )
+        raise ValueError("Single-series historical data contains duplicate dates.")
 
-    history = history.sort_values(
-        ["dt"]
-    ).reset_index(drop=True)
+    history = history.sort_values(["dt"]).reset_index(drop=True)
 
     if len(history) < MINIMUM_HISTORY_ROWS:
         raise ValueError(
@@ -322,15 +305,16 @@ def build_single_series_recursive_feature_row(
     history: pd.DataFrame,
     forecast_date: pd.Timestamp,
 ) -> pd.DataFrame:
-    """Build one model feature row for an isolated forecasting series.
+    """Match the six persisted features without adding domain identity.
 
-    Feature definitions intentionally match the already-validated keyed
-    development path. The ML estimator receives only the six persisted
-    predictive features; application/domain identity is not a model input.
+    Args:
+        history: Validated observations and prior recursive predictions.
+        forecast_date: Date of the next prediction.
+
+    Returns:
+        One feature row in the model's expected column order.
     """
-    ordered = history.sort_values(
-        ["dt"]
-    ).reset_index(drop=True)
+    ordered = history.sort_values(["dt"]).reset_index(drop=True)
 
     values = ordered["sale_amount"]
 
@@ -340,15 +324,9 @@ def build_single_series_recursive_feature_row(
                 "lag_1": float(values.iloc[-1]),
                 "lag_7": float(values.iloc[-7]),
                 "lag_14": float(values.iloc[-14]),
-                "rolling_mean_7": float(
-                    values.tail(7).mean()
-                ),
-                "rolling_mean_14": float(
-                    values.tail(14).mean()
-                ),
-                "day_of_week": int(
-                    forecast_date.dayofweek
-                ),
+                "rolling_mean_7": float(values.tail(7).mean()),
+                "rolling_mean_14": float(values.tail(14).mean()),
+                "day_of_week": int(forecast_date.dayofweek),
                 "dt": forecast_date,
             }
         ]
@@ -362,19 +340,22 @@ def recursive_forecast_single_series(
     historical_data: pd.DataFrame,
     forecast_dates: list[pd.Timestamp],
 ) -> pd.DataFrame:
-    """Generate recursive forecasts for one isolated ShelfLife series.
+    """Forecast one isolated series, appending each prediction to history.
 
-    The selected Random Forest continues to use the exact persisted
-    six-feature contract. Each predicted value is appended to the
-    numerical history before the next forecast step.
+    The service, not this numerical boundary, chooses the ShelfLife entity.
 
-    This function does not decide which ShelfLife entity constitutes a
-    series; that upstream domain decision remains outside the numerical
-    model boundary.
+    Args:
+        model: Validated selected estimator.
+        historical_data: Observed consumption for one series.
+        forecast_dates: Ordered future dates to predict.
+
+    Returns:
+        Dated recursive predictions for the requested horizon.
+
+    Raises:
+        ValueError: History or forecast dates violate the model contract.
     """
-    history = validate_single_series_historical_data(
-        historical_data
-    )
+    history = validate_single_series_historical_data(historical_data)
 
     forecast_dates = validate_forecast_dates(
         forecast_dates,
@@ -384,28 +365,17 @@ def recursive_forecast_single_series(
     predictions = []
 
     for forecast_date in forecast_dates:
-        forecast_date = pd.Timestamp(
-            forecast_date
+        forecast_date = pd.Timestamp(forecast_date)
+
+        feature_frame = build_single_series_recursive_feature_row(
+            history,
+            forecast_date,
         )
 
-        feature_frame = (
-            build_single_series_recursive_feature_row(
-                history,
-                forecast_date,
-            )
-        )
+        if feature_frame[EXPECTED_FEATURE_COLUMNS].isna().any().any():
+            raise ValueError("Recursive forecast features contain " "missing values.")
 
-        if feature_frame[
-            EXPECTED_FEATURE_COLUMNS
-        ].isna().any().any():
-            raise ValueError(
-                "Recursive forecast features contain "
-                "missing values."
-            )
-
-        X_forecast = feature_frame[
-            EXPECTED_FEATURE_COLUMNS
-        ]
+        X_forecast = feature_frame[EXPECTED_FEATURE_COLUMNS]
 
         predicted = np.maximum(
             model.predict(X_forecast),
@@ -450,11 +420,18 @@ def recursive_forecast_single_series(
 def validate_historical_data(
     historical_data: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Validate and normalize history required for inference.
+    """Validate the development artifact's keyed store-product history.
 
-    The current development artifact retains Dataset A's internal
-    store-product representation. This is not yet the final ShelfLife AI
-    operational API schema.
+    This representation is not the operational ShelfLife API schema.
+
+    Args:
+        historical_data: Raw keyed observations.
+
+    Returns:
+        Normalized model history.
+
+    Raises:
+        ValueError: Required keys, dates, or quantities are invalid.
     """
     missing_columns = [
         column
@@ -464,13 +441,10 @@ def validate_historical_data(
 
     if missing_columns:
         raise ValueError(
-            "Historical data is missing required columns: "
-            f"{missing_columns}"
+            "Historical data is missing required columns: " f"{missing_columns}"
         )
 
-    history = historical_data[
-        RUNTIME_HISTORY_COLUMNS
-    ].copy()
+    history = historical_data[RUNTIME_HISTORY_COLUMNS].copy()
 
     history["dt"] = pd.to_datetime(
         history["dt"],
@@ -483,14 +457,10 @@ def validate_historical_data(
     )
 
     if history[RUNTIME_HISTORY_COLUMNS].isna().any().any():
-        raise ValueError(
-            "Historical data contains missing required values."
-        )
+        raise ValueError("Historical data contains missing required values.")
 
     if (history["sale_amount"] < 0).any():
-        raise ValueError(
-            "Historical demand values cannot be negative."
-        )
+        raise ValueError("Historical demand values cannot be negative.")
 
     duplicate_rows = history.duplicated(
         subset=RUNTIME_KEYS + ["dt"],
@@ -498,25 +468,17 @@ def validate_historical_data(
 
     if duplicate_rows.any():
         raise ValueError(
-            "Historical data contains duplicate "
-            "series-date observations."
+            "Historical data contains duplicate " "series-date observations."
         )
 
-    history = history.sort_values(
-        RUNTIME_KEYS + ["dt"]
-    ).reset_index(drop=True)
+    history = history.sort_values(RUNTIME_KEYS + ["dt"]).reset_index(drop=True)
 
-    series_counts = (
-        history.groupby(
-            RUNTIME_KEYS,
-            sort=False,
-        )
-        .size()
-    )
+    series_counts = history.groupby(
+        RUNTIME_KEYS,
+        sort=False,
+    ).size()
 
-    insufficient_series = series_counts[
-        series_counts < MINIMUM_HISTORY_ROWS
-    ]
+    insufficient_series = series_counts[series_counts < MINIMUM_HISTORY_ROWS]
 
     if not insufficient_series.empty:
         raise ValueError(
@@ -526,45 +488,34 @@ def validate_historical_data(
 
     return history
 
+
 def build_recursive_feature_row(
     history: pd.DataFrame,
     forecast_date: pd.Timestamp,
 ) -> pd.DataFrame:
-    """Build one leakage-safe inference row per series.
+    """Reproduce the selected model's leakage-safe keyed features.
 
-    Feature semantics intentionally reproduce the selected model's
-    validated recursive forecasting implementation.
+    Args:
+        history: Validated keyed observations and prior predictions.
+        forecast_date: Date of the next recursive step.
+
+    Returns:
+        Feature rows in the persisted model's column order.
     """
-    ordered = history.sort_values(
-        RUNTIME_KEYS + ["dt"]
-    ).copy()
+    ordered = history.sort_values(RUNTIME_KEYS + ["dt"]).copy()
 
     grouped = ordered.groupby(
         RUNTIME_KEYS,
         sort=False,
     )
 
-    feature_frame = grouped.tail(1)[
-        RUNTIME_KEYS
-    ].copy()
+    feature_frame = grouped.tail(1)[RUNTIME_KEYS].copy()
 
-    feature_frame["lag_1"] = (
-        grouped["sale_amount"]
-        .nth(-1)
-        .to_numpy()
-    )
+    feature_frame["lag_1"] = grouped["sale_amount"].nth(-1).to_numpy()
 
-    feature_frame["lag_7"] = (
-        grouped["sale_amount"]
-        .nth(-7)
-        .to_numpy()
-    )
+    feature_frame["lag_7"] = grouped["sale_amount"].nth(-7).to_numpy()
 
-    feature_frame["lag_14"] = (
-        grouped["sale_amount"]
-        .nth(-14)
-        .to_numpy()
-    )
+    feature_frame["lag_14"] = grouped["sale_amount"].nth(-14).to_numpy()
 
     rolling_7 = (
         ordered.groupby(
@@ -592,90 +543,79 @@ def build_recursive_feature_row(
         .mean()
     )
 
-    feature_frame["rolling_mean_7"] = (
-        rolling_7.to_numpy()
-    )
+    feature_frame["rolling_mean_7"] = rolling_7.to_numpy()
 
-    feature_frame["rolling_mean_14"] = (
-        rolling_14.to_numpy()
-    )
+    feature_frame["rolling_mean_14"] = rolling_14.to_numpy()
 
-    feature_frame["day_of_week"] = (
-        forecast_date.dayofweek
-    )
+    feature_frame["day_of_week"] = forecast_date.dayofweek
 
     feature_frame["dt"] = forecast_date
 
     return feature_frame
 
+
 def validate_forecast_dates(
     forecast_dates,
     historical_data: pd.DataFrame,
 ) -> list[pd.Timestamp]:
-    """Validate requested future forecast dates."""
+    """Reject missing, duplicate, or non-future dates before prediction.
+
+    Args:
+        forecast_dates: Requested date values.
+        historical_data: Validated observations defining the last known date.
+
+    Returns:
+        Normalized future timestamps.
+
+    Raises:
+        ValueError: Dates are malformed or violate the forecast horizon.
+    """
     if not forecast_dates:
         return []
 
     try:
-        normalized_dates = [
-            pd.Timestamp(date)
-            for date in forecast_dates
-        ]
+        normalized_dates = [pd.Timestamp(date) for date in forecast_dates]
     except (TypeError, ValueError) as exc:
-        raise ValueError(
-            "Forecast dates contain an invalid date value."
-        ) from exc
+        raise ValueError("Forecast dates contain an invalid date value.") from exc
 
-    if any(
-        pd.isna(date)
-        for date in normalized_dates
-    ):
-        raise ValueError(
-            "Forecast dates cannot contain missing values."
-        )
+    if any(pd.isna(date) for date in normalized_dates):
+        raise ValueError("Forecast dates cannot contain missing values.")
 
-    if len(set(normalized_dates)) != len(
-        normalized_dates
-    ):
-        raise ValueError(
-            "Forecast dates cannot contain duplicates."
-        )
+    if len(set(normalized_dates)) != len(normalized_dates):
+        raise ValueError("Forecast dates cannot contain duplicates.")
 
-    if normalized_dates != sorted(
-        normalized_dates
-    ):
-        raise ValueError(
-            "Forecast dates must be in ascending order."
-        )
+    if normalized_dates != sorted(normalized_dates):
+        raise ValueError("Forecast dates must be in ascending order.")
 
-    latest_history_date = historical_data[
-        "dt"
-    ].max()
+    latest_history_date = historical_data["dt"].max()
 
-    if any(
-        date <= latest_history_date
-        for date in normalized_dates
-    ):
+    if any(date <= latest_history_date for date in normalized_dates):
         raise ValueError(
-            "Forecast dates must occur after the latest "
-            "historical observation."
+            "Forecast dates must occur after the latest " "historical observation."
         )
 
     return normalized_dates
+
 
 def recursive_forecast(
     model,
     historical_data: pd.DataFrame,
     forecast_dates: list[pd.Timestamp],
 ) -> pd.DataFrame:
-    """Generate recursive forecasts from validated historical data.
+    """Reproduce keyed recursive forecasts by feeding predictions back into history.
 
-    Each predicted value is appended to history before the next forecast
-    step, reproducing the selected model's validated recursive semantics.
+    Args:
+        model: Validated selected estimator.
+        historical_data: Keyed observations for the requested series.
+        forecast_dates: Ordered future dates to predict.
+
+    Returns:
+        Dated recursive predictions.
+
+    Raises:
+        ValueError: History or requested dates are invalid.
     """
-    history = validate_historical_data(
-        historical_data
-    )
+    history = validate_historical_data(historical_data)
 
     forecast_dates = validate_forecast_dates(
         forecast_dates,
@@ -685,59 +625,37 @@ def recursive_forecast(
     predictions = []
 
     for forecast_date in forecast_dates:
-        forecast_date = pd.Timestamp(
-            forecast_date
+        forecast_date = pd.Timestamp(forecast_date)
+
+        feature_frame = build_recursive_feature_row(
+            history,
+            forecast_date,
         )
 
-        feature_frame = (
-            build_recursive_feature_row(
-                history,
-                forecast_date,
-            )
-        )
+        if feature_frame[EXPECTED_FEATURE_COLUMNS].isna().any().any():
+            raise ValueError("Recursive forecast features contain " "missing values.")
 
-        if feature_frame[
-            EXPECTED_FEATURE_COLUMNS
-        ].isna().any().any():
-            raise ValueError(
-                "Recursive forecast features contain "
-                "missing values."
-            )
-
-        X_forecast = feature_frame[
-            EXPECTED_FEATURE_COLUMNS
-        ]
+        X_forecast = feature_frame[EXPECTED_FEATURE_COLUMNS]
 
         predicted = np.maximum(
             model.predict(X_forecast),
             0.0,
         )
 
-        step_predictions = feature_frame[
-            RUNTIME_KEYS + ["dt"]
-        ].copy()
+        step_predictions = feature_frame[RUNTIME_KEYS + ["dt"]].copy()
 
-        step_predictions[
-            "predicted_consumption"
-        ] = predicted
+        step_predictions["predicted_consumption"] = predicted
 
         predictions.append(step_predictions)
 
-        recursive_rows = (
-            step_predictions.rename(
-                columns={
-                    "predicted_consumption":
-                    "sale_amount"
-                }
-            )
+        recursive_rows = step_predictions.rename(
+            columns={"predicted_consumption": "sale_amount"}
         )
 
         history = pd.concat(
             [
                 history,
-                recursive_rows[
-                    RUNTIME_HISTORY_COLUMNS
-                ],
+                recursive_rows[RUNTIME_HISTORY_COLUMNS],
             ],
             ignore_index=True,
         )
@@ -758,33 +676,33 @@ def recursive_forecast(
         ignore_index=True,
     )
 
+
 def run_selected_model_inference(
     historical_data: pd.DataFrame,
     forecast_dates: list[pd.Timestamp],
 ) -> pd.DataFrame:
-    """Run the validated selected-model inference boundary.
+    """Validate the selected artifact before generating development forecasts.
 
-    This is the intended Python entry point for future ShelfLife AI
-    integration. It validates the persisted artifact contract before
-    generating recursive forecasts.
+    Dataset A predictions are not validated restaurant ingredient consumption.
 
-    The current artifact remains a Dataset A development model. Its
-    predictions must not yet be represented as validated restaurant
-    ingredient-consumption forecasts.
+    Args:
+        historical_data: Keyed observations accepted by the development model.
+        forecast_dates: Ordered future dates to predict.
+
+    Returns:
+        Dated recursive predictions.
+
+    Raises:
+        FileNotFoundError: A required model artifact is absent.
+        RuntimeError: The artifact or metadata fails validation.
+        ValueError: History or requested dates are invalid.
     """
     metadata = load_artifact_metadata()
 
-    metadata_checks = validate_metadata_contract(
-        metadata
-    )
+    metadata_checks = validate_metadata_contract(metadata)
 
     if not all(metadata_checks.values()):
-        failed_checks = [
-            name
-            for name, passed
-            in metadata_checks.items()
-            if not passed
-        ]
+        failed_checks = [name for name, passed in metadata_checks.items() if not passed]
 
         raise RuntimeError(
             "Persisted model metadata failed the "
@@ -794,22 +712,13 @@ def run_selected_model_inference(
 
     model = load_selected_model()
 
-    model_checks = validate_loaded_model_contract(
-        model
-    )
+    model_checks = validate_loaded_model_contract(model)
 
     if not all(model_checks.values()):
-        failed_checks = [
-            name
-            for name, passed
-            in model_checks.items()
-            if not passed
-        ]
+        failed_checks = [name for name, passed in model_checks.items() if not passed]
 
         raise RuntimeError(
-            "Persisted model failed the inference "
-            "contract: "
-            f"{failed_checks}"
+            "Persisted model failed the inference " "contract: " f"{failed_checks}"
         )
 
     return recursive_forecast(

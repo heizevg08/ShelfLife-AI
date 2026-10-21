@@ -16,7 +16,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 ML_ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_PATH = ML_ROOT / "src" / "09_selected_model_inference.py"
 
@@ -30,8 +29,20 @@ FEATURE_COLUMNS = [
 ]
 
 VALUES = [
-    1.0, 1.2, 0.9, 1.1, 1.3, 1.0, 1.4,
-    1.2, 1.1, 1.3, 1.5, 1.2, 1.4, 1.3,
+    1.0,
+    1.2,
+    0.9,
+    1.1,
+    1.3,
+    1.0,
+    1.4,
+    1.2,
+    1.1,
+    1.3,
+    1.5,
+    1.2,
+    1.4,
+    1.3,
 ]
 
 KEYED_HISTORY = pd.DataFrame(
@@ -46,9 +57,7 @@ KEYED_HISTORY = pd.DataFrame(
     ]
 )
 
-SINGLE_SERIES_HISTORY = KEYED_HISTORY[
-    ["dt", "sale_amount"]
-].copy()
+SINGLE_SERIES_HISTORY = KEYED_HISTORY[["dt", "sale_amount"]].copy()
 
 ONE_STEP_DATES = ["2026-09-15"]
 MULTI_STEP_DATES = [
@@ -59,14 +68,13 @@ MULTI_STEP_DATES = [
 
 
 def load_runtime_module():
+    """Load the same selected runtime used by the production worker."""
     spec = importlib.util.spec_from_file_location(
         "selected_model_inference_equivalence",
         RUNTIME_PATH,
     )
     if spec is None or spec.loader is None:
-        raise RuntimeError(
-            f"Unable to load inference runtime: {RUNTIME_PATH}"
-        )
+        raise RuntimeError(f"Unable to load inference runtime: {RUNTIME_PATH}")
 
     runtime = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runtime)
@@ -74,46 +82,28 @@ def load_runtime_module():
 
 
 class SingleSeriesEquivalenceTests(unittest.TestCase):
+    """Guard feature and prediction equivalence with the keyed model path."""
+
     @classmethod
     def setUpClass(cls):
         cls.runtime = load_runtime_module()
 
         metadata = cls.runtime.load_artifact_metadata()
-        metadata_checks = cls.runtime.validate_metadata_contract(
-            metadata
-        )
+        metadata_checks = cls.runtime.validate_metadata_contract(metadata)
         if not all(metadata_checks.values()):
-            failed = [
-                key
-                for key, passed in metadata_checks.items()
-                if not passed
-            ]
-            raise AssertionError(
-                f"Metadata contract failed: {failed}"
-            )
+            failed = [key for key, passed in metadata_checks.items() if not passed]
+            raise AssertionError(f"Metadata contract failed: {failed}")
 
         cls.model = cls.runtime.load_selected_model()
-        model_checks = cls.runtime.validate_loaded_model_contract(
-            cls.model
-        )
+        model_checks = cls.runtime.validate_loaded_model_contract(cls.model)
         if not all(model_checks.values()):
-            failed = [
-                key
-                for key, passed in model_checks.items()
-                if not passed
-            ]
-            raise AssertionError(
-                f"Model contract failed: {failed}"
-            )
+            failed = [key for key, passed in model_checks.items() if not passed]
+            raise AssertionError(f"Model contract failed: {failed}")
 
     def test_a_six_feature_values_match_current_keyed_path(self):
-        keyed_history = self.runtime.validate_historical_data(
-            KEYED_HISTORY
-        )
-        single_history = (
-            self.runtime.validate_single_series_historical_data(
-                SINGLE_SERIES_HISTORY
-            )
+        keyed_history = self.runtime.validate_historical_data(KEYED_HISTORY)
+        single_history = self.runtime.validate_single_series_historical_data(
+            SINGLE_SERIES_HISTORY
         )
 
         forecast_date = pd.Timestamp("2026-09-15")
@@ -123,12 +113,10 @@ class SingleSeriesEquivalenceTests(unittest.TestCase):
             forecast_date,
         )[FEATURE_COLUMNS].reset_index(drop=True)
 
-        single_features = (
-            self.runtime.build_single_series_recursive_feature_row(
-                single_history,
-                forecast_date,
-            )[FEATURE_COLUMNS].reset_index(drop=True)
-        )
+        single_features = self.runtime.build_single_series_recursive_feature_row(
+            single_history,
+            forecast_date,
+        )[FEATURE_COLUMNS].reset_index(drop=True)
 
         np.testing.assert_allclose(
             keyed_features.to_numpy(dtype=float),

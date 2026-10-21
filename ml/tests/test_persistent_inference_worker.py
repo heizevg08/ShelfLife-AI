@@ -1,4 +1,4 @@
-﻿"""Protocol tests for the persistent ShelfLife AI inference worker."""
+"""Protocol tests for the persistent ShelfLife AI inference worker."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
-
 
 ML_ROOT = Path(__file__).resolve().parents[1]
 WORKER_PATH = ML_ROOT / "src" / "10_persistent_inference_worker.py"
@@ -80,14 +79,14 @@ def stop_worker(process):
     process.stderr.close()
 
     if process.returncode != 0:
-        raise AssertionError(
-            f"Worker exited with {process.returncode}: {stderr}"
-        )
+        raise AssertionError(f"Worker exited with {process.returncode}: {stderr}")
 
     return stderr
 
 
 class PersistentInferenceWorkerTests(unittest.TestCase):
+    """Exercise startup, request validation, and repeated JSON-lines inference."""
+
     def test_a_startup_emits_ready(self):
         process, ready = start_worker()
 
@@ -154,11 +153,7 @@ class PersistentInferenceWorkerTests(unittest.TestCase):
                 request_id,
             )
 
-            predictions.append(
-                response["predictions"][0][
-                    "predictedConsumption"
-                ]
-            )
+            predictions.append(response["predictions"][0]["predictedConsumption"])
 
         self.assertAlmostEqual(
             predictions[0],
@@ -179,9 +174,7 @@ class PersistentInferenceWorkerTests(unittest.TestCase):
         process.stdin.write("{not-json}\n")
         process.stdin.flush()
 
-        response = json.loads(
-            process.stdout.readline().strip()
-        )
+        response = json.loads(process.stdout.readline().strip())
 
         self.assertFalse(response["ok"])
         self.assertIsNone(response["requestId"])
@@ -284,14 +277,10 @@ class PersistentInferenceWorkerTests(unittest.TestCase):
             "forecastDates": ["2026-09-15"],
         }
 
-        process.stdin.write(
-            "\ufeff" + json.dumps(payload) + "\n"
-        )
+        process.stdin.write("\ufeff" + json.dumps(payload) + "\n")
         process.stdin.flush()
 
-        response = json.loads(
-            process.stdout.readline().strip()
-        )
+        response = json.loads(process.stdout.readline().strip())
 
         self.assertTrue(response["ok"])
         self.assertEqual(
@@ -310,7 +299,6 @@ class PersistentInferenceWorkerTests(unittest.TestCase):
 
         self.assertEqual(process.returncode, 0)
         self.assertEqual(stderr, "")
-
 
     def test_k_dataset_specific_identity_columns_are_rejected(self):
         process, _ = start_worker()
