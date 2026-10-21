@@ -11,7 +11,7 @@ function safeHeader(value: string | undefined): string | undefined {
 }
 
 /**
- * Build SMTP delivery only when every required setting is valid.
+ * Build SMTP delivery (or HTTPS port-443 relay for Render Free Tier) when every required setting is valid.
  * @param env - SMTP host, port, credentials, and sender settings.
  * @param createTransport - Injectable Nodemailer factory for verification.
  * @returns Mail transport, or `undefined` when SMTP is not configured.
@@ -22,11 +22,40 @@ export function createSmtpMailTransport(env: NodeJS.ProcessEnv, createTransport:
   const configuredPass = env.SMTP_PASS;
   // Google displays app passwords in four groups separated by spaces. Those spaces
   // are for readability and must not be included in SMTP authentication.
-  const pass = host?.toLowerCase() === 'smtp.gmail.com' ? configuredPass?.replace(/\s+/g, '') : configuredPass;
+  const pass = (host?.toLowerCase() === 'smtp.gmail.com' || host?.toLowerCase().startsWith('https://script.google.com/'))
+    ? configuredPass?.replace(/\s+/g, '')
+    : configuredPass;
   const fromAddress = safeHeader(env.MAIL_FROM) ?? user;
   const fromName = safeHeader(env.SMTP_FROM_NAME) ?? 'ShelfLife AI';
-  const port = Number(env.SMTP_PORT);
+  const port = Number(env.SMTP_PORT || (host?.toLowerCase().startsWith('https://') ? 443 : NaN));
   if (!host || !user || !pass || !fromAddress || !Number.isInteger(port) || port < 1 || port > 65535) return;
+  if (host.toLowerCase().startsWith('https://')) {
+    return {
+      async send(message) {
+        const response = await fetch(host, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          redirect: 'follow',
+          body: JSON.stringify({
+            secret: pass,
+            user,
+            fromName,
+            fromAddress,
+            to: message.to,
+            subject: message.subject,
+            text: message.text,
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+        const body = (await response.text().catch(() => '')).trim();
+        if (!response.ok || /^unauthorized$/i.test(body) || /^error:/i.test(body)) {
+          const err = new Error(body || `HTTPS mail relay failed with status ${response.status}`) as Error & { code?: string };
+          if (response.status === 401 || response.status === 403 || /^unauthorized$/i.test(body)) err.code = 'EAUTH';
+          throw err;
+        }
+      },
+    };
+  }
   const smtp = createTransport({
     host, port, secure: port === 465, requireTLS: port !== 465,
     auth: { user, pass }, connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 15000,

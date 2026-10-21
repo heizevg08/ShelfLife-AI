@@ -45,3 +45,32 @@ test('password recovery and replacement-email verification share one configured 
   assert.match(messages[0].message.text, /#reset=/);
   assert.match(messages[1].message.text, /123456/);
 });
+
+test('HTTPS mail relay transport works over port 443 for Render Free Tier when SMTP_HOST is an https URL', async () => {
+  const originalFetch = global.fetch;
+  let capturedUrl, capturedInit;
+  global.fetch = async (url, init) => {
+    capturedUrl = url;
+    capturedInit = init;
+    return new Response('OK', { status: 200 });
+  };
+  try {
+    const transport = createSmtpMailTransport({
+      SMTP_HOST: 'https://script.google.com/macros/s/example/exec',
+      SMTP_PORT: '443',
+      SMTP_USER: 'mailer@shelflife.com',
+      SMTP_PASS: 'abcd efgh ijkl mnop',
+      SMTP_FROM_NAME: 'ShelfLife AI',
+    });
+    assert(transport);
+    await transport.send({ to: 'recipient@shelflife.com', subject: 'Welcome', text: 'Hello' });
+    assert.equal(capturedUrl, 'https://script.google.com/macros/s/example/exec');
+    assert.equal(capturedInit.method, 'POST');
+    const payload = JSON.parse(capturedInit.body);
+    assert.equal(payload.secret, 'abcdefghijklmnop');
+    assert.equal(payload.to, 'recipient@shelflife.com');
+    assert.equal(payload.fromName, 'ShelfLife AI');
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
