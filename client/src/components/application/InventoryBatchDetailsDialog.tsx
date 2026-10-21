@@ -4,6 +4,7 @@ import type { InventoryBatch, InventoryBatchDisplayStatus } from '../../services
 import { inventoryBatchRecorderLabel } from '../../utils/inventory-batch-recorder';
 import { formatDate } from '../../utils/date-time';
 import { formatHumanReadableText } from '../../utils/display-text';
+import { formatCurrentStock } from '../../utils/current-stock';
 import { ApplicationModal } from './ApplicationModal';
 import { Status } from './primitives';
 
@@ -86,7 +87,7 @@ export function InventoryBatchDetailsDialog({
               <AlertTriangle size={18} aria-hidden="true" />
               <span>
                 <strong>
-                  {batch.quantity.toLocaleString()} {batch.unit}
+                  {formatCurrentStock(batch.quantity)} {batch.unit}
                 </strong>{' '}
                 is still in stock and needs to be recorded as waste.
               </span>
@@ -96,7 +97,7 @@ export function InventoryBatchDetailsDialog({
           <dl className="sl-batch-details-primary">
             <div>
               <dt>Current Stock</dt>
-              <dd><strong>{batch.quantity.toLocaleString()} {batch.unit}</strong></dd>
+              <dd><strong>{formatCurrentStock(batch.quantity)} {batch.unit}</strong></dd>
             </div>
             <div>
               <dt>{inventoryStaff && batch.displayStatus === 'Expired' ? 'Expired' : 'Expiration'}</dt>
