@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { HttpError } from '../middleware/error.middleware';
 import { eligible, type AuthService, type UserStore } from './auth';
 
+/** Maximum lifetime, in milliseconds, of a rotating persistent session. */
 export const persistentLifetime = 30 * 24 * 60 * 60 * 1000;
 export const tokenHash = (token: string) => createHash('sha256').update(token).digest('hex');
 export const validOpaqueToken = (token: unknown): token is string => typeof token === 'string' && /^[a-f0-9]{64}$/.test(token);
@@ -11,6 +12,14 @@ export interface PersistentStore {
   rotate(hash: string, next: string, now: Date): Promise<PersistentRecord | null>;
   revoke(hash: string): Promise<unknown>;
 }
+/**
+ * Rotate opaque refresh tokens atomically so a consumed token cannot be replayed.
+ * @param store - Persistent token-hash storage.
+ * @param users - Account lookup for current eligibility and auth version.
+ * @param auth - Short-lived access-token issuer.
+ * @param now - Injectable clock for expiry checks.
+ * @returns Session creation, refresh, and revocation operations.
+ */
 export function createPersistentSessions(store: PersistentStore, users: UserStore, auth: AuthService, now = () => new Date()) {
   return {
     async create(userId: string) {

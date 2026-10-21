@@ -3,7 +3,12 @@ import type { ErrorRequestHandler, RequestHandler } from 'express';
 
 const knownErrorTypes = new Set(['Error', 'HttpError', 'AdministrationError', 'ValidationError', 'CastError', 'StrictModeError', 'MongoServerError', 'MongoNetworkError', 'MongoServerSelectionError', 'SyntaxError']);
 
-// Logs contain only allowlisted correlation metadata—never URLs, headers, IPs, bodies, credentials, tokens, or raw errors.
+/**
+ * Correlate failed requests without logging URLs, credentials, bodies, or raw errors.
+ * @param req - Incoming request used only for method and bounded API scope.
+ * @param res - Response receiving the correlation ID.
+ * @param next - Continues request handling.
+ */
 export const requestDiagnostics: RequestHandler = (req, res, next) => {
   const requestId = randomUUID();
   const scope = /^\/api\/(auth|health|users|dashboard|audit-records|ingredients|inventory-batches|usage-records|waste-records|change-requests|reports)(?:\/|$)/.exec(req.path)?.[1] ?? 'other';
@@ -16,6 +21,13 @@ export const requestDiagnostics: RequestHandler = (req, res, next) => {
   next();
 };
 
+/**
+ * Keep only allowlisted error classes and numeric database codes for failure logs.
+ * @param error - Error passed to the global handler.
+ * @param _req - Unused request.
+ * @param res - Response carrying bounded diagnostic metadata.
+ * @param next - Passes the original error onward.
+ */
 export const requestErrorDiagnostics: ErrorRequestHandler = (error, _req, res, next) => {
   const name = error?.constructor?.name;
   res.locals.failureDiagnostic = {

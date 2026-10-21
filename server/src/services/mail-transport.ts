@@ -1,6 +1,8 @@
 import nodemailer from 'nodemailer';
 
+/** Plain-text account email sent by the configured delivery transport. */
 export interface MailMessage { to: string; subject: string; text: string }
+/** Delivery boundary that rejects when the provider does not accept a message. */
 export interface MailTransport { send(message: MailMessage): Promise<void> }
 
 function safeHeader(value: string | undefined): string | undefined {
@@ -8,6 +10,12 @@ function safeHeader(value: string | undefined): string | undefined {
   return clean && !/[\r\n]/.test(clean) ? clean : undefined;
 }
 
+/**
+ * Build SMTP delivery only when every required setting is valid.
+ * @param env - SMTP host, port, credentials, and sender settings.
+ * @param createTransport - Injectable Nodemailer factory for verification.
+ * @returns Mail transport, or `undefined` when SMTP is not configured.
+ */
 export function createSmtpMailTransport(env: NodeJS.ProcessEnv, createTransport: typeof nodemailer.createTransport = nodemailer.createTransport): MailTransport | undefined {
   const host = safeHeader(env.SMTP_HOST);
   const user = safeHeader(env.SMTP_USER);

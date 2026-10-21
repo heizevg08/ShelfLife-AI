@@ -1,5 +1,6 @@
 import { isIP } from 'node:net';
 
+/** Validated runtime settings used to start the API and ML worker. */
 export interface Config {
   nodeEnv: 'development' | 'test' | 'production';
   host: string;
@@ -15,7 +16,12 @@ export interface Config {
   mlInferenceTimeoutMs: number;
 }
 
-// Validation errors contain field names only, never supplied values.
+/**
+ * Reject invalid startup settings without echoing secret environment values.
+ * @param env - Process environment supplied to the server.
+ * @returns Parsed and validated runtime configuration.
+ * @throws Error listing invalid setting names, never their values.
+ */
 export function readConfig(env: NodeJS.ProcessEnv): Config {
   const invalid = new Set<string>();
   const nodeEnv = env.NODE_ENV ?? 'development';

@@ -57,6 +57,12 @@ export function memoryLoginAttemptStore(): LoginAttemptStore {
   };
 }
 
+/**
+ * Reserve login attempts before password checks to bound concurrent guesses.
+ * @param store - Shared attempt storage for production or isolated tests.
+ * @param clock - Injectable time source for the retry window.
+ * @returns Login wrapper that releases reservations on infrastructure failures.
+ */
 export function createLoginLimiter(store: LoginAttemptStore, clock = () => new Date()) {
   return {
     async run<T>(email: unknown, ip: string, login: () => Promise<T>, retryAfter: (seconds: number) => void): Promise<T> {

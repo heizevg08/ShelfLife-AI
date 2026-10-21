@@ -35,6 +35,12 @@ function assertWrite(actor: Actor, user: Account) {
   if (actor.id === user.id || !managedRoles(actor.role).includes(user.role)) throw forbidden();
 }
 const missing = () => new AdministrationError(404, 'NOT_FOUND', 'Account not found');
+/**
+ * Enforce role-scoped account changes and send credentials before creation commits.
+ * @param store - Transactional account and audit storage.
+ * @param welcomeEmail - Delivery required to create an account.
+ * @returns Administration operations scoped to the acting user.
+ */
 export function createAdministration(store: AdministrationStore, welcomeEmail?: AccountWelcomeEmail) {
   return {
     async list(actor: Actor, query: AccountPageQuery) {

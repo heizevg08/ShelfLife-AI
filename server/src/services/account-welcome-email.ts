@@ -1,7 +1,14 @@
 import { createSmtpMailTransport, type MailTransport } from './mail-transport';
 
+/** Delivery contract used before an account-creation transaction commits. */
 export interface AccountWelcomeEmail { available: true; send(email: string, name: string, temporaryPassword: string, accountEmail?: string): Promise<void> }
 
+/**
+ * Require a valid login URL and mail transport before enabling account creation.
+ * @param env - Public login and terms URLs plus mail settings.
+ * @param transport - Configured delivery transport.
+ * @returns Welcome-email sender, or `undefined` when setup is incomplete.
+ */
 export function createAccountWelcomeEmail(env: NodeJS.ProcessEnv, transport: MailTransport | undefined = createSmtpMailTransport(env)): AccountWelcomeEmail | undefined {
   const origin = env.CORS_ORIGINS?.split(',').map(value => value.trim()).find(Boolean);
   let target = env.ACCOUNT_LOGIN_URL?.trim();

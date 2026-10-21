@@ -20,21 +20,25 @@ function resolvePythonExecutable(executable: string): string {
   return resolveWorkerPath(executable);
 }
 
+/** Historical consumption point passed to the Python inference process. */
 export interface ForecastHistoryRow {
   dt: string;
   sale_amount: number;
 }
 
+/** Dated consumption prediction returned by the inference process. */
 export interface ForecastPrediction {
   date: string;
   predictedConsumption: number;
 }
 
+/** History and requested horizon submitted as one worker request. */
 export interface ForecastInferenceRequest {
   history: ForecastHistoryRow[];
   forecastDates: string[];
 }
 
+/** Lifecycle boundary for the persistent, single-request Python worker. */
 export interface ForecastInferenceWorker {
   start(): Promise<void>;
   infer(request: ForecastInferenceRequest): Promise<ForecastPrediction[]>;
@@ -135,6 +139,11 @@ function parseWorkerResponse(value: unknown): WorkerResponse {
   };
 }
 
+/**
+ * Keep Python inference in one bounded child process with startup and request limits.
+ * @param config - Executable paths and millisecond timeout settings.
+ * @returns Worker lifecycle and inference methods.
+ */
 export function createForecastInferenceWorker(
   config: Pick<
     Config,

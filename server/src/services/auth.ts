@@ -5,6 +5,7 @@ import { hashPassword, verifyPassword } from './password';
 import { HttpError } from '../middleware/error.middleware';
 import { normalizeEmail, validPassword } from '../validators/auth';
 
+/** Account lookup and optional sign-in timestamp persistence for authentication. */
 export interface UserStore {
   byEmail(email: string): Promise<UserRecord | null>;
   byId(id: string): Promise<UserRecord | null>;
@@ -12,9 +13,20 @@ export interface UserStore {
 }
 const options = { algorithm: 'HS256' as const, issuer: 'shelflifeai', audience: 'shelflifeai-client', expiresIn: 900 };
 const denied = () => new HttpError(401, 'Invalid email or password');
+/**
+ * Reject inactive or malformed records before issuing or refreshing access.
+ * @param user - Stored account or missing lookup result.
+ * @returns Whether the record can authenticate.
+ */
 export function eligible(user: UserRecord | null): user is UserRecord {
   return !!user && user.isActive === true && normalizeEmail(user.email) === user.email && normalizeUserRole(user.role) !== null;
 }
+/**
+ * Verify credentials and issue bounded, versioned access tokens.
+ * @param store - Account lookup and login timestamp store.
+ * @param secret - Server-side signing key.
+ * @returns Login, token issuance, and bearer authentication operations.
+ */
 export function createAuth(store: UserStore, secret: string) {
   let dummyHash: Promise<string> | undefined;
   const issue = (user: UserRecord) => ({ message: 'Login successful', accessToken: jwt.sign({ version: user.authVersion ?? 0 }, secret, { ...options, subject: user._id.toString() }), user: safeUser(user) });

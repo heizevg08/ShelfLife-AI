@@ -1,15 +1,10 @@
-// ShelfLifeAI reports on Philippine operations, so a "day" means a Philippine
-// calendar day even when the server or browser runs in another timezone.
-// Asia/Manila is a fixed +08:00 zone without daylight saving, so every calendar
-// date maps to exactly one UTC instant range and no timezone dependency is
-// needed beyond the zone data already shipped with Intl.
+/** Reporting timezone shared with the client, independent of the host timezone. */
 export const BUSINESS_TIME_ZONE = 'Asia/Manila';
 
+/** Year, month, and day on the Philippine business calendar. */
 export type BusinessCalendarDate = { year: number; month: number; day: number };
 
-// A filtering window for one or more business days: the start instant is
-// included and the end instant is excluded, so adjacent windows never double
-// count the boundary instant.
+/** Half-open time range so adjacent reports never count a boundary twice. */
 export type BusinessDayBounds = { start: Date; end: Date };
 
 const partsFormatter = new Intl.DateTimeFormat('en-CA', {
@@ -68,32 +63,51 @@ function calendarDateInstant(date: BusinessCalendarDate): Date {
   return new Date(asIfUTC - zoneOffsetMs(firstPass));
 }
 
-// The business calendar date of an instant, as read on a Philippine clock.
+/**
+ * Read an instant on the Philippine business calendar.
+ * @param reference - Instant to convert.
+ * @returns Calendar year, month, and day.
+ */
 export function businessCalendarDate(reference: Date): BusinessCalendarDate {
   const zoned = zonedTimestamp(reference);
   return { year: zoned.year, month: zoned.month, day: zoned.day };
 }
 
-// The business calendar date of an instant as `YYYY-MM-DD`.
+/**
+ * Format an instant as a Philippine calendar date for API filters.
+ * @param reference - Instant to convert.
+ * @returns Date in `YYYY-MM-DD` form.
+ */
 export function businessDateString(reference: Date): string {
   const { year, month, day } = businessCalendarDate(reference);
   return `${year}-${pad(month)}-${pad(day)}`;
 }
 
-// The boundaries of the business day that contains the reference instant.
+/**
+ * Bound the Philippine business day containing an instant.
+ * @param reference - Instant within the target day.
+ * @returns Inclusive start and exclusive end instants.
+ */
 export function businessDayBounds(reference: Date): BusinessDayBounds {
   const date = businessCalendarDate(reference);
   return { start: calendarDateInstant(date), end: calendarDateInstant(addCalendarDays(date, 1)) };
 }
 
-// The boundaries of the business day immediately before the reference instant.
+/**
+ * Bound the Philippine business day preceding an instant.
+ * @param reference - Instant after the target day.
+ * @returns Inclusive start and exclusive end instants.
+ */
 export function previousBusinessDayBounds(reference: Date): BusinessDayBounds {
   const previous = addCalendarDays(businessCalendarDate(reference), -1);
   return { start: calendarDateInstant(previous), end: calendarDateInstant(addCalendarDays(previous, 1)) };
 }
 
-// The boundaries of the business month that contains the reference instant, so a
-// monthly total counts Philippine calendar dates rather than a host-local month.
+/**
+ * Count a Philippine calendar month rather than the host's local month.
+ * @param reference - Instant within the target month.
+ * @returns Inclusive start and exclusive end instants.
+ */
 export function businessMonthBounds(reference: Date): BusinessDayBounds {
   const { year, month } = businessCalendarDate(reference);
   const nextYear = month === 12 ? year + 1 : year;
@@ -101,16 +115,25 @@ export function businessMonthBounds(reference: Date): BusinessDayBounds {
   return { start: calendarDateInstant({ year, month, day: 1 }), end: calendarDateInstant({ year: nextYear, month: nextMonth, day: 1 }) };
 }
 
-// Boundaries spanning `days` whole business days that end with the reference
-// day, counted as calendar days so "last 7 days" means 7 Philippine dates
-// rather than a rolling 168-hour window that drifts with the time of day.
+/**
+ * Count whole Philippine dates instead of a rolling span of hours.
+ * @param reference - Instant within the last included day.
+ * @param days - Positive count of calendar days.
+ * @returns Inclusive start and exclusive end instants.
+ * @throws RangeError when `days` is not a positive integer.
+ */
 export function recentBusinessCalendarBounds(reference: Date, days: number): BusinessDayBounds {
   if (!Number.isInteger(days) || days < 1) throw new RangeError('A recent business range needs at least one whole day.');
   const today = businessCalendarDate(reference);
   return { start: calendarDateInstant(addCalendarDays(today, -(days - 1))), end: calendarDateInstant(addCalendarDays(today, 1)) };
 }
 
-// Boundaries for a `YYYY-MM-DD` calendar date, for filters that receive a date.
+/**
+ * Convert a date-only filter into Philippine day boundaries.
+ * @param value - Calendar date in `YYYY-MM-DD` form.
+ * @returns Inclusive start and exclusive end instants.
+ * @throws RangeError when the date does not match the expected form.
+ */
 export function businessDayBoundsForCalendarDate(value: string): BusinessDayBounds {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) throw new RangeError(`Not a calendar date: ${value}`);
@@ -118,15 +141,22 @@ export function businessDayBoundsForCalendarDate(value: string): BusinessDayBoun
   return { start: calendarDateInstant(date), end: calendarDateInstant(addCalendarDays(date, 1)) };
 }
 
-// The calendar date carried by a date-only field. Such fields are stored at UTC
-// midnight for their intended date, so UTC getters return that date unchanged in
-// every host timezone, while local getters would shift it near the day edge.
+/**
+ * Preserve the intended date of a field serialized at UTC midnight.
+ * @param value - Stored date-only field.
+ * @returns Calendar date in `YYYY-MM-DD` form.
+ */
 export function dateOnlyCalendarString(value: Date): string {
   return `${value.getUTCFullYear()}-${pad(value.getUTCMonth() + 1)}-${pad(value.getUTCDate())}`;
 }
 
-// Calendar arithmetic on a `YYYY-MM-DD` value. Days are counted on the calendar
-// itself, so the result never depends on the host timezone.
+/**
+ * Shift a calendar date without using the host timezone.
+ * @param value - Date in `YYYY-MM-DD` form.
+ * @param deltaDays - Whole calendar days to add or subtract.
+ * @returns Shifted date in `YYYY-MM-DD` form.
+ * @throws RangeError when the date does not match the expected form.
+ */
 export function shiftCalendarDate(value: string, deltaDays: number): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) throw new RangeError(`Not a calendar date: ${value}`);
@@ -134,11 +164,13 @@ export function shiftCalendarDate(value: string, deltaDays: number): string {
   return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}`;
 }
 
-// Every calendar date from `from` to `to`, both inclusive, as `YYYY-MM-DD`. A
-// daily analytics series is built over this sequence so a day with no records is
-// published as a real zero instead of vanishing from the chart. When the span is
-// longer than `limit`, the most recent days are kept: a chart should show current
-// activity rather than truncate at an arbitrary older point.
+/**
+ * Include zero-activity dates while retaining the most recent dates when capped.
+ * @param from - First included `YYYY-MM-DD` date.
+ * @param to - Last included `YYYY-MM-DD` date.
+ * @param limit - Maximum number of recent dates to return.
+ * @returns Inclusive ascending calendar-date sequence.
+ */
 export function calendarDateSequence(from: string, to: string, limit = 400): string[] {
   if (from > to) return [];
   const dates: string[] = [];
