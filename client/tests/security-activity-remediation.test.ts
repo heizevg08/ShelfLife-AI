@@ -56,9 +56,9 @@ test('Security & Activity reuses the shared Admin KPI card contract and drops th
   assert.match(css, /\.sl-superadmin-surface \.sl-user-management-kpis \{ grid-template-columns:repeat\(4,minmax\(0,1fr\)\); \}/);
 });
 
-test('the Audit Logs status dot is suppressed for this page only', () => {
-  assert.match(css, /\.sl-security-activity-v78 \.sl-application-records-table\[data-layout="audit"\] \.sl-status-dot \{ display:none; \}/);
-  assert.match(css, /\.sl-security-activity-v78 \.sl-application-records-table\[data-layout="audit"\] \.sl-status \{ gap:0; \}/);
+test('audit table status dots are suppressed wherever the shared layout appears', () => {
+  assert.match(css, /\.sl-application-records-table\[data-layout="audit"\] \.sl-status-dot \{ display:none; \}/);
+  assert.match(css, /\.sl-application-records-table\[data-layout="audit"\] \.sl-status \{ gap:0; \}/);
   // Badge colour and text still carry the outcome, and the shared primitive is untouched.
   assert.match(auditTable, /<Status tone=\{rowStatus\(row\) === 'Success' \? 'success' : rowStatus\(row\) === 'Warning' \? 'attention' : 'critical'\}>\{rowStatus\(row\)\}<\/Status>/);
   assert.match(primitives, /<span className="sl-status-dot" aria-hidden="true" \/>/, 'other callers keep the dot');

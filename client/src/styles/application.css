@@ -25845,12 +25845,9 @@ section.sl-card:has(.sl-filter-popover) {
    the two date inputs taller than every sibling control and pushed the toolbar to two
    rows, so it is retired: shared sizing, gap, label and alignment now apply unchanged.
    The toolbar grid rules own the From/To columns at every width. */
-/* Status is already spelled out for assistive technology, so the circular dot before
-   Success/Failed duplicated the same value with a second visual channel. Suppressed for
-   this page's audit table only, mirroring the existing .sl-data-table dot suppression;
-   badge colours, badge text and every other status component stay untouched. */
-.sl-security-activity-v78 .sl-application-records-table[data-layout="audit"] .sl-status-dot { display:none; }
-.sl-security-activity-v78 .sl-application-records-table[data-layout="audit"] .sl-status { gap:0; }
+/* Audit status is already spelled out, so its dot adds no information. */
+.sl-application-records-table[data-layout="audit"] .sl-status-dot { display:none; }
+.sl-application-records-table[data-layout="audit"] .sl-status { gap:0; }
 /* Audit identities are immutable (SoT §22), so a record can still carry a name written
    before the current 1-25 character account rule. The USER cell is clamped to one line
    so such a name cannot inflate row height or push the table sideways; the full recorded
