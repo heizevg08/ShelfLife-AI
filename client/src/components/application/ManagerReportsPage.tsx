@@ -8,6 +8,7 @@ import { businessDayRange, businessWeekRange } from '../../utils/business-day';
 import { downloadCombinedReport, downloadReportXlsx, getMyRecentExports, type OperationalReportId, type RecentExport } from '../../services/report-exports';
 import { formatDate, formatDateTime, isValidDateOnlyInput } from '../../utils/date-time';
 import { formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
+import { ApiError } from '../../services/apiClient';
 
 const periods = ['This Week', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom'] as const;
 type ReportSelection = OperationalReportId | 'all';
@@ -51,8 +52,18 @@ export function ManagementReportDownloadCenter({ options = reportOptions, onExpo
       await onExported?.();
     }
     catch (error) {
-      const status = (error as { status?: number }).status;
-      setExportError(status === 401 || status === 403 ? 'You cannot download reports with the current account.' : status === 413 ? 'This report has more than 5,000 rows in a section. Choose a shorter period.' : 'The report could not be prepared. Try again later.');
+      const status = error instanceof ApiError ? error.status : undefined;
+      setExportError(status === 401 || status === 403
+        ? 'You cannot download reports with the current account.'
+        : status === 413
+          ? 'This report has more than 5,000 rows in a section. Choose a shorter period.'
+          : status === 400
+            ? 'The selected report or date range is invalid. Check the filters and try again.'
+            : status === 404
+              ? 'The report download endpoint is unavailable. Restart the server and try again.'
+              : status === 500
+                ? 'The server could not prepare this workbook. Try again; if it continues, check the server logs.'
+                : 'Could not reach the report service. Check the server connection and try again.');
     }
     finally { setExporting(false); }
   }
