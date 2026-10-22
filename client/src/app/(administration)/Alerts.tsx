@@ -27,17 +27,13 @@ function ManagerAlertPending({ label, compact = false }: { label: string; compac
   );
 }
 
-// The record filters. Category, Priority and Status are all shareable selectors, and the
-// tab strip this replaced could not be reached or read by a keyboard the way a listbox can:
-// it stays here as the Category filter rather than being dropped, so no established alert
-// category disappears.
+// Category and priority are the meaningful filters for current, active alerts.
 const ALERT_CATEGORIES = ['All Alerts', 'Expiring Soon', 'Low Stock', 'Forecast Risk'] as const;
 
 function ManagerAlerts() {
   const [category, setCategory] = useState<string>('All Alerts');
   const [search, setSearch] = useState('');
   const [priority, setPriority] = useState('All Priorities');
-  const [status, setStatus] = useState('All Statuses');
   const [rows, setRows] = useState(10);
   const [page, setPage] = useState(1);
   const [trendPeriod, setTrendPeriod] = useState<AlertTrendPeriod>('This Week');
@@ -121,17 +117,16 @@ function ManagerAlerts() {
       const matchSearch = !search.trim() || item.ingredient.toLowerCase().includes(search.toLowerCase()) || item.details.toLowerCase().includes(search.toLowerCase());
       const matchCat = category === 'All Alerts' || item.category === category;
       const matchPriority = priority === 'All Priorities' || item.priority === priority;
-      const matchStatus = status === 'All Statuses' || item.status === status;
-      return matchSearch && matchCat && matchPriority && matchStatus;
+      return matchSearch && matchCat && matchPriority;
     });
-  }, [allAlerts, search, category, priority, status]);
+  }, [allAlerts, search, category, priority]);
 
   const pagedAlerts = useMemo(() => {
     const start = (page - 1) * rows;
     return filteredAlerts.slice(start, start + rows);
   }, [filteredAlerts, page, rows]);
 
-  const reset = () => { setCategory('All Alerts'); setSearch(''); setPriority('All Priorities'); setStatus('All Statuses'); setPage(1); };
+  const reset = () => { setCategory('All Alerts'); setSearch(''); setPriority('All Priorities'); setPage(1); };
   return <>
     <PageHeader
       eyebrow="Intelligence"
@@ -171,7 +166,6 @@ function ManagerAlerts() {
               </label>
               <label><span>Category</span><FilterSelect ariaLabel="Filter alerts by category" value={category} options={ALERT_CATEGORIES.map(value => ({ value, label: value }))} onChange={value => { setCategory(value); setPage(1); }} /></label>
               <label><span>Priority</span><FilterSelect ariaLabel="Filter alerts by priority" value={priority} options={['All Priorities','High','Medium','Low'].map(value => ({value, label: value}))} onChange={value => { setPriority(value); setPage(1); }}/></label>
-              <label><span>Status</span><FilterSelect ariaLabel="Filter alerts by status" value={status} options={['All Statuses','Active','Resolved'].map(value => ({value, label: value}))} onChange={value => { setStatus(value); setPage(1); }}/></label>
               <div className="sl-application-records-filter-actions sl-sa-ingredients-filter-actions"><button type="button" className="sl-button" onClick={reset}>Reset</button></div>
             </div></div>
 
@@ -183,7 +177,6 @@ function ManagerAlerts() {
                   <th>Alert Type</th>
                   <th>Details</th>
                   <th>Priority</th>
-                  <th>Status</th>
                 </tr></thead>
                 <tbody>
                   {pagedAlerts.length > 0 ? (
@@ -198,16 +191,10 @@ function ManagerAlerts() {
                             {alert.priority}
                           </Status>
                         </td>
-                        <td>
-                          <span className={`sl-alert-status-text sl-status-${alert.status.toLowerCase()}`}>
-                            <span className="sl-alert-status-dot" aria-hidden="true" />
-                            {alert.status}
-                          </span>
-                        </td>
                       </tr>
                     ))
                   ) : (
-                    <tr><td colSpan={6} className="sl-empty-cell">{category === 'Forecast Risk' && forecastRisksLoading ? <DataState kind="loading" title="Loading forecast risks" description="Checking forecast risk levels." /> : category === 'Forecast Risk' && forecastRisksError ? <DataState kind="error" title="Forecast risks unavailable" description="Forecast risk levels could not be loaded." /> : batchesLoading && category !== 'Forecast Risk' ? <DataState kind="loading" title="Loading alerts" description="Checking current inventory conditions." /> : batches === null && category !== 'Forecast Risk' ? <DataState kind="error" title="Alerts unavailable" description="Inventory alerts could not be loaded." /> : <DataState kind="empty" title="No matching alerts" description="No current alerts match these filters." />}</td></tr>
+                    <tr><td colSpan={5} className="sl-empty-cell">{category === 'Forecast Risk' && forecastRisksLoading ? <DataState kind="loading" title="Loading forecast risks" description="Checking forecast risk levels." /> : category === 'Forecast Risk' && forecastRisksError ? <DataState kind="error" title="Forecast risks unavailable" description="Forecast risk levels could not be loaded." /> : batchesLoading && category !== 'Forecast Risk' ? <DataState kind="loading" title="Loading alerts" description="Checking current inventory conditions." /> : batches === null && category !== 'Forecast Risk' ? <DataState kind="error" title="Alerts unavailable" description="Inventory alerts could not be loaded." /> : <DataState kind="empty" title="No matching alerts" description="No current alerts match these filters." />}</td></tr>
                   )}
                 </tbody>
               </table>

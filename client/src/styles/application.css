@@ -33857,6 +33857,9 @@ nn .sl-system-settings-v70[data-ui-version=v305-consistent-system-settings] .sl-
   max-width: none;
   min-width: 0;
 }
+.sl-manager-alerts-v134 .sl-application-records-toolbar[data-filter-layout="records-five"] {
+  grid-template-columns: minmax(14rem,1.7fr) repeat(2,minmax(8.5rem,.8fr)) auto;
+}
 
 /* Manager Change Requests keeps reporting controls and its decision ledger aligned. */
 .sl-manager-change-requests-live { gap: calc(var(--sl-space-4) + 4px); }
