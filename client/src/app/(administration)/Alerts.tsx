@@ -12,6 +12,9 @@ import { formatHumanReadableText } from '../../utils/display-text';
 import { businessDateSeries } from '../../components/application/forecast-chart-data';
 import { businessWeekRange, businessDayRange } from '../../utils/business-day';
 import { inventoryAlertRecords } from '../../utils/inventory-alert-records';
+import { forecastRiskAlertRecords } from '../../utils/forecast-risk-alert-records';
+import { getForecastTable, type ForecastTableRow } from '../../services/ingredients';
+import { businessDateInputValue } from '../../utils/business-day';
 
 // No Alerts endpoint exists yet, so every panel states the absence of the service
 // rather than a successful-but-empty result. "No live records yet" alone would read as
@@ -46,6 +49,9 @@ function ManagerAlerts() {
   const [summaryError, setSummaryError] = useState(false);
   const [batches, setBatches] = useState<InventoryBatch[] | null>(null);
   const [batchesLoading, setBatchesLoading] = useState(true);
+  const [forecastRisks, setForecastRisks] = useState<ForecastTableRow[] | null>(null);
+  const [forecastRisksLoading, setForecastRisksLoading] = useState(true);
+  const [forecastRisksError, setForecastRisksError] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -68,7 +74,31 @@ function ManagerAlerts() {
     return () => controller.abort();
   }, []);
 
-  const allAlerts = useMemo(() => inventoryAlertRecords(batches ?? []), [batches]);
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadForecastRisks() {
+      try {
+        const first = await getForecastTable(1, 150, '', '', '', '', controller.signal);
+        const rows = [...first.items];
+        for (let page = 2; page <= Math.ceil(first.total / first.pageSize); page += 1) {
+          const result = await getForecastTable(page, 150, '', '', '', '', controller.signal);
+          rows.push(...result.items);
+        }
+        if (!controller.signal.aborted) setForecastRisks(rows.filter(row => row.riskLevel === 'Critical' || row.riskLevel === 'High'));
+      } catch (error) {
+        if (!controller.signal.aborted && (error as Error).name !== 'AbortError') setForecastRisksError(true);
+      } finally {
+        if (!controller.signal.aborted) setForecastRisksLoading(false);
+      }
+    }
+    void loadForecastRisks();
+    return () => controller.abort();
+  }, []);
+
+  const allAlerts = useMemo(() => [
+    ...inventoryAlertRecords(batches ?? []),
+    ...forecastRiskAlertRecords(forecastRisks ?? [], businessDateInputValue()),
+  ], [batches, forecastRisks]);
 
   const trendPoints = useMemo(() => {
     const days = Number(trendPeriod.match(/\d+/)?.[0] ?? 7);
@@ -121,7 +151,7 @@ function ManagerAlerts() {
         </article>
         <article className="sl-sa-kpi" data-tone="attention">
           <span className="sl-sa-kpi-icon"><TrendingUp aria-hidden="true" /></span>
-          <div><span>Forecast Risk</span><strong>—</strong><small>Forecast alerts unavailable</small></div>
+          <div><span>Forecast Risk</span><strong>{forecastRisksLoading || forecastRisksError ? '—' : forecastRisks?.length ?? 0}</strong><small>{forecastRisksError ? 'Forecast risks unavailable' : forecastRisksLoading ? 'Checking forecast risks' : 'High or critical shortage risk'}</small></div>
         </article>
         <article className="sl-sa-kpi" data-tone="critical">
           <span className="sl-sa-kpi-icon"><Info aria-hidden="true" /></span>
@@ -159,10 +189,10 @@ function ManagerAlerts() {
                   {pagedAlerts.length > 0 ? (
                     pagedAlerts.map(alert => (
                       <tr key={alert.id}>
-                        <td><time dateTime={alert.date}>{alert.batchStatus === 'Low Stock' ? formatDateTime(alert.date) : formatDate(alert.date)}</time></td>
+                        <td><time dateTime={alert.date}>{'batchStatus' in alert && alert.batchStatus === 'Low Stock' ? formatDateTime(alert.date) : formatDate(alert.date)}</time></td>
                         <td className="sl-emphasized-value">{formatHumanReadableText(alert.ingredient)}</td>
                         <td>{alert.category}</td>
-                        <td className="sl-alert-details-cell"><span className="sl-alert-detail-summary">{alert.detailSummary}</span><span className="sl-alert-detail-batch">{alert.batchID}</span></td>
+                        <td className="sl-alert-details-cell"><span className="sl-alert-detail-summary">{alert.detailSummary}</span><span className="sl-alert-detail-batch">{'batchID' in alert ? alert.batchID : alert.detailNote}</span></td>
                         <td>
                           <Status tone={alert.priority === 'High' ? 'critical' : alert.priority === 'Medium' ? 'attention' : 'brand'}>
                             {alert.priority}
@@ -177,7 +207,7 @@ function ManagerAlerts() {
                       </tr>
                     ))
                   ) : (
-                    <tr><td colSpan={6} className="sl-empty-cell">{batchesLoading ? <DataState kind="loading" title="Loading alerts" description="Checking current inventory conditions." /> : batches === null ? <DataState kind="error" title="Alerts unavailable" description="Inventory alerts could not be loaded." /> : <DataState kind="empty" title="No matching alerts" description="No current inventory alerts match these filters." />}</td></tr>
+                    <tr><td colSpan={6} className="sl-empty-cell">{category === 'Forecast Risk' && forecastRisksLoading ? <DataState kind="loading" title="Loading forecast risks" description="Checking forecast risk levels." /> : category === 'Forecast Risk' && forecastRisksError ? <DataState kind="error" title="Forecast risks unavailable" description="Forecast risk levels could not be loaded." /> : batchesLoading && category !== 'Forecast Risk' ? <DataState kind="loading" title="Loading alerts" description="Checking current inventory conditions." /> : batches === null && category !== 'Forecast Risk' ? <DataState kind="error" title="Alerts unavailable" description="Inventory alerts could not be loaded." /> : <DataState kind="empty" title="No matching alerts" description="No current alerts match these filters." />}</td></tr>
                   )}
                 </tbody>
               </table>
