@@ -6,13 +6,15 @@ const page = readFileSync(new URL('../src/components/application/ManagerReportsP
 const service = readFileSync(new URL('../src/services/report-exports.ts', import.meta.url), 'utf8');
 const primitives = readFileSync(new URL('../src/components/application/primitives.tsx', import.meta.url), 'utf8');
 
-test('Manager retains the four authorized KPI sources and pending forecast', () => {
+test('Manager uses authorized sources for all four KPIs, including overall forecast accuracy', () => {
   const labels = ['Inventory Value', 'Near-Expiry Batches', 'Estimated Waste Cost', 'Forecast Accuracy'];
   let cursor = -1;
   for (const label of labels) { const next = page.indexOf(`<span>${label}</span>`); assert.ok(next > cursor); cursor = next; }
   assert.match(page, /getInventoryBatchSummary\(controller\.signal\)/);
   assert.match(page, /getWasteSummary\(controller\.signal\)/);
-  assert.match(page, /<span>Forecast Accuracy<\/span><strong>—<\/strong><small>Forecast data pending<\/small>/);
+  assert.match(page, /getGeneralForecastAccuracy\(controller\.signal\)/);
+  assert.match(page, /accuracy\.metrics\.accuracyScore/);
+  assert.match(page, /accuracy\.evaluatedDays\}\/\{accuracy\.minimumRequiredDays\} days evaluated/);
 });
 
 test('Download Center offers one shared XLSX action and no CSV service', () => {

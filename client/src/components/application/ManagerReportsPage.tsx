@@ -9,6 +9,7 @@ import { downloadCombinedReport, downloadReportXlsx, getMyRecentExports, type Op
 import { formatDate, formatDateTime, isValidDateOnlyInput } from '../../utils/date-time';
 import { formatCompactPeso, formatExactPeso } from '../../utils/compact-number';
 import { ApiError } from '../../services/apiClient';
+import { getGeneralForecastAccuracy, type ForecastAccuracyResponse } from '../../services/ingredients';
 
 const periods = ['This Week', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom'] as const;
 type ReportSelection = OperationalReportId | 'all';
@@ -129,12 +130,15 @@ export function ConnectedManagerReportsPage() {
   const [waste, setWaste] = useState<WasteSummary | null>(null);
   const [inventoryError, setInventoryError] = useState(false);
   const [wasteError, setWasteError] = useState(false);
+  const [accuracy, setAccuracy] = useState<ForecastAccuracyResponse | null>(null);
+  const [accuracyError, setAccuracyError] = useState(false);
   const { recentExports, recentExportsError, refreshRecentExports } = useRecentReportDownloads();
   async function handleExported() { await refreshRecentExports(); }
   useEffect(() => {
     const controller = new AbortController();
     getInventoryBatchSummary(controller.signal).then(setInventory).catch(error => { if ((error as Error).name !== 'AbortError') setInventoryError(true); });
     getWasteSummary(controller.signal).then(setWaste).catch(error => { if ((error as Error).name !== 'AbortError') setWasteError(true); });
+    getGeneralForecastAccuracy(controller.signal).then(setAccuracy).catch(error => { if ((error as Error).name !== 'AbortError') setAccuracyError(true); });
     void refreshRecentExports(controller.signal);
     return () => controller.abort();
   }, []);
@@ -148,7 +152,7 @@ export function ConnectedManagerReportsPage() {
         <article className="sl-sa-kpi" data-tone="brand"><span className="sl-sa-kpi-icon"><PhilippinePeso/></span><div><span>Inventory Value</span><strong title={inventoryAmount !== null && inventoryAmount !== undefined && Number.isFinite(inventoryAmount) ? formatExactPeso(inventoryAmount) : undefined}>{inventoryError || inventoryAmount === null || inventoryAmount === undefined || !Number.isFinite(inventoryAmount) ? '—' : formatCompactPeso(inventoryAmount)}</strong><small>{inventoryError?'Value unavailable':!inventory?'Loading value':inventory.inventoryValue===null?'Unit cost unavailable':'Stock valued at unit cost'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="info"><span className="sl-sa-kpi-icon"><AlertTriangle/></span><div><span>Near-Expiry Batches</span><strong>{inventoryError?'—':inventory?.nearExpiry??'—'}</strong><small>{inventoryError?'Expiry data unavailable':inventory?'Expiring within 7 days':'Loading expiry data'}</small></div></article>
         <article className="sl-sa-kpi" data-tone="attention"><span className="sl-sa-kpi-icon"><Trash2/></span><div><span>Estimated Waste Cost</span><strong title={wasteAmount !== undefined && Number.isFinite(wasteAmount) ? formatExactPeso(wasteAmount) : undefined}>{wasteError || wasteAmount === undefined || !Number.isFinite(wasteAmount) ? '—' : formatCompactPeso(wasteAmount)}</strong><small>{wasteError?'Waste cost unavailable':waste?'Waste cost today':'Loading waste cost'}</small></div></article>
-        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp/></span><div><span>Forecast Accuracy</span><strong>—</strong><small>Forecast data pending</small></div></article>
+        <article className="sl-sa-kpi" data-tone="critical"><span className="sl-sa-kpi-icon"><TrendingUp/></span><div><span>Forecast Accuracy</span>{accuracy?.status === 'AVAILABLE' && accuracy.metrics.accuracyScore !== null ? <><strong>{accuracy.metrics.accuracyScore}%</strong><small>{accuracy.metrics.evaluatedDays} days evaluated</small></> : accuracy?.status === 'UNAVAILABLE' ? <><strong>—</strong><small>{accuracy.evaluatedDays}/{accuracy.minimumRequiredDays} days evaluated</small></> : <><strong>{accuracyError ? '—' : '…'}</strong><small>{accuracyError ? 'Forecast unavailable' : 'Loading forecast'}</small></>}</div></article>
       </section>
       <ManagementReportDownloadCenter onExported={handleExported} />
       <ManagementReportRecentDownloads recentExports={recentExports} recentExportsError={recentExportsError} />
